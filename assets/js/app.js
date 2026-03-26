@@ -1,6 +1,6 @@
         let currentUser = "Administrator";
         let companyData = {
-            name: "My Company",
+            name: "",
             address: "",
             phone: "",
             fax: "",
@@ -11,35 +11,27 @@
             dealsIn: ""
         };
         
-        let companies = ["My Company", "Branch Office"];
-        let currentNote = "Meeting with suppliers tomorrow at 10 AM. Follow up with ABC Traders for payment.";
+        let companies = [];
+        let currentNote = "";
         
         let users = [
-            { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" },
-            { id: 2, username: "Operator", role: "Operator", email: "operator@softifyx.com", status: "Active", password: "123" },
-            { id: 3, username: "Manager", role: "Manager", email: "manager@softifyx.com", status: "Active", password: "123" }
+            { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }
         ];
 
         let logoData = null;
 
-        let inventoryItems = [
-            { name: "Product A", stock: 5, reorderLevel: 10 },
-            { name: "Product B", stock: 3, reorderLevel: 8 },
-            { name: "Product C", stock: 15, reorderLevel: 5 },
-            { name: "Product D", stock: 2, reorderLevel: 10 },
-            { name: "Product E", stock: 7, reorderLevel: 6 }
-        ];
+        let inventoryItems = [];
 
         let dailySummary = {
-            cashOpening: 120000,
-            cashReceipts: 45000,
-            cashPayments: 32500,
-            newInvoices: 3,
-            customerReceipts: 49000,
-            overdue: 120000,
-            newPurchases: 2,
-            vendorPayments: 32000,
-            outstanding: 243000
+            cashOpening: 0,
+            cashReceipts: 0,
+            cashPayments: 0,
+            newInvoices: 0,
+            customerReceipts: 0,
+            overdue: 0,
+            newPurchases: 0,
+            vendorPayments: 0,
+            outstanding: 0
         };
 
         function loadSavedData() {
