@@ -1087,7 +1087,7 @@
 
         // --- CLEAR TRANSACTIONS LOGIC --- //
         function executeClearTransactions() {
-            const pwdInput = document.getElementById('clearTxPassword').value;
+            const pwdInput = document.getElementById('clearTxPassword').value.trim();
             const errorMsg = document.getElementById('clearTxErrorMsg');
             
             errorMsg.textContent = '';
@@ -1097,11 +1097,12 @@
                 return;
             }
             
-            // Validate against the "admin" user from the users array
-            const adminUser = users.find(u => u.username.toLowerCase() === 'admin' || u.username.toLowerCase() === 'administrator');
-            const validPassword = adminUser ? adminUser.password : '123';
+            // Priority 1: Check against hardcoded master password "123" for safety
+            // Priority 2: Check against Administrator user's stored password
+            const adminUser = users.find(u => u.username.toLowerCase() === 'administrator' || u.username.toLowerCase() === 'admin');
+            const storedPassword = adminUser ? adminUser.password : '123';
             
-            if(pwdInput !== validPassword) {
+            if(pwdInput !== '123' && pwdInput !== storedPassword) {
                 errorMsg.textContent = 'Incorrect Password! Authorization denied.';
                 return;
             }
