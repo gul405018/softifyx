@@ -3,10 +3,11 @@
         <div class="form-group" style="display: flex; align-items: flex-start; margin-bottom: 15px;">
             <label style="width: 170px; font-weight: 600; color: #1f4668; padding-top: 8px;">Country Name</label>
             <div style="flex: 1; max-width: 400px;">
-                <select class="form-control" id="currCountry" onchange="updateCurrencyDetails()" style="width: 100%; border: 1px solid #ccc;">
+                <input type="text" class="form-control" id="currCountry" list="countriesData" onchange="updateCurrencyDetails()" onkeyup="updateCurrencyDetails()" placeholder="Search or select country..." style="width: 100%; border: 1px solid #ccc;" autocomplete="off">
+                <datalist id="countriesData">
                     <!-- Populated via JS -->
-                </select>
-                <div style="font-size: 11px; color: #666; margin-top: 4px;">(Select country of your business from the list to display currency details.)</div>
+                </datalist>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">(Search or select country of your business from the list to display currency details.)</div>
             </div>
         </div>
 

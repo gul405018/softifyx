@@ -1114,38 +1114,76 @@
 
         // --- CURRENCY LOGIC --- //
         const countryDataList = [
-            { c: 'Pakistan', n: 'Pakistani Rupee', s: 'Rs.' },
-            { c: 'India', n: 'Indian Rupee', s: '₹' },
-            { c: 'United States', n: 'US Dollar', s: '$' },
-            { c: 'United Kingdom', n: 'British Pound', s: '£' },
-            { c: 'Eurozone', n: 'Euro', s: '€' },
-            { c: 'Saudi Arabia', n: 'Saudi Riyal', s: 'SAR' },
-            { c: 'United Arab Emirates', n: 'UAE Dirham', s: 'AED' },
-            { c: 'Australia', n: 'Australian Dollar', s: 'A$' },
-            { c: 'Canada', n: 'Canadian Dollar', s: 'C$' },
-            { c: 'China', n: 'Chinese Yuan', s: '¥' },
-            { c: 'Japan', n: 'Japanese Yen', s: '¥' }
+            { c: 'Afghanistan', n: 'Afghan Afghani', s: '؋' }, { c: 'Albania', n: 'Albanian Lek', s: 'L' },
+            { c: 'Algeria', n: 'Algerian Dinar', s: 'د.ج' }, { c: 'Andorra', n: 'Euro', s: '€' },
+            { c: 'Angola', n: 'Angolan Kwanza', s: 'Kz' }, { c: 'Argentina', n: 'Argentine Peso', s: '$' },
+            { c: 'Armenia', n: 'Armenian Dram', s: '֏' }, { c: 'Australia', n: 'Australian Dollar', s: 'A$' },
+            { c: 'Austria', n: 'Euro', s: '€' }, { c: 'Azerbaijan', n: 'Azerbaijani Manat', s: '₼' },
+            { c: 'Bahamas', n: 'Bahamian Dollar', s: 'B$' }, { c: 'Bahrain', n: 'Bahraini Dinar', s: '.د.ب' },
+            { c: 'Bangladesh', n: 'Bangladeshi Taka', s: '৳' }, { c: 'Barbados', n: 'Barbadian Dollar', s: 'Bds$' },
+            { c: 'Belarus', n: 'Belarusian Ruble', s: 'Br' }, { c: 'Belgium', n: 'Euro', s: '€' },
+            { c: 'Belize', n: 'Belize Dollar', s: 'BZ$' }, { c: 'Bhutan', n: 'Bhutanese Ngultrum', s: 'Nu.' },
+            { c: 'Bolivia', n: 'Bolivian Boliviano', s: 'Bs.' }, { c: 'Bosnia', n: 'Convertible Mark', s: 'KM' },
+            { c: 'Brazil', n: 'Brazilian Real', s: 'R$' }, { c: 'Brunei', n: 'Brunei Dollar', s: 'B$' },
+            { c: 'Bulgaria', n: 'Bulgarian Lev', s: 'лв' }, { c: 'Cambodia', n: 'Cambodian Riel', s: '៛' },
+            { c: 'Canada', n: 'Canadian Dollar', s: 'C$' }, { c: 'Chile', n: 'Chilean Peso', s: '$' },
+            { c: 'China', n: 'Chinese Yuan', s: '¥' }, { c: 'Colombia', n: 'Colombian Peso', s: '$' },
+            { c: 'Costa Rica', n: 'Costa Rican Colón', s: '₡' }, { c: 'Croatia', n: 'Euro', s: '€' },
+            { c: 'Cuba', n: 'Cuban Peso', s: '₱' }, { c: 'Cyprus', n: 'Euro', s: '€' },
+            { c: 'Czech Republic', n: 'Czech Koruna', s: 'Kč' }, { c: 'Denmark', n: 'Danish Krone', s: 'kr' },
+            { c: 'Dominican Republic', n: 'Dominican Peso', s: 'RD$' }, { c: 'Ecuador', n: 'US Dollar', s: '$' },
+            { c: 'Egypt', n: 'Egyptian Pound', s: '£' }, { c: 'Estonia', n: 'Euro', s: '€' },
+            { c: 'Finland', n: 'Euro', s: '€' }, { c: 'France', n: 'Euro', s: '€' },
+            { c: 'Georgia', n: 'Georgian Lari', s: '₾' }, { c: 'Germany', n: 'Euro', s: '€' },
+            { c: 'Greece', n: 'Euro', s: '€' }, { c: 'Guatemala', n: 'Guatemalan Quetzal', s: 'Q' },
+            { c: 'Honduras', n: 'Honduran Lempira', s: 'L' }, { c: 'Hungary', n: 'Hungarian Forint', s: 'Ft' },
+            { c: 'Iceland', n: 'Icelandic Króna', s: 'kr' }, { c: 'India', n: 'Indian Rupee', s: '₹' },
+            { c: 'Indonesia', n: 'Indonesian Rupiah', s: 'Rp' }, { c: 'Iran', n: 'Iranian Rial', s: '﷼' },
+            { c: 'Iraq', n: 'Iraqi Dinar', s: 'ع.د' }, { c: 'Ireland', n: 'Euro', s: '€' },
+            { c: 'Israel', n: 'Israeli New Shekel', s: '₪' }, { c: 'Italy', n: 'Euro', s: '€' },
+            { c: 'Jamaica', n: 'Jamaican Dollar', s: 'J$' }, { c: 'Japan', n: 'Japanese Yen', s: '¥' },
+            { c: 'Jordan', n: 'Jordanian Dinar', s: 'د.ا' }, { c: 'Kazakhstan', n: 'Kazakhstani Tenge', s: '₸' },
+            { c: 'Kenya', n: 'Kenyan Shilling', s: 'KSh' }, { c: 'Kuwait', n: 'Kuwaiti Dinar', s: 'د.ك' },
+            { c: 'Lebanon', n: 'Lebanese Pound', s: 'ل.ل' }, { c: 'Libya', n: 'Libyan Dinar', s: 'ل.د' },
+            { c: 'Malaysia', n: 'Malaysian Ringgit', s: 'RM' }, { c: 'Mexico', n: 'Mexican Peso', s: '$' },
+            { c: 'Morocco', n: 'Moroccan Dirham', s: 'د.م.' }, { c: 'Nepal', n: 'Nepalese Rupee', s: 'रू' },
+            { c: 'Netherlands', n: 'Euro', s: '€' }, { c: 'New Zealand', n: 'New Zealand Dollar', s: 'NZ$' },
+            { c: 'Nigeria', n: 'Nigerian Naira', s: '₦' }, { c: 'Norway', n: 'Norwegian Krone', s: 'kr' },
+            { c: 'Oman', n: 'Omani Rial', s: 'ر.ع.' }, { c: 'Pakistan', n: 'Pakistani Rupee', s: 'Rs.' },
+            { c: 'Philippines', n: 'Philippine Peso', s: '₱' }, { c: 'Poland', n: 'Polish Złoty', s: 'zł' },
+            { c: 'Portugal', n: 'Euro', s: '€' }, { c: 'Qatar', n: 'Qatari Riyal', s: 'ر.ق' },
+            { c: 'Romania', n: 'Romanian Leu', s: 'lei' }, { c: 'Russia', n: 'Russian Ruble', s: '₽' },
+            { c: 'Saudi Arabia', n: 'Saudi Riyal', s: 'SAR' }, { c: 'Singapore', n: 'Singapore Dollar', s: 'S$' },
+            { c: 'South Africa', n: 'South African Rand', s: 'R' }, { c: 'South Korea', n: 'South Korean Won', s: '₩' },
+            { c: 'Spain', n: 'Euro', s: '€' }, { c: 'Sri Lanka', n: 'Sri Lankan Rupee', s: 'Rs' },
+            { c: 'Sweden', n: 'Swedish Krona', s: 'kr' }, { c: 'Switzerland', n: 'Swiss Franc', s: 'CHF' },
+            { c: 'Taiwan', n: 'New Taiwan Dollar', s: 'NT$' }, { c: 'Thailand', n: 'Thai Baht', s: '฿' },
+            { c: 'Turkey', n: 'Turkish Lira', s: '₺' }, { c: 'United Arab Emirates', n: 'UAE Dirham', s: 'AED' },
+            { c: 'United Kingdom', n: 'British Pound', s: '£' }, { c: 'United States', n: 'US Dollar', s: '$' },
+            { c: 'Vietnam', n: 'Vietnamese Đồng', s: '₫' }
         ];
 
         function initCurrencyView() {
-            const select = document.getElementById('currCountry');
-            if(!select) return;
-            let html = '<option value="">-- Select Country --</option>';
+            const dataList = document.getElementById('countriesData');
+            const inputEl = document.getElementById('currCountry');
+            if(!dataList || !inputEl) return;
+            
+            let html = '';
             countryDataList.sort((a,b) => a.c.localeCompare(b.c)).forEach(item => {
-                html += `<option value="${item.c}">${item.c}</option>`;
+                html += `<option value="${item.c}">`;
             });
-            select.innerHTML = html;
+            dataList.innerHTML = html;
             
             const savedCurr = localStorage.getItem('softifyx_currency');
             if(savedCurr) {
                 try {
                     const data = JSON.parse(savedCurr);
-                    select.value = data.country || '';
+                    inputEl.value = data.country || '';
                     document.getElementById('currName').value = data.name || '';
                     document.getElementById('currSymbol').value = data.symbol || '';
                 } catch(e){}
             } else {
-                select.value = 'Pakistan';
+                inputEl.value = 'Pakistan';
                 updateCurrencyDetails();
             }
         }
