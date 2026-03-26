@@ -1,0 +1,192 @@
+<div class="branding-row">
+    <div class="company-title">
+        <span class="softifyx">Softifyx</span>
+        <span class="company-name" id="titleCompanyName">- My Company</span>
+    </div>
+    <div id="logoDisplay"></div>
+</div>
+
+<div class="divider"></div>
+
+<div class="toolbar-row">
+    <div class="nav-menu">
+        <div class="menu-item" id="adminMenu">
+            Administrator <i class="fas fa-chevron-down"></i>
+            <div class="dropdown" id="adminDropdown">
+                <div class="dropdown-item" id="myCompanyBtn" data-target="Navigation/Administrator/my_company.html">My Company</div>
+                <div class="dropdown-item" id="myLogoBtn" data-target="Navigation/Administrator/my_logo.html">My Logo</div>
+                <div class="dropdown-item" id="listOfCompaniesBtn" data-target="Navigation/Administrator/list_of_companies.html">List Of Companies</div>
+                <div class="dropdown-item" id="userLoginsBtn" data-target="Navigation/Administrator/user_logins.html">User Logins</div>
+                <div class="dropdown-item" data-target="Navigation/Administrator/user_rights.html">User Rights</div>
+                <div class="dropdown-item" data-target="Navigation/Administrator/passwords.html">Passwords</div>
+                <div class="dropdown-item" data-target="Navigation/Administrator/financial_year.html">Financial Year</div>
+                <div class="dropdown-item" data-target="Navigation/Administrator/clear_transactions.html">Clear Transactions</div>
+                <div class="dropdown-item" data-target="Navigation/Administrator/currency.html">Currency</div>
+                <div class="dropdown-item" data-target="Navigation/Administrator/backup_utility.html">BackUp Utility</div>
+                <div class="dropdown-item" onclick="alert('Exit App...')">Exit</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="maintainMenu">
+            Maintain <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/Maintain/chart_of_accounts.html">Chart of Accounts</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/customers.html">Customers</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/vendors_suppliers.html">Vendors/Suppliers</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/bank_accounts.html">Bank Accounts</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/accounts_opening_balances.html">Accounts Opening Balances</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/chart_of_inventory.html">Chart Of Inventory</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/inventory_opening_balances.html">Inventory Opening Balances</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/inventory_brands.html">Inventory Brands</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/inventory_locations.html">Inventory Locations</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/item_price_settings.html">Item Price Settings</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/item_sales_tax_rates.html">Item Sales Tax Rates</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/item_pre_order_levels.html">Item Pre-Order Levels</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/item_cost_valuation_method.html">Item Cost Valuation Method</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/chart_of_services.html">Chart Of Services</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/voucher_posting_preferences.html">Voucher Posting Preferences</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/inventory_movement_settings.html">Inventory Movement Settings</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/customer_regions.html">Customer Regions</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/business_sectors.html">Business Sectors</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/employees.html">Employees</div>
+                <div class="dropdown-item" data-target="Navigation/Maintain/jobs.html">Jobs</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="purchasesMenu">
+            Purchases <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/Purchases/purchase_orders.html">Purchase Orders</div>
+                <div class="dropdown-item" data-target="Navigation/Purchases/purchases_sales_tax.html">Purchases (Sales Tax)</div>
+                <div class="dropdown-item" data-target="Navigation/Purchases/purchases_non_tax.html">Purchases (Non Tax)</div>
+                <div class="dropdown-item" data-target="Navigation/Purchases/purchases_return_debit_notes.html">Purchases Return/Debit Notes</div>
+                <div class="dropdown-item" data-target="Navigation/Purchases/cash_payments.html">Cash Payments</div>
+                <div class="dropdown-item" data-target="Navigation/Purchases/bank_payments.html">Bank Payments</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="salesMenu">
+            Sales <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/Sales/customer_follow_up.html">Customer Follow-Up</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/quotations.html">Quotations</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/sale_orders.html">Sale Orders</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/delivery_challans.html">Delivery Challans</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/sales_tax_invoices.html">Sales Tax Invoices</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/sale_invoices_non_tax.html">Sale Invoices (Non Tax)</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/sale_return_credit_notes.html">Sale Return/Credit Notes</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/cash_receipts.html">Cash Receipts</div>
+                <div class="dropdown-item" data-target="Navigation/Sales/bank_receipts.html">Bank Receipts</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="storeMenu">
+            Store <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/Store/inward_gate_passes.html">Inward Gate Passes</div>
+                <div class="dropdown-item" data-target="Navigation/Store/outward_gate_passes.html">Outward Gate Passes</div>
+                <div class="dropdown-item" data-target="Navigation/Store/material_issue_notes.html">Material Issue Notes</div>
+                <div class="dropdown-item" data-target="Navigation/Store/production_notes.html">Production Notes</div>
+                <div class="dropdown-item" data-target="Navigation/Store/inventory_transfers.html">Inventory Transfers</div>
+                <div class="dropdown-item" data-target="Navigation/Store/add_inventory_adjustments.html">Add Inventory Adjustments</div>
+                <div class="dropdown-item" data-target="Navigation/Store/reduce_inventory_adjustments.html">Reduce Inventory Adjustments</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="smsMenu">
+            SMS <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/SMS/send_ledger_summary.html">Send Ledger Summary</div>
+                <div class="dropdown-item" data-target="Navigation/SMS/send_payment_reminder.html">Send Payment Reminder</div>
+                <div class="dropdown-item" data-target="Navigation/SMS/sms_templates.html">SMS Templates</div>
+                <div class="dropdown-item" data-target="Navigation/SMS/bulk_messages.html">Bulk Messages</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="notesMenu">
+            Notes <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/Notes/journal_notes.html">Journal Notes</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="adjustmentMenu">
+            Adjustment <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/Adjustment/general_journal_voucher.html">General Journal Voucher</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="reportsMenu">
+            Reports <i class="fas fa-chevron-down"></i>
+            <div class="dropdown wide">
+                <div class="dropdown-item" data-target="Navigation/Reports/journal_report.html">Journal Report</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/print_voucher.html">Print Voucher</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/product_serials_tracking.html">Product Serials Tracking</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/item_below_re_order_level.html">Item Below Re-Order Level</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/purchase_order_tracking.html">Purchase Order Tracking</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/sale_order_tracking.html">Sale Order Tracking</div>
+                
+                <div class="dropdown-item has-nested">Purchase Reports
+                    <div class="nested-dropdown">
+                        <div class="nested-item" data-target="Navigation/Reports/purchase_summary.html">Purchase Summary</div>
+                        <div class="nested-item" data-target="Navigation/Reports/purchase_register.html">Purchase Register</div>
+                        <div class="nested-item" data-target="Navigation/Reports/party_purchase_summary.html">Party Purchase Summary</div>
+                        <div class="nested-item" data-target="Navigation/Reports/payments_reports.html">Payments Reports</div>
+                        <div class="nested-item" data-target="Navigation/Reports/purchase_activity_report_invoice_voice.html">Purchase Activity Report - Invoice Voice</div>
+                        <div class="nested-item" data-target="Navigation/Reports/purchase_activity_report_party_voice.html">Purchase Activity Report - Party Voice</div>
+                        <div class="nested-item" data-target="Navigation/Reports/item_purchase_summary.html">Item Purchase Summary</div>
+                        <div class="nested-item" data-target="Navigation/Reports/item_purchase_analysis.html">Item Purchase Analysis</div>
+                        <div class="nested-item" data-target="Navigation/Reports/accounts_payable_aging.html">Accounts Payable Aging</div>
+                    </div>
+                </div>
+                
+                <div class="dropdown-item" data-target="Navigation/Reports/material_consumption_report.html">Material Consumption Report</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/production_report.html">Production Report</div>
+                
+                <div class="dropdown-item has-nested">Sale Reports
+                    <div class="nested-dropdown">
+                        <div class="nested-item" data-target="Navigation/Reports/sale_summary.html">Sale Summary</div>
+                        <div class="nested-item" data-target="Navigation/Reports/sale_register.html">Sale Register</div>
+                        <div class="nested-item" data-target="Navigation/Reports/party_sale_summary.html">Party Sale Summary</div>
+                        <div class="nested-item" data-target="Navigation/Reports/recovery_receipts_reports.html">Recovery/Receipts Reports</div>
+                        <div class="nested-item" data-target="Navigation/Reports/sale_activity_report_invoice_voice.html">Sale Activity Report - Invoice Voice</div>
+                        <div class="nested-item" data-target="Navigation/Reports/sale_activity_report_party_voice.html">Sale Activity Report - Party Voice</div>
+                        <div class="nested-item" data-target="Navigation/Reports/item_sale_summary.html">Item Sale Summary</div>
+                        <div class="nested-item" data-target="Navigation/Reports/item_sale_analysis.html">Item Sale Analysis</div>
+                        <div class="nested-item" data-target="Navigation/Reports/services_analysis.html">Services Analysis</div>
+                        <div class="nested-item" data-target="Navigation/Reports/accounts_receivable_aging.html">Accounts Receivable Aging</div>
+                    </div>
+                </div>
+                
+                <div class="dropdown-item" data-target="Navigation/Reports/view_inventory_ledgers.html">View Inventory Ledgers</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/print_inventory_ledgers.html">Print Inventory Ledgers</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/item_wise_profit_loss.html">Item-Wise Profit/Loss</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/inventory_balances.html">Inventory Balances</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/job_ledgers.html">Job Ledgers</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/view_account_ledger.html">View Account Ledger</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/print_account_ledger.html">Print Account Ledger</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/cash_bank_balances.html">Cash & Bank Balances</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/customer_balances.html">Customer Balances</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/vendor_balances.html">Vendor Balances</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/trial_balance.html">Trial Balance</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/income_statement.html">Income Statement</div>
+                <div class="dropdown-item" data-target="Navigation/Reports/balance_sheet.html">Balance Sheet</div>
+            </div>
+        </div>
+
+        <div class="menu-item" id="aboutMenu">
+            About <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="dropdown-item" data-target="Navigation/About/software_information.html">Software Information</div>
+                <div class="dropdown-item" data-target="Navigation/About/license_details.html">License Details</div>
+                <div class="dropdown-item" data-target="Navigation/About/contact_info.html">Contact Info</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="welcome-user" id="welcomeUserDisplay">
+        <i class="fas fa-user-circle"></i>
+        <span>Welcome Administrator</span>
+    </div>
+</div>

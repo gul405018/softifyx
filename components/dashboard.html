@@ -1,0 +1,138 @@
+<div class="welcome-card">
+    <div class="softifyx-title">SOFTIFYX</div>
+    <div class="licensed-text">LICENSED TO</div>
+    <div class="company-badge" id="dashboardCompanyName">My Company</div>
+</div>
+
+<div class="search-date-bar">
+    <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" class="search-input" id="globalSearch" placeholder="Search Item (Overall Inventory Search...)">
+        <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i> Search</button>
+    </div>
+    <div class="date-wrapper">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Daily Report</span>
+        <input type="date" id="dailyReportDate" value="2026-03-13">
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <i class="fas fa-chart-simple"></i>
+            <span>Sales</span>
+        </div>
+        <div class="stat-value" id="salesValue">₹0</div>
+        <span class="stat-badge">NIL</span>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <i class="fas fa-wallet"></i>
+            <span>Cash in Hand</span>
+        </div>
+        <div class="stat-value" id="cashValue">₹1,25,000</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <i class="fas fa-building-columns"></i>
+            <span>Bank Balance</span>
+        </div>
+        <div class="stat-value" id="bankValue">₹8,42,500</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <i class="fas fa-chart-pie"></i>
+            <span>Total Receivables</span>
+        </div>
+        <div class="stat-value" id="receivablesValue">₹4,56,000</div>
+    </div>
+</div>
+
+<div class="financial-grid">
+    <div class="financial-card">
+        <h3><i class="fas fa-coins"></i> Cash & Banks</h3>
+        <div class="financial-row">
+            <span class="label">Opening Balance</span>
+            <span class="value" id="cashOpening">₹1,20,000</span>
+        </div>
+        <div class="financial-row">
+            <span class="label">Receipts</span>
+            <span class="value" id="cashReceipts">₹45,000</span>
+        </div>
+        <div class="financial-row">
+            <span class="label">Payments</span>
+            <span class="value" id="cashPayments">₹32,500</span>
+        </div>
+        <div class="financial-row highlight-row">
+            <span class="label">Current Balance</span>
+            <span class="value" id="cashCurrent">₹1,32,500</span>
+        </div>
+    </div>
+    <div class="financial-card">
+        <h3><i class="fas fa-user-tie"></i> Receivables / Customers</h3>
+        <div class="financial-row">
+            <span class="label">Opening Balance</span>
+            <span class="value" id="recOpening">₹3,80,000</span>
+        </div>
+        <div class="financial-row">
+            <span class="label">Sales (Debits)</span>
+            <span class="value" id="recSales">₹1,25,000</span>
+        </div>
+        <div class="financial-row">
+            <span class="label">Receipts (Credits)</span>
+            <span class="value" id="recReceipts">₹49,000</span>
+        </div>
+        <div class="financial-row highlight-row">
+            <span class="label">Current Balance</span>
+            <span class="value" id="recCurrent">₹4,56,000</span>
+        </div>
+    </div>
+    <div class="financial-card">
+        <h3><i class="fas fa-truck"></i> Payables / Vendors</h3>
+        <div class="financial-row">
+            <span class="label">Opening Balance</span>
+            <span class="value" id="payOpening">₹1,90,000</span>
+        </div>
+        <div class="financial-row">
+            <span class="label">Purchases (Credits)</span>
+            <span class="value" id="payPurchases">₹85,000</span>
+        </div>
+        <div class="financial-row">
+            <span class="label">Payments (Debits)</span>
+            <span class="value" id="payPayments">₹32,000</span>
+        </div>
+        <div class="financial-row highlight-row">
+            <span class="label">Current Balance</span>
+            <span class="value" id="payCurrent">₹2,43,000</span>
+        </div>
+    </div>
+</div>
+
+<div class="widgets-grid">
+    <div class="widget-card">
+        <div class="widget-title">
+            <i class="fas fa-chart-line"></i>
+            Weekly Sales Trend
+        </div>
+        <div class="graph-bars">
+            <div class="bar-container"><div class="bar" style="height: 40px;"></div><span class="bar-label">Mon</span></div>
+            <div class="bar-container"><div class="bar" style="height: 60px;"></div><span class="bar-label">Tue</span></div>
+            <div class="bar-container"><div class="bar" style="height: 30px;"></div><span class="bar-label">Wed</span></div>
+            <div class="bar-container"><div class="bar" style="height: 80px;"></div><span class="bar-label">Thu</span></div>
+            <div class="bar-container"><div class="bar" style="height: 55px;"></div><span class="bar-label">Fri</span></div>
+            <div class="bar-container"><div class="bar" style="height: 65px;"></div><span class="bar-label">Sat</span></div>
+        </div>
+    </div>
+    <div class="widget-card">
+        <div class="widget-title">
+            <i class="fas fa-pen"></i>
+            My Notes
+        </div>
+        <textarea class="notes-textarea" id="notesText" placeholder="Write your notes here...">Meeting with suppliers tomorrow at 10 AM. Follow up with ABC Traders for payment.</textarea>
+        <div class="notes-actions">
+            <button class="btn btn-primary" id="saveNoteBtn"><i class="fas fa-save"></i> Save</button>
+            <button class="btn btn-secondary" id="clearNoteBtn"><i class="fas fa-times"></i> Clear</button>
+        </div>
+    </div>
+</div>
