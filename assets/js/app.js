@@ -872,15 +872,14 @@
                 userOptions += `<option value="${u.id}">${u.username}</option>`;
             });
 
-            let rightsRows = `<tr data-right="Welcome Screen" ondblclick="toggleRightStatus(this)">
-                <td><i class="fas fa-caret-right" style="margin-right:5px;color:#333;"></i> Welcome Screen</td>
-                <td class="right-status" style="text-align: center; color: #d63031; font-weight: 500;"></td>
-            </tr>`;
+            let rightsRows = '';
 
             document.querySelectorAll('#navMenu .menu-item').forEach(m => {
                 m.querySelectorAll('.dropdown-item').forEach(item => {
                     let itemName = item.childNodes[0].textContent.trim();
-                    if (!itemName || itemName === 'About' || itemName === 'User Rights') return;
+                    
+                    const excluded = ['About', 'User Rights', 'Welcome Screen', 'Software Information', 'License Details', 'Contact Info'];
+                    if (!itemName || excluded.includes(itemName)) return;
                     
                     let isParent = item.classList.contains('has-nested');
                     let indent = isParent ? '' : 'indent-level-1';
@@ -890,7 +889,7 @@
                             ${isParent ? '<i class="fas fa-caret-right" style="margin-right:5px;color:#333;"></i>' : ''} 
                             ${itemName}
                         </td>
-                        <td class="right-status" style="text-align: center; color: #d63031; font-weight: 500;"></td>
+                        <td class="right-status" style="text-align: center; font-weight: 500;">Allowed</td>
                     </tr>`;
                 });
             });
@@ -898,11 +897,20 @@
             openModal(
                 { icon: 'fa-shield-alt', text: 'User Rights Settings' },
                 `<div>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
-                        <label style="font-weight: 600; color: #1f4668;">Select User:</label>
-                        <select class="form-control" id="urUserSelect" style="max-width: 250px;" onchange="loadUserRightsForm()">
-                            ${userOptions}
-                        </select>
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                        <div>
+                            <label style="font-weight: 600; color: #1f4668;">Select User:</label>
+                            <select class="form-control" id="urUserSelect" style="display: inline-block; width: 180px; margin-left: 5px;" onchange="loadUserRightsForm()">
+                                ${userOptions}
+                            </select>
+                        </div>
+                        <div style="border-left: 1px solid #ccc; padding-left: 15px;">
+                            <label style="font-weight: 600; color: #1f4668;">User Role:</label>
+                            <select class="form-control" id="urUserRole" style="display: inline-block; width: 180px; margin-left: 5px;">
+                                <option value="Operator">Operator (Data Entry)</option>
+                                <option value="Viewer">Viewer (Read Only)</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <p style="text-align: right; color: #d63031; font-style: italic; font-size: 11px; margin-bottom: 5px;">
@@ -938,9 +946,11 @@
         function toggleRightStatus(row) {
             const statusCell = row.querySelector('.right-status');
             if (statusCell.textContent === 'Not Allowed') {
-                statusCell.textContent = '';
+                statusCell.textContent = 'Allowed';
+                statusCell.style.color = '#27ae60';
             } else {
                 statusCell.textContent = 'Not Allowed';
+                statusCell.style.color = '#d63031';
             }
         }
 
@@ -952,21 +962,28 @@
             let rightsData = {};
             if (savedRights) rightsData = JSON.parse(savedRights);
             
+            document.getElementById('urUserRole').value = rightsData.__USER_ROLE__ || 'Operator';
+            
             document.querySelectorAll('#urTableBody tr').forEach(row => {
                 const rightName = row.getAttribute('data-right');
                 const statusCell = row.querySelector('.right-status');
                 
                 if (rightsData[rightName] === false) {
                     statusCell.textContent = 'Not Allowed';
+                    statusCell.style.color = '#d63031';
                 } else {
-                    statusCell.textContent = '';
+                    statusCell.textContent = 'Allowed';
+                    statusCell.style.color = '#27ae60';
                 }
             });
         }
 
         function saveUserRights() {
             const userId = document.getElementById('urUserSelect').value;
-            let rightsData = {};
+            const userRole = document.getElementById('urUserRole').value;
+            let rightsData = {
+                __USER_ROLE__: userRole
+            };
             
             document.querySelectorAll('#urTableBody tr').forEach(row => {
                 const rightName = row.getAttribute('data-right');
