@@ -828,9 +828,7 @@
 
             const userRightsBtn = document.getElementById('userRightsBtn');
             if(userRightsBtn) {
-                userRightsBtn.addEventListener('click', function() {
-                    openUserRightsModal();
-                });
+                // Now handled by loadView / SPA router
             }
         }
 
@@ -866,7 +864,7 @@
             }
         }
 
-        function openUserRightsModal() {
+        function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
                 userOptions += `<option value="${u.id}">${u.username}</option>`;
@@ -915,49 +913,11 @@
                 </tr>`;
             });
 
-            openModal(
-                { icon: 'fa-shield-alt', text: 'User Rights Settings' },
-                `<div>
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
-                        <div>
-                            <label style="font-weight: 600; color: #1f4668;">Select User:</label>
-                            <select class="form-control" id="urUserSelect" style="display: inline-block; width: 180px; margin-left: 5px;" onchange="loadUserRightsForm()">
-                                ${userOptions}
-                            </select>
-                        </div>
-                        <div style="border-left: 1px solid #ccc; padding-left: 15px;">
-                            <label style="font-weight: 600; color: #1f4668;">User Role:</label>
-                            <select class="form-control" id="urUserRole" style="display: inline-block; width: 180px; margin-left: 5px;">
-                                <option value="Operator">Operator (Data Entry)</option>
-                                <option value="Viewer">Viewer (Read Only)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <p style="text-align: right; color: #d63031; font-style: italic; font-size: 11px; margin-bottom: 5px;">
-                        Double-click on selected right type to change right status.
-                    </p>
-                    
-                    <div style="max-height: 45vh; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
-                        <table class="ur-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 70%;">Right Type</th>
-                                    <th style="width: 30%; text-align: center;">Right Allowed Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="urTableBody">
-                                ${rightsRows}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="saveUserRights()"><i class="fas fa-check"></i> Save Changes</button>
-                        <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Cancel</button>
-                    </div>
-                </div>`
-            );
+            const urUserSelect = document.getElementById('urUserSelect');
+            if(urUserSelect) urUserSelect.innerHTML = userOptions;
+            
+            const urTableBody = document.getElementById('urTableBody');
+            if(urTableBody) urTableBody.innerHTML = rightsRows;
             
             setTimeout(() => {
                 loadUserRightsForm();
@@ -1013,7 +973,7 @@
             });
             
             localStorage.setItem('softifyx_user_rights_' + userId, JSON.stringify(rightsData));
-            closeModal();
+            alert('User rights saved successfully!');
         }
 
         function init() {
@@ -1067,7 +1027,7 @@
         window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
-        window.openUserRightsModal = openUserRightsModal;
+        window.initUserRightsView = initUserRightsView;
         window.toggleRightStatus = toggleRightStatus;
         window.loadUserRightsForm = loadUserRightsForm;
         window.saveUserRights = saveUserRights;
@@ -1113,6 +1073,9 @@ window.loadView = async function(url) {
         const res = await fetch(url);
         if (res.ok) {
             mainContent.innerHTML = await res.text();
+            if (url.includes('user_rights.html') && window.initUserRightsView) {
+                window.initUserRightsView();
+            }
         } else {
             mainContent.innerHTML = `
                 <div style="padding: 50px; text-align: center; color: #555; background: #fff; border-radius: 8px; margin: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">

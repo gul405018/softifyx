@@ -1,0 +1,44 @@
+<div style="background:#fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-family: Segoe UI, Tahoma, sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #F5A623; padding-bottom: 15px; margin-bottom: 20px;">
+        <h2 style="color: #1f4668; margin: 0; font-size: 22px;"><i class="fas fa-shield-alt" style="color:#F5A623;"></i> User Rights Settings</h2>
+        <button class="btn btn-primary" onclick="saveUserRights()"><i class="fas fa-check"></i> Save Changes</button>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
+        <div>
+            <label style="font-weight: 600; color: #1f4668;">Select User:</label>
+            <select class="form-control" id="urUserSelect" style="display: inline-block; width: 220px; margin-left: 5px;" onchange="loadUserRightsForm()">
+                <!-- Populated via JS -->
+            </select>
+        </div>
+        <div style="border-left: 1px solid #ccc; padding-left: 15px;">
+            <label style="font-weight: 600; color: #1f4668;">User Role:</label>
+            <select class="form-control" id="urUserRole" style="display: inline-block; width: 220px; margin-left: 5px;">
+                <option value="Operator">Operator (Data Entry)</option>
+                <option value="Viewer">Viewer (Read Only)</option>
+            </select>
+        </div>
+    </div>
+    
+    <p style="text-align: right; color: #d63031; font-style: italic; font-size: 13px; margin-bottom: 5px;">
+        Double-click on selected right type to change right status.
+    </p>
+    
+    <div style="border: 1px solid #ccc; border-radius: 4px; background: white;">
+        <table class="ur-table" style="margin-bottom: 0;">
+            <thead>
+                <tr>
+                    <th style="width: 70%;">Right Type</th>
+                    <th style="width: 30%; text-align: center;">Right Allowed Status</th>
+                </tr>
+            </thead>
+            <tbody id="urTableBody">
+                <!-- Populated via JS -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div style="text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+        <button class="btn btn-primary" onclick="saveUserRights()"><i class="fas fa-check"></i> Save Changes</button>
+    </div>
+</div>
