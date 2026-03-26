@@ -779,7 +779,7 @@
         function init() {
             loadSavedData();
             setupDropdowns();
-            setupMenuButtons();
+            // setupMenuButtons(); // Disabled: Modals replaced by SPA views
 
             const today = new Date();
             const yyyy = today.getFullYear();
