@@ -1325,6 +1325,7 @@
             setupDropdowns();
             setupMenuButtons(); 
             applyGlobalCurrencySymbol(); // Hook into page load
+            setupAutoBackupScheduler();
 
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -1407,6 +1408,78 @@
         window.toggleCountryList = toggleCountryList;
         window.filterCountryList = filterCountryList;
         window.selectCustomCountry = selectCustomCountry;
+        window.executeBackup = executeBackup;
+        window.executeRestore = executeRestore;
+
+// === BACKUP LOGIC ===
+        function executeBackup(isAuto = false) {
+            const fullBackupData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                fullBackupData[key] = localStorage.getItem(key);
+            }
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackupData));
+            
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            const formattedDate = `${dd}-${mm}-${yyyy}`;
+            
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `${formattedDate}_Data_Backup.json`);
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+
+            if (!isAuto) {
+                alert("Backup Extracted Successfully! Please store this generated file in a secure location or assigned directory.");
+                closeModal();
+            }
+        }
+
+        function executeRestore(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (confirm("WARNING: ALL current data will be erased and completely replaced by the back-up data. Are you absolutely sure you want to proceed with restore?")) {
+                        localStorage.clear();
+                        Object.keys(data).forEach(key => {
+                            localStorage.setItem(key, data[key]);
+                        });
+                        alert("Backup Restored Successfully! Data restored globally. The system will now automatically reload to reflect these changes.");
+                        window.location.reload();
+                    }
+                } catch(err) {
+                    alert("System Restore Error: The selected file is not a valid backup architecture. Restoration canceled.");
+                }
+                event.target.value = ''; // Reset input to allow re-selection
+            };
+            reader.readAsText(file);
+        }
+
+        function setupAutoBackupScheduler() {
+            // Check every 30 seconds for Midnight (00:00) execution criteria exactly like windows CRON
+            setInterval(() => {
+                const now = new Date();
+                if (now.getHours() === 0 && now.getMinutes() === 0) {
+                    const todayStr = now.toDateString();
+                    const lastRun = localStorage.getItem('softifyx_last_autobackup');
+                    
+                    if (lastRun !== todayStr) {
+                        localStorage.setItem('softifyx_last_autobackup', todayStr);
+                        console.log("Triggering scheduled Midnight Auto-Backup protocol...");
+                        executeBackup(true);
+                    }
+                }
+            }, 30000);
+        }
 
 // === API INTEGRATION READINESS ===
 /**

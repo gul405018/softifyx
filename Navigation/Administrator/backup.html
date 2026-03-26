@@ -1,0 +1,47 @@
+changes applied<div style="font-family: Segoe UI, Tahoma, sans-serif;">
+    <div
+        style="background: #f1f2f6; padding: 10px 15px; border-bottom: 1px solid #ddd; display: flex; align-items: baseline; justify-content: space-between;">
+        <h2
+            style="margin: 0; color: #7f8fa6; font-style: italic; font-size: 26px; font-weight: 800; text-transform: uppercase;">
+            BACK - UP UTILITY</h2>
+        <span style="color: #c0392b; font-style: italic; font-size: 15px;">Close the main application, before taking
+            back-up or the back-up may contain errors.</span>
+    </div>
+
+    <div style="padding: 15px 20px;">
+        <fieldset style="border: 1px solid #b2bec3; padding: 15px; margin-bottom: 25px;">
+            <legend style="color: #636e72; font-weight: bold; font-size: 15px; padding: 0 5px;">Back-Up Data</legend>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <p style="color: #0000cd; font-size: 13px; margin: 0; flex: 1; line-height: 1.6; font-weight: 500;">
+                    It is recommended that you always take back-up after using your application or atleast once
+                    everyday. Store your back-up at some safe location, like some other hard drive or CD. Remember, that
+                    your application can be installed again but your data cannot be restored, if you lose it in any way
+                    and don't have the back-up data. It has become much easier now a days to corrupt or lose data, in
+                    presence of various silent computer worms and viruses, as well as sudden power shut downs.
+                </p>
+                <button onclick="executeBackup()"
+                    style="padding: 15px 20px; border: 2px solid #636e72; background: #fdfdfd; cursor: pointer; font-weight: bold; color: #2d3436; height: 90px; width: 120px; box-shadow: 2px 2px 4px rgba(0,0,0,0.1); border-style: inset; transition: background 0.1s;"
+                    onmousedown="this.style.background='#e0e0e0'"
+                    onmouseup="this.style.background='#fdfdfd'">Back-Up<br>Data</button>
+            </div>
+        </fieldset>
+
+        <fieldset style="border: 1px solid #b2bec3; padding: 15px;">
+            <legend style="color: #636e72; font-weight: bold; font-size: 15px; padding: 0 5px;">Restore Back-Up</legend>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <p style="color: #0000cd; font-size: 13px; margin: 0; flex: 1; line-height: 1.6; font-weight: 500;">
+                    This will replace your current data with the data in back-up. If you are having any problems with
+                    your current data then it is recommended that you restore your back-up but if the back-up is not
+                    up-to-date then you would not be able to restore data entered after you last took back-up of your
+                    data. It is always advised that you take back-up of your current data before restoring older one.
+                </p>
+                <button onclick="document.getElementById('restoreFileInput').click()"
+                    style="padding: 15px 20px; border: 1px solid #b2bec3; background: #fdfdfd; cursor: pointer; font-weight: bold; color: #2d3436; height: 90px; width: 120px; box-shadow: 2px 2px 4px rgba(0,0,0,0.1); transition: background 0.1s;"
+                    onmousedown="this.style.background='#e0e0e0'"
+                    onmouseup="this.style.background='#fdfdfd'">Restore<br>Back-up</button>
+                <input type="file" id="restoreFileInput" style="display:none;" accept=".json"
+                    onchange="executeRestore(event)">
+            </div>
+        </fieldset>
+    </div>
+</div>
