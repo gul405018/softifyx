@@ -873,25 +873,46 @@
             });
 
             let rightsRows = '';
+            
+            const explicitRights = [
+                "My Company", "My Logo", "List Of Companies", "User Logins",
+                "User Rights", "Passwords", "Financial Year", "Clear Transactions",
+                "Currency", "BackUp Utility", "Chart of Accounts", "Customers",
+                "Vendors/Suppliers", "Bank Accounts", "Accounts Opening Balances",
+                "Chart Of Inventory", "Inventory Opening Balances", "Inventory Brands",
+                "Inventory Locations", "Item Price Settings", "Item Sales Tax Rates",
+                "Item Pre-Order Levels", "Item Cost Valuation Method", "Chart Of Services",
+                "Voucher Posting Preferences", "Inventory Movement Settings", "Customer Regions",
+                "Business Sectors", "Employees", "Jobs", "Purchase Orders", "Purchases (Sales Tax)",
+                "Purchases (Non Tax)", "Purchases Return/Debit Notes", "Cash Payments",
+                "Bank Payments", "Customer Follow-Up", "Quotations", "Sale Orders",
+                "Delivery Challans", "Sales Tax Invoices", "Sale Invoices (Non Tax)",
+                "Sale Return/Credit Notes", "Cash Reciepts", "Bank Reciepts", "Inward Gate Passes",
+                "Outward Gate Passes", "Material Issue Notes", "Production Notes",
+                "Inventory Transfers", "Add Inventory Adjustments", "Reduce Inventory Adjustments",
+                "Send Ledger Summary", "Send Payment Reminder", "SMS Templates", "Bulk Messages",
+                "Journal Notes", "General Journal Voucher", "Journal Report", "Print Voucher",
+                "Product Serials Tracking", "Item Below Re-Order Level", "Purchase Order Tracking",
+                "Sale Order Tracking", "Purchase Summary", "Purchase Register",
+                "Party Purchase Summary", "Payments Reports", "Purchase Activity Report - Invoice Wise",
+                "Purchase Activity Report - Party Wise", "Item Purchase Summary", "Item Purchase Analysis",
+                "Accounts Payable Aging", "Material Consumption Report", "Production Report",
+                "Sale Summary", "Sale Register", "Party Sale Summary", "Recovery/Reciepts Reports",
+                "Sale Activity Report - Invoice Wise", "Sale Activity Report - Party Wise",
+                "Item Sale Summary", "Item Sale Analysis", "Services Analysis", "Accounts Recievable Aging",
+                "View Inventory Ledgers", "Print Inventory Ledgers", "Item-Wise Profit/Loss",
+                "Inventory Balances", "Job Ledgers", "View Account Ledger", "Print Account Ledger",
+                "Cash & Bank Balances", "Customer Balances", "Vendor Balances", "Trial Balance",
+                "Income Statement", "Balance Sheet"
+            ];
 
-            document.querySelectorAll('#navMenu .menu-item').forEach(m => {
-                m.querySelectorAll('.dropdown-item').forEach(item => {
-                    let itemName = item.childNodes[0].textContent.trim();
-                    
-                    const excluded = ['About', 'User Rights', 'Welcome Screen', 'Software Information', 'License Details', 'Contact Info'];
-                    if (!itemName || excluded.includes(itemName)) return;
-                    
-                    let isParent = item.classList.contains('has-nested');
-                    let indent = isParent ? '' : 'indent-level-1';
-                    
-                    rightsRows += `<tr data-right="${itemName}" ondblclick="toggleRightStatus(this)">
-                        <td class="${indent}">
-                            ${isParent ? '<i class="fas fa-caret-right" style="margin-right:5px;color:#333;"></i>' : ''} 
-                            ${itemName}
-                        </td>
-                        <td class="right-status" style="text-align: center; font-weight: 500;">Allowed</td>
-                    </tr>`;
-                });
+            explicitRights.forEach(itemName => {
+                rightsRows += `<tr data-right="${itemName}" ondblclick="toggleRightStatus(this)">
+                    <td class="indent-level-1">
+                        ${itemName}
+                    </td>
+                    <td class="right-status" style="text-align: center; font-weight: 500;">Allowed</td>
+                </tr>`;
             });
 
             openModal(
@@ -917,7 +938,7 @@
                         Double-click on selected right type to change right status.
                     </p>
                     
-                    <div style="max-height: 350px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
+                    <div style="max-height: 45vh; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
                         <table class="ur-table">
                             <thead>
                                 <tr>
