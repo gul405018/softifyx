@@ -1164,15 +1164,15 @@
         ];
 
         function initCurrencyView() {
-            const dataList = document.getElementById('countriesData');
             const inputEl = document.getElementById('currCountry');
-            if(!dataList || !inputEl) return;
+            if(!inputEl) return;
             
-            let html = '';
-            countryDataList.sort((a,b) => a.c.localeCompare(b.c)).forEach(item => {
-                html += `<option value="${item.c}">`;
+            document.addEventListener('click', function(e) {
+                if(e.target.id !== 'currCountry') {
+                    const dd = document.getElementById('countryDropdownList');
+                    if(dd) dd.style.display = 'none';
+                }
             });
-            dataList.innerHTML = html;
             
             const savedCurr = localStorage.getItem('softifyx_currency');
             if(savedCurr) {
@@ -1186,6 +1186,42 @@
                 inputEl.value = 'Pakistan';
                 updateCurrencyDetails();
             }
+        }
+
+        function renderCustomCountryList(list) {
+            const container = document.getElementById('countryDropdownList');
+            if(!container) return;
+            let html = '';
+            list.sort((a,b) => a.c.localeCompare(b.c)).forEach(item => {
+                html += `<div style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #eee; transition: background 0.1s;" onmouseover="this.style.background='#f4f6f8'" onmouseout="this.style.background='white'" onclick="selectCustomCountry('${item.c.replace(/'/g, "\\'")}')">${item.c}</div>`;
+            });
+            container.innerHTML = html.length ? html : '<div style="padding: 10px 15px; color: #d63031; font-style: italic;">No exact match</div>';
+        }
+
+        function showCountryList() {
+            const dd = document.getElementById('countryDropdownList');
+            if(dd) dd.style.display = 'block';
+            filterCountryList();
+        }
+
+        function filterCountryList() {
+            const inputEl = document.getElementById('currCountry');
+            if(!inputEl) return;
+            const str = inputEl.value.toLowerCase();
+            const filtered = countryDataList.filter(item => item.c.toLowerCase().includes(str));
+            renderCustomCountryList(filtered);
+            const dd = document.getElementById('countryDropdownList');
+            if(dd) dd.style.display = 'block';
+        }
+
+        function selectCustomCountry(countryName) {
+            const inputEl = document.getElementById('currCountry');
+            if(inputEl) {
+                inputEl.value = countryName;
+                updateCurrencyDetails();
+            }
+            const dd = document.getElementById('countryDropdownList');
+            if(dd) dd.style.display = 'none';
         }
 
         function updateCurrencyDetails() {
@@ -1333,6 +1369,9 @@
         window.updateCurrencyDetails = updateCurrencyDetails;
         window.saveCurrencySettings = saveCurrencySettings;
         window.applyGlobalCurrencySymbol = applyGlobalCurrencySymbol;
+        window.showCountryList = showCountryList;
+        window.filterCountryList = filterCountryList;
+        window.selectCustomCountry = selectCustomCountry;
 
 // === API INTEGRATION READINESS ===
 /**
