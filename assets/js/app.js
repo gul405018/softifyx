@@ -828,7 +828,9 @@
 
             const userRightsBtn = document.getElementById('userRightsBtn');
             if(userRightsBtn) {
-                // Now handled by loadView / SPA router
+                userRightsBtn.addEventListener('click', function() {
+                    openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView);
+                });
             }
         }
 
@@ -976,6 +978,31 @@
             alert('User rights saved successfully!');
         }
 
+        async function openModularPopup(url, titleIcon, titleText, initCallback) {
+            try {
+                openModal(
+                    { icon: titleIcon, text: titleText },
+                    '<div style="padding:50px;text-align:center;color:#666;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Loading...</div>'
+                );
+                const res = await fetch(url);
+                if (res.ok) {
+                    const html = await res.text();
+                    const container = document.getElementById('modalContainer');
+                    const body = container.querySelector('.modal-body');
+                    body.innerHTML = html;
+                    if (typeof initCallback === 'function') {
+                        setTimeout(() => initCallback(), 50);
+                    }
+                } else {
+                    const container = document.getElementById('modalContainer');
+                    const body = container.querySelector('.modal-body');
+                    body.innerHTML = '<div style="color:red;padding:20px;text-align:center;">Failed to load module. (' + res.status + ')</div>';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
         function init() {
             loadSavedData();
             setupDropdowns();
@@ -1027,6 +1054,7 @@
         window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
+        window.openModularPopup = openModularPopup;
         window.initUserRightsView = initUserRightsView;
         window.toggleRightStatus = toggleRightStatus;
         window.loadUserRightsForm = loadUserRightsForm;
@@ -1073,9 +1101,6 @@ window.loadView = async function(url) {
         const res = await fetch(url);
         if (res.ok) {
             mainContent.innerHTML = await res.text();
-            if (url.includes('user_rights.html') && window.initUserRightsView) {
-                window.initUserRightsView();
-            }
         } else {
             mainContent.innerHTML = `
                 <div style="padding: 50px; text-align: center; color: #555; background: #fff; border-radius: 8px; margin: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
