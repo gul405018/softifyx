@@ -94,36 +94,56 @@
             const get = id => document.getElementById(id);
             const fmt = val => '₹' + (val || 0).toLocaleString('en-IN');
 
+            // --- 1. MAIN DASHBOARD CONTENT (dashboard.html) ---
+            
             // Top Stat Cards
             const salesVal = get('salesValue'); if(salesVal) salesVal.textContent = fmt(dailySummary.sales);
             const cashVal = get('cashValue'); if(cashVal) cashVal.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
             const bankVal = get('bankValue'); if(bankVal) bankVal.textContent = fmt(dailySummary.bankBalance);
             const recVal = get('receivablesValue'); if(recVal) recVal.textContent = fmt(dailySummary.recOpening + dailySummary.recSales - dailySummary.recReceipts);
 
-            // Detailed Financial Cards (Cash & Bank)
+            // Financial Cards (Match dashboard.html IDs)
             const cO = get('cashOpening'); if(cO) cO.textContent = fmt(dailySummary.cashOpening);
             const cR = get('cashReceipts'); if(cR) cR.textContent = fmt(dailySummary.cashReceipts);
             const cP = get('cashPayments'); if(cP) cP.textContent = fmt(dailySummary.cashPayments);
             const cC = get('cashCurrent'); if(cC) cC.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
 
-            // Detailed Financial Cards (Receivables)
             const rO = get('recOpening'); if(rO) rO.textContent = fmt(dailySummary.recOpening);
             const rS = get('recSales'); if(rS) rS.textContent = fmt(dailySummary.recSales);
             const rR = get('recReceipts'); if(rR) rR.textContent = fmt(dailySummary.recReceipts);
             const rC = get('recCurrent'); if(rC) rC.textContent = fmt(dailySummary.recOpening + dailySummary.recSales - dailySummary.recReceipts);
 
-            // Detailed Financial Cards (Payables)
             const pO = get('payOpening'); if(pO) pO.textContent = fmt(dailySummary.payOpening);
             const pP = get('payPurchases'); if(pP) pP.textContent = fmt(dailySummary.payPurchases);
             const pPa = get('payPayments'); if(pPa) pPa.textContent = fmt(dailySummary.payPayments);
             const pC = get('payCurrent'); if(pC) pC.textContent = fmt(dailySummary.payOpening + dailySummary.payPurchases - dailySummary.payPayments);
 
-            // Low Stock Widgets (Handle legacy IDs for backward compatibility if any)
+            // --- 2. RIGHT SIDEBAR SUMMARY (index.html) ---
+            
+            // Cash Position
+            const scO = get('summaryCashOpening'); if(scO) scO.textContent = fmt(dailySummary.cashOpening);
+            const scR = get('summaryCashReceipts'); if(scR) scR.textContent = fmt(dailySummary.cashReceipts);
+            const scP = get('summaryCashPayments'); if(scP) scP.textContent = fmt(dailySummary.cashPayments);
+            const scN = get('summaryCashNet'); if(scN) scN.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
+
+            // Customer Activity
+            const snI = get('summaryNewInvoices'); if(snI) snI.textContent = dailySummary.newInvoices;
+            const scr = get('summaryCustomerReceipts'); if(scr) scr.textContent = fmt(dailySummary.customerReceipts);
+            const sod = get('summaryOverdue'); if(sod) sod.textContent = fmt(dailySummary.overdue);
+
+            // Vendor Activity
+            const snP = get('summaryNewPurchases'); if(snP) snP.textContent = dailySummary.newPurchases;
+            const svp = get('summaryVendorPayments'); if(svp) svp.textContent = fmt(dailySummary.vendorPayments);
+            const sou = get('summaryOutstanding'); if(sou) sou.textContent = fmt(dailySummary.outstanding);
+
+            // --- 3. COMMON WIDGETS ---
+            
+            // Low Stock / Inventory Alerts
             let lowStock = inventoryItems.filter(item => item.stock < item.reorderLevel).length;
             const lsc = get('lowStockCount'); if(lsc) lsc.textContent = lowStock + ' Items';
             const rc = get('reorderCount'); if(rc) rc.textContent = (lowStock > 2 ? 2 : lowStock) + ' Items';
 
-            // Weekly Sales Trend (Zero out graph bars for Primary Mode)
+            // Weekly Sales Trend
             const bars = document.querySelectorAll('.graph-bars .bar');
             bars.forEach(bar => {
                 bar.style.height = '0px';
