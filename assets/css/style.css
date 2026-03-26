@@ -951,6 +951,40 @@
             font-weight: 600;
         }
 
+        .ur-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .ur-table th {
+            text-align: left;
+            padding: 8px 5px;
+            color: #1f4668;
+            font-weight: 600;
+            border-bottom: 2px solid #F5A623;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .ur-table td {
+            padding: 8px 5px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ur-table tr:hover td {
+            background: #f1f8ff;
+        }
+        
+        .ur-table td.indent-level-1 {
+            padding-left: 25px;
+            color: #555;
+        }
+
         .footer {
             background: white;
             padding: 8px 15px;

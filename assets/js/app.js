@@ -825,6 +825,13 @@
                     </div>`
                 );
             });
+
+            const userRightsBtn = document.getElementById('userRightsBtn');
+            if(userRightsBtn) {
+                userRightsBtn.addEventListener('click', function() {
+                    openUserRightsModal();
+                });
+            }
         }
 
         function selectCompanyForLogin(select) {
@@ -857,6 +864,118 @@
                 
                 updateNames();
             }
+        }
+
+        function openUserRightsModal() {
+            let userOptions = '';
+            users.forEach(u => {
+                userOptions += `<option value="${u.id}">${u.username}</option>`;
+            });
+
+            let rightsRows = `<tr data-right="Welcome Screen" ondblclick="toggleRightStatus(this)">
+                <td><i class="fas fa-caret-right" style="margin-right:5px;color:#333;"></i> Welcome Screen</td>
+                <td class="right-status" style="text-align: center; color: #d63031; font-weight: 500;"></td>
+            </tr>`;
+
+            document.querySelectorAll('#navMenu .menu-item').forEach(m => {
+                m.querySelectorAll('.dropdown-item').forEach(item => {
+                    let itemName = item.childNodes[0].textContent.trim();
+                    if (!itemName || itemName === 'About' || itemName === 'User Rights') return;
+                    
+                    let isParent = item.classList.contains('has-nested');
+                    let indent = isParent ? '' : 'indent-level-1';
+                    
+                    rightsRows += `<tr data-right="${itemName}" ondblclick="toggleRightStatus(this)">
+                        <td class="${indent}">
+                            ${isParent ? '<i class="fas fa-caret-right" style="margin-right:5px;color:#333;"></i>' : ''} 
+                            ${itemName}
+                        </td>
+                        <td class="right-status" style="text-align: center; color: #d63031; font-weight: 500;"></td>
+                    </tr>`;
+                });
+            });
+
+            openModal(
+                { icon: 'fa-shield-alt', text: 'User Rights Settings' },
+                `<div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                        <label style="font-weight: 600; color: #1f4668;">Select User:</label>
+                        <select class="form-control" id="urUserSelect" style="max-width: 250px;" onchange="loadUserRightsForm()">
+                            ${userOptions}
+                        </select>
+                    </div>
+                    
+                    <p style="text-align: right; color: #d63031; font-style: italic; font-size: 11px; margin-bottom: 5px;">
+                        Double-click on selected right type to change right status.
+                    </p>
+                    
+                    <div style="max-height: 350px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
+                        <table class="ur-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 70%;">Right Type</th>
+                                    <th style="width: 30%; text-align: center;">Right Allowed Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="urTableBody">
+                                ${rightsRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="saveUserRights()"><i class="fas fa-check"></i> Save Changes</button>
+                        <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Cancel</button>
+                    </div>
+                </div>`
+            );
+            
+            setTimeout(() => {
+                loadUserRightsForm();
+            }, 50);
+        }
+
+        function toggleRightStatus(row) {
+            const statusCell = row.querySelector('.right-status');
+            if (statusCell.textContent === 'Not Allowed') {
+                statusCell.textContent = '';
+            } else {
+                statusCell.textContent = 'Not Allowed';
+            }
+        }
+
+        function loadUserRightsForm() {
+            const userId = document.getElementById('urUserSelect')?.value;
+            if (!userId) return;
+            const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+            
+            let rightsData = {};
+            if (savedRights) rightsData = JSON.parse(savedRights);
+            
+            document.querySelectorAll('#urTableBody tr').forEach(row => {
+                const rightName = row.getAttribute('data-right');
+                const statusCell = row.querySelector('.right-status');
+                
+                if (rightsData[rightName] === false) {
+                    statusCell.textContent = 'Not Allowed';
+                } else {
+                    statusCell.textContent = '';
+                }
+            });
+        }
+
+        function saveUserRights() {
+            const userId = document.getElementById('urUserSelect').value;
+            let rightsData = {};
+            
+            document.querySelectorAll('#urTableBody tr').forEach(row => {
+                const rightName = row.getAttribute('data-right');
+                const statusCell = row.querySelector('.right-status');
+                rightsData[rightName] = (statusCell.textContent !== 'Not Allowed');
+            });
+            
+            localStorage.setItem('softifyx_user_rights_' + userId, JSON.stringify(rightsData));
+            closeModal();
         }
 
         function init() {
@@ -910,6 +1029,10 @@
         window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
+        window.openUserRightsModal = openUserRightsModal;
+        window.toggleRightStatus = toggleRightStatus;
+        window.loadUserRightsForm = loadUserRightsForm;
+        window.saveUserRights = saveUserRights;
 
 // === API INTEGRATION READINESS ===
 /**
