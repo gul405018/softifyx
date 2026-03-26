@@ -23,9 +23,19 @@
         let inventoryItems = [];
 
         let dailySummary = {
+            sales: 0,
+            cashValue: 0,
+            bankBalance: 0,
+            receivablesValue: 0,
             cashOpening: 0,
             cashReceipts: 0,
             cashPayments: 0,
+            recOpening: 0,
+            recSales: 0,
+            recReceipts: 0,
+            payOpening: 0,
+            payPurchases: 0,
+            payPayments: 0,
             newInvoices: 0,
             customerReceipts: 0,
             overdue: 0,
@@ -81,22 +91,43 @@
         }
 
         function updateDashboardSummary() {
-            document.getElementById('summaryCashOpening').textContent = '₹' + dailySummary.cashOpening.toLocaleString('en-IN');
-            document.getElementById('summaryCashReceipts').textContent = '₹' + dailySummary.cashReceipts.toLocaleString('en-IN');
-            document.getElementById('summaryCashPayments').textContent = '₹' + dailySummary.cashPayments.toLocaleString('en-IN');
-            document.getElementById('summaryCashNet').textContent = '₹' + (dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments).toLocaleString('en-IN');
-            
-            document.getElementById('summaryNewInvoices').textContent = dailySummary.newInvoices;
-            document.getElementById('summaryCustomerReceipts').textContent = '₹' + dailySummary.customerReceipts.toLocaleString('en-IN');
-            document.getElementById('summaryOverdue').textContent = '₹' + dailySummary.overdue.toLocaleString('en-IN');
-            
-            document.getElementById('summaryNewPurchases').textContent = dailySummary.newPurchases;
-            document.getElementById('summaryVendorPayments').textContent = '₹' + dailySummary.vendorPayments.toLocaleString('en-IN');
-            document.getElementById('summaryOutstanding').textContent = '₹' + dailySummary.outstanding.toLocaleString('en-IN');
-            
+            const get = id => document.getElementById(id);
+            const fmt = val => '₹' + (val || 0).toLocaleString('en-IN');
+
+            // Top Stat Cards
+            const salesVal = get('salesValue'); if(salesVal) salesVal.textContent = fmt(dailySummary.sales);
+            const cashVal = get('cashValue'); if(cashVal) cashVal.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
+            const bankVal = get('bankValue'); if(bankVal) bankVal.textContent = fmt(dailySummary.bankBalance);
+            const recVal = get('receivablesValue'); if(recVal) recVal.textContent = fmt(dailySummary.recOpening + dailySummary.recSales - dailySummary.recReceipts);
+
+            // Detailed Financial Cards (Cash & Bank)
+            const cO = get('cashOpening'); if(cO) cO.textContent = fmt(dailySummary.cashOpening);
+            const cR = get('cashReceipts'); if(cR) cR.textContent = fmt(dailySummary.cashReceipts);
+            const cP = get('cashPayments'); if(cP) cP.textContent = fmt(dailySummary.cashPayments);
+            const cC = get('cashCurrent'); if(cC) cC.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
+
+            // Detailed Financial Cards (Receivables)
+            const rO = get('recOpening'); if(rO) rO.textContent = fmt(dailySummary.recOpening);
+            const rS = get('recSales'); if(rS) rS.textContent = fmt(dailySummary.recSales);
+            const rR = get('recReceipts'); if(rR) rR.textContent = fmt(dailySummary.recReceipts);
+            const rC = get('recCurrent'); if(rC) rC.textContent = fmt(dailySummary.recOpening + dailySummary.recSales - dailySummary.recReceipts);
+
+            // Detailed Financial Cards (Payables)
+            const pO = get('payOpening'); if(pO) pO.textContent = fmt(dailySummary.payOpening);
+            const pP = get('payPurchases'); if(pP) pP.textContent = fmt(dailySummary.payPurchases);
+            const pPa = get('payPayments'); if(pPa) pPa.textContent = fmt(dailySummary.payPayments);
+            const pC = get('payCurrent'); if(pC) pC.textContent = fmt(dailySummary.payOpening + dailySummary.payPurchases - dailySummary.payPayments);
+
+            // Low Stock Widgets (Handle legacy IDs for backward compatibility if any)
             let lowStock = inventoryItems.filter(item => item.stock < item.reorderLevel).length;
-            document.getElementById('lowStockCount').textContent = lowStock + ' Items';
-            document.getElementById('reorderCount').textContent = (lowStock > 2 ? 2 : lowStock) + ' Items';
+            const lsc = get('lowStockCount'); if(lsc) lsc.textContent = lowStock + ' Items';
+            const rc = get('reorderCount'); if(rc) rc.textContent = (lowStock > 2 ? 2 : lowStock) + ' Items';
+
+            // Weekly Sales Trend (Zero out graph bars for Primary Mode)
+            const bars = document.querySelectorAll('.graph-bars .bar');
+            bars.forEach(bar => {
+                bar.style.height = '0px';
+            });
         }
 
         function saveSummary() {
