@@ -148,6 +148,9 @@
             bars.forEach(bar => {
                 bar.style.height = '0px';
             });
+
+            // Re-apply currency symbols after data update
+            applyGlobalCurrencySymbol();
         }
 
         function saveSummary() {
@@ -1347,14 +1350,15 @@
 
         function applyGlobalCurrencySymbol() {
             const savedCurr = localStorage.getItem('softifyx_currency');
-            const newSym = savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.';
+            const newSym = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
             
-            // Extract the pure numeric value and reconstruct the string to guarantee flawless symbol swapping
-            const priceElements = document.querySelectorAll('.stat-value, .financial-row .value, .summary-row .value');
-            priceElements.forEach(el => {
+            // Only update elements specifically marked as money
+            const moneyElements = document.querySelectorAll('.money');
+            moneyElements.forEach(el => {
+                // Extract only numbers and basic formatting
                 const numberPart = el.innerText.replace(/[^\d.,-]/g, '').trim();
-                if(numberPart) {
-                    el.innerText = newSym + ' ' + numberPart;
+                if(numberPart !== "") {
+                    el.innerText = newSym + numberPart;
                 }
             });
         }
