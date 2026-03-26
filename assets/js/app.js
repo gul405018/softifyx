@@ -779,24 +779,36 @@
         function init() {
             loadSavedData();
             setupDropdowns();
-            // setupMenuButtons(); // Disabled: Modals replaced by SPA views
+            setupMenuButtons(); 
 
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
-            document.getElementById('dailyReportDate').value = `${yyyy}-${mm}-${dd}`;
+            
+            const dailyReportDate = document.getElementById('dailyReportDate');
+            if (dailyReportDate) dailyReportDate.value = `${yyyy}-${mm}-${dd}`;
 
-            document.getElementById('searchBtn').addEventListener('click', performSearch);
-            document.getElementById('globalSearch').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') performSearch();
-            });
+            const searchBtn = document.getElementById('searchBtn');
+            if (searchBtn) searchBtn.addEventListener('click', performSearch);
+            
+            const globalSearch = document.getElementById('globalSearch');
+            if (globalSearch) {
+                globalSearch.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') performSearch();
+                });
+            }
 
-            document.getElementById('inventoryAlertsCard').addEventListener('click', showInventoryDetails);
+            const inventoryAlertsCard = document.getElementById('inventoryAlertsCard');
+            if (inventoryAlertsCard) inventoryAlertsCard.addEventListener('click', showInventoryDetails);
 
-            document.getElementById('saveNoteBtn').addEventListener('click', saveNote);
-            document.getElementById('clearNoteBtn').addEventListener('click', clearNote);
-            document.getElementById('dailyReportDate').addEventListener('change', onDateChange);
+            const saveNoteBtn = document.getElementById('saveNoteBtn');
+            if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNote);
+            
+            const clearNoteBtn = document.getElementById('clearNoteBtn');
+            if (clearNoteBtn) clearNoteBtn.addEventListener('click', clearNote);
+            
+            if (dailyReportDate) dailyReportDate.addEventListener('change', onDateChange);
         }
 
         window.closeModal = closeModal;
@@ -896,11 +908,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('sidebar-container').innerHTML = await sideRes.text();
         }
 
+        // Load Default View FIRST
+        await window.loadView('components/dashboard.html');
+
         // Initialize general app variables and behaviors
         init();
-
-        // Load Default View
-        window.loadView('components/dashboard.html');
 
     } catch(err) {
         console.error('Failed to load components:', err);
