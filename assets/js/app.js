@@ -159,11 +159,16 @@
 
         function displayLogo() {
             const logoDisplay = document.getElementById('logoDisplay');
-            if (logoData) {
-                logoDisplay.innerHTML = `<img src="${logoData}" style="height: 35px; width: auto; border-radius: 4px;">`;
-            } else {
-                logoDisplay.innerHTML = '';
-            }
+            if (!logoDisplay) return;
+            
+            // Priority 1: User-uploaded logo in assets/logos/
+            // Priority 2: In-memory/localStorage logoData
+            // Use a relative path that browser can resolve
+            const logoPath = 'assets/logos/logo.png';
+            
+            // We use an image with an error handler to check if the file exists
+            logoDisplay.innerHTML = `<img src="${logoPath}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;" 
+                onerror="this.onerror=null; this.src='${logoData || ''}'; if(!'${logoData}') this.parentElement.innerHTML='';">`;
         }
 
         function updateNames() {
@@ -1395,11 +1400,32 @@
         }
 
         function init() {
+            // --- 1. SESSION AUTHENTICATION CHECK ---
+            const session = localStorage.getItem('softifyx_session');
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // --- 2. INITIALIZE APP DATA ---
             loadSavedData();
             setupDropdowns();
             setupMenuButtons(); 
             applyGlobalCurrencySymbol(); // Hook into page load
             setupAutoBackupScheduler();
+
+            // Update Welcome Display
+            const sessionData = JSON.parse(session);
+            const welcomeUserDisplay = document.getElementById('welcomeUserDisplay');
+            if(welcomeUserDisplay && sessionData.username) {
+                welcomeUserDisplay.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${sessionData.username}</span>`;
+            }
+            
+            // Update Company Name from Session if available
+            const titleCompanyName = document.getElementById('titleCompanyName');
+            if(titleCompanyName && sessionData.company) {
+                titleCompanyName.innerText = `- ${sessionData.company}`;
+            }
 
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -1663,4 +1689,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to load components:', err);
     }
 });
-
+// Global Logout Handler
+window.handleLogout = function() {
+    if(confirm("Are you sure you want to log out?")) {
+        localStorage.removeItem('softifyx_session');
+        window.location.href = 'login.html';
+    }
+};
