@@ -1112,6 +1112,90 @@
             }
         }
 
+        // --- CURRENCY LOGIC --- //
+        const countryDataList = [
+            { c: 'Pakistan', n: 'Pakistani Rupee', s: 'Rs.' },
+            { c: 'India', n: 'Indian Rupee', s: '₹' },
+            { c: 'United States', n: 'US Dollar', s: '$' },
+            { c: 'United Kingdom', n: 'British Pound', s: '£' },
+            { c: 'Eurozone', n: 'Euro', s: '€' },
+            { c: 'Saudi Arabia', n: 'Saudi Riyal', s: 'SAR' },
+            { c: 'United Arab Emirates', n: 'UAE Dirham', s: 'AED' },
+            { c: 'Australia', n: 'Australian Dollar', s: 'A$' },
+            { c: 'Canada', n: 'Canadian Dollar', s: 'C$' },
+            { c: 'China', n: 'Chinese Yuan', s: '¥' },
+            { c: 'Japan', n: 'Japanese Yen', s: '¥' }
+        ];
+
+        function initCurrencyView() {
+            const select = document.getElementById('currCountry');
+            if(!select) return;
+            let html = '<option value="">-- Select Country --</option>';
+            countryDataList.sort((a,b) => a.c.localeCompare(b.c)).forEach(item => {
+                html += `<option value="${item.c}">${item.c}</option>`;
+            });
+            select.innerHTML = html;
+            
+            const savedCurr = localStorage.getItem('softifyx_currency');
+            if(savedCurr) {
+                try {
+                    const data = JSON.parse(savedCurr);
+                    select.value = data.country || '';
+                    document.getElementById('currName').value = data.name || '';
+                    document.getElementById('currSymbol').value = data.symbol || '';
+                } catch(e){}
+            } else {
+                select.value = 'Pakistan';
+                updateCurrencyDetails();
+            }
+        }
+
+        function updateCurrencyDetails() {
+            const countryName = document.getElementById('currCountry').value;
+            const data = countryDataList.find(c => c.c === countryName);
+            if(data) {
+                document.getElementById('currName').value = data.n;
+                document.getElementById('currSymbol').value = data.s;
+            }
+        }
+
+        function saveCurrencySettings() {
+            const c = document.getElementById('currCountry').value;
+            const n = document.getElementById('currName').value;
+            const s = document.getElementById('currSymbol').value;
+            const err = document.getElementById('currErrorMsg');
+            
+            if(!c || !n || !s) {
+                err.style.color = '#d63031';
+                err.textContent = 'Please fill all related fields.';
+                return;
+            }
+            
+            localStorage.setItem('softifyx_currency', JSON.stringify({ country: c, name: n, symbol: s }));
+            err.style.color = '#27ae60';
+            err.textContent = 'Settings saved successfully!';
+            
+            applyGlobalCurrencySymbol();
+            
+            setTimeout(() => {
+                if(err) err.textContent = '';
+                closeModal();
+            }, 800);
+        }
+
+        function applyGlobalCurrencySymbol() {
+            const savedCurr = localStorage.getItem('softifyx_currency');
+            const newSym = savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.';
+            
+            const currencyMatchRegex = /₹|Rs\.|US\$|€|£|Rs|AED|SAR|¥|\$/g;
+            
+            // Replaces symbol safely inside known monetary elements on screen
+            const priceElements = document.querySelectorAll('.stat-value, .financial-row .value, .summary-row .value');
+            priceElements.forEach(el => {
+                el.innerText = el.innerText.replace(currencyMatchRegex, newSym + ' ');
+            });
+        }
+
         async function openModularPopup(url, titleIcon, titleText, initCallback) {
             try {
                 const res = await fetch(url);
@@ -1129,6 +1213,8 @@
                             setTimeout(() => initUserRightsView(), 10);
                         } else if (url.includes('financial_year.html')) {
                             setTimeout(() => initFinancialYearView(), 10);
+                        } else if (url.includes('currency.html')) {
+                            setTimeout(() => initCurrencyView(), 10);
                         }
                     }
                 } else {
@@ -1201,9 +1287,14 @@
         window.savePasswordSettings = savePasswordSettings;
         window.initFinancialYearView = initFinancialYearView;
         window.selectFinancialYear = selectFinancialYear;
+        window.selectFinancialYear = selectFinancialYear;
         window.addFinancialYear = addFinancialYear;
         window.saveFinancialYear = saveFinancialYear;
         window.executeClearTransactions = executeClearTransactions;
+        window.initCurrencyView = initCurrencyView;
+        window.updateCurrencyDetails = updateCurrencyDetails;
+        window.saveCurrencySettings = saveCurrencySettings;
+        window.applyGlobalCurrencySymbol = applyGlobalCurrencySymbol;
 
 // === API INTEGRATION READINESS ===
 /**
@@ -1244,6 +1335,7 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
                 const res = await fetch(url);
                 if (res.ok) {
                     mainContent.innerHTML = await res.text();
+                    applyGlobalCurrencySymbol(); // Dynamically update symbols on layout load
                 } else {
                     console.error("View not found:", url);
                 }
