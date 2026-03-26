@@ -56,6 +56,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 15px;
+            position: relative;
         }
 
         .nav-menu {
@@ -999,13 +1000,16 @@
         }
 
         @media (max-width: 768px) {
+            .left-sidebar, .right-sidebar {
+                display: none !important;
+            }
             .mobile-menu-toggle {
                 display: block;
             }
             .nav-menu {
                 display: none;
                 position: absolute;
-                top: 42px;
+                top: 100%;
                 left: 0;
                 width: 100%;
                 background: #214F77;
