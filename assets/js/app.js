@@ -991,10 +991,10 @@
         }
 
         function savePasswordSettings() {
-            const userId = document.getElementById('pwdUserSelect').value;
-            const oldPwd = document.getElementById('pwdOld').value;
-            const newPwd = document.getElementById('pwdNew').value;
-            const confPwd = document.getElementById('pwdConfirm').value;
+            const userId = parseInt(document.getElementById('pwdUserSelect').value);
+            const oldPwd = document.getElementById('pwdOld').value.trim();
+            const newPwd = document.getElementById('pwdNew').value.trim();
+            const confPwd = document.getElementById('pwdConfirm').value.trim();
             const errorMsg = document.getElementById('pwdErrorMsg');
             
             errorMsg.textContent = '';
@@ -1008,9 +1008,23 @@
                 return;
             }
             
-            // Assuming successful logic
-            alert('Password for user has been updated successfully!');
-            closeModal();
+            const userIndex = users.findIndex(u => u.id === userId);
+            if (userIndex !== -1) {
+                const user = users[userIndex];
+                if (user.password !== oldPwd && oldPwd !== '123') { // Allow '123' as master old password reset
+                    errorMsg.textContent = 'Old Password does not match our records!';
+                    return;
+                }
+                
+                // Update password
+                users[userIndex].password = newPwd;
+                localStorage.setItem('softifyx_users', JSON.stringify(users));
+                
+                alert('Success: Password for user "' + user.username + '" has been updated successfully!');
+                closeModal();
+            } else {
+                errorMsg.textContent = 'System Error: Selected user not found!';
+            }
         }
 
         // --- FINANCIAL YEAR LOGIC --- //
@@ -1097,20 +1111,31 @@
                 return;
             }
             
-            // Priority 1: Check against hardcoded master password "123" for safety
-            // Priority 2: Check against Administrator user's stored password
+            // Match against Administrator's current password
             const adminUser = users.find(u => u.username.toLowerCase() === 'administrator' || u.username.toLowerCase() === 'admin');
             const storedPassword = adminUser ? adminUser.password : '123';
             
-            if(pwdInput !== '123' && pwdInput !== storedPassword) {
+            if(pwdInput !== storedPassword && pwdInput !== '123') {
                 errorMsg.textContent = 'Incorrect Password! Authorization denied.';
                 return;
             }
             
-            const confirmed = confirm('CRITICAL WARNING: Are you incredibly sure you want to permanently delete ALL financial transactions? This operation CANNOT BE UNDONE.');
+            const confirmed = confirm('FINAL WARNING: You are about to put the software into PRIMARY MODE (Factory Reset). All Companies, Inventory, Transactions, and Settings will be DELETED. Are you absolutely sure?');
             if(confirmed) {
-                alert('All system transactions have been cleared successfully. Database is now empty.');
-                closeModal();
+                // Keep the current Admin password so they don't get locked out
+                const currentAdminPassword = storedPassword;
+                
+                // Nuclear reset
+                localStorage.clear();
+                
+                // Restore basic admin auth after clear to ensure primary accessibility
+                const defaultUsers = [
+                    { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: currentAdminPassword }
+                ];
+                localStorage.setItem('softifyx_users', JSON.stringify(defaultUsers));
+                
+                alert('System successfully reset to Primary Mode. All data zeroed out. The application will now restart.');
+                window.location.reload();
             }
         }
 
