@@ -15,9 +15,9 @@
         let currentNote = "Meeting with suppliers tomorrow at 10 AM. Follow up with ABC Traders for payment.";
         
         let users = [
-            { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active" },
-            { id: 2, username: "Operator", role: "Operator", email: "operator@softifyx.com", status: "Active" },
-            { id: 3, username: "Manager", role: "Manager", email: "manager@softifyx.com", status: "Active" }
+            { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" },
+            { id: 2, username: "Operator", role: "Operator", email: "operator@softifyx.com", status: "Active", password: "123" },
+            { id: 3, username: "Manager", role: "Manager", email: "manager@softifyx.com", status: "Active", password: "123" }
         ];
 
         let logoData = null;
@@ -64,7 +64,7 @@
             
             const savedUsers = localStorage.getItem('softifyx_users');
             if (savedUsers) {
-                users = JSON.parse(savedUsers);
+                users = JSON.parse(savedUsers).map(u => ({ ...u, password: u.password || '123' }));
             }
             
             const savedLogo = localStorage.getItem('softifyx_logo');
@@ -336,7 +336,8 @@
                     username: username,
                     role: role,
                     email: email,
-                    status: 'Active'
+                    status: 'Active',
+                    password: document.getElementById('newPassword')?.value || '123'
                 };
                 users.push(newUser);
                 localStorage.setItem('softifyx_users', JSON.stringify(users));
