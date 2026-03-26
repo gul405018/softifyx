@@ -1168,7 +1168,7 @@
             if(!inputEl) return;
             
             document.addEventListener('click', function(e) {
-                if(e.target.id !== 'currCountry') {
+                if(e.target.id !== 'currCountry' && e.target.id !== 'currChevron') {
                     const dd = document.getElementById('countryDropdownList');
                     if(dd) dd.style.display = 'none';
                 }
@@ -1202,6 +1202,24 @@
             const dd = document.getElementById('countryDropdownList');
             if(dd) dd.style.display = 'block';
             filterCountryList();
+        }
+
+        function toggleCountryList(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const dd = document.getElementById('countryDropdownList');
+            const inputEl = document.getElementById('currCountry');
+            if(dd && inputEl) {
+                if(dd.style.display === 'block') {
+                    dd.style.display = 'none';
+                } else {
+                    dd.style.display = 'block';
+                    inputEl.focus();
+                    filterCountryList();
+                }
+            }
         }
 
         function filterCountryList() {
@@ -1386,6 +1404,7 @@
         window.saveCurrencySettings = saveCurrencySettings;
         window.applyGlobalCurrencySymbol = applyGlobalCurrencySymbol;
         window.showCountryList = showCountryList;
+        window.toggleCountryList = toggleCountryList;
         window.filterCountryList = filterCountryList;
         window.selectCustomCountry = selectCustomCountry;
 
