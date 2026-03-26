@@ -980,23 +980,17 @@
 
         async function openModularPopup(url, titleIcon, titleText, initCallback) {
             try {
-                openModal(
-                    { icon: titleIcon, text: titleText },
-                    '<div style="padding:50px;text-align:center;color:#666;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Loading...</div>'
-                );
                 const res = await fetch(url);
                 if (res.ok) {
                     const html = await res.text();
-                    const container = document.getElementById('modalContainer');
-                    const body = container.querySelector('.modal-body');
-                    body.innerHTML = html;
+                    openModal({ icon: titleIcon, text: titleText }, html);
                     if (typeof initCallback === 'function') {
-                        setTimeout(() => initCallback(), 50);
+                        setTimeout(() => initCallback(), 10);
                     }
                 } else {
-                    const container = document.getElementById('modalContainer');
-                    const body = container.querySelector('.modal-body');
-                    body.innerHTML = '<div style="color:red;padding:20px;text-align:center;">Failed to load module. (' + res.status + ')</div>';
+                    openModal({ icon: titleIcon, text: titleText }, 
+                        '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>'
+                    );
                 }
             } catch (err) {
                 console.error(err);
@@ -1091,27 +1085,21 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
     }
 }
 
-window.loadView = async function(url) {
-    try {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
-        
-        mainContent.innerHTML = '<div style="padding: 50px; text-align: center; color: #aaa;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Loading Component...</div>';
-        
-        const res = await fetch(url);
-        if (res.ok) {
-            mainContent.innerHTML = await res.text();
-        } else {
-            mainContent.innerHTML = `
-                <div style="padding: 50px; text-align: center; color: #555; background: #fff; border-radius: 8px; margin: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <h2><i class="fas fa-laptop-code" style="color: #4a90e2; font-size: 2rem; margin-bottom: 20px;"></i><br>Module Not Found / In Development</h2>
-                    <p style="margin-top: 10px;">The requested file <code>${url}</code> does not exist yet.</p>
-                </div>`;
-        }
-    } catch (err) {
-        console.error('Failed to load view:', err);
-    }
-};
+        window.loadView = async function(url) {
+            try {
+                const mainContent = document.getElementById('main-content');
+                if (!mainContent) return;
+                
+                const res = await fetch(url);
+                if (res.ok) {
+                    mainContent.innerHTML = await res.text();
+                } else {
+                    console.error("View not found:", url);
+                }
+            } catch (err) {
+                console.error('Failed to load view:', err);
+            }
+        };
 
 /**
  * Global App Initialization
@@ -1134,11 +1122,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // Attach SPA event listeners to all generic dropdown menus
-            document.querySelectorAll('.dropdown-item[data-target]').forEach(item => {
+            // Attach SPA event listeners to all generic dropdown menus using Popup System
+            document.querySelectorAll('.dropdown-item[data-target], .nested-item[data-target]').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
-                    window.loadView(item.getAttribute('data-target'));
+                    let targetUrl = item.getAttribute('data-target');
+                    let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText);
+                    
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                 });
             });
@@ -1148,6 +1139,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sideRes = await fetch('components/sidebar.html');
         if(sideRes.ok) {
             document.getElementById('sidebar-container').innerHTML = await sideRes.text();
+            
+            // Attach SPA event listeners to all sidebar menus using Popup System
+            document.querySelectorAll('.sidebar-item[data-target]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    let targetUrl = item.getAttribute('data-target');
+                    let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText);
+                });
+            });
         }
 
         // Load Default View FIRST
