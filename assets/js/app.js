@@ -147,14 +147,42 @@
         function setupDropdowns() {
             document.querySelectorAll('.menu-item').forEach(menuItem => {
                 menuItem.addEventListener('click', function(e) {
+                    // Only toggle if they clicked the direct menu-item text, not inside its dropdown
+                    if (e.target === this || e.target.parentElement === this && !e.target.classList.contains('dropdown')) {
+                        e.stopPropagation();
+                        toggleDropdown(this);
+                    }
+                });
+            });
+
+            // Prevent dropdown clicks from bubbling up and hiding the menu-item
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                dropdown.addEventListener('click', function(e) {
+                    e.stopPropagation(); 
+                });
+            });
+
+            // Handle nested dropdowns specifically for touch/click compatibility
+            document.querySelectorAll('.has-nested').forEach(nested => {
+                nested.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    toggleDropdown(this);
+                    const nestedMenu = this.querySelector('.nested-dropdown');
+                    if (nestedMenu) {
+                        const isShown = nestedMenu.classList.contains('show-nested');
+                        // Close any other nested dropdowns first
+                        document.querySelectorAll('.nested-dropdown').forEach(nd => nd.classList.remove('show-nested'));
+                        if (!isShown) {
+                            nestedMenu.classList.add('show-nested');
+                        }
+                    }
                 });
             });
 
             document.addEventListener('click', function(e) {
-                if (!e.target.closest('.menu-item') && !e.target.closest('.dropdown') && !e.target.closest('.nested-dropdown')) {
+                if (!e.target.closest('.menu-item') && !e.target.closest('.dropdown') && !e.target.closest('.nested-dropdown') && !e.target.closest('.mobile-menu-toggle')) {
                     hideAllDropdowns();
+                    const navMenu = document.getElementById('navMenu');
+                    if(navMenu) navMenu.classList.remove('active');
                 }
             });
         }

@@ -190,7 +190,8 @@
             margin-left: 2px;
         }
 
-        .dropdown-item.has-nested:hover > .nested-dropdown {
+        .dropdown-item.has-nested:hover > .nested-dropdown,
+        .nested-dropdown.show-nested {
             display: block !important;
         }
 
