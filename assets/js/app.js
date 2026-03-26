@@ -1012,6 +1012,78 @@
             closeModal();
         }
 
+        // --- FINANCIAL YEAR LOGIC --- //
+        let financialYears = [
+            { id: 1, start: '2020-07-01', end: '2021-06-30', abbr: '2020-21' }
+        ];
+
+        function initFinancialYearView() {
+            renderFinancialYearList();
+            addFinancialYear(); 
+        }
+
+        function renderFinancialYearList() {
+            const listObj = document.getElementById('fyListBox');
+            if(!listObj) return;
+            let html = '';
+            financialYears.forEach(fy => {
+                const activeId = document.getElementById('fyEditId') ? document.getElementById('fyEditId').value : '';
+                const activeCls = (activeId == fy.id) ? 'active' : '';
+                html += `<div class="listbox-item ${activeCls}" onclick="selectFinancialYear(${fy.id})">${fy.abbr}</div>`;
+            });
+            listObj.innerHTML = html;
+        }
+
+        function selectFinancialYear(id) {
+            const fy = financialYears.find(f => f.id == id);
+            if(fy) {
+                document.getElementById('fyStartDate').value = fy.start;
+                document.getElementById('fyEndDate').value = fy.end;
+                document.getElementById('fyAbbreviation').value = fy.abbr;
+                document.getElementById('fyEditId').value = fy.id;
+                document.getElementById('fyErrorMsg').textContent = '';
+                renderFinancialYearList();
+            }
+        }
+
+        function addFinancialYear() {
+            document.getElementById('fyStartDate').value = '';
+            document.getElementById('fyEndDate').value = '';
+            document.getElementById('fyAbbreviation').value = '';
+            document.getElementById('fyEditId').value = '';
+            document.getElementById('fyErrorMsg').textContent = '';
+            renderFinancialYearList();
+        }
+
+        function saveFinancialYear() {
+            const start = document.getElementById('fyStartDate').value;
+            const end = document.getElementById('fyEndDate').value;
+            const abbr = document.getElementById('fyAbbreviation').value;
+            const editId = document.getElementById('fyEditId').value;
+            const errorMsg = document.getElementById('fyErrorMsg');
+            
+            errorMsg.style.color = '#d63031';
+            if(!start || !end || !abbr) {
+                errorMsg.textContent = 'Please fill all related fields.';
+                return;
+            }
+            if(editId) {
+                const fy = financialYears.find(f => f.id == editId);
+                if(fy) {
+                    fy.start = start; fy.end = end; fy.abbr = abbr;
+                }
+            } else {
+                const newId = financialYears.length ? Math.max(...financialYears.map(f=>f.id)) + 1 : 1;
+                financialYears.push({ id: newId, start, end, abbr });
+                document.getElementById('fyEditId').value = newId;
+            }
+            
+            errorMsg.style.color = '#27ae60';
+            errorMsg.textContent = 'Saved successfully!';
+            setTimeout(() => { if(errorMsg) errorMsg.textContent=''; }, 2000);
+            renderFinancialYearList();
+        }
+
         async function openModularPopup(url, titleIcon, titleText, initCallback) {
             try {
                 const res = await fetch(url);
@@ -1027,6 +1099,8 @@
                             setTimeout(() => initPasswordsView(), 10);
                         } else if (url.includes('user_rights.html')) {
                             setTimeout(() => initUserRightsView(), 10);
+                        } else if (url.includes('financial_year.html')) {
+                            setTimeout(() => initFinancialYearView(), 10);
                         }
                     }
                 } else {
@@ -1097,6 +1171,10 @@
         window.loadUserRightsForm = loadUserRightsForm;
         window.saveUserRights = saveUserRights;
         window.savePasswordSettings = savePasswordSettings;
+        window.initFinancialYearView = initFinancialYearView;
+        window.selectFinancialYear = selectFinancialYear;
+        window.addFinancialYear = addFinancialYear;
+        window.saveFinancialYear = saveFinancialYear;
 
 // === API INTEGRATION READINESS ===
 /**
