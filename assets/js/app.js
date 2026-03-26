@@ -978,14 +978,56 @@
             alert('User rights saved successfully!');
         }
 
+        // === MODULAR POPUP SYSTEM ARCHITECTURE ===
+
+        function initPasswordsView() {
+            let uOpts = '';
+            users.forEach(u => {
+                uOpts += `<option value="${u.id}">${u.username}</option>`;
+            });
+            const pwdUserSelect = document.getElementById('pwdUserSelect');
+            if(pwdUserSelect) pwdUserSelect.innerHTML = uOpts;
+        }
+
+        function savePasswordSettings() {
+            const userId = document.getElementById('pwdUserSelect').value;
+            const oldPwd = document.getElementById('pwdOld').value;
+            const newPwd = document.getElementById('pwdNew').value;
+            const confPwd = document.getElementById('pwdConfirm').value;
+            const errorMsg = document.getElementById('pwdErrorMsg');
+            
+            errorMsg.textContent = '';
+            
+            if(!oldPwd || !newPwd || !confPwd) {
+                errorMsg.textContent = 'All fields are required!';
+                return;
+            }
+            if(newPwd !== confPwd) {
+                errorMsg.textContent = 'New Password and Re-Type Password do not match!';
+                return;
+            }
+            
+            // Assuming successful logic
+            alert('Password for user has been updated successfully!');
+            closeModal();
+        }
+
         async function openModularPopup(url, titleIcon, titleText, initCallback) {
             try {
                 const res = await fetch(url);
                 if (res.ok) {
                     const html = await res.text();
                     openModal({ icon: titleIcon, text: titleText }, html);
+                    
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
+                    } else {
+                        // Global Init Fallbacks based on modular URL mapping
+                        if (url.includes('passwords.html')) {
+                            setTimeout(() => initPasswordsView(), 10);
+                        } else if (url.includes('user_rights.html')) {
+                            setTimeout(() => initUserRightsView(), 10);
+                        }
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
@@ -1050,9 +1092,11 @@
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;
         window.initUserRightsView = initUserRightsView;
+        window.initPasswordsView = initPasswordsView;
         window.toggleRightStatus = toggleRightStatus;
         window.loadUserRightsForm = loadUserRightsForm;
         window.saveUserRights = saveUserRights;
+        window.savePasswordSettings = savePasswordSettings;
 
 // === API INTEGRATION READINESS ===
 /**
