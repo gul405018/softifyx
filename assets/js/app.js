@@ -484,12 +484,13 @@
 
         function saveLogoSettings() {
             const fileInput = document.getElementById('logoFile');
-            const noLogoOption = document.getElementById('noLogoOption')?.checked;
+            const doNotShowOption = document.getElementById('doNotShowOption')?.checked;
             
-            if (noLogoOption) {
+            if (doNotShowOption) {
                 logoData = null;
                 localStorage.removeItem('softifyx_logo');
                 displayLogo();
+                closeModal();
             } else if (fileInput && fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const reader = new FileReader();
@@ -497,22 +498,28 @@
                     logoData = e.target.result;
                     localStorage.setItem('softifyx_logo', logoData);
                     displayLogo();
+                    closeModal();
                 };
                 reader.readAsDataURL(file);
+            } else {
+                closeModal();
             }
         }
 
         function previewLogo() {
             const fileInput = document.getElementById('logoFile');
             const preview = document.getElementById('logoPreview');
-            const previewContainer = document.querySelector('.logo-preview-container');
+            const noLogoText = document.getElementById('noLogoText');
             
             if (fileInput && fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.src = e.target.result;
-                    previewContainer.classList.add('show');
+                    preview.style.display = 'block';
+                    if (noLogoText) noLogoText.style.display = 'none';
+                    const setOption = document.getElementById('setLogoOption');
+                    if (setOption) setOption.checked = true;
                 };
                 reader.readAsDataURL(file);
             }
@@ -650,23 +657,24 @@
                             <i class="fas fa-info-circle" style="color: #F5A623; margin-right: 8px;"></i>
                             Note: Only .jpeg, .jpg, .png or .gif files can be set as logo.
                         </div>
-                        <div class="logo-preview-container ${logoData ? 'show' : ''}">
-                            <img id="logoPreview" class="logo-preview" src="${logoData || ''}" alt="Logo Preview">
+                        <div style="border: 1px dashed #b9c2ce; border-radius: 6px; padding: 25px; text-align: center; margin-bottom: 20px; background-color: #fbfdff; min-height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <div id="noLogoText" style="color: #6b84a3; font-style: italic; font-size: 14px; ${logoData ? 'display: none;' : ''}">No Logo</div>
+                            <img id="logoPreview" class="logo-preview" src="${logoData || ''}" alt="Logo Preview" style="max-height: 80px; max-width: 100%; border: none; padding: 0; margin: 0; box-shadow: none; ${!logoData ? 'display: none;' : ''}">
                         </div>
                         <div style="margin: 15px 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                <input type="radio" name="logoOption" id="noLogoOption" value="none" ${!logoData ? 'checked' : ''}> 
-                                <label for="noLogoOption" style="font-size: 13px;">No Logo</label>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                                 <input type="radio" name="logoOption" id="setLogoOption" value="set" ${logoData ? 'checked' : ''}> 
-                                <label for="setLogoOption" style="font-size: 13px;">Set New Logo</label>
+                                <label for="setLogoOption" style="font-size: 14px;">Set New Logo</label>
                             </div>
-                            <div style="margin-left: 25px; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                <input type="file" id="logoFile" accept=".jpg,.jpeg,.png,.gif" onchange="previewLogo()" style="font-size: 12px;">
+                            <div style="margin-left: 28px; display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                                <input type="file" id="logoFile" accept=".jpg,.jpeg,.png,.gif" onchange="previewLogo()" style="font-size: 13px;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                                <input type="radio" name="logoOption" id="doNotShowOption" value="none" ${!logoData ? 'checked' : ''}> 
+                                <label for="doNotShowOption" style="font-size: 14px;">Do Not Show Logo</label>
                             </div>
                         </div>
-                        <div style="background: #f0f5fc; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 12px; color: #1f4668;">
+                        <div style="background: #f0f5fc; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 13px; color: #1f4668;">
                             <i class="fas fa-info-circle" style="color: #F5A623; margin-right: 8px;"></i>
                             Your selected logo will be printed on your documents.
                         </div>
