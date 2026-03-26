@@ -136,10 +136,17 @@
 
         users.forEach(u => { const op = new Option(u.username, u.username); userSelect.add(op); });
         companies.forEach(c => { 
-            const cName = typeof c === 'string' ? c : c.name;
-            const op = new Option(cName, cName); companySelect.add(op); 
+            const cName = (typeof c === 'string') ? c : (c.name || "Unknown Company");
+            if (cName !== "[object Object]") {
+                const op = new Option(cName, cName); 
+                companySelect.add(op); 
+            }
         });
-        financialYears.forEach(y => { const op = new Option(y, y); yearSelect.add(op); });
+        financialYears.forEach(y => { 
+            const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
+            const op = new Option(yName, yName); 
+            yearSelect.add(op); 
+        });
 
         // Yeti Animations
         const armL = document.querySelector('.armL');

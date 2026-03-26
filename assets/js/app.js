@@ -48,8 +48,15 @@
             if (savedFY) financialYears = JSON.parse(savedFY);
 
             // COMPANY-SPECIFIC DATA (Isolated)
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const savedCompany = localStorage.getItem(getCoKey('softifyx_company'));
-            if (savedCompany) companyData = JSON.parse(savedCompany);
+            
+            if (savedCompany) {
+                companyData = JSON.parse(savedCompany);
+            } else if (sessionData.company) {
+                // FALLBACK: Initialize with name from session if no specific settings saved yet
+                companyData = { name: sessionData.company, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
+            }
 
             const savedLogo = localStorage.getItem(getCoKey('softifyx_logo'));
             logoData = savedLogo || null;

@@ -92,8 +92,9 @@
         if (window.companies && selector) {
             let optionsHtml = '';
             window.companies.forEach(company => {
-                const selected = (window.companyData && window.companyData.name === company) ? 'selected' : '';
-                optionsHtml += `<option value="${company}" ${selected}>${company}</option>`;
+                const cName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
+                const selected = (window.companyData && window.companyData.name === cName) ? 'selected' : '';
+                optionsHtml += `<option value="${cName}" ${selected}>${cName}</option>`;
             });
             selector.innerHTML = optionsHtml;
         }
