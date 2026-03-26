@@ -39,7 +39,12 @@
         function loadSavedData() {
             // GLOBAL DATA (Same for all companies)
             const savedCompanies = localStorage.getItem('softifyx_companies');
-            if (savedCompanies) companies = JSON.parse(savedCompanies);
+            if (savedCompanies) {
+                companies = JSON.parse(savedCompanies).filter(c => {
+                    const name = typeof c === 'string' ? c : c.name;
+                    return name && name !== "[object Object]";
+                });
+            }
 
             const savedUsers = localStorage.getItem('softifyx_users');
             if (savedUsers) users = JSON.parse(savedUsers);
@@ -1061,7 +1066,10 @@
             const userIndex = users.findIndex(u => u.id === userId);
             if (userIndex !== -1) {
                 const user = users[userIndex];
-                if (user.password !== oldPwd && oldPwd !== '123') { // Allow '123' as master old password reset
+                // Admin can override any user's password without knowing old password
+                const isAdminReset = (currentUser === 'Administrator' && user.username !== 'Administrator');
+                
+                if (!isAdminReset && user.password !== oldPwd && oldPwd !== '123') { 
                     errorMsg.textContent = 'Old Password does not match our records!';
                     return;
                 }
@@ -1368,7 +1376,25 @@
             try {
                 const res = await fetch(url);
                 if (res.ok) {
-                    const html = await res.text();
+                    let html = await res.text();
+                    
+                    // --- AUTOMATED RIGHTS CHECK FOR POPUPS ---
+                    // Create a temporary element to parse the HTML and check for [data-module]
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const moduleTag = tempDiv.querySelector('[data-module]');
+                    
+                    if (moduleTag) {
+                        const moduleName = moduleTag.getAttribute('data-module');
+                        if (!checkUserRights(moduleName)) {
+                            html = `<div style="padding:40px; text-align:center; color:#d63031;">
+                                <i class="fas fa-lock" style="font-size:40px; margin-bottom:10px;"></i>
+                                <h3 style="font-weight:700;">Access Denied</h3>
+                                <p style="color:#666;">You do not have permission for <b>${moduleName.replace('_', ' ')}</b>.</p>
+                            </div>`;
+                        }
+                    }
+                    
                     openModal({ icon: titleIcon, text: titleText }, html);
                     
                     if (typeof initCallback === 'function') {
@@ -1615,7 +1641,25 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
                 
                 const res = await fetch(url);
                 if (res.ok) {
-                    mainContent.innerHTML = await res.text();
+                    const html = await res.text();
+                    
+                    // --- AUTOMATED RIGHTS CHECK FOR VIEWS ---
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const moduleTag = tempDiv.querySelector('[data-module]');
+                    
+                    if (moduleTag && !checkUserRights(moduleTag.getAttribute('data-module'))) {
+                        mainContent.innerHTML = `
+                            <div style="padding:100px 20px; text-align:center; color:#d63031;">
+                                <i class="fas fa-lock" style="font-size:64px; margin-bottom:20px;"></i>
+                                <h1 style="font-family:'Segoe UI'; font-weight:700;">Access Denied</h1>
+                                <p style="color:#666; font-size:18px;">You do not have permission to access this module.</p>
+                                <button class="btn btn-primary" style="margin-top:30px; height:40px; padding:0 30px;" onclick="window.location.reload()">Return to Dashboard</button>
+                            </div>`;
+                        return;
+                    }
+
+                    mainContent.innerHTML = html;
                     applyGlobalCurrencySymbol(); // Dynamically update symbols on layout load
                 } else {
                     console.error("View not found:", url);
@@ -1692,3 +1736,20 @@ window.handleLogout = function() {
         window.location.href = 'login.html';
     }
 };
+
+// --- FUTURE-PROOF ARCHITECTURE: USER RIGHTS HELPER ---
+/**
+ * Generic function to check if the current user has access to a specific module.
+ * @param {string} moduleName - Name of the module (e.g., 'sale_invoice')
+ */
+function checkUserRights(moduleName) {
+    if (currentUser === 'Administrator') return true;
+    
+    // Check global rights (stored per user per company prefix)
+    const rightsKey = getCoKey(`user_rights_${currentUser}`);
+    const rights = JSON.parse(localStorage.getItem(rightsKey) || '{}');
+    
+    // Default to true (unrestricted) if not explicitly set to false
+    return rights[moduleName] !== false;
+}
+window.checkUserRights = checkUserRights;
