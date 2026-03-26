@@ -1027,12 +1027,15 @@
                 border-bottom: 1px solid rgba(255,255,255,0.1);
             }
             .dropdown {
-                position: static;
+                position: absolute;
+                top: 100%;
+                left: 0;
                 width: 100%;
-                box-shadow: none;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
                 background: #f8f9fa;
                 border: none;
                 border-radius: 0;
+                z-index: 50001;
             }
             .dropdown-item {
                 padding: 10px 25px;

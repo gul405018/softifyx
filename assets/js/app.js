@@ -139,6 +139,7 @@
             if (dropdown.style.display === 'block') {
                 dropdown.style.display = 'none';
             } else {
+                hideAllDropdowns();
                 dropdown.style.display = 'block';
             }
         }
