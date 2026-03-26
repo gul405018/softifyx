@@ -1201,7 +1201,7 @@
         function showCountryList() {
             const dd = document.getElementById('countryDropdownList');
             if(dd) dd.style.display = 'block';
-            filterCountryList();
+            renderCustomCountryList(countryDataList);
         }
 
         function toggleCountryList(e) {
@@ -1217,7 +1217,7 @@
                 } else {
                     dd.style.display = 'block';
                     inputEl.focus();
-                    filterCountryList();
+                    renderCustomCountryList(countryDataList);
                 }
             }
         }
