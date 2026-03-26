@@ -22,72 +22,65 @@
 
         let inventoryItems = [];
 
-        let dailySummary = {
-            sales: 0,
-            cashValue: 0,
-            bankBalance: 0,
-            receivablesValue: 0,
-            cashOpening: 0,
-            cashReceipts: 0,
-            cashPayments: 0,
-            recOpening: 0,
-            recSales: 0,
-            recReceipts: 0,
-            payOpening: 0,
-            payPurchases: 0,
-            payPayments: 0,
-            newInvoices: 0,
-            customerReceipts: 0,
-            overdue: 0,
-            newPurchases: 0,
-            vendorPayments: 0,
-            outstanding: 0
-        };
+        let dailySummary = { /* default state ... */ }; 
+        // Initial empty state (will be populated from summary prefix)
+        
+        // Helper for Multi-Company Isolation (Separate Databases)
+        function getCoKey(key) {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const coName = session.company || 'default';
+            // Global keys that should NOT be isolated
+            const globalKeys = ['softifyx_users', 'softifyx_companies', 'softifyx_financial_years', 'softifyx_session'];
+            if (globalKeys.includes(key)) return key;
+            // Company-specific keys
+            return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
+        }
 
         function loadSavedData() {
+            // GLOBAL DATA (Same for all companies)
             const savedCompanies = localStorage.getItem('softifyx_companies');
-            if (savedCompanies) {
-                companies = JSON.parse(savedCompanies);
-            }
+            if (savedCompanies) companies = JSON.parse(savedCompanies);
 
-            const activeName = localStorage.getItem('softifyx_active_company');
-            const savedCompany = localStorage.getItem('softifyx_company');
-            
-            if (activeName) {
-                const found = companies.find(c => (typeof c === 'string' ? c : c.name) === activeName);
-                if (found) {
-                    companyData = typeof found === 'string' ? { name: found, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" } : { ...found };
-                } else if (savedCompany) {
-                    companyData = JSON.parse(savedCompany);
-                }
-            } else if (savedCompany) {
-                companyData = JSON.parse(savedCompany);
-            }
-            
             const savedUsers = localStorage.getItem('softifyx_users');
-            if (savedUsers) {
-                users = JSON.parse(savedUsers).map(u => ({ ...u, password: u.password || '123' }));
-            }
-            
-            const savedLogo = localStorage.getItem('softifyx_logo');
-            if (savedLogo) {
-                logoData = savedLogo;
-                displayLogo();
-            }
-            
-            const savedNote = localStorage.getItem('softifyx_note');
-            if (savedNote) {
-                currentNote = savedNote;
-                document.getElementById('notesText').value = currentNote;
-            }
+            if (savedUsers) users = JSON.parse(savedUsers);
 
-            const savedSummary = localStorage.getItem('softifyx_summary');
-            if (savedSummary) {
-                dailySummary = JSON.parse(savedSummary);
-            }
-            
+            const savedFY = localStorage.getItem('softifyx_financial_years');
+            if (savedFY) financialYears = JSON.parse(savedFY);
+
+            // COMPANY-SPECIFIC DATA (Isolated)
+            const savedCompany = localStorage.getItem(getCoKey('softifyx_company'));
+            if (savedCompany) companyData = JSON.parse(savedCompany);
+
+            const savedLogo = localStorage.getItem(getCoKey('softifyx_logo'));
+            logoData = savedLogo || null;
+            if (logoData) displayLogo();
+
+            const savedNote = localStorage.getItem(getCoKey('softifyx_note'));
+                currentNote = savedNote || '';
+            const notesText = document.getElementById('notesText');
+            if (notesText) notesText.value = currentNote;
+
+            const savedSummary = localStorage.getItem(getCoKey('softifyx_summary'));
+            if (savedSummary) dailySummary = JSON.parse(savedSummary);
+            else resetDashboardModel(); // Re-zero if no data for this company
+
+            const savedInv = localStorage.getItem(getCoKey('softifyx_inventory'));
+            if (savedInv) inventoryItems = JSON.parse(savedInv);
+            else inventoryItems = [];
+
             updateNames();
             updateDashboardSummary();
+        }
+
+        function resetDashboardModel() {
+            dailySummary = {
+                sales: 0, cashValue: 0, bankBalance: 0, receivablesValue: 0,
+                cashOpening: 0, cashReceipts: 0, cashPayments: 0,
+                recOpening: 0, recSales: 0, recReceipts: 0,
+                payOpening: 0, payPurchases: 0, payPayments: 0,
+                newInvoices: 0, customerReceipts: 0, overdue: 0,
+                newPurchases: 0, vendorPayments: 0, outstanding: 0
+            };
         }
 
         function updateDashboardSummary() {
@@ -154,7 +147,7 @@
         }
 
         function saveSummary() {
-            localStorage.setItem('softifyx_summary', JSON.stringify(dailySummary));
+            localStorage.setItem(getCoKey('softifyx_summary'), JSON.stringify(dailySummary));
         }
 
         function displayLogo() {
@@ -566,7 +559,7 @@
                     dealsIn: dealsIn || ''
                 };
                 
-                localStorage.setItem('softifyx_company', JSON.stringify(companyData));
+                localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
                 updateNames();
                 
                 dailySummary.cashReceipts += 10000;
@@ -582,7 +575,7 @@
             
             if (doNotShowOption) {
                 logoData = null;
-                localStorage.removeItem('softifyx_logo');
+                localStorage.removeItem(getCoKey('softifyx_logo'));
                 displayLogo();
                 closeModal();
             } else if (fileInput && fileInput.files.length > 0) {
@@ -590,7 +583,7 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     logoData = e.target.result;
-                    localStorage.setItem('softifyx_logo', logoData);
+                    localStorage.setItem(getCoKey('softifyx_logo'), logoData);
                     displayLogo();
                     closeModal();
                 };
@@ -638,9 +631,8 @@
                 companies.push({ ...companyData });
             }
 
-            localStorage.setItem('softifyx_company', JSON.stringify(companyData));
+            localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
             localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-            localStorage.setItem('softifyx_active_company', companyData.name);
             updateNames();
             
             dailySummary.cashReceipts += 5000;
@@ -655,14 +647,14 @@
             const noteText = document.getElementById('notesText')?.value;
             if (noteText) {
                 currentNote = noteText;
-                localStorage.setItem('softifyx_note', currentNote);
+                localStorage.setItem(getCoKey('softifyx_note'), currentNote);
             }
         }
 
         function clearNote() {
             document.getElementById('notesText').value = '';
             currentNote = '';
-            localStorage.setItem('softifyx_note', '');
+            localStorage.setItem(getCoKey('softifyx_note'), '');
         }
 
         function performSearch() {
@@ -1146,6 +1138,7 @@
             
             errorMsg.style.color = '#27ae60';
             errorMsg.textContent = 'Saved successfully!';
+            localStorage.setItem('softifyx_financial_years', JSON.stringify(financialYears));
             setTimeout(() => { if(errorMsg) errorMsg.textContent=''; }, 2000);
             renderFinancialYearList();
         }
@@ -1173,19 +1166,15 @@
             
             const confirmed = confirm('FINAL WARNING: You are about to put the software into PRIMARY MODE (Factory Reset). All Companies, Inventory, Transactions, and Settings will be DELETED. Are you absolutely sure?');
             if(confirmed) {
-                // Keep the current Admin password so they don't get locked out
-                const currentAdminPassword = storedPassword;
+                // Company-Specific Reset (Isolation)
+                const prefix = getCoKey('').replace('__', '_'); // Get the prefix like softifyx_CoName_
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(prefix) && !key.includes('users') && !key.includes('companies')) {
+                        localStorage.removeItem(key);
+                    }
+                });
                 
-                // Nuclear reset
-                localStorage.clear();
-                
-                // Restore basic admin auth after clear to ensure primary accessibility
-                const defaultUsers = [
-                    { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: currentAdminPassword }
-                ];
-                localStorage.setItem('softifyx_users', JSON.stringify(defaultUsers));
-                
-                alert('System successfully reset to Primary Mode. All data zeroed out. The application will now restart.');
+                alert('Company data successfully zeroed out. The application will now restart.');
                 window.location.reload();
             }
         }
@@ -1341,7 +1330,7 @@
                 return;
             }
             
-            localStorage.setItem('softifyx_currency', JSON.stringify({ country: c, name: n, symbol: s }));
+            localStorage.setItem(getCoKey('softifyx_currency'), JSON.stringify({ country: c, name: n, symbol: s }));
             err.style.color = '#27ae60';
             err.textContent = 'Settings saved successfully!';
             
