@@ -1084,6 +1084,34 @@
             renderFinancialYearList();
         }
 
+        // --- CLEAR TRANSACTIONS LOGIC --- //
+        function executeClearTransactions() {
+            const pwdInput = document.getElementById('clearTxPassword').value;
+            const errorMsg = document.getElementById('clearTxErrorMsg');
+            
+            errorMsg.textContent = '';
+            
+            if(!pwdInput) {
+                errorMsg.textContent = 'Hardware Authorization: Admin Password is required!';
+                return;
+            }
+            
+            // Validate against the "admin" user from the users array
+            const adminUser = users.find(u => u.username.toLowerCase() === 'admin' || u.username.toLowerCase() === 'administrator');
+            const validPassword = adminUser ? adminUser.password : '123';
+            
+            if(pwdInput !== validPassword) {
+                errorMsg.textContent = 'Incorrect Password! Authorization denied.';
+                return;
+            }
+            
+            const confirmed = confirm('CRITICAL WARNING: Are you incredibly sure you want to permanently delete ALL financial transactions? This operation CANNOT BE UNDONE.');
+            if(confirmed) {
+                alert('All system transactions have been cleared successfully. Database is now empty.');
+                closeModal();
+            }
+        }
+
         async function openModularPopup(url, titleIcon, titleText, initCallback) {
             try {
                 const res = await fetch(url);
@@ -1175,6 +1203,7 @@
         window.selectFinancialYear = selectFinancialYear;
         window.addFinancialYear = addFinancialYear;
         window.saveFinancialYear = saveFinancialYear;
+        window.executeClearTransactions = executeClearTransactions;
 
 // === API INTEGRATION READINESS ===
 /**
