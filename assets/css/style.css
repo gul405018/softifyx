@@ -612,7 +612,7 @@
             padding: 15px;
             height: fit-content;
             max-height: calc(100vh - 110px);
-            overflow-y: hidden;
+            overflow-y: auto;
         }
 
         .summary-section {
@@ -959,8 +959,8 @@
         }
 
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
 
         ::-webkit-scrollbar-track {

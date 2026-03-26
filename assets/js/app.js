@@ -43,14 +43,23 @@
         };
 
         function loadSavedData() {
-            const savedCompany = localStorage.getItem('softifyx_company');
-            if (savedCompany) {
-                companyData = JSON.parse(savedCompany);
-            }
-            
             const savedCompanies = localStorage.getItem('softifyx_companies');
             if (savedCompanies) {
                 companies = JSON.parse(savedCompanies);
+            }
+
+            const activeName = localStorage.getItem('softifyx_active_company');
+            const savedCompany = localStorage.getItem('softifyx_company');
+            
+            if (activeName) {
+                const found = companies.find(c => (typeof c === 'string' ? c : c.name) === activeName);
+                if (found) {
+                    companyData = typeof found === 'string' ? { name: found, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" } : { ...found };
+                } else if (savedCompany) {
+                    companyData = JSON.parse(savedCompany);
+                }
+            } else if (savedCompany) {
+                companyData = JSON.parse(savedCompany);
             }
             
             const savedUsers = localStorage.getItem('softifyx_users');
@@ -437,12 +446,17 @@
                     dealsIn: document.getElementById('newCompanyDealsIn')?.value || ''
                 };
                 
-                companies.push(companyName);
+                companies.push(newCompany);
                 localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+
+                // Switch active
+                companyData = { ...newCompany };
+                localStorage.setItem('softifyx_active_company', companyName);
                 
                 dailySummary.newInvoices++;
                 saveSummary();
                 updateDashboardSummary();
+                updateNames();
                 
                 document.getElementById('listOfCompaniesBtn').click();
             }
@@ -536,13 +550,25 @@
             companyData.ntn = document.getElementById('modalCompanyNTN')?.value || '';
             companyData.dealsIn = document.getElementById('modalCompanyDealsIn')?.value || '';
             
+            // Fix: update item in companies array
+            const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === companyData.name);
+            if (index !== -1) {
+                companies[index] = { ...companyData };
+            } else {
+                companies.push({ ...companyData });
+            }
+
             localStorage.setItem('softifyx_company', JSON.stringify(companyData));
+            localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+            localStorage.setItem('softifyx_active_company', companyData.name);
             updateNames();
             
             dailySummary.cashReceipts += 5000;
             dailySummary.customerReceipts += 5000;
             saveSummary();
             updateDashboardSummary();
+            
+            closeModal();
         }
 
         function saveNote() {
@@ -776,10 +802,31 @@
         function selectCompanyForLogin(select) {
             const selectedCompany = select.value;
             if (selectedCompany) {
-                // In real scenario, this would load company data from database
-                // For now, we'll just update the form fields
-                companyData.name = selectedCompany;
-                document.getElementById('modalCompanyName').value = selectedCompany;
+                localStorage.setItem('softifyx_active_company', selectedCompany);
+                
+                let found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
+                if (found) {
+                    if (typeof found === 'string') {
+                        companyData = { name: found, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
+                    } else {
+                        companyData = { ...found };
+                    }
+                } else {
+                    companyData.name = selectedCompany;
+                }
+                
+                // Update form fields immediately
+                const n = id => { const el = document.getElementById(id); if (el) return el; return {}; };
+                n('modalCompanyName').value = companyData.name || '';
+                n('modalCompanyAddress').value = companyData.address || '';
+                n('modalCompanyPhone').value = companyData.phone || '';
+                n('modalCompanyFax').value = companyData.fax || '';
+                n('modalCompanyEmail').value = companyData.email || '';
+                n('modalCompanyWebsite').value = companyData.website || '';
+                n('modalCompanyGST').value = companyData.gst || '';
+                n('modalCompanyNTN').value = companyData.ntn || '';
+                n('modalCompanyDealsIn').value = companyData.dealsIn || '';
+                
                 updateNames();
             }
         }
@@ -900,6 +947,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(navRes.ok) {
             document.getElementById('navbar-container').innerHTML = await navRes.text();
             
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    const navMenu = document.getElementById('navMenu');
+                    if (navMenu) {
+                        navMenu.classList.toggle('active');
+                    }
+                });
+            }
+
             // Attach SPA event listeners to all generic dropdown menus
             document.querySelectorAll('.dropdown-item[data-target]').forEach(item => {
                 item.addEventListener('click', (e) => {
