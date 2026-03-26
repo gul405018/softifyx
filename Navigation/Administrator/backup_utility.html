@@ -1,44 +1,55 @@
-<div id="backupPopupWrapper" style="font-family: 'Segoe UI', Arial, sans-serif; background: #fff; width: 100%; box-sizing: border-box; padding: 10px 15px;">
+<div id="backupPopupWrapper" style="font-family: Arial, sans-serif; background: #f5f5f5; width: 100%; box-sizing: border-box; padding: 0 0 20px 0;">
     
-    <!-- Warning Banner -->
-    <div style="background: #fff; margin-bottom: 15px;">
-        <span style="color: #d63031; font-style: italic; font-size: 14px; font-weight: 500;">Note: Close the main application before taking back-up or the back-up may contain errors.</span>
+    <!-- Header Banner -->
+    <div style="background: linear-gradient(to bottom, #ffffff, #e6e6e6); border-bottom: 2px solid #222; padding: 12px 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+        <span style="color: #a0a0a0; font-style: italic; font-weight: 900; font-size: 24px; font-family: Arial, sans-serif; letter-spacing: 1px; text-shadow: 1px 1px 0px #fff, -1px -1px 0px #ccc; transform: scaleX(1.15); display: inline-block; transform-origin: left; margin-right: 15px;">BACK - UP UTILITY</span>
+        <span style="color: #d32f2f; font-style: italic; font-size: 14px; font-family: Arial, sans-serif;">Close the main application, before taking back-up or the back-up may contain errors.</span>
     </div>
 
-    <!-- Fieldset 1 -->
-    <fieldset style="border: 1px solid #ccc; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; background: #fafafa; min-height: 110px; display: flex; align-items: center; justify-content: space-between; gap: 30px;">
-        <legend style="color: #666; font-weight: bold; font-size: 14px; padding: 0 5px; margin-left: 10px;">Back-Up Data</legend>
-        <p style="color: #1f4668; font-size: 13.5px; margin: 0; flex: 1; line-height: 1.5;">
-            It is recommended that you always take back-up after using your application or atleast once everyday. Store your back-up at some safe location, like some other hard drive or CD. Remember, that your application can be installed again but your data cannot be restored, if you lose it in any way and don't have the back-up data. It has become much easier now a days to corrupt or lose data, in presence of various silent computer worms and viruses, as well as sudden power shut downs.
-        </p>
-        <button class="btn btn-primary" onclick="executeBackup()" style="background-color: #1f4668; color: #fff; border: 1px solid #1f4668; border-radius: 4px; height: 60px; width: 140px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; flex-shrink: 0; transition: 0.2s;" onmouseover="this.style.backgroundColor='#163854'" onmouseout="this.style.backgroundColor='#1f4668'"><i class="fas fa-download" style="font-size: 18px;"></i> Back-Up Data</button>
-    </fieldset>
+    <div style="padding: 0 20px;">
+        <!-- Fieldset 1 -->
+        <fieldset style="border: 1px solid #b3b3b3; padding: 15px 20px; margin-bottom: 30px; background: transparent; display: flex; align-items: stretch; justify-content: space-between; gap: 30px;">
+            <legend style="color: #888; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; padding: 0 5px; margin-left: 10px;">Back-Up Data</legend>
+            <p style="color: #0000ff; font-family: Arial, sans-serif; font-size: 13px; margin: 0; flex: 1; line-height: 1.5; padding-top: 5px;">
+                It is recommended that you always take back-up after using your application or atleast once everyday. Store your back-up at some safe location, like some other hard drive or CD. Remember, that your application can be installed again but your data cannot be restored, if you lose it in any way and don't have the back-up data. It has become much easier now a days to corrupt or lose data, in presence of various silent computer worms and viruses, as well as sudden power shut downs.
+            </p>
+            <button class="btn btn-primary" onclick="executeBackup()" style="background-color: #1f4668; color: #fff; border: 1px solid #1f4668; border-radius: 4px; height: 60px; width: 140px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; flex-shrink: 0; transition: 0.2s; align-self: center;" onmouseover="this.style.backgroundColor='#163854'" onmouseout="this.style.backgroundColor='#1f4668'"><i class="fas fa-download" style="font-size: 18px;"></i> Back-Up Data</button>
+        </fieldset>
 
-    <!-- Fieldset 2 -->
-    <fieldset style="border: 1px solid #ccc; padding: 12px 18px; border-radius: 4px; background: #fafafa; min-height: 110px; display: flex; align-items: center; justify-content: space-between; gap: 30px;">
-        <legend style="color: #666; font-weight: bold; font-size: 14px; padding: 0 5px; margin-left: 10px;">Restore Back-Up</legend>
-        <p style="color: #1f4668; font-size: 13.5px; margin: 0; flex: 1; line-height: 1.5;">
-            This will replace your current data with the data in back-up. If you are having any problems with your current data then it is recommended that you restore your back-up but if the back-up is not up-to-date then you would not be able to restore data entered after you last took back-up of your data. It is always advised that you take back-up of your current data before restoring older one.
-        </p>
-        <div style="flex-shrink: 0;">
-            <button class="btn btn-primary" onclick="document.getElementById('restoreFileInput').click()" style="background-color: #1f4668; color: #fff; border: 1px solid #1f4668; border-radius: 4px; height: 60px; width: 140px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.backgroundColor='#163854'" onmouseout="this.style.backgroundColor='#1f4668'"><i class="fas fa-upload" style="font-size: 18px;"></i> Restore Back-up</button>
-            <input type="file" id="restoreFileInput" style="display:none;" accept=".json" onchange="executeRestore(event)">
-        </div>
-    </fieldset>
+        <!-- Fieldset 2 -->
+        <fieldset style="border: 1px solid #b3b3b3; padding: 15px 20px; background: transparent; display: flex; align-items: stretch; justify-content: space-between; gap: 30px;">
+            <legend style="color: #888; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; padding: 0 5px; margin-left: 10px;">Restore Back-Up</legend>
+            <p style="color: #0000ff; font-family: Arial, sans-serif; font-size: 13px; margin: 0; flex: 1; line-height: 1.5; padding-top: 5px;">
+                This will replace your current data with the data in back-up. If you are having any problems with your current data then it is recommended that you restore your back-up but if the back-up is not up-to-date then you would not be able to restore data entered after you last took back-up of your data. It is always advised that you take back-up of your current data before restoring older one.
+            </p>
+            <div style="flex-shrink: 0; align-self: center;">
+                <button class="btn btn-primary" onclick="document.getElementById('restoreFileInput').click()" style="background-color: #1f4668; color: #fff; border: 1px solid #1f4668; border-radius: 4px; height: 60px; width: 140px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.backgroundColor='#163854'" onmouseout="this.style.backgroundColor='#1f4668'"><i class="fas fa-upload" style="font-size: 18px;"></i> Restore Back-up</button>
+                <input type="file" id="restoreFileInput" style="display:none;" accept=".json" onchange="executeRestore(event)">
+            </div>
+        </fieldset>
+    </div>
 </div>
 
 <script>
     setTimeout(() => {
         const modalContainer = document.getElementById('modalContainer');
         if (modalContainer) {
-            modalContainer.style.width = '780px';
+            modalContainer.style.width = '820px';
             modalContainer.style.maxWidth = '95vw';
+            modalContainer.style.padding = '0';
+            modalContainer.style.overflow = 'hidden';
+            modalContainer.style.backgroundColor = '#f5f5f5';
         }
         
         // Custom cleanup when modal closes to snap width back to normal for other forms
         const orgClose = window.closeModal;
         window.closeModal = function() {
-            if(modalContainer) modalContainer.style.width = '';
+            if(modalContainer) {
+                modalContainer.style.width = '';
+                modalContainer.style.padding = '';
+                modalContainer.style.overflow = '';
+                modalContainer.style.backgroundColor = '';
+            }
             if(orgClose) orgClose();
         };
     }, 10);
