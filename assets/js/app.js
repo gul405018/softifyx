@@ -1353,6 +1353,20 @@
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;
+
+        // Utilities
+        window.togglePasswordVisibility = function(inputId, iconElement) {
+            const el = document.getElementById(inputId);
+            if(el) {
+                const type = el.getAttribute('type') === 'password' ? 'text' : 'password';
+                el.setAttribute('type', type);
+                if(iconElement) {
+                    iconElement.className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+                    iconElement.style.color = type === 'password' ? '#888' : '#e74c3c';
+                }
+            }
+        };
+
         window.initUserRightsView = initUserRightsView;
         window.initPasswordsView = initPasswordsView;
         window.toggleRightStatus = toggleRightStatus;
