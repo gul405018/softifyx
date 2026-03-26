@@ -1261,12 +1261,13 @@
             const savedCurr = localStorage.getItem('softifyx_currency');
             const newSym = savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.';
             
-            const currencyMatchRegex = /₹|Rs\.|US\$|€|£|Rs|AED|SAR|¥|\$/g;
-            
-            // Replaces symbol safely inside known monetary elements on screen
+            // Extract the pure numeric value and reconstruct the string to guarantee flawless symbol swapping
             const priceElements = document.querySelectorAll('.stat-value, .financial-row .value, .summary-row .value');
             priceElements.forEach(el => {
-                el.innerText = el.innerText.replace(currencyMatchRegex, newSym + ' ');
+                const numberPart = el.innerText.replace(/[^\d.,-]/g, '').trim();
+                if(numberPart) {
+                    el.innerText = newSym + ' ' + numberPart;
+                }
             });
         }
 
@@ -1305,6 +1306,7 @@
             loadSavedData();
             setupDropdowns();
             setupMenuButtons(); 
+            applyGlobalCurrencySymbol(); // Hook into page load
 
             const today = new Date();
             const yyyy = today.getFullYear();
