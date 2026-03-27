@@ -260,6 +260,11 @@
             `;
             
             overlay.classList.add('active');
+
+            // Apply Viewer Restrictions if necessary
+            setTimeout(() => {
+                applyViewerRestrictions(container);
+            }, 50);
         }
 
         function closeModal() {
@@ -370,9 +375,8 @@
                     <div class="form-group">
                         <label>Role</label>
                         <select class="form-control" id="newRole">
-                            <option value="Admin">Admin</option>
-                            <option value="Operator">Operator</option>
-                            <option value="Manager">Manager</option>
+                            <option value="Operator">Operator (Data Entry)</option>
+                            <option value="Viewer">Viewer (Read Only)</option>
                         </select>
                     </div>
                     <div class="modal-actions">
@@ -421,8 +425,8 @@
                             <label>Role</label>
                             <select class="form-control" id="editRole">
                                 <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                                <option value="Operator" ${user.role === 'Operator' ? 'selected' : ''}>Operator</option>
-                                <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
+                                <option value="Operator" ${user.role === 'Operator' ? 'selected' : ''}>Operator (Data Entry)</option>
+                                <option value="Viewer" ${user.role === 'Viewer' ? 'selected' : ''}>Viewer (Read Only)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1038,7 +1042,15 @@
             });
             
             localStorage.setItem('softifyx_user_rights_' + userId, JSON.stringify(rightsData));
-            alert('User rights saved successfully!');
+            
+            // Sync the user's role in the main users list as well
+            const userIdx = users.findIndex(u => u.id == userId);
+            if (userIdx !== -1) {
+                users[userIdx].role = userRole;
+                localStorage.setItem('softifyx_users', JSON.stringify(users));
+            }
+
+            alert('User rights and role saved successfully!');
         }
 
         // === MODULAR POPUP SYSTEM ARCHITECTURE ===
@@ -1390,23 +1402,86 @@
 
             const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
             if (!savedRights) {
-                // Default behavior: Viewer can't do much, Operator can do most except Admin tasks
-                const role = session.role || 'Viewer';
-                return role === 'Admin' || role === 'Operator'; 
+                // Default: Operator can do everything, Viewer can only see basic dashboard/ledgers
+                const currentRole = session.role || 'Viewer';
+                if (currentRole === 'Viewer') {
+                    const basicViewerAllowed = ["Daily Summary", "View Inventory Ledgers", "View Account Ledger", "Inventory Balances", "Dashboard"];
+                    return basicViewerAllowed.includes(rightName);
+                }
+                return true; 
             }
 
             const rightsData = JSON.parse(savedRights);
+            const userSetRole = rightsData.__USER_ROLE__ || session.role || 'Viewer';
+            
+            // If explicit right is set to false, then deny even for operators
             if (rightsData[rightName] === false) return false;
             
-            // Check based on role if no explicit right set
-            const role = rightsData.__USER_ROLE__ || session.role || 'Viewer';
-            if (role === 'Viewer') {
-                // Viewer can only see specific reports/summaries
-                const viewerAllowed = ["Daily Summary", "View Inventory Ledgers", "View Account Ledger", "Inventory Balances", "Dashboard"];
-                return viewerAllowed.includes(rightName);
+            // Strict role check
+            if (userSetRole === 'Viewer') {
+                // Viewer can ONLY open modules explicitly allowed by Admin
+                return rightsData[rightName] === true;
             }
             
+            // Administrator and Operator can open anything not explicitly denied
             return true;
+        }
+
+        function applyViewerRestrictions(container) {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            // We need to check both session role and user rights role
+            const userId = users.find(u => u.username === session.username)?.id;
+            let currentRole = session.role || 'Viewer';
+            
+            if (userId) {
+                const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+                if (savedRights) {
+                    const rightsData = JSON.parse(savedRights);
+                    currentRole = rightsData.__USER_ROLE__ || currentRole;
+                }
+            }
+
+            if (currentRole !== 'Viewer') return;
+
+            // 1. Disable all standard input fields
+            const inputs = container.querySelectorAll('input, select, textarea');
+            inputs.forEach(el => {
+                el.disabled = true;
+                el.style.backgroundColor = '#f4f6f9'; // Visual cue for read-only
+                el.style.cursor = 'not-allowed';
+            });
+
+            // 2. Hide or disable Action buttons
+            const actionKeywords = [
+                'Save', 'Add', 'Update', 'Delete', 'Clear', 'Restore', 'Backup', 
+                'Post', 'Record', 'New', 'Remove', 'Edit', 'Change'
+            ];
+            
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const btnText = btn.innerText.trim();
+                const btnHtml = btn.innerHTML;
+                
+                // Keep "Close", "Cancel", "Back", "View", "Print", "Print Preview" icons/text
+                const isNavigation = btnText.match(/Close|Cancel|Back|Understand|View|Exit/i);
+                const isPrinting = btnHtml.match(/fa-print|fa-file-pdf/i) || btnText.match(/Print|Report/i);
+                
+                if (!isNavigation && !isPrinting) {
+                    const isAction = actionKeywords.some(kw => btnText.includes(kw) || btnHtml.includes(kw.toLowerCase()));
+                    if (isAction || btn.classList.contains('btn-primary') || btn.classList.contains('btn-danger') || btn.classList.contains('btn-warning')) {
+                        btn.style.display = 'none'; // Hide it completely for a cleaner "Viewer" look
+                    }
+                }
+            });
+
+            // 3. Add a small badge indicating Read-Only mode
+            const header = container.querySelector('.modal-header');
+            if (header) {
+                const badge = document.createElement('span');
+                badge.innerHTML = '<i class="fas fa-eye"></i> Read Only Mode';
+                badge.style.cssText = 'background: #e1f5fe; color: #01579b; padding: 4px 10px; border-radius: 4px; font-size: 11px; margin-left: 15px; font-weight: 600; border: 1px solid #b3e5fc;';
+                header.appendChild(badge);
+            }
         }
 
         function showAccessDenied(moduleName) {
