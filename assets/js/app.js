@@ -398,12 +398,12 @@
                 `<div style="font-family: 'Segoe UI', sans-serif;">
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Username</label>
-                        <input type="text" class="form-control" id="newUsername" placeholder="Enter username" style="height: 38px; border-radius: 8px;">
+                        <input type="text" class="form-control" id="newUsername" placeholder="Enter username" style="height: 38px; border-radius: 8px;" autocomplete="off">
                     </div>
                     <div class="form-group" style="margin-bottom: 20px; position: relative;">
                         <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Password</label>
                         <div style="position: relative;">
-                            <input type="password" class="form-control" id="newPassword" placeholder="Enter password" style="height: 38px; border-radius: 8px; padding-right: 40px;">
+                            <input type="password" class="form-control" id="newPassword" placeholder="Enter password" style="height: 38px; border-radius: 8px; padding-right: 40px;" autocomplete="new-password">
                             <i class="fas fa-eye-slash" id="togglePasswordIcon" 
                                style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; font-size: 16px;" 
                                onclick="togglePasswordVisibility('newPassword', this)"></i>
