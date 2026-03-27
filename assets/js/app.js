@@ -1393,28 +1393,32 @@
 
         function checkUserRights(rightName) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            if (session.username === 'Administrator') return true; // Admin always holds all rights
             
-            // Get user rights for the specific user
+            // 1. HARD ADMIN CHECK: The main 'Administrator' account always has 100% access.
+            if (session.username === 'Administrator') return true;
+            
+            // 2. Resolve User ID
             const userId = users.find(u => u.username === session.username)?.id;
             if (!userId) return false;
 
-            const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
-            
-            // If the user's role is Admin (but not the main Administrator account), they still get everything
-            // This allows the user to create other "Admin" accounts.
+            // 3. Resolve Role from User List (More reliable than session)
             const userObj = users.find(u => u.id == userId);
-            if (userObj && userObj.role === 'Admin') return true;
+            const userRole = userObj?.role || 'Operator';
+            
+            // 4. ADMIN ROLE CHECK: Secondary Admin accounts also have 100% access.
+            if (userRole === 'Admin') return true;
 
+            // 5. Check Explicit Rights
+            const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
             if (!savedRights) {
-                // If no rights are saved yet, non-admins have ZERO access by default to everything
+                // Default: All non-admins have zero access until rights are saved.
                 return false; 
             }
 
             const rightsData = JSON.parse(savedRights);
             
-            // STRICT ALLOW-LIST: User must have the right explicitly set to TRUE
-            // Any undefined or false right is blocked for Operators and Viewers.
+            // STRICT ALLOW-LIST: User MUST have the right explicitly set to TRUE.
+            // If it is 'false' or 'undefined', it is BLOCKED.
             return rightsData[rightName] === true;
         }
 

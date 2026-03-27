@@ -174,7 +174,7 @@
             if ((userObj && p === userObj.password) || isDefaultAdmin) {
                 localStorage.setItem('softifyx_session', JSON.stringify({
                     username: u,
-                    role: userObj ? (userObj.role || 'Admin') : 'Admin', 
+                    role: userObj ? (userObj.role || 'Operator') : 'Admin', 
                     company: companySelect.value,
                     year: yearSelect.value,
                     loginTime: Date.now()
