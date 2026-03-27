@@ -1022,7 +1022,7 @@
                     <td class="indent-level-1">
                         ${itemName}
                     </td>
-                    <td class="right-status" style="text-align: center; font-weight: 500;">Allowed</td>
+                    <td class="right-status" style="text-align: center; font-weight: 500; color: #d63031;">Not Allowed</td>
                 </tr>`;
             });
 
@@ -1062,12 +1062,14 @@
                 const rightName = row.getAttribute('data-right');
                 const statusCell = row.querySelector('.right-status');
                 
-                if (rightsData[rightName] === false) {
-                    statusCell.textContent = 'Not Allowed';
-                    statusCell.style.color = '#d63031';
-                } else {
+                // STRICT CHECK: Only show "Allowed" if explicitly saved as TRUE.
+                // If it is missing (null/undefined) or explicitly 'false', it is "Not Allowed".
+                if (rightsData[rightName] === true) {
                     statusCell.textContent = 'Allowed';
                     statusCell.style.color = '#27ae60';
+                } else {
+                    statusCell.textContent = 'Not Allowed';
+                    statusCell.style.color = '#d63031';
                 }
             });
         }
