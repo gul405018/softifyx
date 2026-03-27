@@ -613,7 +613,6 @@
                 companyData = { ...newCompany };
                 localStorage.setItem('softifyx_active_company', companyName);
                 
-                dailySummary.newInvoices++;
                 saveSummary();
                 updateDashboardSummary();
                 updateNames();
@@ -656,10 +655,6 @@
                 }
 
                 updateNames();
-                
-                dailySummary.cashReceipts += 10000;
-                dailySummary.customerReceipts += 10000;
-                saveSummary();
                 updateDashboardSummary();
             }
         }
@@ -738,10 +733,8 @@
 
             updateNames();
             
-            dailySummary.cashReceipts += 5000;
-            dailySummary.customerReceipts += 5000;
-            saveSummary();
-            updateDashboardSummary();
+            // Reload all company-specific data (Inventory, Summary, etc.) to ensure dashboard reflects new choice
+            loadSavedData();
             
             closeModal();
         }
