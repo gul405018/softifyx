@@ -30,7 +30,7 @@
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coName = session.company || 'default';
             // Global keys that should NOT be isolated
-            const globalKeys = ['softifyx_companies', 'softifyx_financial_years', 'softifyx_session'];
+            const globalKeys = ['softifyx_companies', 'softifyx_session'];
             if (globalKeys.includes(key)) return key;
             // Company-specific keys
             return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
@@ -50,8 +50,9 @@
             if (savedUsers) users = JSON.parse(savedUsers);
             else users = [{ id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }];
 
-            const savedFY = localStorage.getItem('softifyx_financial_years');
+            const savedFY = localStorage.getItem(getCoKey('softifyx_financial_years'));
             if (savedFY) financialYears = JSON.parse(savedFY);
+            else financialYears = ["2021-22","2022-23","2023-24","2024-25"];
 
             // COMPANY-SPECIFIC DATA (Isolated)
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
@@ -531,8 +532,14 @@
                 user.email = document.getElementById('editEmail')?.value || user.email;
                 user.role = document.getElementById('editRole')?.value || user.role;
                 user.status = document.getElementById('editStatus')?.value || user.status;
-                if (users[index].username === "Administrator") {
-                    localStorage.setItem('softifyx_admin_password', newPassword);
+                // Find the index of the user to check for Administrator
+                const index = users.findIndex(u => u.id === userId);
+                if (index !== -1 && users[index].username === "Administrator") {
+                    // If the Administrator's password was changed, it would be handled separately
+                    // For now, ensure the admin password key is not overwritten by general user updates
+                    // The original code had an issue here with `newPassword` not being defined.
+                    // If password change for admin is intended, it needs a dedicated input.
+                    // For now, we'll ensure the users array is saved correctly.
                 }
                 localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
                 document.getElementById('userLoginsBtn').click();
@@ -544,9 +551,8 @@
                 const index = users.findIndex(u => u.id === userId);
                 if (index !== -1 && users[index].username !== 'Administrator') {
                     users.splice(index, 1);
-                    if (users[index].username === "Administrator") {
-                        localStorage.setItem('softifyx_admin_password', password);
-                    }
+                    // The instruction had a malformed duplicate line here.
+                    // Keeping the correct existing line.
                     localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
                     document.getElementById('userLoginsBtn').click();
                 }
@@ -629,6 +635,17 @@
                 companyData = { ...newCompany };
                 localStorage.setItem('softifyx_active_company', companyName);
                 
+                // New logic from instruction
+                if (companyName && companyName !== "[object Object]") {
+                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                    session.company = companyName;
+                    localStorage.setItem('softifyx_session', JSON.stringify(session));
+                    localStorage.setItem('softifyx_active_company', companyName);
+                    
+                    alert(`Switched to: ${companyName}`);
+                    window.location.reload();
+                }
+
                 saveSummary();
                 updateDashboardSummary();
                 updateNames();
@@ -741,11 +758,14 @@
             localStorage.setItem('softifyx_companies', JSON.stringify(companies));
             
             // CRITICAL SYNC: Update the main session too if the name changed
+            // The instruction provided a new block to replace the existing session update and reload.
+            // Update session and reload
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            if (sessionData.company !== companyData.name) {
-                sessionData.company = companyData.name;
-                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-            }
+            sessionData.company = companyData.name;
+            localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+            
+            alert('Settings saved. Refreshing to apply changes...');
+            window.location.reload();
 
             updateNames();
             
@@ -1140,13 +1160,13 @@
                 rightsData[rightName] = (statusCell.textContent !== 'Not Allowed');
             });
             
-            localStorage.setItem('softifyx_user_rights_' + userId, JSON.stringify(rightsData));
+            localStorage.setItem(getCoKey('softifyx_user_rights_' + userId), JSON.stringify(rightsData));
             
             // Sync the user's role in the main users list as well
             const userIdx = users.findIndex(u => u.id == userId);
             if (userIdx !== -1) {
                 users[userIdx].role = userRole;
-                localStorage.setItem('softifyx_users', JSON.stringify(users));
+                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
             }
 
             alert('User rights and role saved successfully!');
@@ -1194,7 +1214,7 @@
                 
                 // Update password
                 users[userIndex].password = newPwd;
-                localStorage.setItem('softifyx_users', JSON.stringify(users));
+                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
                 
                 alert('Success: Password for user "' + user.username + '" has been updated successfully!');
                 closeModal();
@@ -1271,7 +1291,7 @@
             
             errorMsg.style.color = '#27ae60';
             errorMsg.textContent = 'Saved successfully!';
-            localStorage.setItem('softifyx_financial_years', JSON.stringify(financialYears));
+            localStorage.setItem(getCoKey('softifyx_financial_years'), JSON.stringify(financialYears));
             setTimeout(() => { if(errorMsg) errorMsg.textContent=''; }, 2000);
             renderFinancialYearList();
         }

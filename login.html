@@ -208,16 +208,18 @@
             yearSelect.add(op); 
         });
 
-        // 3. Logic to update users based on selected company
-        function updateUsersForCompany() {
+        // 3. Logic to update users AND financial years based on selected company
+        function updateUsersAndData() {
             const coName = companySelect.value || 'default';
             const userKey = `softifyx_${coName}_users`;
-            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
+            const fyKey = `softifyx_${coName}_financial_years`;
             
+            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
+            const companyFYs = JSON.parse(localStorage.getItem(fyKey) || '["2021-22","2022-23","2023-24","2024-25"]');
+            
+            // Update Users
             const currentSelectedUser = userSelect.value;
             userSelect.innerHTML = '';
-            
-            // Always add Administrator (Global)
             const adminOp = new Option("Administrator", "Administrator");
             userSelect.add(adminOp);
             
@@ -227,21 +229,31 @@
                     userSelect.add(op);
                 }
             });
-
-            // Try to restore selection if it still exists
             if (currentSelectedUser && Array.from(userSelect.options).some(o => o.value === currentSelectedUser)) {
                 userSelect.value = currentSelectedUser;
             }
+
+            // Update Financial Years
+            const currentSelectedFY = yearSelect.value;
+            yearSelect.innerHTML = '';
+            companyFYs.forEach(y => {
+                const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
+                const op = new Option(yName, yName); 
+                yearSelect.add(op); 
+            });
+            if (currentSelectedFY && Array.from(yearSelect.options).some(o => o.value === currentSelectedFY)) {
+                yearSelect.value = currentSelectedFY;
+            }
         }
 
-        companySelect.addEventListener('change', updateUsersForCompany);
+        companySelect.addEventListener('change', updateUsersAndData);
 
         // --- LOGIN DEFAULTS LOGIC ---
         if (savedDefaults.company) companySelect.value = savedDefaults.company;
         if (savedDefaults.year) yearSelect.value = savedDefaults.year;
         
-        // Populate users for the initially selected company
-        updateUsersForCompany();
+        // Populate users and data for the initially selected company
+        updateUsersAndData();
         
         // Now set the user default if it worked
         if (savedDefaults.username && Array.from(userSelect.options).some(o => o.value === savedDefaults.username)) {
