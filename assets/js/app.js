@@ -896,7 +896,8 @@
             const userRightsBtn = document.getElementById('userRightsBtn');
             if(userRightsBtn) {
                 userRightsBtn.addEventListener('click', function() {
-                    openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView);
+                    if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
+                    openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
                 });
             }
         }
@@ -1500,22 +1501,29 @@
             openModal({ icon: 'fa-shield-alt', text: 'Access Restricted' }, html);
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback) {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName) {
             try {
+                // If moduleName is explicitly provided, check rights BEFORE any fetch to prevent loading
+                if (moduleName && !checkUserRights(moduleName)) {
+                    showAccessDenied(moduleName);
+                    return;
+                }
+
                 const res = await fetch(url);
                 if (res.ok) {
                     let html = await res.text();
                     
                     // --- AUTOMATED RIGHTS CHECK FOR POPUPS ---
                     // Create a temporary element to parse the HTML and check for [data-module]
+                    // This is a fallback if moduleName wasn't passed to the function
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     const moduleTag = tempDiv.querySelector('[data-module]');
                     
-                    if (moduleTag) {
-                        const moduleName = moduleTag.getAttribute('data-module');
-                        if (!checkUserRights(moduleName)) {
-                            showAccessDenied(moduleName);
+                    if (moduleTag && !moduleName) {
+                        const extractedName = moduleTag.getAttribute('data-module');
+                        if (!checkUserRights(extractedName)) {
+                            showAccessDenied(extractedName);
                             return;
                         }
                     }
@@ -1820,8 +1828,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
                     let targetUrl = item.getAttribute('data-target');
+                    let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                 });
@@ -1838,8 +1847,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
                     let targetUrl = item.getAttribute('data-target');
+                    let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName);
                 });
             });
         }
