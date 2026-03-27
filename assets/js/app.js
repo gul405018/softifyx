@@ -19,6 +19,7 @@
         ];
 
         let logoData = null;
+        let originSelectedCompanyName = ""; // New: track original name to fix edit/duplicate bug
 
         let inventoryItems = [];
 
@@ -680,8 +681,14 @@
                 
                 localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
                 
+                // CRITICAL SYNC: Update the global companies list as well
+                const companiesIdx = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === (session.company || companyData.name));
+                if (companiesIdx !== -1) {
+                    companies[companiesIdx] = { ...companyData };
+                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+                }
+
                 // CRITICAL SYNC: Update the main session too if the name changed
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 if (session.company !== businessName) {
                     session.company = businessName;
                     localStorage.setItem('softifyx_session', JSON.stringify(session));
@@ -746,13 +753,18 @@
             companyData.ntn = document.getElementById('modalCompanyNTN')?.value || '';
             companyData.dealsIn = document.getElementById('modalCompanyDealsIn')?.value || '';
             
-            // Fix: update item in companies array
-            const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === companyData.name);
+            // Fix: update item using the original name tracked during selection
+            const searchName = originSelectedCompanyName || companyData.name;
+            const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === searchName);
+            
             if (index !== -1) {
                 companies[index] = { ...companyData };
             } else {
                 companies.push({ ...companyData });
             }
+
+            // Sync original name for future edits without closing
+            originSelectedCompanyName = companyData.name;
 
             localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
             localStorage.setItem('softifyx_companies', JSON.stringify(companies));
@@ -787,6 +799,29 @@
             document.getElementById('notesText').value = '';
             currentNote = '';
             localStorage.setItem(getCoKey('softifyx_note'), '');
+        }
+
+        function deleteCompany() {
+            const nameToDelete = document.getElementById('modalCompanyName')?.value || originSelectedCompanyName;
+            if (!nameToDelete) return;
+
+            if (confirm(`Are you sure you want to PERMANENTLY delete "${nameToDelete}"? This action cannot be undone.`)) {
+                const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === nameToDelete);
+                if (index !== -1) {
+                    companies.splice(index, 1);
+                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+                    
+                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                    if (session.company === nameToDelete) {
+                        // If active company deleted, logout
+                        localStorage.removeItem('softifyx_session');
+                        window.location.href = 'login.html';
+                    } else {
+                        alert('Company deleted successfully.');
+                        window.location.reload();
+                    }
+                }
+            }
         }
 
         function performSearch() {
@@ -986,9 +1021,20 @@
                         <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
                             <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive</label>
                         </div>
-                        <div class="modal-actions">
-                            <button class="btn btn-primary" onclick="saveCompanyDetails()">Save Changes</button>
-                            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                        <div class="modal-actions" style="justify-content: space-between;">
+                            <div>
+                                <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
+                                    <i class="fas fa-trash-alt"></i> Delete Company
+                                </button>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary" onclick="saveCompanyDetails()">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <button class="btn btn-secondary" onclick="closeModal()">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
                         </div>
                     </div>`
                 );
@@ -1018,6 +1064,7 @@
 
         function selectCompanyForLogin(select) {
             const selectedCompany = select.value;
+            originSelectedCompanyName = selectedCompany; // Store for tracking edits
             if (selectedCompany) {
                 localStorage.setItem('softifyx_active_company', selectedCompany);
                 
