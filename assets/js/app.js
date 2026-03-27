@@ -97,7 +97,7 @@
 
         function updateDashboardSummary() {
             const get = id => document.getElementById(id);
-            const savedCurr = localStorage.getItem('softifyx_currency');
+            const savedCurr = localStorage.getItem(getCoKey('softifyx_currency'));
             const currencySymbol = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
             const fmt = val => currencySymbol + (val || 0).toLocaleString('en-IN');
 
@@ -1263,7 +1263,7 @@
                 }
             });
             
-            const savedCurr = localStorage.getItem('softifyx_currency');
+            const savedCurr = localStorage.getItem(getCoKey('softifyx_currency'));
             if(savedCurr) {
                 try {
                     const data = JSON.parse(savedCurr);
@@ -1357,6 +1357,7 @@
             err.textContent = 'Settings saved successfully!';
             
             applyGlobalCurrencySymbol();
+            updateDashboardSummary();
             
             setTimeout(() => {
                 if(err) err.textContent = '';
@@ -1365,7 +1366,7 @@
         }
 
         function applyGlobalCurrencySymbol() {
-            const savedCurr = localStorage.getItem('softifyx_currency');
+            const savedCurr = localStorage.getItem(getCoKey('softifyx_currency'));
             const newSym = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
             
             // Only update elements specifically marked as money
