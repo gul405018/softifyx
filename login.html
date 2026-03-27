@@ -162,7 +162,7 @@
             <label>Financial Year</label>
             <div style="display:flex; gap:5px; flex:1;">
                 <select id="yearDropdown" style="flex:1;"></select>
-                <button type="button" class="btn btn-default" style="width: auto;">Set Default</button>
+                <button type="button" id="setDefaultBtn" class="btn btn-default" style="width: auto;">Set Default</button>
             </div>
         </div>
         <div class="field-row">
@@ -204,6 +204,34 @@
             const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
             const op = new Option(yName, yName); 
             yearSelect.add(op); 
+        });
+
+        // --- LOGIN DEFAULTS LOGIC ---
+        const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
+        if (savedDefaults.username) userSelect.value = savedDefaults.username;
+        if (savedDefaults.company) companySelect.value = savedDefaults.company;
+        if (savedDefaults.year) yearSelect.value = savedDefaults.year;
+
+        document.getElementById('setDefaultBtn').addEventListener('click', () => {
+            const defaults = {
+                username: userSelect.value,
+                company: companySelect.value,
+                year: yearSelect.value
+            };
+            localStorage.setItem('softifyx_login_defaults', JSON.stringify(defaults));
+            
+            // Visual feedback
+            const btn = document.getElementById('setDefaultBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Saved! ✅';
+            btn.style.borderColor = '#27ae60';
+            btn.style.color = '#27ae60';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.borderColor = '#ced4da';
+                btn.style.color = '#495057';
+            }, 2000);
         });
 
         // AUTHENTIC YETI LOGIC for User-Provided SVG
