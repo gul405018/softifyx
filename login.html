@@ -307,14 +307,21 @@
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
-            const userObj = users.find(usr => usr.username === u);
-            const isDefaultAdmin = (u === 'Administrator' && p === 'admin123'); // Fallback for first-time use
+            
+            const coName = companySelect.value || 'default';
+            const userKey = `softifyx_${coName}_users`;
+            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
+            const userObj = companyUsers.find(usr => usr.username === u);
+            
+            // Global Admin Check
+            const globalAdminPwd = localStorage.getItem('softifyx_admin_password') || '123';
+            const isDefaultAdmin = (u === 'Administrator' && (p === globalAdminPwd || p === 'admin123'));
 
             if ((userObj && p === userObj.password) || isDefaultAdmin) {
                 localStorage.setItem('softifyx_session', JSON.stringify({
                     username: u,
-                    role: userObj ? (userObj.role || 'Operator') : 'Admin', 
-                    company: companySelect.value,
+                    role: (u === 'Administrator') ? 'Admin' : (userObj ? (userObj.role || 'Operator') : 'Operator'),
+                    company: coName,
                     year: yearSelect.value,
                     loginTime: Date.now()
                 }));
