@@ -371,51 +371,84 @@
         function showAddUserForm() {
             openModal(
                 { icon: 'fa-user-plus', text: 'Add New User' },
-                `<div>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" class="form-control" id="newUsername" placeholder="Enter username">
+                `<div style="font-family: 'Segoe UI', sans-serif;">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Username</label>
+                        <input type="text" class="form-control" id="newUsername" placeholder="Enter username" style="height: 38px; border-radius: 8px;">
                     </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" class="form-control" id="newPassword" placeholder="Enter password">
+                    <div class="form-group" style="margin-bottom: 20px; position: relative;">
+                        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Password</label>
+                        <div style="position: relative;">
+                            <input type="password" class="form-control" id="newPassword" placeholder="Enter password" style="height: 38px; border-radius: 8px; padding-right: 40px;">
+                            <i class="fas fa-eye-slash" id="togglePasswordIcon" 
+                               style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; font-size: 16px;" 
+                               onclick="togglePasswordVisibility('newPassword', this)"></i>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="form-control" id="newEmail" placeholder="Enter email">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Email</label>
+                        <input type="email" class="form-control" id="newEmail" placeholder="Enter email" style="height: 38px; border-radius: 8px;">
                     </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="form-control" id="newRole">
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Role</label>
+                        <select class="form-control" id="newRole" style="height: 38px; border-radius: 8px;">
                             <option value="Operator">Operator (Data Entry)</option>
                             <option value="Viewer">Viewer (Read Only)</option>
+                            <option value="Admin">Admin (Manager)</option>
                         </select>
                     </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="addUser()">Add User</button>
-                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <div class="modal-actions" style="border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                        <button class="btn btn-primary" onclick="addUser()" style="height: 42px; padding: 0 30px; font-weight: 600; border-radius: 10px;">Add User</button>
+                        <button class="btn btn-secondary" onclick="closeModal()" style="height: 42px; padding: 0 30px; font-weight: 600; border-radius: 10px;">Cancel</button>
                     </div>
                 </div>`
             );
         }
 
+        window.togglePasswordVisibility = function(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        };
+
         function addUser() {
             const username = document.getElementById('newUsername')?.value;
             const email = document.getElementById('newEmail')?.value;
             const role = document.getElementById('newRole')?.value;
+            const password = document.getElementById('newPassword')?.value;
             
             if (username && email) {
+                if (!password) {
+                    alert("Please enter a password for the new user!");
+                    return;
+                }
                 const newUser = {
                     id: users.length + 1,
                     username: username,
                     role: role,
                     email: email,
                     status: 'Active',
-                    password: document.getElementById('newPassword')?.value || '123'
+                    password: password
                 };
                 users.push(newUser);
                 localStorage.setItem('softifyx_users', JSON.stringify(users));
-                document.getElementById('userLoginsBtn').click();
+                
+                // Show a small success toast if possible, otherwise close
+                closeModal();
+                alert("User added successfully! They can now log in.");
+                
+                // Refresh the list if the user list modal was partially open
+                const userLoginsBtn = document.getElementById('userLoginsBtn');
+                if(userLoginsBtn) userLoginsBtn.click();
+            } else {
+                alert("Please fill in both Username and Email!");
             }
         }
 
