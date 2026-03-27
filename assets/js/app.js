@@ -1970,9 +1970,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
-                    // Close mobile menu if active
+                    // Close ALL mobile layers
                     const navMenu = document.getElementById('navMenu');
                     if(navMenu) navMenu.classList.remove('active');
+                    document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show'));
                 });
             });
         }
