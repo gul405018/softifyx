@@ -101,19 +101,31 @@
             const currencySymbol = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
             const fmt = val => currencySymbol + (val || 0).toLocaleString('en-IN');
 
-            // --- 1. MAIN DASHBOARD CONTENT (dashboard.html) ---
+                    // --- 1. MAIN DASHBOARD CONTENT (dashboard.html) ---
+            const showOrHide = (id, permission, value) => {
+                const el = get(id);
+                if (!el) return;
+                if (!checkUserRights(permission)) {
+                    el.textContent = "Restricted";
+                    el.style.color = "#bdc3c7";
+                    el.style.fontSize = "14px";
+                } else {
+                    el.textContent = fmt(value);
+                    el.style.color = "";
+                    el.style.fontSize = "";
+                }
+            };
             
-            // Top Stat Cards
-            const salesVal = get('salesValue'); if(salesVal) salesVal.textContent = fmt(dailySummary.sales);
-            const cashVal = get('cashValue'); if(cashVal) cashVal.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
-            const bankVal = get('bankValue'); if(bankVal) bankVal.textContent = fmt(dailySummary.bankBalance);
-            const recVal = get('receivablesValue'); if(recVal) recVal.textContent = fmt(dailySummary.recOpening + dailySummary.recSales - dailySummary.recReceipts);
+            showOrHide('salesValue', 'Sale Summary', dailySummary.sales);
+            showOrHide('cashValue', 'Recovery/Receipts Reports', dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
+            showOrHide('bankValue', 'Cash & Bank Balances', dailySummary.bankBalance);
+            showOrHide('receivablesValue', 'Accounts Receivable Aging', dailySummary.recOpening + dailySummary.recSales - dailySummary.recReceipts);
 
             // Financial Cards (Match dashboard.html IDs)
-            const cO = get('cashOpening'); if(cO) cO.textContent = fmt(dailySummary.cashOpening);
-            const cR = get('cashReceipts'); if(cR) cR.textContent = fmt(dailySummary.cashReceipts);
-            const cP = get('cashPayments'); if(cP) cP.textContent = fmt(dailySummary.cashPayments);
-            const cC = get('cashCurrent'); if(cC) cC.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
+            showOrHide('cashOpening', 'Cash Payments', dailySummary.cashOpening);
+            showOrHide('cashReceipts', 'Cash Receipts', dailySummary.cashReceipts);
+            showOrHide('cashPayments', 'Cash Payments', dailySummary.cashPayments);
+            showOrHide('cashCurrent', 'Cash Payments', dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
 
             const rO = get('recOpening'); if(rO) rO.textContent = fmt(dailySummary.recOpening);
             const rS = get('recSales'); if(rS) rS.textContent = fmt(dailySummary.recSales);
@@ -134,14 +146,14 @@
             const scN = get('summaryCashNet'); if(scN) scN.textContent = fmt(dailySummary.cashOpening + dailySummary.cashReceipts - dailySummary.cashPayments);
 
             // Customer Activity
-            const snI = get('summaryNewInvoices'); if(snI) snI.textContent = dailySummary.newInvoices;
-            const scr = get('summaryCustomerReceipts'); if(scr) scr.textContent = fmt(dailySummary.customerReceipts);
+            const snI = get('summaryNewInvoices'); if(snI) snI.textContent = checkUserRights("Sale Summary") ? dailySummary.newInvoices : "*";
+            const scr = get('summaryCustomerReceipts'); if(scr) scr.textContent = checkUserRights("Recovery/Receipts Reports") ? fmt(dailySummary.customerReceipts) : "Restricted";
             const sod = get('summaryOverdue'); if(sod) sod.textContent = fmt(dailySummary.overdue);
 
             // Vendor Activity
             const snP = get('summaryNewPurchases'); if(snP) snP.textContent = dailySummary.newPurchases;
-            const svp = get('summaryVendorPayments'); if(svp) svp.textContent = fmt(dailySummary.vendorPayments);
-            const sou = get('summaryOutstanding'); if(sou) sou.textContent = fmt(dailySummary.outstanding);
+            const svp = get('summaryVendorPayments'); if(svp) svp.textContent = checkUserRights("Payments Reports") ? fmt(dailySummary.vendorPayments) : "Restricted";
+            const sou = get('summaryOutstanding'); if(sou) sou.textContent = checkUserRights("Accounts Payable Aging") ? fmt(dailySummary.outstanding) : "Restricted";
 
             // --- 3. COMMON WIDGETS ---
             
@@ -1480,19 +1492,56 @@
         }
 
         function showAccessDenied(moduleName) {
-            const html = `<div style="padding:60px 40px; text-align:center; background: linear-gradient(135.2deg, #fff 0%, #f9fbff 100%); border-radius: 15px;">
+            // Remove any existing access denied markers
+            const existing = document.getElementById('accessDeniedPopup');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'accessDeniedPopup';
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+                display: flex; align-items: center; justify-content: center;
+                z-index: 99999; opacity: 0; transition: opacity 0.3s ease;
+            `;
+
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: white; padding: 40px; border-radius: 20px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center;
+                max-width: 450px; width: 90%; transform: scale(0.8);
+                transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            `;
+
+            card.innerHTML = `
                 <div style="width: 80px; height: 80px; background: #fff5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid #ffeded;">
-                    <i class="fas fa-shield-alt" style="font-size:35px; color:#e74c3c;"></i>
+                    <i class="fas fa-lock" style="font-size:35px; color:#e74c3c;"></i>
                 </div>
-                <h2 style="font-weight:700; color:#2c3e50; margin-bottom:10px; font-size: 24px;">Access Restricted</h2>
-                <p style="color:#7f8c8d; font-size: 16px; margin-bottom: 25px; line-height: 1.5;">Oops! It looks like you don't have the necessary <b>rights</b> to access the <span style="color:#3498db; font-weight: 600;">${moduleName.replace(/_/g, ' ')}</span> module.</p>
-                <div style="background: #fdf2f2; padding: 10px 15px; border-radius: 8px; display: inline-block; border-left: 4px solid #e74c3c; margin-bottom: 20px;">
-                    <span style="color:#c0392b; font-size: 13px; font-weight: 600;"><i class="fas fa-info-circle"></i> Please contact your system Administrator for permission.</span>
-                </div>
-                <br>
-                <button class="btn btn-primary" onclick="closeModal()" style="padding: 10px 30px; border-radius: 25px; background: #2c3e50; border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">Understand & Back</button>
-            </div>`;
-            openModal({ icon: 'fa-shield-alt', text: 'Access Restricted' }, html);
+                <h2 style="font-weight:700; color:#2c3e50; margin-bottom:10px; font-size: 24px;">Module Restricted</h2>
+                <p style="color:#7f8c8d; font-size: 15px; margin-bottom: 25px; line-height: 1.6;">
+                    Sorry, you do not have permission to view or open <b>${moduleName}</b>.<br>
+                    Please contact your Manager/Administrator for access.
+                </p>
+                <button class="btn btn-primary" style="padding: 12px 40px; border-radius: 30px; background: #2c3e50; border: none; font-weight: 600; cursor: pointer; color: white;">Close Message</button>
+            `;
+
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+
+            // Animate in
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+
+            const close = () => {
+                overlay.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+                setTimeout(() => overlay.remove(), 300);
+            };
+
+            overlay.onclick = (e) => { if(e.target === overlay) close(); };
+            card.querySelector('button').onclick = close;
         }
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName) {
@@ -1866,19 +1915,6 @@ window.handleLogout = function() {
     }
 };
 
-// --- FUTURE-PROOF ARCHITECTURE: USER RIGHTS HELPER ---
-/**
- * Generic function to check if the current user has access to a specific module.
- * @param {string} moduleName - Name of the module (e.g., 'sale_invoice')
- */
-function checkUserRights(moduleName) {
-    if (currentUser === 'Administrator') return true;
-    
-    // Check global rights (stored per user per company prefix)
-    const rightsKey = getCoKey(`user_rights_${currentUser}`);
-    const rights = JSON.parse(localStorage.getItem(rightsKey) || '{}');
-    
-    // Default to true (unrestricted) if not explicitly set to false
-    return rights[moduleName] !== false;
-}
+// --- FUTURE-PROOF ARCHITECTURE ---
+// Note: checkUserRights is defined in the main scope above.
 window.checkUserRights = checkUserRights;
