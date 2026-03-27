@@ -796,16 +796,13 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.05); /* Nearly clear, no dimming */
-            backdrop-filter: none; /* No blur */
-            display: none; 
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 10000000; /* Absolute Top */
-            padding: 20px;
-            box-sizing: border-box;
+            z-index: 50000;
         }
 
         .modal-overlay.active {
@@ -1065,138 +1062,65 @@
         }
 
         @media (max-width: 768px) {
-            .dashboard-layout {
-                flex-direction: column;
-                height: auto;
-                overflow-y: visible;
-                padding: 10px 5px;
-            }
             .left-sidebar, .right-sidebar {
-                display: none !important; /* Sidebars hidden on mobile */
-            }
-            .center-content {
-                width: 100%;
-                max-height: none;
-                overflow-y: visible;
+                display: none !important;
             }
             .mobile-menu-toggle {
                 display: block;
-                position: relative;
-                z-index: 100001;
-                pointer-events: auto;
-                cursor: pointer;
             }
             .nav-menu {
                 display: none;
                 position: absolute;
                 top: 100%;
-                left: 10px;
-                width: 280px;
-                max-width: 90vw;
-                background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                left: 0;
+                width: 100%;
+                background: #214F77;
                 flex-direction: column;
                 gap: 0;
-                padding: 5px 0;
-                border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                z-index: 100002;
-                border: 1px solid rgba(255,255,255,0.1);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                overflow: hidden;
+                padding: 10px 0;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 50000;
             }
             .nav-menu.active {
-                display: flex !important;
-                animation: slideDownFade 0.3s ease forwards;
-            }
-            @keyframes slideDownFade {
-                from { opacity: 0; transform: translateY(-10px) scale(0.95); }
-                to { opacity: 1; transform: translateY(0) scale(1); }
+                display: flex;
             }
             .menu-item {
-                padding: 14px 20px;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-                justify-content: space-between;
-                font-size: 15px;
-                color: #fff;
+                padding: 12px 20px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
             }
             .dropdown {
                 position: absolute;
-                inset: 0;
+                top: 100%;
+                left: 0;
                 width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                display: none;
-                flex-direction: column;
-                z-index: 100003;
-                border-radius: 12px;
-                overflow-y: auto;
-                animation: drillIn 0.3s ease-out forwards;
-                padding: 0;
-            }
-            .dropdown.show {
-                display: flex !important;
-            }
-            @keyframes drillIn {
-                from { opacity: 0; transform: translateX(30px); }
-                to { opacity: 1; transform: translateX(0); }
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                background: #f8f9fa;
+                border: none;
+                border-radius: 0;
+                z-index: 50001;
             }
             .dropdown-item {
-                color: #fff;
-                padding: 16px 20px;
-                font-size: 15px;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
+                padding: 10px 25px;
+                border-bottom: 1px solid #eaeaea;
             }
-            .dropdown-item:hover {
-                background: rgba(255,255,255,0.1);
-                color: #fff;
-            }
-            .nav-menu {
-                overflow: hidden;
-                box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-            }
-            .dropdown-item {
-                color: #e0e6ed;
-                padding: 12px 20px;
-                font-size: 14px;
-                border-bottom: 1px solid rgba(255,255,255,0.03);
-            }
-            .dropdown-item:hover {
-                background: rgba(255,255,255,0.1);
-                color: #fff;
+            .welcome-user {
+                display: none; /* Hide on very small screens to save space */
             }
             .branding-row {
-                height: auto;
-                padding: 15px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .company-title {
-                font-size: 18px;
-            }
-            .dashboard-logo {
-                height: 50px;
-                position: static;
-                transform: none;
-                margin-bottom: 10px;
-            }
-            .welcome-card {
-                padding: 15px 10px;
-            }
-            .softifyx-title {
-                font-size: 24px;
+                padding: 0 10px;
             }
             .search-date-bar {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
             }
-            .stats-grid, .financial-grid, .widgets-grid {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .financial-grid {
                 grid-template-columns: 1fr;
             }
             .modal-container {
                 width: 95%;
-                margin: 20px auto;
                 padding: 15px;
             }
         }
