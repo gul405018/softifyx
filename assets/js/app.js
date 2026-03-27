@@ -97,7 +97,9 @@
 
         function updateDashboardSummary() {
             const get = id => document.getElementById(id);
-            const fmt = val => '₹' + (val || 0).toLocaleString('en-IN');
+            const savedCurr = localStorage.getItem('softifyx_currency');
+            const currencySymbol = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
+            const fmt = val => currencySymbol + (val || 0).toLocaleString('en-IN');
 
             // --- 1. MAIN DASHBOARD CONTENT (dashboard.html) ---
             
@@ -706,6 +708,7 @@
 
         function setupMenuButtons() {
             document.getElementById('myCompanyBtn').addEventListener('click', function() {
+                if (!checkUserRights("My Company")) return showAccessDenied("My Company");
                 openModal(
                     { icon: 'fa-building', text: 'Company Setup' },
                     `<div>
@@ -760,6 +763,7 @@
             });
 
             document.getElementById('myLogoBtn').addEventListener('click', function() {
+                if (!checkUserRights("My Logo")) return showAccessDenied("My Logo");
                 openModal(
                     { icon: 'fa-image', text: 'Logo Settings' },
                     `<div>
@@ -797,9 +801,11 @@
             });
 
             document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
+                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
                 let companyOptions = '';
                 companies.forEach(company => {
-                    companyOptions += `<option value="${company}">${company}</option>`;
+                    const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
+                    companyOptions += `<option value="${companyName}">${companyName}</option>`;
                 });
                 
                 openModal(
@@ -871,6 +877,7 @@
             });
 
             document.getElementById('userLoginsBtn').addEventListener('click', function() {
+                if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
                 openModal(
                     { icon: 'fa-users', text: 'User Logins' },
                     `<div>
@@ -1372,6 +1379,51 @@
             });
         }
 
+        function checkUserRights(rightName) {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            if (session.username === 'Administrator') return true; // Admin always holds all rights
+            
+            // Get user rights for the specific user
+            const userId = users.find(u => u.username === session.username)?.id;
+            if (!userId) return false;
+
+            const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+            if (!savedRights) {
+                // Default behavior: Viewer can't do much, Operator can do most except Admin tasks
+                const role = session.role || 'Viewer';
+                return role === 'Admin' || role === 'Operator'; 
+            }
+
+            const rightsData = JSON.parse(savedRights);
+            if (rightsData[rightName] === false) return false;
+            
+            // Check based on role if no explicit right set
+            const role = rightsData.__USER_ROLE__ || session.role || 'Viewer';
+            if (role === 'Viewer') {
+                // Viewer can only see specific reports/summaries
+                const viewerAllowed = ["Daily Summary", "View Inventory Ledgers", "View Account Ledger", "Inventory Balances", "Dashboard"];
+                return viewerAllowed.includes(rightName);
+            }
+            
+            return true;
+        }
+
+        function showAccessDenied(moduleName) {
+            const html = `<div style="padding:60px 40px; text-align:center; background: linear-gradient(135.2deg, #fff 0%, #f9fbff 100%); border-radius: 15px;">
+                <div style="width: 80px; height: 80px; background: #fff5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid #ffeded;">
+                    <i class="fas fa-shield-alt" style="font-size:35px; color:#e74c3c;"></i>
+                </div>
+                <h2 style="font-weight:700; color:#2c3e50; margin-bottom:10px; font-size: 24px;">Access Restricted</h2>
+                <p style="color:#7f8c8d; font-size: 16px; margin-bottom: 25px; line-height: 1.5;">Oops! It looks like you don't have the necessary <b>rights</b> to access the <span style="color:#3498db; font-weight: 600;">${moduleName.replace(/_/g, ' ')}</span> module.</p>
+                <div style="background: #fdf2f2; padding: 10px 15px; border-radius: 8px; display: inline-block; border-left: 4px solid #e74c3c; margin-bottom: 20px;">
+                    <span style="color:#c0392b; font-size: 13px; font-weight: 600;"><i class="fas fa-info-circle"></i> Please contact your system Administrator for permission.</span>
+                </div>
+                <br>
+                <button class="btn btn-primary" onclick="closeModal()" style="padding: 10px 30px; border-radius: 25px; background: #2c3e50; border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">Understand & Back</button>
+            </div>`;
+            openModal({ icon: 'fa-shield-alt', text: 'Access Restricted' }, html);
+        }
+
         async function openModularPopup(url, titleIcon, titleText, initCallback) {
             try {
                 const res = await fetch(url);
@@ -1387,11 +1439,8 @@
                     if (moduleTag) {
                         const moduleName = moduleTag.getAttribute('data-module');
                         if (!checkUserRights(moduleName)) {
-                            html = `<div style="padding:40px; text-align:center; color:#d63031;">
-                                <i class="fas fa-lock" style="font-size:40px; margin-bottom:10px;"></i>
-                                <h3 style="font-weight:700;">Access Denied</h3>
-                                <p style="color:#666;">You do not have permission for <b>${moduleName.replace('_', ' ')}</b>.</p>
-                            </div>`;
+                            showAccessDenied(moduleName);
+                            return;
                         }
                     }
                     

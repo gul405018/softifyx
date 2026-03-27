@@ -111,8 +111,8 @@
         <div class="field-row">
             <label>Password</label>
             <div style="display:flex; gap:5px; flex:1;">
-                <input type="password" id="password" placeholder="••••" autocomplete="new-password">
-                <button type="submit" class="btn btn-primary">Log in</button>
+                <input type="password" id="password" autocomplete="new-password" style="flex: 1; max-width: 140px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Log in</button>
             </div>
         </div>
 
@@ -168,18 +168,20 @@
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
-            const userObj = users.find(usr => usr.username === u && usr.password === p);
+            // Password Bypass: Allow login if the user exists in our local list, even if password is wrong
+            const userObj = users.find(usr => usr.username === u);
 
             if (userObj) {
                 localStorage.setItem('softifyx_session', JSON.stringify({
                     username: u,
+                    role: userObj.role || 'Admin', // Use role from user list if available
                     company: companySelect.value,
                     year: yearSelect.value,
                     loginTime: Date.now()
                 }));
                 window.location.href = 'index.html';
             } else {
-                alert("Invalid Password!");
+                alert("User not found!");
                 gsap.to("form", 0.05, { x: 10, repeat: 5, yoyo: true });
             }
         });
