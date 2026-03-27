@@ -184,15 +184,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
         // Populate Data from LocalStorage
-        const users = JSON.parse(localStorage.getItem('softifyx_users') || '[{"username":"Administrator","password":"123"}]');
         const companies = JSON.parse(localStorage.getItem('softifyx_companies') || '["Softifyx Company"]');
         const financialYears = JSON.parse(localStorage.getItem('softifyx_financial_years') || '["2021-22","2022-23","2023-24"]');
+        const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
 
         const userSelect = document.getElementById('userDropdown');
         const companySelect = document.getElementById('companyDropdown');
         const yearSelect = document.getElementById('yearDropdown');
 
-        users.forEach(u => { const op = new Option(u.username, u.username); userSelect.add(op); });
+        // 1. Populate Companies
         companies.forEach(c => { 
             const cName = (typeof c === 'string') ? c : (c.name || "Unknown Company");
             if (cName !== "[object Object]") {
@@ -200,17 +200,53 @@
                 companySelect.add(op); 
             }
         });
+
+        // 2. Populate Years
         financialYears.forEach(y => { 
             const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
             const op = new Option(yName, yName); 
             yearSelect.add(op); 
         });
 
+        // 3. Logic to update users based on selected company
+        function updateUsersForCompany() {
+            const coName = companySelect.value || 'default';
+            const userKey = `softifyx_${coName}_users`;
+            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
+            
+            const currentSelectedUser = userSelect.value;
+            userSelect.innerHTML = '';
+            
+            // Always add Administrator (Global)
+            const adminOp = new Option("Administrator", "Administrator");
+            userSelect.add(adminOp);
+            
+            companyUsers.forEach(u => {
+                if (u.username && u.username !== "Administrator") {
+                    const op = new Option(u.username, u.username);
+                    userSelect.add(op);
+                }
+            });
+
+            // Try to restore selection if it still exists
+            if (currentSelectedUser && Array.from(userSelect.options).some(o => o.value === currentSelectedUser)) {
+                userSelect.value = currentSelectedUser;
+            }
+        }
+
+        companySelect.addEventListener('change', updateUsersForCompany);
+
         // --- LOGIN DEFAULTS LOGIC ---
-        const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
-        if (savedDefaults.username) userSelect.value = savedDefaults.username;
         if (savedDefaults.company) companySelect.value = savedDefaults.company;
         if (savedDefaults.year) yearSelect.value = savedDefaults.year;
+        
+        // Populate users for the initially selected company
+        updateUsersForCompany();
+        
+        // Now set the user default if it worked
+        if (savedDefaults.username && Array.from(userSelect.options).some(o => o.value === savedDefaults.username)) {
+            userSelect.value = savedDefaults.username;
+        }
 
         document.getElementById('setDefaultBtn').addEventListener('click', () => {
             const defaults = {

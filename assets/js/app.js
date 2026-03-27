@@ -30,7 +30,7 @@
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coName = session.company || 'default';
             // Global keys that should NOT be isolated
-            const globalKeys = ['softifyx_users', 'softifyx_companies', 'softifyx_financial_years', 'softifyx_session'];
+            const globalKeys = ['softifyx_companies', 'softifyx_financial_years', 'softifyx_session'];
             if (globalKeys.includes(key)) return key;
             // Company-specific keys
             return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
@@ -46,8 +46,9 @@
                 });
             }
 
-            const savedUsers = localStorage.getItem('softifyx_users');
+            const savedUsers = localStorage.getItem(getCoKey('softifyx_users'));
             if (savedUsers) users = JSON.parse(savedUsers);
+            else users = [{ id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }];
 
             const savedFY = localStorage.getItem('softifyx_financial_years');
             if (savedFY) financialYears = JSON.parse(savedFY);
@@ -235,7 +236,16 @@
                     // Only toggle if they clicked the direct menu-item text, not inside its dropdown
                     if (e.target === this || e.target.parentElement === this && !e.target.closest('.dropdown')) {
                         e.stopPropagation();
-                        toggleDropdown(this);
+                        
+                        // Exclusive Toggle: Close all other main dropdowns
+                        const dropdown = this.querySelector('.dropdown');
+                        const isAlreadyOpen = dropdown && (dropdown.style.display === 'block' || dropdown.classList.contains('show'));
+                        
+                        hideAllDropdowns();
+                        
+                        if (!isAlreadyOpen) {
+                            toggleDropdown(this);
+                        }
                     }
                 });
             });
@@ -521,7 +531,10 @@
                 user.email = document.getElementById('editEmail')?.value || user.email;
                 user.role = document.getElementById('editRole')?.value || user.role;
                 user.status = document.getElementById('editStatus')?.value || user.status;
-                localStorage.setItem('softifyx_users', JSON.stringify(users));
+                if (users[index].username === "Administrator") {
+                    localStorage.setItem('softifyx_admin_password', newPassword);
+                }
+                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
                 document.getElementById('userLoginsBtn').click();
             }
         }
@@ -531,7 +544,10 @@
                 const index = users.findIndex(u => u.id === userId);
                 if (index !== -1 && users[index].username !== 'Administrator') {
                     users.splice(index, 1);
-                    localStorage.setItem('softifyx_users', JSON.stringify(users));
+                    if (users[index].username === "Administrator") {
+                        localStorage.setItem('softifyx_admin_password', password);
+                    }
+                    localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
                     document.getElementById('userLoginsBtn').click();
                 }
             }
@@ -1281,17 +1297,26 @@
                 return;
             }
             
-            const confirmed = confirm('FINAL WARNING: You are about to put the software into PRIMARY MODE (Factory Reset). All Companies, Inventory, Transactions, and Settings will be DELETED. Are you absolutely sure?');
+            const confirmed = confirm('FINAL WARNING: This will clear all transactions (Sales, Payments, Receipts) for the current company. Master Data (Inventory, Chart of Accounts, etc.) will be PRESERVED. Are you absolutely sure?');
             if(confirmed) {
                 // Company-Specific Reset (Isolation)
                 const prefix = getCoKey('').replace('__', '_'); // Get the prefix like softifyx_CoName_
+                const keepKeywords = ['inventory', 'accounts', 'users', 'rights', 'company', 'logo', 'currency', 'note', 'companies', 'session', 'financial_years'];
+                
                 Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith(prefix) && !key.includes('users') && !key.includes('companies')) {
-                        localStorage.removeItem(key);
+                    if (key.startsWith(prefix)) {
+                        const isProtected = keepKeywords.some(kw => key.toLowerCase().includes(kw));
+                        if (!isProtected) {
+                            localStorage.removeItem(key);
+                        }
                     }
                 });
                 
-                alert('Company data successfully zeroed out. The application will now restart.');
+                // Also reset the dashboard numbers
+                resetDashboardModel();
+                saveSummary();
+                
+                alert('Transactions successfully cleared. Master data was preserved.');
                 window.location.reload();
             }
         }

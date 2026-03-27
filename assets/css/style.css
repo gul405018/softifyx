@@ -1074,34 +1074,43 @@
                 top: 100%;
                 left: 0;
                 width: 100%;
-                background: #214F77;
+                background: #1F4E79;
                 flex-direction: column;
                 gap: 0;
-                padding: 10px 0;
+                padding: 0;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.2);
                 z-index: 50000;
+                max-height: 80vh;
+                overflow-y: auto;
             }
             .nav-menu.active {
                 display: flex;
             }
             .menu-item {
                 padding: 12px 20px;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                width: 100%;
+                text-align: left;
+                position: relative;
             }
             .dropdown {
-                position: absolute;
-                top: 100%;
-                left: 0;
+                position: static; /* Mobile: Push other items down instead of overlaying */
                 width: 100%;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                background: #f8f9fa;
+                box-shadow: none;
+                background: rgba(0,0,0,0.1); /* Slightly darker to distinguish from main nav */
                 border: none;
                 border-radius: 0;
-                z-index: 50001;
+                padding: 0;
+                margin-top: 8px;
             }
             .dropdown-item {
-                padding: 10px 25px;
-                border-bottom: 1px solid #eaeaea;
+                padding: 10px 35px; /* More indent for sub-items */
+                color: rgba(255,255,255,0.85);
+                border-bottom: 1px solid rgba(255,255,255,0.03);
+            }
+            .dropdown-item:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
             }
             .welcome-user {
                 display: none; /* Hide on very small screens to save space */
