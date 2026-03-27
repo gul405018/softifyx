@@ -473,7 +473,7 @@
                     password: password
                 };
                 users.push(newUser);
-                localStorage.setItem('softifyx_users', JSON.stringify(users));
+                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
                 
                 // Show a small success toast if possible, otherwise close
                 closeModal();
@@ -1050,6 +1050,11 @@
                 n('modalCompanyDealsIn').value = companyData.dealsIn || '';
                 
                 updateNames();
+
+                // Force a full reload to refresh dashboard data for the NEW company
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             }
         }
         function initUserRightsView() {
@@ -1124,7 +1129,7 @@
         function loadUserRightsForm() {
             const userId = document.getElementById('urUserSelect')?.value;
             if (!userId) return;
-            const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+            const savedRights = localStorage.getItem(getCoKey('softifyx_user_rights_' + userId));
             
             let rightsData = {};
             if (savedRights) rightsData = JSON.parse(savedRights);
@@ -1538,7 +1543,7 @@
             if (userRole === 'Admin') return true;
 
             // 5. Check Explicit Rights
-            const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+            const savedRights = localStorage.getItem(getCoKey('softifyx_user_rights_' + userId));
             if (!savedRights) {
                 // Default: All non-admins have zero access until rights are saved.
                 return false; 
@@ -1558,7 +1563,7 @@
             let currentRole = session.role || 'Viewer';
             
             if (userId) {
-                const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+                const savedRights = localStorage.getItem(getCoKey('softifyx_user_rights_' + userId));
                 if (savedRights) {
                     const rightsData = JSON.parse(savedRights);
                     currentRole = rightsData.__USER_ROLE__ || currentRole;
