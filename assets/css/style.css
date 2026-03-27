@@ -1093,7 +1093,8 @@
                 z-index: 50000;
             }
             .nav-menu.active {
-                display: flex;
+                display: flex !important;
+                z-index: 99999;
             }
             .menu-item {
                 padding: 12px 20px;

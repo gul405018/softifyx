@@ -1673,11 +1673,9 @@
                 welcomeUserDisplay.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${sessionData.username}</span>`;
             }
             
-            // Update Company Name from Session if available
-            const titleCompanyName = document.getElementById('titleCompanyName');
-            if(titleCompanyName && sessionData.company) {
-                titleCompanyName.innerText = `- ${sessionData.company}`;
-            }
+            // Refresh Dashboard Content
+            updateNames();
+
 
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -1911,14 +1909,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('navbar-container').innerHTML = await navRes.text();
             
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            if (mobileMenuToggle) {
-                mobileMenuToggle.addEventListener('click', () => {
-                    const navMenu = document.getElementById('navMenu');
-                    if (navMenu) {
-                        navMenu.classList.toggle('active');
-                    }
+            const navMenuEl = document.getElementById('navMenu');
+            if (mobileMenuToggle && navMenuEl) {
+                mobileMenuToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navMenuEl.classList.toggle('active');
                 });
             }
+
 
             // Attach SPA event listeners to all generic dropdown menus using Popup System
             document.querySelectorAll('.dropdown-item[data-target], .nested-item[data-target]').forEach(item => {
