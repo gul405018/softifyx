@@ -798,8 +798,8 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(6px);
+            background: rgba(0, 0, 0, 0.05); /* Nearly clear, no dimming */
+            backdrop-filter: none; /* No blur */
             display: none; 
             justify-content: center;
             align-items: center;
@@ -1139,21 +1139,6 @@
             @keyframes drillIn {
                 from { opacity: 0; transform: translateX(30px); }
                 to { opacity: 1; transform: translateX(0); }
-            }
-            .dropdown-back {
-                padding: 16px 20px;
-                background: rgba(255, 255, 255, 0.1);
-                color: #F5A623;
-                font-weight: 700;
-                font-size: 14px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                border-bottom: 2px solid rgba(255,255,255,0.1);
-                position: sticky;
-                top: 0;
-                z-index: 2;
             }
             .dropdown-item {
                 color: #fff;

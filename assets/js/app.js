@@ -231,20 +231,6 @@
 
         function setupDropdowns() {
             document.querySelectorAll('.menu-item').forEach(menuItem => {
-                const dropdown = menuItem.querySelector('.dropdown');
-                
-                // Add Back Button for Mobile if not already present
-                if (dropdown && !dropdown.querySelector('.dropdown-back')) {
-                    const backBtn = document.createElement('div');
-                    backBtn.className = 'dropdown-back';
-                    backBtn.innerHTML = '<i class="fas fa-chevron-left"></i> Back';
-                    backBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        dropdown.classList.remove('show');
-                    };
-                    dropdown.prepend(backBtn);
-                }
-
                 menuItem.addEventListener('click', function(e) {
                     // Only toggle if they clicked the direct menu-item text, not inside its dropdown
                     if (e.target === this || e.target.parentElement === this && !e.target.closest('.dropdown')) {
