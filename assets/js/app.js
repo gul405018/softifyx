@@ -955,9 +955,7 @@
                 "Purchases (Non Tax)", "Purchases Return/Debit Notes", "Cash Payments",
                 "Bank Payments", "Customer Follow-Up", "Quotations", "Sale Orders",
                 "Delivery Challans", "Sales Tax Invoices", "Sale Invoices (Non Tax)",
-                "Sale Return/Credit Notes", "Cash Reciepts", "Bank Reciepts", "Inward Gate Passes",
-                "Outward Gate Passes", "Material Issue Notes", "Production Notes",
-                "Inventory Transfers", "Add Inventory Adjustments", "Reduce Inventory Adjustments",
+                "Sale Return/Credit Notes",                "Cash Receipts", "Bank Receipts", "Inward Gate Passes", "Outward Gate Passes", "Material Issue Notes", "Production Notes", "Inventory Transfers", "Add Inventory Adjustments", "Reduce Inventory Adjustments",
                 "Send Ledger Summary", "Send Payment Reminder", "SMS Templates", "Bulk Messages",
                 "Journal Notes", "General Journal Voucher", "Journal Report", "Print Voucher",
                 "Product Serials Tracking", "Item Below Re-Order Level", "Purchase Order Tracking",
@@ -965,9 +963,9 @@
                 "Party Purchase Summary", "Payments Reports", "Purchase Activity Report - Invoice Wise",
                 "Purchase Activity Report - Party Wise", "Item Purchase Summary", "Item Purchase Analysis",
                 "Accounts Payable Aging", "Material Consumption Report", "Production Report",
-                "Sale Summary", "Sale Register", "Party Sale Summary", "Recovery/Reciepts Reports",
+                "Sale Summary", "Sale Register", "Party Sale Summary", "Recovery/Receipts Reports",
                 "Sale Activity Report - Invoice Wise", "Sale Activity Report - Party Wise",
-                "Item Sale Summary", "Item Sale Analysis", "Services Analysis", "Accounts Recievable Aging",
+                "Item Sale Summary", "Item Sale Analysis", "Services Analysis", "Accounts Receivable Aging",
                 "View Inventory Ledgers", "Print Inventory Ledgers", "Item-Wise Profit/Loss",
                 "Inventory Balances", "Job Ledgers", "View Account Ledger", "Print Account Ledger",
                 "Cash & Bank Balances", "Customer Balances", "Vendor Balances", "Trial Balance",
@@ -1402,30 +1400,22 @@
             if (!userId) return false;
 
             const savedRights = localStorage.getItem('softifyx_user_rights_' + userId);
+            
+            // If the user's role is Admin (but not the main Administrator account), they still get everything
+            // This allows the user to create other "Admin" accounts.
+            const userObj = users.find(u => u.id == userId);
+            if (userObj && userObj.role === 'Admin') return true;
+
             if (!savedRights) {
-                // Default: Operator can do everything, Viewer can only see basic dashboard/ledgers
-                const currentRole = session.role || 'Viewer';
-                if (currentRole === 'Viewer') {
-                    const basicViewerAllowed = ["Daily Summary", "View Inventory Ledgers", "View Account Ledger", "Inventory Balances", "Dashboard"];
-                    return basicViewerAllowed.includes(rightName);
-                }
-                return true; 
+                // If no rights are saved yet, non-admins have ZERO access by default to everything
+                return false; 
             }
 
             const rightsData = JSON.parse(savedRights);
-            const userSetRole = rightsData.__USER_ROLE__ || session.role || 'Viewer';
             
-            // If explicit right is set to false, then deny even for operators
-            if (rightsData[rightName] === false) return false;
-            
-            // Strict role check
-            if (userSetRole === 'Viewer') {
-                // Viewer can ONLY open modules explicitly allowed by Admin
-                return rightsData[rightName] === true;
-            }
-            
-            // Administrator and Operator can open anything not explicitly denied
-            return true;
+            // STRICT ALLOW-LIST: User must have the right explicitly set to TRUE
+            // Any undefined or false right is blocked for Operators and Viewers.
+            return rightsData[rightName] === true;
         }
 
         function applyViewerRestrictions(container) {

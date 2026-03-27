@@ -168,20 +168,20 @@
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
-            // Password Bypass: Allow login if the user exists in our local list, even if password is wrong
             const userObj = users.find(usr => usr.username === u);
+            const isDefaultAdmin = (u === 'Administrator' && p === 'admin123'); // Fallback for first-time use
 
-            if (userObj) {
+            if ((userObj && p === userObj.password) || isDefaultAdmin) {
                 localStorage.setItem('softifyx_session', JSON.stringify({
                     username: u,
-                    role: userObj.role || 'Admin', // Use role from user list if available
+                    role: userObj ? (userObj.role || 'Admin') : 'Admin', 
                     company: companySelect.value,
                     year: yearSelect.value,
                     loginTime: Date.now()
                 }));
                 window.location.href = 'index.html';
             } else {
-                alert("User not found!");
+                alert("Invalid username or password!");
                 gsap.to("form", 0.05, { x: 10, repeat: 5, yoyo: true });
             }
         });
