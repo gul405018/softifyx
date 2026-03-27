@@ -642,6 +642,14 @@
                 };
                 
                 localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
+                
+                // CRITICAL SYNC: Update the main session too if the name changed
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                if (session.company !== businessName) {
+                    session.company = businessName;
+                    localStorage.setItem('softifyx_session', JSON.stringify(session));
+                }
+
                 updateNames();
                 
                 dailySummary.cashReceipts += 10000;
@@ -715,6 +723,14 @@
 
             localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
             localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+            
+            // CRITICAL SYNC: Update the main session too if the name changed
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            if (sessionData.company !== companyData.name) {
+                sessionData.company = companyData.name;
+                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+            }
+
             updateNames();
             
             dailySummary.cashReceipts += 5000;
@@ -971,6 +987,11 @@
             if (selectedCompany) {
                 localStorage.setItem('softifyx_active_company', selectedCompany);
                 
+                // CRITICAL SYNC: Update the main session so getCoKey uses this company prefix on refresh
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                session.company = selectedCompany;
+                localStorage.setItem('softifyx_session', JSON.stringify(session));
+                
                 let found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
                 if (found) {
                     if (typeof found === 'string') {
@@ -997,7 +1018,6 @@
                 updateNames();
             }
         }
-
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
@@ -1914,9 +1934,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 mobileMenuToggle.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    e.stopImmediatePropagation(); // Ensure click-outside doesn't catch this instantly
                     navMenuEl.classList.toggle('active');
                 });
             }
+
 
 
             // Attach SPA event listeners to all generic dropdown menus using Popup System

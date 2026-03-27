@@ -1078,6 +1078,10 @@
             }
             .mobile-menu-toggle {
                 display: block;
+                position: relative;
+                z-index: 100001;
+                pointer-events: auto;
+                cursor: pointer;
             }
             .nav-menu {
                 display: none;
