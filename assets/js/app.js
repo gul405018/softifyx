@@ -58,6 +58,8 @@
             
             if (savedCompany) {
                 companyData = JSON.parse(savedCompany);
+                // Ensure name matches session if changed there
+                if (sessionData.company) companyData.name = sessionData.company; 
             } else if (sessionData.company) {
                 // FALLBACK: Initialize with name from session if no specific settings saved yet
                 companyData = { name: sessionData.company, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
@@ -191,9 +193,17 @@
         }
 
         function updateNames() {
-            document.getElementById('titleCompanyName').textContent = `- ${companyData.name}`;
-            document.getElementById('dashboardCompanyName').textContent = companyData.name;
-            document.getElementById('welcomeUserDisplay').innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${currentUser}</span>`;
+            const titleEl = document.getElementById('titleCompanyName');
+            if (titleEl) titleEl.textContent = `- ${companyData.name}`;
+            
+            const dashNameEl = document.getElementById('dashboardCompanyName');
+            if (dashNameEl) dashNameEl.textContent = companyData.name;
+            
+            // Critical: Update Browser Tab Title
+            document.title = `Softifyx - ${companyData.name || 'Financials'}`;
+
+            const welcomeEl = document.getElementById('welcomeUserDisplay');
+            if (welcomeEl) welcomeEl.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${currentUser}</span>`;
         }
 
         function hideAllDropdowns() {
@@ -248,10 +258,19 @@
                 });
             });
 
+            // Mobile Menu Toggle
+            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.getElementById('navMenu');
+            if (menuToggle && navMenu) {
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    navMenu.classList.toggle('active');
+                });
+            }
+
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.menu-item') && !e.target.closest('.dropdown') && !e.target.closest('.nested-dropdown') && !e.target.closest('.mobile-menu-toggle')) {
                     hideAllDropdowns();
-                    const navMenu = document.getElementById('navMenu');
                     if(navMenu) navMenu.classList.remove('active');
                 }
             });

@@ -1062,8 +1062,19 @@
         }
 
         @media (max-width: 768px) {
+            .dashboard-layout {
+                flex-direction: column;
+                height: auto;
+                overflow-y: visible;
+                padding: 10px 5px;
+            }
             .left-sidebar, .right-sidebar {
-                display: none !important;
+                display: none !important; /* Sidebars hidden on mobile */
+            }
+            .center-content {
+                width: 100%;
+                max-height: none;
+                overflow-y: visible;
             }
             .mobile-menu-toggle {
                 display: block;
@@ -1087,40 +1098,56 @@
             .menu-item {
                 padding: 12px 20px;
                 border-bottom: 1px solid rgba(255,255,255,0.1);
+                justify-content: flex-start;
             }
             .dropdown {
-                position: absolute;
-                top: 100%;
-                left: 0;
+                position: static;
                 width: 100%;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                box-shadow: none;
                 background: #f8f9fa;
-                border: none;
                 border-radius: 0;
-                z-index: 50001;
+                margin-top: 0;
             }
             .dropdown-item {
-                padding: 10px 25px;
+                padding: 12px 30px;
                 border-bottom: 1px solid #eaeaea;
             }
             .welcome-user {
-                display: none; /* Hide on very small screens to save space */
+                display: none;
             }
             .branding-row {
-                padding: 0 10px;
+                height: auto;
+                padding: 10px 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .company-title {
+                font-size: 18px;
+            }
+            .dashboard-logo {
+                height: 50px;
+                position: static;
+                transform: none;
+                margin-bottom: 10px;
+            }
+            .welcome-card {
+                padding: 15px 10px;
+            }
+            .softifyx-title {
+                font-size: 24px;
             }
             .search-date-bar {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 10px;
             }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .financial-grid {
+            .stats-grid, .financial-grid, .widgets-grid {
                 grid-template-columns: 1fr;
             }
             .modal-container {
                 width: 95%;
+                margin: 20px auto;
                 padding: 15px;
             }
         }
