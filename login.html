@@ -79,16 +79,36 @@
         <div class="svgContainer">
             <svg class="mySVG" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="100" cy="100" r="100" fill="#a9ddf3" />
-                <g class="body">
-                    <path fill="#FFFFFF" d="M193.3,135.9c-5.8-8.4-15.5-13.9-26.5-13.9H151V72c0-27.6-22.4-50-50-50S51,44.4,51,72v50H32.1 c-10.6,0-20,5.1-25.8,13l0,78h187L193.3,135.9z" />
+                <g class="yeti">
+                    <!-- Body -->
+                    <path class="body" fill="#FFFFFF" d="M193.3,135.9c-5.8-8.4-15.5-13.9-26.5-13.9H151V72c0-27.6-22.4-50-50-50S51,44.4,51,72v50H32.1 c-10.6,0-20,5.1-25.8,13l0,78h187L193.3,135.9z" />
                     <path fill="none" stroke="#3A5E77" stroke-width="2" d="M193.3,135.9c-5.8-8.4-15.5-13.9-26.5-13.9H151V72c0-27.6-22.4-50-50-50S51,44.4,51,72v50H32.1c-10.6,0-20,5.1-25.8,13" />
-                </g>
-                <path class="face" fill="#DDF1FA" d="M134.5,46v35.5c0,21.8-15.4,39.5-34.5,39.5s-34.5-17.7-34.5-39.5V46" />
-                <g class="eyeL"><circle cx="85" cy="78" r="3.5" fill="#3a5e77" /><circle cx="84" cy="76" r="1" fill="#fff" /></g>
-                <g class="eyeR"><circle cx="115" cy="78" r="3.5" fill="#3a5e77" /><circle cx="114" cy="76" r="1" fill="#fff" /></g>
-                <g class="arms">
-                    <path class="armL" fill="#fff" stroke="#3a5e77" stroke-width="2" d="M110,60 C70,65 30,75 10,130" />
-                    <path class="armR" fill="#fff" stroke="#3a5e77" stroke-width="2" d="M130,60 C170,65 210,75 230,130" />
+                    
+                    <!-- Face Shifter Group -->
+                    <g class="face-shifter">
+                        <path class="face" fill="#DDF1FA" d="M134.5,46v35.5c0,21.8-15.4,39.5-34.5,39.5s-34.5-17.7-34.5-39.5V46" />
+                        <!-- Eyes -->
+                        <g class="eyeL">
+                           <circle cx="85" cy="78" r="4.5" fill="#3a5e77" />
+                           <circle class="pupilL" cx="85" cy="78" r="2" fill="#fff" />
+                        </g>
+                        <g class="eyeR">
+                           <circle cx="115" cy="78" r="4.5" fill="#3a5e77" />
+                           <circle class="pupilR" cx="115" cy="78" r="2" fill="#fff" />
+                        </g>
+                        <!-- Nose/Mouth -->
+                        <path d="M97,95 q3,4 6,0" fill="none" stroke="#3a5e77" stroke-width="1.5" stroke-linecap="round" />
+                    </g>
+
+                    <!-- Hands/Arms -->
+                    <g class="arms">
+                        <path class="armL" fill="#FFFFFF" stroke="#3a5e77" stroke-width="2" d="M30,150 Q20,100 80,85" style="visibility:hidden;" />
+                        <path class="armR" fill="#FFFFFF" stroke="#3a5e77" stroke-width="2" d="M170,150 Q180,100 120,85" style="visibility:hidden;" />
+                        
+                        <!-- Simple Circles for the "covering" effect -->
+                        <circle class="handL" cx="35" cy="160" r="25" fill="#FFFFFF" stroke="#3a5e77" stroke-width="2" />
+                        <circle class="handR" cx="165" cy="160" r="25" fill="#FFFFFF" stroke="#3a5e77" stroke-width="2" />
+                    </g>
                 </g>
             </svg>
         </div>
@@ -149,14 +169,40 @@
             yearSelect.add(op); 
         });
 
-        // Yeti Animations
-        const armL = document.querySelector('.armL');
-        const armR = document.querySelector('.armR');
+        // Yeti Design & Interactions
+        const handL = document.querySelector('.handL');
+        const handR = document.querySelector('.handR');
+        const faceShifter = document.querySelector('.face-shifter');
+        const pupilL = document.querySelector('.pupilL');
+        const pupilR = document.querySelector('.pupilR');
         const passwordInput = document.getElementById('password');
 
+        // Initial hidden positions for hands
+        gsap.set([handL, handR], { y: 100, opacity: 0 });
+
         passwordInput.addEventListener('focus', () => {
-            gsap.to(armL, { x: 50, y: -40, rotation: 120, ease: "power2.out" });
-            gsap.to(armR, { x: -50, y: -40, rotation: -120, ease: "power2.out" });
+            // Move hands up to cover eyes
+            gsap.to(handL, { y: -75, x: 50, scale: 1.2, opacity: 1, ease: "back.out(1.7)", duration: 0.5 });
+            gsap.to(handR, { y: -75, x: -50, scale: 1.2, opacity: 1, ease: "back.out(1.7)", duration: 0.5 });
+            // Move face down slightly
+            gsap.to(faceShifter, { y: 5, duration: 0.4 });
+        });
+
+        passwordInput.addEventListener('blur', () => {
+            // Move hands back down
+            gsap.to(handL, { y: 100, x: 0, scale: 1, opacity: 0, ease: "power2.in", duration: 0.4 });
+            gsap.to(handR, { y: 100, x: 0, scale: 1, opacity: 0, ease: "power2.in", duration: 0.4 });
+            // Move face back
+            gsap.to(faceShifter, { y: 0, duration: 0.4 });
+        });
+
+        // Eye Tracking (Optional/Fun feature)
+        document.addEventListener('mousemove', (e) => {
+            if (document.activeElement === passwordInput) return;
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            gsap.to(faceShifter, { x: x * 0.5, y: y * 0.5, duration: 0.2 });
+            gsap.to([pupilL, pupilR], { x: x, y: y, duration: 0.2 });
         });
         passwordInput.addEventListener('blur', () => {
             gsap.to(armL, { x: 0, y: 0, rotation: 0, ease: "power2.out" });
