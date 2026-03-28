@@ -1,27 +1,27 @@
-<div id="coaContainer" data-module="Chart of Accounts" style="height: 560px; display: flex; flex-direction: column; gap: 4px; background: white; padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px;">
+<div id="coaContainer" data-module="Chart of Accounts" style="height: 600px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px;">
     
     <!-- Section 1: Main Account Types -->
-    <div style="flex: 1; display: flex; flex-direction: column; min-height: 145px;">
-        <div style="font-size: 11px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">1. Main Account Types</div>
-        <div style="display: flex; gap: 15px; flex: 1; align-items: start;">
+    <div style="flex: 1; display: flex; flex-direction: column; min-height: 180px;">
+        <div style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">1. Main Account Types</div>
+        <div style="display: flex; gap: 20px; flex: 1; align-items: start;">
             <!-- Left: List -->
             <div style="flex: 1;">
-                <select id="mainAccountList" size="5" style="width: 100%; height: 110px; border: 1px solid #cbd5e0; outline: none; font-size: 13px;" onchange="onMainAccountSelect(this.value)"></select>
+                <select id="mainAccountList" size="8" style="width: 100%; height: 150px; border: 1px solid #cbd5e0; outline: none; font-size: 13px;" onchange="onMainAccountSelect(this.value)"></select>
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
-            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 2px;">
-                    <button class="coa-btn" onclick="printCOA('main')">Chart</button>
-                    <div style="width: 20px;"></div> <!-- Small spacer -->
-                    <button class="coa-btn" onclick="resetMainForm()">Add</button>
+            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 4px;">
+                    <button class="coa-btn coa-primary" onclick="printCOA('main')">Chart</button>
+                    <div style="width: 30px;"></div> <!-- Spacer -->
+                    <button class="coa-btn coa-primary" onclick="resetMainForm()">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOAMain()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="resetMainForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOAMain()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 145px 1fr; gap: 5px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center;">
                     <label class="coa-label">Main Type Code</label>
-                    <input type="number" id="mainTypeCode" class="coa-input" style="width: 80px;">
+                    <input type="number" id="mainTypeCode" class="coa-input" style="width: 90px;">
                     
                     <label class="coa-label">Main Account Type</label>
                     <input type="text" id="mainAccountType" class="coa-input">
@@ -41,30 +41,30 @@
         </div>
     </div>
 
-    <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 5px 0;">
+    <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 8px 0;">
 
     <!-- Section 2: Sub Account Types -->
-    <div style="flex: 1; display: flex; flex-direction: column; min-height: 125px;">
-        <div style="font-size: 11px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">2. Sub Account Types</div>
-        <div style="display: flex; gap: 15px; flex: 1; align-items: start;">
+    <div style="flex: 1; display: flex; flex-direction: column; min-height: 160px;">
+        <div style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">2. Sub Account Types</div>
+        <div style="display: flex; gap: 20px; flex: 1; align-items: start;">
             <!-- Left: List -->
             <div style="flex: 1;">
-                <select id="subAccountList" size="4" style="width: 100%; height: 100px; border: 1px solid #cbd5e0; outline: none; font-size: 13px;" onchange="onSubAccountSelect(this.value)"></select>
+                <select id="subAccountList" size="7" style="width: 100%; height: 150px; border: 1px solid #cbd5e0; outline: none; font-size: 13px;" onchange="onSubAccountSelect(this.value)"></select>
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
-            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 2px;">
-                    <button class="coa-btn" onclick="printCOA('sub')">Chart</button>
-                    <div style="width: 20px;"></div> <!-- Small spacer -->
-                    <button class="coa-btn" onclick="resetSubForm()">Add</button>
+            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 4px;">
+                    <button class="coa-btn coa-primary" onclick="printCOA('sub')">Chart</button>
+                    <div style="width: 30px;"></div> <!-- Spacer -->
+                    <button class="coa-btn coa-primary" onclick="resetSubForm()">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOASub()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="resetSubForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOASub()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 145px 1fr; gap: 5px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center;">
                     <label class="coa-label">Sub Account Code</label>
-                    <input type="text" id="subAccountCode" readonly class="coa-input" style="width: 100px; background: #edf2f7;">
+                    <input type="text" id="subAccountCode" readonly class="coa-input" style="width: 110px; background: #f8fafc;">
                     
                     <label class="coa-label">Sub Account Type</label>
                     <input type="text" id="subAccountType" class="coa-input">
@@ -73,36 +73,36 @@
         </div>
     </div>
 
-    <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 5px 0;">
+    <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 8px 0;">
 
     <!-- Section 3: List of Accounts -->
-    <div style="flex: 1.2; display: flex; flex-direction: column; min-height: 145px;">
-        <div style="font-size: 11px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">3. List of Accounts</div>
-        <div style="display: flex; gap: 15px; flex: 1; align-items: start;">
+    <div style="flex: 1.2; display: flex; flex-direction: column; min-height: 180px;">
+        <div style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">3. List of Accounts</div>
+        <div style="display: flex; gap: 20px; flex: 1; align-items: start;">
             <!-- Left: List -->
             <div style="flex: 1;">
-                <select id="listAccountList" size="5" style="width: 100%; height: 120px; border: 1px solid #cbd5e0; outline: none; font-size: 13px;" onchange="onListAccountSelect(this.value)"></select>
+                <select id="listAccountList" size="8" style="width: 100%; height: 150px; border: 1px solid #cbd5e0; outline: none; font-size: 13px;" onchange="onListAccountSelect(this.value)"></select>
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
-            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 2px;">
-                    <button class="coa-btn" onclick="printCOA('list')">Chart</button>
-                    <button class="coa-btn" onclick="findCOA()">Find</button>
-                    <div style="width: 20px;"></div> <!-- Small spacer -->
-                    <button class="coa-btn" onclick="resetListForm()">Add</button>
+            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 4px;">
+                    <button class="coa-btn coa-primary" onclick="printCOA('list')">Chart</button>
+                    <button class="coa-btn coa-primary" onclick="findCOA()">Find</button>
+                    <div style="width: 30px;"></div> <!-- Spacer -->
+                    <button class="coa-btn coa-primary" onclick="resetListForm()">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOAList()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="resetListForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOAList()">Delete</button>
                 </div>
                 
-                <div style="margin: 0;">
-                    <a href="#" style="color: #1F4E79; font-size: 10px; font-weight: 700; font-style: italic; text-decoration: underline;">Click Here to Record Details of Bank Accounts ....</a>
+                <div style="margin: 0; padding-left: 2px;">
+                    <a href="#" style="color: #1F4E79; font-size: 11px; font-weight: 700; font-style: italic; text-decoration: underline;">Click Here to Record Details of Bank Accounts ....</a>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 145px 1fr; gap: 5px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center;">
                     <label class="coa-label">Account Code</label>
-                    <input type="text" id="accountCode" readonly class="coa-input" style="width: 120px; background: #edf2f7;">
+                    <input type="text" id="accountCode" readonly class="coa-input" style="width: 130px; background: #f8fafc;">
                     
                     <label class="coa-label">Account Name</label>
                     <input type="text" id="accountName" class="coa-input">
@@ -111,41 +111,44 @@
         </div>
     </div>
 
-    <div style="color: #e53e3e; font-size: 10px; text-align: center; margin-top: 2px; font-weight: 600;">
-        Press: Ctrl+N to add new account, Ctrl+S to save changes and ESC to cancel
+    <div style="color: #64748b; font-size: 11px; text-align: center; margin-top: 4px; font-style: italic;">
+        Press: <b>Ctrl+N</b> to add new, <b>Ctrl+S</b> to save, <b>ESC</b> to cancel
     </div>
 
     <style>
         .coa-btn {
             background: #ffffff;
             border: 1px solid #1F4E79;
-            padding: 3px 12px;
-            font-size: 12px;
-            font-weight: 700;
+            padding: 2px 14px;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            min-width: 65px;
+            min-width: 75px;
             border-radius: 4px;
             color: #1F4E79;
             transition: all 0.2s;
-            height: 28px;
-            text-transform: capitalize;
+            height: 30px;
         }
-        .coa-btn:hover { background: #1F4E79; color: white; }
+        .coa-btn:hover { background: #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .coa-btn:active { transform: translateY(1px); }
         
-        .coa-save { color: #2f855a !important; border-color: #2f855a !important; }
-        .coa-save:hover { background: #2f855a !important; color: white !important; }
+        .coa-primary { color: #1F4E79; border-color: #1F4E79; }
+        .coa-primary:hover { background: #1F4E79; color: white; }
 
-        .coa-cancel { color: #c05621 !important; border-color: #c05621 !important; }
-        .coa-cancel:hover { background: #c05621 !important; color: white !important; }
+        .coa-save { color: #15803d !important; border-color: #15803d !important; }
+        .coa-save:hover { background: #15803d !important; color: white !important; }
 
-        .coa-delete { color: #c53030 !important; border-color: #c53030 !important; }
-        .coa-delete:hover { background: #c53030 !important; color: white !important; }
+        .coa-cancel { color: #475569 !important; border-color: #475569 !important; }
+        .coa-cancel:hover { background: #475569 !important; color: white !important; }
+
+        .coa-delete { color: #dc2626 !important; border-color: #dc2626 !important; }
+        .coa-delete:hover { background: #dc2626 !important; color: white !important; }
         
-        .coa-label { font-size: 11px; font-style: italic; font-weight: 700; color: #4a5568; }
-        .coa-input { height: 26px; border: 1px solid #cbd5e0; border-radius: 2px; padding: 0 6px; font-size: 13px; outline: none; width: 100%; }
-        .coa-input:focus { border-color: #1F4E79; background: #fffdf0; box-shadow: 0 0 0 1px rgba(31,78,121,0.2); }
+        .coa-label { font-size: 12px; font-style: italic; font-weight: 600; color: #334155; }
+        .coa-input { height: 32px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 10px; font-size: 13px; outline: none; width: 100%; transition: border 0.2s; }
+        .coa-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 1px rgba(31,78,121,0.1); }
         
-        option:checked { background: #bee3f8 !important; color: #2c5282; }
+        option:checked { background: #1F4E79 !important; color: white !important; }
+        option { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
     </style>
 </div>
