@@ -26,6 +26,33 @@
         let coaSub = [];
         let coaList = [];
 
+        const DEFAULT_COA_MAIN = [
+            { code: "100", name: "Cash", component: "Current Assets" },
+            { code: "110", name: "Bank", component: "Current Assets" },
+            { code: "120", name: "Customers", component: "Current Assets" },
+            { code: "130", name: "Inventories", component: "Current Assets" },
+            { code: "140", name: "Advance & Prepayments", component: "Current Assets" },
+            { code: "150", name: "Short-term Investment", component: "Non-Current Assets" },
+            { code: "160", name: "Fixed Assets", component: "Non-Current Assets" },
+            { code: "170", name: "Preliminary Expenses", component: "Non-Current Assets" },
+            { code: "180", name: "Long-term Investment", component: "Non-Current Assets" },
+            { code: "210", name: "Vendors/Suppliers", component: "Current Liabilities" },
+            { code: "220", name: "Accrued Expenses", component: "Current Liabilities" },
+            { code: "230", name: "Short-term Loans", component: "Current Liabilities" },
+            { code: "240", name: "Long-term Loans", component: "Non-Current Liabilities" },
+            { code: "300", name: "Capital", component: "Equity" },
+            { code: "310", name: "Owner’s Drawing Account", component: "Equity" },
+            { code: "320", name: "Profit/Loss Account", component: "Income" },
+            { code: "400", name: "Revenue", component: "Income" },
+            { code: "700", name: "Other Operating Income", component: "Income" },
+            { code: "500", name: "Cost of Sale", component: "Expenses" },
+            { code: "600", name: "Administrative Expenses", component: "Expenses" },
+            { code: "650", name: "Marketing & Distribution Expenses", component: "Expenses" },
+            { code: "670", name: "Financial Expenses", component: "Expenses" },
+            { code: "680", name: "Taxation", component: "Expenses" },
+            { code: "800", name: "Other Expenses", component: "Expenses" }
+        ];
+
         let dailySummary = { /* default state ... */ }; 
         // Initial empty state (will be populated from summary prefix)
         
@@ -91,6 +118,12 @@
             coaMain = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_main')) || '[]');
             coaSub = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_sub')) || '[]');
             coaList = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_list')) || '[]');
+
+            // Inject Default COA if empty
+            if (coaMain.length === 0) {
+                coaMain = [...DEFAULT_COA_MAIN];
+                localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
+            }
 
             updateNames();
             updateDashboardSummary();
@@ -2113,39 +2146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedMainCode = null;
         let selectedSubCode = null;
 
-        const DEFAULT_COA_MAIN = [
-            { code: "100", name: "Cash", component: "Current Assets" },
-            { code: "110", name: "Bank", component: "Current Assets" },
-            { code: "120", name: "Customers", component: "Current Assets" },
-            { code: "130", name: "Inventories", component: "Current Assets" },
-            { code: "140", name: "Advance & Prepayments", component: "Current Assets" },
-            { code: "150", name: "Short-term Investment", component: "Non-Current Assets" },
-            { code: "160", name: "Fixed Assets", component: "Non-Current Assets" },
-            { code: "170", name: "Preliminary Expenses", component: "Non-Current Assets" },
-            { code: "180", name: "Long-term Investment", component: "Non-Current Assets" },
-            { code: "210", name: "Vendors/Suppliers", component: "Current Liabilities" },
-            { code: "220", name: "Accrued Expenses", component: "Current Liabilities" },
-            { code: "230", name: "Short-term Loans", component: "Current Liabilities" },
-            { code: "240", name: "Long-term Loans", component: "Non-Current Liabilities" },
-            { code: "300", name: "Capital", component: "Equity" },
-            { code: "310", name: "Owner’s Drawing Account", component: "Equity" },
-            { code: "320", name: "Profit/Loss Account", component: "Income" },
-            { code: "400", name: "Revenue", component: "Income" },
-            { code: "700", name: "Other Operating Income", component: "Income" },
-            { code: "500", name: "Cost of Sale", component: "Expenses" },
-            { code: "600", name: "Administrative Expenses", component: "Expenses" },
-            { code: "650", name: "Marketing & Distribution Expenses", component: "Expenses" },
-            { code: "670", name: "Financial Expenses", component: "Expenses" },
-            { code: "680", name: "Taxation", component: "Expenses" },
-            { code: "800", name: "Other Expenses", component: "Expenses" }
-        ];
-
         function initChartOfAccountsView() {
-            // Inject Default Data if Empty
-            if (coaMain.length === 0) {
-                coaMain = DEFAULT_COA_MAIN;
-                localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
-            }
             renderCOAMainList();
             resetMainForm();
             resetSubForm();
