@@ -2166,13 +2166,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     resetMainForm();
                     resetSubForm();
                     resetListForm();
-
-                    // Automatically select first item if available
-                    if (coaMain.length > 0) {
-                        const firstCode = coaMain[0].code;
-                        list.value = firstCode;
-                        onMainAccountSelect(firstCode);
-                    }
                 } else if (++retries >= maxRetries) {
                     clearInterval(checkAndRender);
                     console.error("COA: Failed to find mainAccountList.");
@@ -2195,17 +2188,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('financialStatementComponent').value = main.component;
             }
             renderCOASubList();
-            
-            // Automatic cascading: Select first sub-account if exists
-            const subList = document.getElementById('subAccountList');
-            if (subList && subList.options.length > 0) {
-                const firstSubCode = subList.options[0].value;
-                subList.value = firstSubCode;
-                onSubAccountSelect(firstSubCode);
-            } else {
-                resetSubFormFieldsOnly(); // Helper to clear fields without clearing main selection
-                resetListForm();
-            }
+            resetSubFormFieldsOnly();
+            resetListForm();
         }
 
         function resetSubFormFieldsOnly() {
@@ -2280,16 +2264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountType').value = sub.name;
             }
             renderCOAListList();
-            
-            // Automatic cascading: Select first list-account if exists
-            const accList = document.getElementById('listAccountList');
-            if (accList && accList.options.length > 0) {
-                const firstAccCode = accList.options[0].value;
-                accList.value = firstAccCode;
-                onListAccountSelect(firstAccCode);
-            } else {
-                resetListForm();
-            }
+            if(typeof resetListForm === 'function') resetListForm();
         }
 
         function saveCOASub() {
