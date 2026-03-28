@@ -2182,10 +2182,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         function onMainAccountSelect(code) {
             selectedMainCode = code;
             const main = coaMain.find(m => m.code == code);
+            const compSelect = document.getElementById('financialStatementComponent');
             if(main) {
                 document.getElementById('mainTypeCode').value = main.code;
                 document.getElementById('mainAccountType').value = main.name;
-                document.getElementById('financialStatementComponent').value = main.component;
+                if(compSelect) {
+                    compSelect.value = main.component;
+                    compSelect.disabled = true; // Lock for existing accounts
+                }
             }
             renderCOASubList();
             resetSubFormFieldsOnly();
@@ -2217,6 +2221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
             renderCOAMainList();
+            resetMainForm(); // Reset and re-enable dropdown
             alert("Main Account Type Saved!");
         }
 
@@ -2243,6 +2248,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').value = '';
             if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').value = '';
             if(document.getElementById('mainAccountList')) document.getElementById('mainAccountList').value = '';
+            const compSelect = document.getElementById('financialStatementComponent');
+            if(compSelect) {
+                compSelect.value = 'current assets';
+                compSelect.disabled = false; // Re-enable for new entry
+            }
             selectedMainCode = null;
             renderCOASubList();
         }
@@ -2315,13 +2325,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetSubForm() {
+        function resetSubForm(generate = false) {
             if(document.getElementById('subAccountType')) document.getElementById('subAccountType').value = '';
             if(document.getElementById('subAccountList')) document.getElementById('subAccountList').value = '';
             selectedSubCode = null;
             
-            // Auto-generate next Sub code if Main is selected
-            if (selectedMainCode) {
+            // Only generate code if explicitly requested (clicked Add)
+            if (generate && selectedMainCode) {
                 const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
                 let nextNum = 1;
                 if(siblings.length > 0) {
@@ -2398,12 +2408,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetListForm() {
+        function resetListForm(generate = false) {
             if(document.getElementById('accountName')) document.getElementById('accountName').value = '';
             if(document.getElementById('listAccountList')) document.getElementById('listAccountList').value = '';
             
-            // Auto-generate next List code if Sub is selected
-            if (selectedSubCode) {
+            // Only generate code if explicitly requested (clicked Add)
+            if (generate && selectedSubCode) {
                 const siblings = coaList.filter(l => l.subCode == selectedSubCode);
                 let nextNum = 1;
                 if(siblings.length > 0) {
