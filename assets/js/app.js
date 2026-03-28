@@ -183,16 +183,30 @@
 
         function displayLogo() {
             const logoDisplay = document.getElementById('logoDisplay');
-            if (!logoDisplay) return;
-            
-            // Priority 1: User-uploaded logo in assets/logos/
-            // Priority 2: In-memory/localStorage logoData
-            // Use a relative path that browser can resolve
+            const dashLogo = document.getElementById('dashLogo');
             const logoPath = 'assets/logos/logo.png';
             
-            // We use an image with an error handler to check if the file exists
-            logoDisplay.innerHTML = `<img src="${logoPath}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;" 
-                onerror="this.onerror=null; this.src='${logoData || ''}'; if(!'${logoData}') this.parentElement.innerHTML='';">`;
+            // 1. Handle Navbar Logo
+            if (logoDisplay) {
+                logoDisplay.innerHTML = `<img src="${logoPath}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;" 
+                    onerror="this.onerror=null; this.src='${logoData || ''}'; if(!'${logoData}') this.parentElement.innerHTML='';">`;
+            }
+
+            // 2. Handle Dashboard Logo (Primary Welcome Card)
+            if (dashLogo) {
+                dashLogo.src = logoPath;
+                dashLogo.style.display = 'block'; // Default to show
+                
+                dashLogo.onerror = function() {
+                    this.onerror = null; 
+                    if (logoData) {
+                        this.src = logoData;
+                        this.style.display = 'block';
+                    } else {
+                        this.style.display = 'none'; // Hide the white box/shadow completely
+                    }
+                };
+            }
         }
 
         function updateNames() {
@@ -2007,6 +2021,7 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
 
                     mainContent.innerHTML = html;
                     applyGlobalCurrencySymbol(); // Dynamically update symbols on layout load
+                    displayLogo(); // Update dashboard logo if present
                 } else {
                     console.error("View not found:", url);
                 }
