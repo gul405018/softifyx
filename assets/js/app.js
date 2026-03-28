@@ -2148,18 +2148,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function initChartOfAccountsView() {
             let retries = 0;
-            const maxRetries = 20; // 2 seconds total if 100ms interval
+            const maxRetries = 20; 
             const checkAndRender = setInterval(() => {
                 const list = document.getElementById('mainAccountList');
                 if (list) {
                     clearInterval(checkAndRender);
+                    // Force re-load from localStorage to ensure latest data is visible
+                    coaMain = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_main')) || '[]');
+                    coaSub = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_sub')) || '[]');
+                    coaList = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_list')) || '[]');
+                    
+                    if (coaMain.length === 0) coaMain = [...DEFAULT_COA_MAIN];
+
                     renderCOAMainList();
                     resetMainForm();
                     resetSubForm();
                     resetListForm();
+
+                    // Automatically select first item if available
+                    if (coaMain.length > 0) {
+                        const firstCode = coaMain[0].code;
+                        list.value = firstCode;
+                        onMainAccountSelect(firstCode);
+                    }
                 } else if (++retries >= maxRetries) {
                     clearInterval(checkAndRender);
-                    console.error("COA: Failed to find mainAccountList after retries.");
+                    console.error("COA: Failed to find mainAccountList.");
                 }
             }, 100);
         }
@@ -2179,8 +2193,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('financialStatementComponent').value = main.component;
             }
             renderCOASubList();
-            resetSubForm();
-            resetListForm();
+            
+            // Automatic cascading: Select first sub-account if exists
+            const subList = document.getElementById('subAccountList');
+            if (subList && subList.options.length > 0) {
+                const firstSubCode = subList.options[0].value;
+                subList.value = firstSubCode;
+                onSubAccountSelect(firstSubCode);
+            } else {
+                resetSubFormFieldsOnly(); // Helper to clear fields without clearing main selection
+                resetListForm();
+            }
+        }
+
+        function resetSubFormFieldsOnly() {
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').value = '';
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').value = '';
+            selectedSubCode = null;
         }
 
         function saveCOAMain() {
@@ -2249,7 +2278,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountType').value = sub.name;
             }
             renderCOAListList();
-            resetListForm();
+            
+            // Automatic cascading: Select first list-account if exists
+            const accList = document.getElementById('listAccountList');
+            if (accList && accList.options.length > 0) {
+                const firstAccCode = accList.options[0].value;
+                accList.value = firstAccCode;
+                onListAccountSelect(firstAccCode);
+            } else {
+                resetListForm();
+            }
         }
 
         function saveCOASub() {
