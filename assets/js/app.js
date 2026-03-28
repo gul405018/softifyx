@@ -2147,10 +2147,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedSubCode = null;
 
         function initChartOfAccountsView() {
-            renderCOAMainList();
-            resetMainForm();
-            resetSubForm();
-            resetListForm();
+            setTimeout(() => {
+                renderCOAMainList();
+                resetMainForm();
+                resetSubForm();
+                resetListForm();
+            }, 50);
         }
 
         function renderCOAMainList() {
