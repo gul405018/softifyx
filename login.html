@@ -60,6 +60,8 @@
             flex: 1; height: 32px; padding: 0 10px; border: 1px solid #ced4da;
             border-radius: 4px; font-size: 0.85em; color: #495057;
             background-color: #f8f9fa; outline: none;
+            min-width: 0; /* Ensures flex-item can shrink below its content size */
+            width: 100%;
         }
         .field-row select:focus, .field-row input:focus { border-color: #217093; background: #fff; }
         

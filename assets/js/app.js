@@ -667,6 +667,7 @@
             const dealsIn = document.getElementById('modalDealsIn')?.value;
             
             if (businessName) {
+                const oldName = companyData.name;
                 companyData = {
                     name: businessName,
                     address: address || '',
@@ -682,20 +683,29 @@
                 localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
                 
                 // CRITICAL SYNC: Update the global companies list as well
-                const companiesIdx = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === (session.company || companyData.name));
+                const companiesIdx = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === (oldName || companyData.name));
                 if (companiesIdx !== -1) {
                     companies[companiesIdx] = { ...companyData };
+                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+                } else {
+                    // If not found (shouldn't happen), add it
+                    companies.push({ ...companyData });
                     localStorage.setItem('softifyx_companies', JSON.stringify(companies));
                 }
 
                 // CRITICAL SYNC: Update the main session too if the name changed
-                if (session.company !== businessName) {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                if (session.company === oldName || !session.company) {
                     session.company = businessName;
                     localStorage.setItem('softifyx_session', JSON.stringify(session));
+                    // Also update active company for selection persistence
+                    localStorage.setItem('softifyx_active_company', businessName);
                 }
 
                 updateNames();
                 updateDashboardSummary();
+                alert('Company settings saved and synchronized successfully!');
+                closeModal();
             }
         }
 
@@ -743,7 +753,10 @@
         }
 
         function saveCompanyDetails() {
-            companyData.name = document.getElementById('modalCompanyName')?.value || companyData.name;
+            const oldName = originSelectedCompanyName || companyData.name;
+            const newName = document.getElementById('modalCompanyName')?.value || companyData.name;
+
+            companyData.name = newName;
             companyData.address = document.getElementById('modalCompanyAddress')?.value || '';
             companyData.phone = document.getElementById('modalCompanyPhone')?.value || '';
             companyData.fax = document.getElementById('modalCompanyFax')?.value || '';
@@ -754,7 +767,7 @@
             companyData.dealsIn = document.getElementById('modalCompanyDealsIn')?.value || '';
             
             // Fix: update item using the original name tracked during selection
-            const searchName = originSelectedCompanyName || companyData.name;
+            const searchName = oldName;
             const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === searchName);
             
             if (index !== -1) {
@@ -763,28 +776,24 @@
                 companies.push({ ...companyData });
             }
 
-            // Sync original name for future edits without closing
-            originSelectedCompanyName = companyData.name;
-
-            localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
+            // Sync global records
             localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-            
-            // CRITICAL SYNC: Update the main session too if the name changed
-            // The instruction provided a new block to replace the existing session update and reload.
-            // Update session and reload
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            sessionData.company = companyData.name;
-            localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-            
-            alert('Settings saved. Refreshing to apply changes...');
-            window.location.reload();
 
-            updateNames();
+            // CRITICAL SYNC: Update the main session too
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const wasActiveCompany = (sessionData.company === oldName);
             
-            // Reload all company-specific data (Inventory, Summary, etc.) to ensure dashboard reflects new choice
-            loadSavedData();
+            // Always update active company if we are saving from the List of Companies (user intent is to select/save)
+            sessionData.company = newName;
+            localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+            localStorage.setItem('softifyx_active_company', newName);
             
-            closeModal();
+            // Save company-specific details for the NEW name prefix
+            // Note: getCoKey uses session.company, which is now updated.
+            localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
+
+            alert('Changes saved. Application will refresh to apply company data isolation.');
+            window.location.reload();
         }
 
         function saveNote() {
@@ -1066,12 +1075,8 @@
             const selectedCompany = select.value;
             originSelectedCompanyName = selectedCompany; // Store for tracking edits
             if (selectedCompany) {
-                localStorage.setItem('softifyx_active_company', selectedCompany);
-                
-                // CRITICAL SYNC: Update the main session so getCoKey uses this company prefix on refresh
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                session.company = selectedCompany;
-                localStorage.setItem('softifyx_session', JSON.stringify(session));
+                // Remove immediate save and reload so user can edit before applying
+                // localStorage.setItem('softifyx_active_company', selectedCompany);
                 
                 let found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
                 if (found) {
@@ -1085,23 +1090,21 @@
                 }
                 
                 // Update form fields immediately
-                const n = id => { const el = document.getElementById(id); if (el) return el; return {}; };
-                n('modalCompanyName').value = companyData.name || '';
-                n('modalCompanyAddress').value = companyData.address || '';
-                n('modalCompanyPhone').value = companyData.phone || '';
-                n('modalCompanyFax').value = companyData.fax || '';
-                n('modalCompanyEmail').value = companyData.email || '';
-                n('modalCompanyWebsite').value = companyData.website || '';
-                n('modalCompanyGST').value = companyData.gst || '';
-                n('modalCompanyNTN').value = companyData.ntn || '';
-                n('modalCompanyDealsIn').value = companyData.dealsIn || '';
+                const n = id => { const el = document.getElementById(id); if (el) return el; else return { value: '' }; };
+                const nameEl = n('modalCompanyName');
+                if (nameEl) nameEl.value = companyData.name || '';
                 
-                updateNames();
-
-                // Force a full reload to refresh dashboard data for the NEW company
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
+                // Also update the fields in the 'List of Companies' form specifically
+                if (document.getElementById('modalCompanyAddress')) document.getElementById('modalCompanyAddress').value = companyData.address || '';
+                if (document.getElementById('modalCompanyPhone')) document.getElementById('modalCompanyPhone').value = companyData.phone || '';
+                if (document.getElementById('modalCompanyFax')) document.getElementById('modalCompanyFax').value = companyData.fax || '';
+                if (document.getElementById('modalCompanyEmail')) document.getElementById('modalCompanyEmail').value = companyData.email || '';
+                if (document.getElementById('modalCompanyWebsite')) document.getElementById('modalCompanyWebsite').value = companyData.website || '';
+                if (document.getElementById('modalCompanyGST')) document.getElementById('modalCompanyGST').value = companyData.gst || '';
+                if (document.getElementById('modalCompanyNTN')) document.getElementById('modalCompanyNTN').value = companyData.ntn || '';
+                if (document.getElementById('modalCompanyDealsIn')) document.getElementById('modalCompanyDealsIn').value = companyData.dealsIn || '';
+                
+                // If the user wants to login to THIS company, they must click 'Save Changes'
             }
         }
         function initUserRightsView() {
