@@ -22,6 +22,9 @@
         let originSelectedCompanyName = ""; // New: track original name to fix edit/duplicate bug
 
         let inventoryItems = [];
+        let coaMain = [];
+        let coaSub = [];
+        let coaList = [];
 
         let dailySummary = { /* default state ... */ }; 
         // Initial empty state (will be populated from summary prefix)
@@ -84,6 +87,10 @@
             const savedInv = localStorage.getItem(getCoKey('softifyx_inventory'));
             if (savedInv) inventoryItems = JSON.parse(savedInv);
             else inventoryItems = [];
+
+            coaMain = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_main')) || '[]');
+            coaSub = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_sub')) || '[]');
+            coaList = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_list')) || '[]');
 
             updateNames();
             updateDashboardSummary();
@@ -2096,14 +2103,304 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to load components:', err);
     }
 });
-// Global Logout Handler
-window.handleLogout = function() {
-    if(confirm("Are you sure you want to log out?")) {
-        localStorage.removeItem('softifyx_session');
-        window.location.href = 'login.html';
-    }
-};
+// --- CHART OF ACCOUNTS (COA) LOGIC ---
+        let selectedMainCode = null;
+        let selectedSubCode = null;
 
-// --- FUTURE-PROOF ARCHITECTURE ---
-// Note: checkUserRights is defined in the main scope above.
-window.checkUserRights = checkUserRights;
+        function initChartOfAccountsView() {
+            renderCOAMainList();
+            resetMainForm();
+            resetSubForm();
+            resetListForm();
+        }
+
+        function renderCOAMainList() {
+            const list = document.getElementById('mainAccountList');
+            if(!list) return;
+            list.innerHTML = coaMain.map(m => `<option value="${m.code}">${m.code} - ${m.name}</option>`).join('');
+        }
+
+        function onMainAccountSelect(code) {
+            selectedMainCode = code;
+            const main = coaMain.find(m => m.code == code);
+            if(main) {
+                document.getElementById('mainTypeCode').value = main.code;
+                document.getElementById('mainAccountType').value = main.name;
+                document.getElementById('financialStatementComponent').value = main.component;
+            }
+            renderCOASubList();
+            resetSubForm();
+            resetListForm();
+        }
+
+        function saveCOAMain() {
+            const codeInput = document.getElementById('mainTypeCode');
+            const nameInput = document.getElementById('mainAccountType');
+            const componentInput = document.getElementById('financialStatementComponent');
+            
+            if(!codeInput || !nameInput || !componentInput) return;
+
+            const code = codeInput.value.trim();
+            const name = nameInput.value.trim();
+            const component = componentInput.value;
+
+            if(!code || !name) return alert("Code and Name are required!");
+            
+            const idx = coaMain.findIndex(m => m.code == code);
+            if(idx !== -1) coaMain[idx] = { code, name, component };
+            else coaMain.push({ code, name, component });
+
+            localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
+            renderCOAMainList();
+            alert("Main Account Type Saved!");
+        }
+
+        function deleteCOAMain() {
+            if(!selectedMainCode) return;
+            if(confirm("Are you sure? This will NOT delete sub-accounts automatically but may cause orphans.")) {
+                coaMain = coaMain.filter(m => m.code != selectedMainCode);
+                localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
+                selectedMainCode = null;
+                renderCOAMainList();
+                resetMainForm();
+            }
+        }
+
+        function resetMainForm() {
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').value = '';
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').value = '';
+            if(document.getElementById('mainAccountList')) document.getElementById('mainAccountList').value = '';
+            selectedMainCode = null;
+            renderCOASubList();
+        }
+
+        // Sub Accounts
+        function renderCOASubList() {
+            const list = document.getElementById('subAccountList');
+            if(!list) return;
+            if(!selectedMainCode) { list.innerHTML = ''; return; }
+            const filtered = coaSub.filter(s => s.mainCode == selectedMainCode);
+            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.code} - ${s.name}</option>`).join('');
+        }
+
+        function onSubAccountSelect(code) {
+            selectedSubCode = code;
+            const sub = coaSub.find(s => s.code == code);
+            if(sub) {
+                document.getElementById('subAccountCode').value = sub.code;
+                document.getElementById('subAccountType').value = sub.name;
+            }
+            renderCOAListList();
+            resetListForm();
+        }
+
+        function saveCOASub() {
+            if(!selectedMainCode) return alert("Select a Main Account Type first!");
+            const name = document.getElementById('subAccountType').value.trim();
+            if(!name) return alert("Sub Account Name is required!");
+
+            let code = document.getElementById('subAccountCode').value;
+            if(!code) {
+                // Generate new code: MainCode + 2 digits
+                const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(s => {
+                        const sCode = s.code.toString();
+                        return parseInt(sCode.substring(selectedMainCode.toString().length));
+                    });
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                code = selectedMainCode.toString() + nextNum.toString().padStart(2, '0');
+            }
+
+            const idx = coaSub.findIndex(s => s.code == code);
+            if(idx !== -1) coaSub[idx] = { code, name, mainCode: selectedMainCode };
+            else coaSub.push({ code, name, mainCode: selectedMainCode });
+
+            localStorage.setItem(getCoKey('softifyx_coa_sub'), JSON.stringify(coaSub));
+            renderCOASubList();
+            alert("Sub Account Type Saved!");
+        }
+
+        function deleteCOASub() {
+            if(!selectedSubCode) return;
+            if(confirm("Are you sure?")) {
+                coaSub = coaSub.filter(s => s.code != selectedSubCode);
+                localStorage.setItem(getCoKey('softifyx_coa_sub'), JSON.stringify(coaSub));
+                selectedSubCode = null;
+                renderCOASubList();
+                resetSubForm();
+            }
+        }
+
+        function resetSubForm() {
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').value = '';
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').value = '';
+            if(document.getElementById('subAccountList')) document.getElementById('subAccountList').value = '';
+            selectedSubCode = null;
+            renderCOAListList();
+        }
+
+        // List of Accounts
+        function renderCOAListList() {
+            const list = document.getElementById('listAccountList');
+            if(!list) return;
+            if(!selectedSubCode) { list.innerHTML = ''; return; }
+            const filtered = coaList.filter(l => l.subCode == selectedSubCode);
+            list.innerHTML = filtered.map(l => `<option value="${l.code}">${l.code} - ${l.name}</option>`).join('');
+        }
+
+        function onListAccountSelect(code) {
+            const acc = coaList.find(l => l.code == code);
+            if(acc) {
+                document.getElementById('accountCode').value = acc.code;
+                document.getElementById('accountName').value = acc.name;
+            }
+        }
+
+        function saveCOAList() {
+            if(!selectedSubCode) return alert("Select a Sub Account Type first!");
+            const name = document.getElementById('accountName').value.trim();
+            if(!name) return alert("Account Name is required!");
+
+            let code = document.getElementById('accountCode').value;
+            if(!code) {
+                // Generate new code: SubCode + 3 digits
+                const siblings = coaList.filter(l => l.subCode == selectedSubCode);
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(l => {
+                        const lCode = l.code.toString();
+                        return parseInt(lCode.substring(selectedSubCode.toString().length));
+                    });
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                code = selectedSubCode.toString() + nextNum.toString().padStart(3, '0');
+            }
+
+            const idx = coaList.findIndex(l => l.code == code);
+            if(idx !== -1) coaList[idx] = { code, name, subCode: selectedSubCode };
+            else coaList.push({ code, name, subCode: selectedSubCode });
+
+            localStorage.setItem(getCoKey('softifyx_coa_list'), JSON.stringify(coaList));
+            renderCOAListList();
+            alert("Account Saved!");
+        }
+
+        function deleteCOAList() {
+            const code = document.getElementById('accountCode').value;
+            if(!code) return;
+            if(confirm("Are you sure?")) {
+                coaList = coaList.filter(l => l.code != code);
+                localStorage.setItem(getCoKey('softifyx_coa_list'), JSON.stringify(coaList));
+                renderCOAListList();
+                resetListForm();
+            }
+        }
+
+        function resetListForm() {
+            if(document.getElementById('accountCode')) document.getElementById('accountCode').value = '';
+            if(document.getElementById('accountName')) document.getElementById('accountName').value = '';
+            if(document.getElementById('listAccountList')) document.getElementById('listAccountList').value = '';
+        }
+
+        // Professional Printing
+        function printCOA(level) {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const company = JSON.parse(localStorage.getItem(getCoKey('softifyx_company')) || '{}');
+            const logo = localStorage.getItem(getCoKey('softifyx_logo'));
+            
+            let reportTitle = "CHART OF ACCOUNTS";
+            let data = [];
+            if(level === 'main') { reportTitle = "MAIN ACCOUNT TYPES"; data = coaMain; }
+            else if(level === 'sub') { reportTitle = "SUB ACCOUNT TYPES"; data = selectedMainCode ? coaSub.filter(s=>s.mainCode==selectedMainCode) : coaSub; }
+            else { reportTitle = "LIST OF ACCOUNTS"; data = selectedSubCode ? coaList.filter(l=>l.subCode==selectedSubCode) : coaList; }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Report - ${reportTitle}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #333; }
+                        .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; }
+                        .company-info h1 { margin: 0; color: #2c3e50; font-size: 26px; font-weight: 800; text-transform: uppercase; }
+                        .company-info p { margin: 3px 0; color: #34495e; font-size: 14px; }
+                        .logo img { max-height: 100px; max-width: 250px; object-fit: contain; }
+                        .report-title-box { text-align: center; background: #f1f4f8; padding: 15px; margin-bottom: 30px; border-radius: 8px; border: 1px solid #d1d9e6; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                        th, td { border: 1px solid #dee2e6; padding: 14px; text-align: left; }
+                        th { background: #2c3e50; color: white; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+                        td { font-size: 14px; }
+                        tr:nth-child(even) { background: #fcfdfe; }
+                        .footer { margin-top: 60px; font-size: 12px; color: #95a5a6; text-align: center; border-top: 1px solid #eee; padding-top: 15px; font-style: italic; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-info">
+                            <h1>${company.name || session.company || 'Business Name'}</h1>
+                            <p>${company.address || 'Address Details'}</p>
+                            <p>Phone: ${company.phone || 'N/A'} | Email: ${company.email || 'N/A'}</p>
+                            <p>NTN: ${company.ntn || 'N/A'} | GST: ${company.gst || 'N/A'}</p>
+                        </div>
+                        <div class="logo">
+                            ${logo ? '<img src="' + logo + '">' : ''}
+                        </div>
+                    </div>
+                    <div class="report-title-box">
+                        <h2 style="margin:0; color:#2c3e50;">${reportTitle}</h2>
+                        <p style="margin:8px 0 0; color:#7f8c8d; font-size:13px; font-weight:600;">Report Generation Date: ${new Date().toLocaleString()}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:180px;">Account Code</th>
+                                <th>Account Name</th>
+                                ${level === 'main' ? '<th>Financial Statement Group</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.length > 0 ? data.map(item => `
+                                <tr>
+                                    <td style="font-weight:700; color:#2980b9;">${item.code}</td>
+                                    <td style="font-weight:500;">${item.name}</td>
+                                    ${level === 'main' ? `<td>${item.component}</td>` : ''}
+                                </tr>
+                            `).join('') : '<tr><td colspan="3" style="text-align:center; padding:30px; color:#95a5a6;">No records found in this category.</td></tr>'}
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        This is an electronically generated report from Softifyx ERP. No signature required.
+                    </div>
+                    <script>window.onload = () => { window.print(); }</script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        window.initChartOfAccountsView = initChartOfAccountsView;
+        window.onMainAccountSelect = onMainAccountSelect;
+        window.saveCOAMain = saveCOAMain;
+        window.deleteCOAMain = deleteCOAMain;
+        window.resetMainForm = resetMainForm;
+        window.onSubAccountSelect = onSubAccountSelect;
+        window.saveCOASub = saveCOASub;
+        window.deleteCOASub = deleteCOASub;
+        window.resetSubForm = resetSubForm;
+        window.onListAccountSelect = onListAccountSelect;
+        window.saveCOAList = saveCOAList;
+        window.deleteCOAList = deleteCOAList;
+        window.resetListForm = resetListForm;
+        window.printCOA = printCOA;
+
+        window.handleLogout = function() {
+            if(confirm("Are you sure you want to log out?")) {
+                localStorage.removeItem('softifyx_session');
+                window.location.href = 'login.html';
+            }
+        };
+
+        window.checkUserRights = checkUserRights;
