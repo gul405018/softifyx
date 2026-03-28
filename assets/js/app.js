@@ -1811,6 +1811,8 @@
                             setTimeout(() => initFinancialYearView(), 10);
                         } else if (url.includes('currency.html')) {
                             setTimeout(() => initCurrencyView(), 10);
+                        } else if (url.includes('chart_of_accounts.html')) {
+                            setTimeout(() => initChartOfAccountsView(), 10);
                         }
                     }
                 } else {
@@ -2102,8 +2104,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    let isWide = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName, isWide);
+                    let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2126,8 +2128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    let isWide = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName, isWide);
+                    let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
                 });
             });
         }
