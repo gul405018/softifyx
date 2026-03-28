@@ -186,26 +186,32 @@
             const dashLogo = document.getElementById('dashLogo');
             const logoPath = 'assets/logos/logo.png';
             
-            // 1. Handle Navbar Logo
+            // Priority 1: User-uploaded logoData (Base64)
+            // Priority 2: External logo file (logo.png)
+            const finalSrc = logoData || logoPath;
+
+            // 1. Handle Navbar Logo (Top-Right)
             if (logoDisplay) {
-                logoDisplay.innerHTML = `<img src="${logoPath}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;" 
-                    onerror="this.onerror=null; this.src='${logoData || ''}'; if(!'${logoData}') this.parentElement.innerHTML='';">`;
+                if (logoData) {
+                    logoDisplay.innerHTML = `<img src="${logoData}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;">`;
+                } else {
+                    logoDisplay.innerHTML = `<img src="${logoPath}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;" 
+                        onerror="this.style.display='none'; this.parentElement.innerHTML='';">`;
+                }
             }
 
             // 2. Handle Dashboard Logo (Primary Welcome Card)
             if (dashLogo) {
-                dashLogo.src = logoPath;
-                dashLogo.style.display = 'block'; // Default to show
-                
-                dashLogo.onerror = function() {
-                    this.onerror = null; 
-                    if (logoData) {
-                        this.src = logoData;
-                        this.style.display = 'block';
-                    } else {
-                        this.style.display = 'none'; // Hide the white box/shadow completely
-                    }
-                };
+                if (logoData) {
+                    dashLogo.src = logoData;
+                    dashLogo.style.display = 'block';
+                } else {
+                    dashLogo.src = logoPath;
+                    dashLogo.style.display = 'block';
+                    dashLogo.onerror = function() {
+                        this.style.display = 'none'; // Hide completely if both sources fail
+                    };
+                }
             }
         }
 

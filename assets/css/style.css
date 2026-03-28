@@ -334,10 +334,8 @@
             width: auto;
             height: 80px; /* Increased from 60px to fill the bar better */
             object-fit: contain;
-            background: white;
-            padding: 5px; /* Reduced padding to make the logo image itself larger */
+            /* background, padding, and box-shadow removed as requested */
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
 
         .softifyx-title {
