@@ -186,32 +186,23 @@
             const dashLogo = document.getElementById('dashLogo');
             const logoPath = 'assets/logos/logo.png';
             
-            // Priority 1: User-uploaded logoData (Base64)
-            // Priority 2: External logo file (logo.png)
-            const finalSrc = logoData || logoPath;
-
-            // 1. Handle Navbar Logo (Top-Right)
+            // 1. Navbar (Top-Right): Show ONLY the Business Owner's Uploaded Logo (logoData)
             if (logoDisplay) {
                 if (logoData) {
-                    logoDisplay.innerHTML = `<img src="${logoData}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;">`;
+                    logoDisplay.innerHTML = `<img src="${logoData}" id="userLogo" style="height: 35px; width: auto; border-radius: 4px;">`;
                 } else {
-                    logoDisplay.innerHTML = `<img src="${logoPath}" id="mainLogo" style="height: 35px; width: auto; border-radius: 4px;" 
-                        onerror="this.style.display='none'; this.parentElement.innerHTML='';">`;
+                    logoDisplay.innerHTML = ''; // Hide if no custom logo uploaded
                 }
             }
 
-            // 2. Handle Dashboard Logo (Primary Welcome Card)
+            // 2. Dashboard Middle (Welcome Card): Always Show Software Company Logo (logo.png)
             if (dashLogo) {
-                if (logoData) {
-                    dashLogo.src = logoData;
-                    dashLogo.style.display = 'block';
-                } else {
-                    dashLogo.src = logoPath;
-                    dashLogo.style.display = 'block';
-                    dashLogo.onerror = function() {
-                        this.style.display = 'none'; // Hide completely if both sources fail
-                    };
-                }
+                dashLogo.src = logoPath;
+                dashLogo.style.display = 'block';
+                dashLogo.onerror = function() {
+                    this.style.display = 'none'; // Hide if file missing
+                    this.parentElement.style.boxShadow = 'none'; // Clean up parent
+                };
             }
         }
 
