@@ -2147,26 +2147,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedSubCode = null;
 
         function initChartOfAccountsView() {
-            // Wait for modal DOM to be fully ready
-            setTimeout(() => {
+            let retries = 0;
+            const maxRetries = 20; // 2 seconds total if 100ms interval
+            const checkAndRender = setInterval(() => {
                 const list = document.getElementById('mainAccountList');
                 if (list) {
+                    clearInterval(checkAndRender);
                     renderCOAMainList();
                     resetMainForm();
                     resetSubForm();
                     resetListForm();
-                } else {
-                    // Retry once if element not found immediately
-                    setTimeout(() => {
-                        if (document.getElementById('mainAccountList')) {
-                            renderCOAMainList();
-                            resetMainForm();
-                            resetSubForm();
-                            resetListForm();
-                        }
-                    }, 200);
+                } else if (++retries >= maxRetries) {
+                    clearInterval(checkAndRender);
+                    console.error("COA: Failed to find mainAccountList after retries.");
                 }
-            }, 200);
+            }, 100);
         }
 
         function renderCOAMainList() {
