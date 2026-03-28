@@ -311,9 +311,12 @@
             });
         }
 
-        function openModal(title, content) {
+        function openModal(title, content, isWide = false) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
+            
+            if (isWide) container.classList.add('modal-wide');
+            else container.classList.remove('modal-wide');
             
             container.innerHTML = `
                 <div class="modal-header">
@@ -1734,7 +1737,7 @@
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName) {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
             try {
                 // If moduleName is explicitly provided, check rights BEFORE any fetch to prevent loading
                 if (moduleName && !checkUserRights(moduleName)) {
@@ -1761,7 +1764,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html);
+                    openModal({ icon: titleIcon, text: titleText }, html, isWide);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -1779,7 +1782,8 @@
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
-                        '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>'
+                        '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
+                        isWide
                     );
                 }
             } catch (err) {
@@ -2065,7 +2069,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName);
+                    let isWide = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2088,7 +2093,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName);
+                    let isWide = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, null, moduleName, isWide);
                 });
             });
         }
@@ -2117,7 +2123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderCOAMainList() {
             const list = document.getElementById('mainAccountList');
             if(!list) return;
-            list.innerHTML = coaMain.map(m => `<option value="${m.code}">${m.code} - ${m.name}</option>`).join('');
+            list.innerHTML = coaMain.map(m => `<option value="${m.code}">${m.name}</option>`).join('');
         }
 
         function onMainAccountSelect(code) {
@@ -2157,7 +2163,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function deleteCOAMain() {
             if(!selectedMainCode) return;
-            if(confirm("Are you sure? This will NOT delete sub-accounts automatically but may cause orphans.")) {
+            
+            // Delete Protection: Check for Sub Accounts
+            const hasChildren = coaSub.some(s => s.mainCode == selectedMainCode);
+            if (hasChildren) {
+                alert("Cannot delete Main Account Type! Sub-accounts exist for this category. Please delete all sub-accounts first.");
+                return;
+            }
+
+            if(confirm("Are you sure you want to delete this Main Account Type?")) {
                 coaMain = coaMain.filter(m => m.code != selectedMainCode);
                 localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
                 selectedMainCode = null;
@@ -2180,7 +2194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!list) return;
             if(!selectedMainCode) { list.innerHTML = ''; return; }
             const filtered = coaSub.filter(s => s.mainCode == selectedMainCode);
-            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.code} - ${s.name}</option>`).join('');
+            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
 
         function onSubAccountSelect(code) {
@@ -2225,7 +2239,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function deleteCOASub() {
             if(!selectedSubCode) return;
-            if(confirm("Are you sure?")) {
+
+            // Delete Protection: Check for List of Accounts
+            const hasChildren = coaList.some(l => l.subCode == selectedSubCode);
+            if (hasChildren) {
+                alert("Cannot delete Sub Account Type! Items exist in the List of Accounts for this category. Please delete them first.");
+                return;
+            }
+
+            if(confirm("Are you sure you want to delete this Sub Account Type?")) {
                 coaSub = coaSub.filter(s => s.code != selectedSubCode);
                 localStorage.setItem(getCoKey('softifyx_coa_sub'), JSON.stringify(coaSub));
                 selectedSubCode = null;
@@ -2235,11 +2257,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetSubForm() {
-            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').value = '';
             if(document.getElementById('subAccountType')) document.getElementById('subAccountType').value = '';
             if(document.getElementById('subAccountList')) document.getElementById('subAccountList').value = '';
             selectedSubCode = null;
+            
+            // Auto-generate next Sub code if Main is selected
+            if (selectedMainCode) {
+                const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(s => {
+                        const sCode = s.code.toString();
+                        return parseInt(sCode.substring(selectedMainCode.toString().length));
+                    });
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                const code = selectedMainCode.toString() + nextNum.toString().padStart(2, '0');
+                if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').value = code;
+            } else {
+                if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').value = '';
+            }
+            
             renderCOAListList();
+            resetListForm();
         }
 
         // List of Accounts
@@ -2248,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!list) return;
             if(!selectedSubCode) { list.innerHTML = ''; return; }
             const filtered = coaList.filter(l => l.subCode == selectedSubCode);
-            list.innerHTML = filtered.map(l => `<option value="${l.code}">${l.code} - ${l.name}</option>`).join('');
+            list.innerHTML = filtered.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
         }
 
         function onListAccountSelect(code) {
@@ -2300,9 +2340,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetListForm() {
-            if(document.getElementById('accountCode')) document.getElementById('accountCode').value = '';
             if(document.getElementById('accountName')) document.getElementById('accountName').value = '';
             if(document.getElementById('listAccountList')) document.getElementById('listAccountList').value = '';
+            
+            // Auto-generate next List code if Sub is selected
+            if (selectedSubCode) {
+                const siblings = coaList.filter(l => l.subCode == selectedSubCode);
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(l => {
+                        const lCode = l.code.toString();
+                        return parseInt(lCode.substring(selectedSubCode.toString().length));
+                    });
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                const code = selectedSubCode.toString() + nextNum.toString().padStart(3, '0');
+                if(document.getElementById('accountCode')) document.getElementById('accountCode').value = code;
+            } else {
+                if(document.getElementById('accountCode')) document.getElementById('accountCode').value = '';
+            }
         }
 
         // Professional Printing

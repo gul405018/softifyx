@@ -821,6 +821,11 @@
             display: flex;
             flex-direction: column;
             border: 2px solid #1f4668;
+            transition: max-width 0.3s ease;
+        }
+
+        .modal-container.modal-wide {
+            max-width: 1100px;
         }
 
         @keyframes modalFadeIn {
