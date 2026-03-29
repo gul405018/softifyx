@@ -69,16 +69,50 @@
         }
 
         function loadSavedData() {
-            // GLOBAL DATA Fetch
+            // 1. Fetch Company List
             fetch('api/manage_companies.php')
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
                         companies = data.data.map(c => ({ id: c.id, name: c.name, ...c }));
+                        
+                        // Sync companyData with current session company
+                        const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                        const activeCo = companies.find(c => c.name === sessionData.company);
+                        if (activeCo) {
+                            companyData = {
+                                name: activeCo.name,
+                                address: activeCo.address || "",
+                                phone: activeCo.phone || "",
+                                fax: activeCo.fax || "",
+                                email: activeCo.email || "",
+                                website: activeCo.website || "",
+                                gst: activeCo.gst_no || "",
+                                ntn: activeCo.ntn_no || "",
+                                dealsIn: activeCo.deals_in || ""
+                            };
+                            originSelectedCompanyId = activeCo.id;
+                        } else if (sessionData.company) {
+                            companyData.name = sessionData.company;
+                        }
                         updateNames();
+                        updateDashboardSummary();
+                        
+                        // 2. Fetch Logo from DB
+                        if (sessionData.company) {
+                            fetch(`api/get_logo.php?name=${encodeURIComponent(sessionData.company)}`)
+                                .then(res => res.json())
+                                .then(lData => {
+                                    if (lData.status === 'success' && lData.logo) {
+                                        logoData = lData.logo;
+                                        displayLogo();
+                                    }
+                                });
+                        }
                     }
                 });
 
+            // 3. Fetch Users
             fetch('api/manage_users.php')
                 .then(res => res.json())
                 .then(data => {
@@ -87,22 +121,7 @@
                     }
                 });
 
-            // Keep session-based logic for current view/company selection
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const savedCompany = localStorage.getItem(getCoKey('softifyx_company'));
-            
-            if (savedCompany) {
-                companyData = JSON.parse(savedCompany);
-                if (sessionData.company) companyData.name = sessionData.company; 
-            } else if (sessionData.company) {
-                companyData = { name: sessionData.company, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
-            }
-
-            // Other local UI states (Logo, Notes, COA cache)
-            const savedLogo = localStorage.getItem(getCoKey('softifyx_logo'));
-            logoData = savedLogo || null;
-            if (logoData) displayLogo();
-
+            // Load local UI states only
             coaMain = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_main')) || '[]');
             coaSub = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_sub')) || '[]');
             coaList = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_list')) || '[]');
@@ -672,43 +691,42 @@
 
         function addNewCompany() {
             const companyName = document.getElementById('newCompanyName')?.value;
-            if (companyName) {
-                const newCompany = {
-                    name: companyName,
-                    address: document.getElementById('newCompanyAddress')?.value || '',
-                    phone: document.getElementById('newCompanyPhone')?.value || '',
-                    fax: document.getElementById('newCompanyFax')?.value || '',
-                    email: document.getElementById('newCompanyEmail')?.value || '',
-                    website: document.getElementById('newCompanyWebsite')?.value || '',
-                    gst: document.getElementById('newCompanyGST')?.value || '',
-                    ntn: document.getElementById('newCompanyNTN')?.value || '',
-                    dealsIn: document.getElementById('newCompanyDealsIn')?.value || ''
-                };
-                
-                companies.push(newCompany);
-                localStorage.setItem('softifyx_companies', JSON.stringify(companies));
+            if (!companyName) return alert("Please enter a business name");
 
-                // Switch active
-                companyData = { ...newCompany };
-                localStorage.setItem('softifyx_active_company', companyName);
-                
-                // New logic from instruction
-                if (companyName && companyName !== "[object Object]") {
+            const payload = {
+                name: companyName,
+                address: document.getElementById('newCompanyAddress')?.value || '',
+                phone: document.getElementById('newCompanyPhone')?.value || '',
+                fax: document.getElementById('newCompanyFax')?.value || '',
+                email: document.getElementById('newCompanyEmail')?.value || '',
+                website: document.getElementById('newCompanyWebsite')?.value || '',
+                gst: document.getElementById('newCompanyGST')?.value || '',
+                ntn: document.getElementById('newCompanyNTN')?.value || '',
+                dealsIn: document.getElementById('newCompanyDealsIn')?.value || ''
+            };
+
+            fetch('api/save_company.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    
+                    // Switch to the newly created company
                     const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                     session.company = companyName;
                     localStorage.setItem('softifyx_session', JSON.stringify(session));
                     localStorage.setItem('softifyx_active_company', companyName);
                     
-                    alert(`Switched to: ${companyName}`);
                     window.location.reload();
+                } else {
+                    alert("Error: " + data.message);
                 }
-
-                saveSummary();
-                updateDashboardSummary();
-                updateNames();
-                
-                document.getElementById('listOfCompaniesBtn').click();
-            }
+            })
+            .catch(err => alert("Server Connection Error!"));
         }
 
         function saveCompanySettings() {
@@ -738,7 +756,7 @@
                 fetch('api/save_company.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ ...payload, id: originSelectedCompanyId })
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -780,7 +798,7 @@
                     fetch('api/save_logo.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ logo: base64Logo })
+                        body: JSON.stringify({ logo: base64Logo, id: originSelectedCompanyId })
                     })
                     .then(res => res.json())
                     .then(data => {

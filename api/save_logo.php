@@ -10,7 +10,7 @@ if (!$data) {
 }
 
 try {
-    $company_id = 1;
+    $company_id = $data['id'] ?? 1; // Default to 1 if not provided
 
     // Check if exists
     $check = $pdo->prepare("SELECT id FROM companies WHERE id = ? LIMIT 1");
@@ -21,9 +21,7 @@ try {
         $stmt = $pdo->prepare("UPDATE companies SET logo_data = ? WHERE id = ?");
         $stmt->execute([$data['logo'], $company_id]);
     } else {
-        // This case shouldn't really happen if company exists, but for safety:
-        $stmt = $pdo->prepare("UPDATE companies SET logo_data = ? WHERE id = ?");
-        $stmt->execute([$data['logo'], $company_id]);
+        throw new Exception("Company not found");
     }
 
     echo json_encode(["status" => "success", "message" => "Logo saved successfully!"]);
