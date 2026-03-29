@@ -17,7 +17,7 @@ try {
     $existing = $check->fetch();
 
     if ($existing) {
-        $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, ntn = ?, gst = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE companies SET company_name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, ntn_no = ?, gst_no = ? WHERE id = ?");
         $stmt->execute([
             $data['name'], 
             $data['address'], 
@@ -30,7 +30,7 @@ try {
             $company_id
         ]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO companies (name, address, phone, fax, email, website, ntn, gst) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO companies (company_name, address, phone, fax, email, website, ntn_no, gst_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $data['name'], 
             $data['address'], 
@@ -44,7 +44,7 @@ try {
     }
 
     echo json_encode(["status" => "success", "message" => "Company settings updated successfully!"]);
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 ?>

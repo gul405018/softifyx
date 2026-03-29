@@ -6,10 +6,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     try {
-        $stmt = $pdo->query("SELECT id, name, address, phone, fax, email, website, gst_no, ntn_no, deals_in FROM companies ORDER BY id ASC");
+        $stmt = $pdo->query("SELECT id, company_name as name, address, phone, fax, email, website, gst_no, ntn_no, deals_in FROM companies ORDER BY id ASC");
         $companies = $stmt->fetchAll();
         echo json_encode(["status" => "success", "data" => $companies]);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 } elseif ($method === 'POST') {
@@ -20,7 +20,7 @@ if ($method === 'GET') {
             $stmt = $pdo->prepare("DELETE FROM companies WHERE id = ?");
             $stmt->execute([$data['id']]);
             echo json_encode(["status" => "success", "message" => "Company deleted successfully!"]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
         }
     } else {

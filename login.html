@@ -199,11 +199,12 @@
                     allData = data;
                     populateInitialDropdowns();
                 } else {
-                    alert("System Error: Could not load configuration data.");
+                    alert("System Error: " + (data.message || "Could not load configuration data."));
                 }
             })
             .catch(err => {
-                alert("Connection Error. Please check your internet.");
+                console.error("Fetch Error:", err);
+                alert("Connection Error: Could not reach the server or the response was invalid. Details: " + err.message);
             });
 
         function populateInitialDropdowns() {
@@ -316,7 +317,8 @@
                 }
             })
             .catch(err => {
-                alert("Login Error: Server Connection Fail.");
+                console.error("Login Fetch Error:", err);
+                alert("Login Error: Server Connection Fail. Details: " + err.message);
             });
         });
     </script>

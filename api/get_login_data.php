@@ -4,7 +4,7 @@ require_once '../includes/db_connect.php';
 
 try {
     // 1. Fetch Companies
-    $stmt = $pdo->query("SELECT id, name FROM companies ORDER BY name ASC");
+    $stmt = $pdo->query("SELECT id, company_name as name FROM companies ORDER BY name ASC");
     $companies = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // 2. Fetch Users
@@ -22,7 +22,7 @@ try {
         "financial_years" => $fys
     ]);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 ?>

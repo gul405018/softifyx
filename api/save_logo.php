@@ -13,20 +13,21 @@ try {
     $company_id = 1;
 
     // Check if exists
-    $check = $pdo->prepare("SELECT id FROM company_logos WHERE company_id = ? LIMIT 1");
+    $check = $pdo->prepare("SELECT id FROM companies WHERE id = ? LIMIT 1");
     $check->execute([$company_id]);
     $existing = $check->fetch();
 
     if ($existing) {
-        $stmt = $pdo->prepare("UPDATE company_logos SET logo_data = ? WHERE company_id = ?");
+        $stmt = $pdo->prepare("UPDATE companies SET logo_data = ? WHERE id = ?");
         $stmt->execute([$data['logo'], $company_id]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO company_logos (company_id, logo_data) VALUES (?, ?)");
-        $stmt->execute([$company_id, $data['logo']]);
+        // This case shouldn't really happen if company exists, but for safety:
+        $stmt = $pdo->prepare("UPDATE companies SET logo_data = ? WHERE id = ?");
+        $stmt->execute([$data['logo'], $company_id]);
     }
 
     echo json_encode(["status" => "success", "message" => "Logo saved successfully!"]);
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 ?>

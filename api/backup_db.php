@@ -17,12 +17,12 @@ if ($action === 'export') {
         $output .= "DROP TABLE IF EXISTS `$table`;\n";
         
         // Structure
-        $stmt = $pdo->query("SHOW CREATE TABLE `$table` text");
+        $stmt = $pdo->query("SHOW CREATE TABLE `$table` ");
         $create = $stmt->fetch();
         $output .= $create['Create Table'] . ";\n\n";
         
         // Data
-        $stmt = $pdo->query("SELECT * FROM `$table` desc");
+        $stmt = $pdo->query("SELECT * FROM `$table` ");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($rows as $row) {
@@ -56,8 +56,8 @@ if ($action === 'export') {
         $pdo->exec($sql);
         $pdo->commit();
         echo json_encode(["status" => "success", "message" => "Database restored successfully!"]);
-    } catch (Exception $e) {
-        $pdo->rollBack();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 }

@@ -49,7 +49,7 @@ try {
         echo json_encode(["status" => "error", "message" => "Invalid username or password."]);
     }
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
 }
 ?>
