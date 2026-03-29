@@ -10,7 +10,7 @@ if (!$data) {
 }
 
 try {
-    $company_id = 1;
+    $company_id = $data['company_id'] ?? 1; // Default to 1 for backward compatibility
 
     // Check if code exists for this company
     $stmt = $pdo->prepare("SELECT id FROM coa_main WHERE company_id = ? AND code = ?");

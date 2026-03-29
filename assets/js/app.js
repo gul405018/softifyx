@@ -511,37 +511,6 @@
             }
         };
 
-        function showAddUserForm() {
-            openModal(`
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;"><i class="fas fa-user-plus"></i> Add New User</h3>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" class="form-control" id="newUsername">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" class="form-control" id="newPassword">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label>Email</label>
-                        <input type="email" class="form-control" id="newEmail">
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="form-control" id="newRole">
-                            <option value="Admin">Admin (Manager)</option>
-                            <option value="Operator">Operator (Data Entry)</option>
-                            <option value="Viewer">Viewer (Read Only)</option>
-                        </select>
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="addUser()"><i class="fas fa-save"></i> Add User</button>
-                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    </div>
-                </div>`
-            );
-        }
 
         window.addUser = function() {
             const username = document.getElementById('newUsername')?.value;
@@ -571,9 +540,9 @@
         function editUser(userId) {
             const user = users.find(u => u.id == userId);
             if (user) {
-                openModal(`
-                    <div style="padding: 20px;">
-                        <h3>Edit User Profile</h3>
+                openModal(
+                    { icon: 'fa-user-edit', text: 'Edit User Profile' },
+                    `<div style="padding: 20px;">
                         <div class="form-group">
                             <label>Username</label>
                             <input type="text" class="form-control" id="editUsername" value="${user.username}">
@@ -1322,59 +1291,50 @@
             });
         }
 
-        // --- FINANCIAL YEAR LOGIC --- //
-        let financialYears = [
-            { id: 1, start: '2020-07-01', end: '2021-06-30', abbr: '2020-21' }
-        ];
+        // --- FINANCIAL YEAR LOGIC (DATABASE SYNC) --- //
+        let financialYears = [];
 
         function initFinancialYearView() {
-            renderFinancialYearList();
-            addFinancialYear(); 
+            const check = setInterval(() => {
+                const box = document.getElementById('fyListBox');
+                if (box) {
+                    clearInterval(check);
+                    loadFinancialYears();
+                }
+            }, 100);
         }
 
-        function renderFinancialYearList() {
-            const listObj = document.getElementById('fyListBox');
-            if(!listObj) return;
-            let html = '';
-            financialYears.forEach(fy => {
-                const activeId = document.getElementById('fyEditId') ? document.getElementById('fyEditId').value : '';
-                const activeCls = (activeId == fy.id) ? 'active' : '';
-                html += `<div class="listbox-item ${activeCls}" onclick="selectFinancialYear(${fy.id})">${fy.abbr}</div>`;
-            });
-            listObj.innerHTML = html;
+        function loadFinancialYears() {
+            fetch(`api/get_login_data.php`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        financialYears = data.financial_years;
+                        renderFYList();
+                    }
+                });
         }
 
-        function selectFinancialYear(id) {
-            const fy = financialYears.find(f => f.id == id);
-            if(fy) {
-                document.getElementById('fyStartDate').value = fy.start;
-                document.getElementById('fyEndDate').value = fy.end;
-                document.getElementById('fyAbbreviation').value = fy.abbr;
-                document.getElementById('fyEditId').value = fy.id;
-                document.getElementById('fyErrorMsg').textContent = '';
-                renderFinancialYearList();
-            }
+        function renderFYList() {
+            const box = document.getElementById('fyListBox');
+            if(!box) return;
+            box.innerHTML = (financialYears || []).map(fy => `
+                <div class="listbox-item" onclick="onFinancialYearSelect(${fy.id}, this)">
+                    ${fy.abbr}
+                </div>
+            `).join('');
         }
 
-        function addFinancialYear() {
-            document.getElementById('fyStartDate').value = '';
-            document.getElementById('fyEndDate').value = '';
-            document.getElementById('fyAbbreviation').value = '';
-            document.getElementById('fyEditId').value = '';
-            document.getElementById('fyErrorMsg').textContent = '';
-            renderFinancialYearList();
-        }
-
-        function saveFinancialYear() {
-            const start = document.getElementById('fyStartDate').value;
-            const end = document.getElementById('fyEndDate').value;
-            const abbr = document.getElementById('fyAbbreviation').value;
-            const editId = document.getElementById('fyEditId').value;
-            const errorMsg = document.getElementById('fyErrorMsg');
+        window.onFinancialYearSelect = function(id, el) {
+            document.querySelectorAll('.listbox-item').forEach(i => i.classList.remove('active'));
+            if(el) el.classList.add('active');
             
-            errorMsg.style.color = '#d63031';
-            if(!start || !end || !abbr) {
-                errorMsg.textContent = 'Please fill all related fields.';
+            const fy = financialYears.find(f => f.id == id);
+            if (fy) {
+                document.getElementById('fyStartDate').value = fy.start_date || fy.start || '';
+                document.getElementById('fyEndDate').value = fy.end_date || fy.end || '';
+                document.getElementById('fyAbbreviation').value = fy.abbr || '';
+                document.getElementById('fyEditId').value = fy.id;
                 return;
             }
 
@@ -2091,8 +2051,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
+                    const isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
+                    const isFY = (moduleName === "Financial Year" || (targetUrl && targetUrl.includes('financial_year.html')));
+                    
+                    let initCb = null;
+                    if (isCoa) initCb = initChartOfAccountsView;
+                    else if (isFY) initCb = initFinancialYearView;
+
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCb, moduleName, isCoa);
                 });
             });
         }
@@ -2181,7 +2147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fetch('api/save_coa_main.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, name, component })
+                body: JSON.stringify({ code, name, component, company_id: originSelectedCompanyId })
             })
             .then(res => res.json())
             .then(data => {
@@ -2257,7 +2223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fetch('api/save_coa_sub.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mainCode: selectedMainCode, code, name })
+                body: JSON.stringify({ mainCode: selectedMainCode, code, name, company_id: originSelectedCompanyId })
             })
             .then(res => res.json())
             .then(data => {
@@ -2342,7 +2308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fetch('api/save_coa_list.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subCode: selectedSubCode, code, name })
+                body: JSON.stringify({ subCode: selectedSubCode, code, name, company_id: originSelectedCompanyId })
             })
             .then(res => res.json())
             .then(data => {

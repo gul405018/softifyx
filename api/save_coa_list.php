@@ -10,7 +10,7 @@ if (!$data) {
 }
 
 try {
-    $company_id = 1;
+    $company_id = $data['company_id'] ?? 1;
 
     $stmt = $pdo->prepare("SELECT id FROM coa_list WHERE company_id = ? AND code = ?");
     $stmt->execute([$company_id, $data['code']]);

@@ -10,7 +10,7 @@ if (!$data) {
 }
 
 try {
-    $company_id = 1;
+    $company_id = $data['company_id'] ?? 1;
 
     // We search by code for this company
     $stmt = $pdo->prepare("SELECT id FROM coa_sub WHERE company_id = ? AND code = ?");

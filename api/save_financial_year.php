@@ -10,8 +10,7 @@ if (!$data) {
 }
 
 try {
-    // We assume company_id 1 for now or get it from session
-    $company_id = 1; 
+    $company_id = $data['company_id'] ?? 1; 
 
     if (!empty($data['id'])) {
         // Update
@@ -24,7 +23,7 @@ try {
     }
 
     echo json_encode(["status" => "success", "message" => "Financial Year saved successfully!"]);
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 ?>
