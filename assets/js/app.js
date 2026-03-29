@@ -19,7 +19,8 @@
         ];
 
         let logoData = null;
-        let originSelectedCompanyName = ""; // New: track original name to fix edit/duplicate bug
+        let originSelectedCompanyName = ""; 
+        let originSelectedCompanyId = null; // New: track DB id for companies
 
         let inventoryItems = [];
         let coaMain = [];
@@ -68,62 +69,45 @@
         }
 
         function loadSavedData() {
-            // GLOBAL DATA (Same for all companies)
-            const savedCompanies = localStorage.getItem('softifyx_companies');
-            if (savedCompanies) {
-                companies = JSON.parse(savedCompanies).filter(c => {
-                    const name = typeof c === 'string' ? c : c.name;
-                    return name && name !== "[object Object]";
+            // GLOBAL DATA Fetch
+            fetch('api/manage_companies.php')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        companies = data.data.map(c => ({ id: c.id, name: c.name, ...c }));
+                        updateNames();
+                    }
                 });
-            }
 
-            const savedUsers = localStorage.getItem(getCoKey('softifyx_users'));
-            if (savedUsers) users = JSON.parse(savedUsers);
-            else users = [{ id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }];
+            fetch('api/manage_users.php')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        users = data.data;
+                    }
+                });
 
-            const savedFY = localStorage.getItem(getCoKey('softifyx_financial_years'));
-            if (savedFY) financialYears = JSON.parse(savedFY);
-            else financialYears = ["2021-22","2022-23","2023-24","2024-25"];
-
-            // COMPANY-SPECIFIC DATA (Isolated)
+            // Keep session-based logic for current view/company selection
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const savedCompany = localStorage.getItem(getCoKey('softifyx_company'));
             
             if (savedCompany) {
                 companyData = JSON.parse(savedCompany);
-                // Ensure name matches session if changed there
                 if (sessionData.company) companyData.name = sessionData.company; 
             } else if (sessionData.company) {
-                // FALLBACK: Initialize with name from session if no specific settings saved yet
                 companyData = { name: sessionData.company, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
             }
 
+            // Other local UI states (Logo, Notes, COA cache)
             const savedLogo = localStorage.getItem(getCoKey('softifyx_logo'));
             logoData = savedLogo || null;
             if (logoData) displayLogo();
-
-            const savedNote = localStorage.getItem(getCoKey('softifyx_note'));
-                currentNote = savedNote || '';
-            const notesText = document.getElementById('notesText');
-            if (notesText) notesText.value = currentNote;
-
-            const savedSummary = localStorage.getItem(getCoKey('softifyx_summary'));
-            if (savedSummary) dailySummary = JSON.parse(savedSummary);
-            else resetDashboardModel(); // Re-zero if no data for this company
-
-            const savedInv = localStorage.getItem(getCoKey('softifyx_inventory'));
-            if (savedInv) inventoryItems = JSON.parse(savedInv);
-            else inventoryItems = [];
 
             coaMain = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_main')) || '[]');
             coaSub = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_sub')) || '[]');
             coaList = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_list')) || '[]');
 
-            // Inject Default COA if empty
-            if (coaMain.length === 0) {
-                coaMain = [...DEFAULT_COA_MAIN];
-                localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
-            }
+            if (coaMain.length === 0) { coaMain = [...DEFAULT_COA_MAIN]; }
 
             updateNames();
             updateDashboardSummary();
@@ -508,71 +492,87 @@
             }
         };
 
-        function addUser() {
+        function showAddUserForm() {
+            openModal(`
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 20px;"><i class="fas fa-user-plus"></i> Add New User</h3>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" class="form-control" id="newUsername">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" class="form-control" id="newPassword">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="newEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select class="form-control" id="newRole">
+                            <option value="Admin">Admin (Manager)</option>
+                            <option value="Operator">Operator (Data Entry)</option>
+                            <option value="Viewer">Viewer (Read Only)</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="addUser()"><i class="fas fa-save"></i> Add User</button>
+                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    </div>
+                </div>`
+            );
+        }
+
+        window.addUser = function() {
             const username = document.getElementById('newUsername')?.value;
             const email = document.getElementById('newEmail')?.value;
             const role = document.getElementById('newRole')?.value;
             const password = document.getElementById('newPassword')?.value;
             
-            if (username && email) {
-                if (!password) {
-                    alert("Please enter a password for the new user!");
-                    return;
+            if (!username || !password) return alert("Username and Password are required!");
+
+            fetch('api/manage_users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, email, role, status: 'Active' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    closeModal();
+                    loadSavedData();
+                } else {
+                    alert(data.message);
                 }
-                const newUser = {
-                    id: users.length + 1,
-                    username: username,
-                    role: role,
-                    email: email,
-                    status: 'Active',
-                    password: password
-                };
-                users.push(newUser);
-                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
-                
-                // Show a small success toast if possible, otherwise close
-                closeModal();
-                alert("User added successfully! They can now log in.");
-                
-                // Refresh the list if the user list modal was partially open
-                const userLoginsBtn = document.getElementById('userLoginsBtn');
-                if(userLoginsBtn) userLoginsBtn.click();
-            } else {
-                alert("Please fill in both Username and Email!");
-            }
-        }
+            });
+        };
 
         function editUser(userId) {
-            const user = users.find(u => u.id === userId);
+            const user = users.find(u => u.id == userId);
             if (user) {
-                openModal(
-                    { icon: 'fa-user-edit', text: 'Edit User' },
-                    `<div>
+                openModal(`
+                    <div style="padding: 20px;">
+                        <h3>Edit User Profile</h3>
                         <div class="form-group">
                             <label>Username</label>
                             <input type="text" class="form-control" id="editUsername" value="${user.username}">
                         </div>
                         <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" class="form-control" id="editEmail" value="${user.email}">
+                            <label>Email Address</label>
+                            <input type="email" class="form-control" id="editEmail" value="${user.email || ''}">
                         </div>
                         <div class="form-group">
-                            <label>Role</label>
+                            <label>User Role</label>
                             <select class="form-control" id="editRole">
                                 <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                                <option value="Operator" ${user.role === 'Operator' ? 'selected' : ''}>Operator (Data Entry)</option>
-                                <option value="Viewer" ${user.role === 'Viewer' ? 'selected' : ''}>Viewer (Read Only)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select class="form-control" id="editStatus">
-                                <option value="Active" ${user.status === 'Active' ? 'selected' : ''}>Active</option>
-                                <option value="Inactive" ${user.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                <option value="Operator" ${user.role === 'Operator' ? 'selected' : ''}>Operator</option>
+                                <option value="Viewer" ${user.role === 'Viewer' ? 'selected' : ''}>Viewer</option>
                             </select>
                         </div>
                         <div class="modal-actions">
-                            <button class="btn btn-primary" onclick="updateUser(${userId})">Update</button>
+                            <button class="btn btn-primary" onclick="updateUser(${userId})">Save Changes</button>
                             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                         </div>
                     </div>`
@@ -581,37 +581,39 @@
         }
 
         function updateUser(userId) {
-            const user = users.find(u => u.id === userId);
-            if (user) {
-                user.username = document.getElementById('editUsername')?.value || user.username;
-                user.email = document.getElementById('editEmail')?.value || user.email;
-                user.role = document.getElementById('editRole')?.value || user.role;
-                user.status = document.getElementById('editStatus')?.value || user.status;
-                // Find the index of the user to check for Administrator
-                const index = users.findIndex(u => u.id === userId);
-                if (index !== -1 && users[index].username === "Administrator") {
-                    // If the Administrator's password was changed, it would be handled separately
-                    // For now, ensure the admin password key is not overwritten by general user updates
-                    // The original code had an issue here with `newPassword` not being defined.
-                    // If password change for admin is intended, it needs a dedicated input.
-                    // For now, we'll ensure the users array is saved correctly.
+            const username = document.getElementById('editUsername')?.value;
+            const email = document.getElementById('editEmail')?.value;
+            const role = document.getElementById('editRole')?.value;
+
+            fetch('api/manage_users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId, username, email, role, status: 'Active' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    closeModal();
+                    loadSavedData();
                 }
-                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
-                document.getElementById('userLoginsBtn').click();
-            }
+            });
         }
 
         function deleteUser(userId) {
-            if (confirm('Are you sure you want to delete this user?')) {
-                const index = users.findIndex(u => u.id === userId);
-                if (index !== -1 && users[index].username !== 'Administrator') {
-                    users.splice(index, 1);
-                    // The instruction had a malformed duplicate line here.
-                    // Keeping the correct existing line.
-                    localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
-                    document.getElementById('userLoginsBtn').click();
+            if (!confirm('Are you sure you want to delete this user?')) return;
+            fetch('api/manage_users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', id: userId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    loadSavedData();
                 }
-            }
+            });
         }
 
         function showAddCompanyForm() {
@@ -721,8 +723,7 @@
             const dealsIn = document.getElementById('modalDealsIn')?.value;
             
             if (businessName) {
-                const oldName = companyData.name;
-                companyData = {
+                const payload = {
                     name: businessName,
                     address: address || '',
                     phone: phone || '',
@@ -733,33 +734,30 @@
                     ntn: ntn || '',
                     dealsIn: dealsIn || ''
                 };
-                
-                localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
-                
-                // CRITICAL SYNC: Update the global companies list as well
-                const companiesIdx = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === (oldName || companyData.name));
-                if (companiesIdx !== -1) {
-                    companies[companiesIdx] = { ...companyData };
-                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-                } else {
-                    // If not found (shouldn't happen), add it
-                    companies.push({ ...companyData });
-                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-                }
 
-                // CRITICAL SYNC: Update the main session too if the name changed
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                if (session.company === oldName || !session.company) {
-                    session.company = businessName;
-                    localStorage.setItem('softifyx_session', JSON.stringify(session));
-                    // Also update active company for selection persistence
-                    localStorage.setItem('softifyx_active_company', businessName);
-                }
-
-                updateNames();
-                updateDashboardSummary();
-                alert('Company settings saved and synchronized successfully!');
-                closeModal();
+                fetch('api/save_company.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Keep local state for immediate UI feedback
+                        companyData = payload;
+                        localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
+                        
+                        updateNames();
+                        updateDashboardSummary();
+                        alert(data.message);
+                        closeModal();
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    alert("Server Connection Error!");
+                });
             }
         }
 
@@ -769,6 +767,7 @@
             
             if (doNotShowOption) {
                 logoData = null;
+                // API call to clear logo could be added here
                 localStorage.removeItem(getCoKey('softifyx_logo'));
                 displayLogo();
                 closeModal();
@@ -776,10 +775,28 @@
                 const file = fileInput.files[0];
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    logoData = e.target.result;
-                    localStorage.setItem(getCoKey('softifyx_logo'), logoData);
-                    displayLogo();
-                    closeModal();
+                    const base64Logo = e.target.result;
+                    
+                    fetch('api/save_logo.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ logo: base64Logo })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            logoData = base64Logo;
+                            localStorage.setItem(getCoKey('softifyx_logo'), logoData);
+                            displayLogo();
+                            alert(data.message);
+                            closeModal();
+                        } else {
+                            alert("Error: " + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        alert("Logo upload failed. Check server connection.");
+                    });
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -807,83 +824,52 @@
         }
 
         function saveCompanyDetails() {
-            const oldName = originSelectedCompanyName || companyData.name;
-            const newName = document.getElementById('modalCompanyName')?.value || companyData.name;
+            const id = originSelectedCompanyId; // Assign this in selection
+            const payload = {
+                id: id,
+                name: document.getElementById('modalCompanyName')?.value || '',
+                address: document.getElementById('modalCompanyAddress')?.value || '',
+                phone: document.getElementById('modalCompanyPhone')?.value || '',
+                fax: document.getElementById('modalCompanyFax')?.value || '',
+                email: document.getElementById('modalCompanyEmail')?.value || '',
+                website: document.getElementById('modalCompanyWebsite')?.value || '',
+                gst: document.getElementById('modalCompanyGST')?.value || '',
+                ntn: document.getElementById('modalCompanyNTN')?.value || '',
+                dealsIn: document.getElementById('modalCompanyDealsIn')?.value || ''
+            };
 
-            companyData.name = newName;
-            companyData.address = document.getElementById('modalCompanyAddress')?.value || '';
-            companyData.phone = document.getElementById('modalCompanyPhone')?.value || '';
-            companyData.fax = document.getElementById('modalCompanyFax')?.value || '';
-            companyData.email = document.getElementById('modalCompanyEmail')?.value || '';
-            companyData.website = document.getElementById('modalCompanyWebsite')?.value || '';
-            companyData.gst = document.getElementById('modalCompanyGST')?.value || '';
-            companyData.ntn = document.getElementById('modalCompanyNTN')?.value || '';
-            companyData.dealsIn = document.getElementById('modalCompanyDealsIn')?.value || '';
-            
-            // Fix: update item using the original name tracked during selection
-            const searchName = oldName;
-            const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === searchName);
-            
-            if (index !== -1) {
-                companies[index] = { ...companyData };
-            } else {
-                companies.push({ ...companyData });
-            }
-
-            // Sync global records
-            localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-
-            // CRITICAL SYNC: Update the main session too
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const wasActiveCompany = (sessionData.company === oldName);
-            
-            // Always update active company if we are saving from the List of Companies (user intent is to select/save)
-            sessionData.company = newName;
-            localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-            localStorage.setItem('softifyx_active_company', newName);
-            
-            // Save company-specific details for the NEW name prefix
-            // Note: getCoKey uses session.company, which is now updated.
-            localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
-
-            alert('Changes saved. Application will refresh to apply company data isolation.');
-            window.location.reload();
-        }
-
-        function saveNote() {
-            const noteText = document.getElementById('notesText')?.value;
-            if (noteText) {
-                currentNote = noteText;
-                localStorage.setItem(getCoKey('softifyx_note'), currentNote);
-            }
-        }
-
-        function clearNote() {
-            document.getElementById('notesText').value = '';
-            currentNote = '';
-            localStorage.setItem(getCoKey('softifyx_note'), '');
+            fetch('api/save_company.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    loadSavedData();
+                    closeModal();
+                }
+            });
         }
 
         function deleteCompany() {
-            const nameToDelete = document.getElementById('modalCompanyName')?.value || originSelectedCompanyName;
-            if (!nameToDelete) return;
+            const idToDelete = originSelectedCompanyId;
+            if (!idToDelete) return;
 
-            if (confirm(`Are you sure you want to PERMANENTLY delete "${nameToDelete}"? This action cannot be undone.`)) {
-                const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === nameToDelete);
-                if (index !== -1) {
-                    companies.splice(index, 1);
-                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-                    
-                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                    if (session.company === nameToDelete) {
-                        // If active company deleted, logout
-                        localStorage.removeItem('softifyx_session');
-                        window.location.href = 'login.html';
-                    } else {
-                        alert('Company deleted successfully.');
+            if (confirm(`Are you sure you want to PERMANENTLY delete this company?`)) {
+                fetch('api/manage_companies.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id: idToDelete })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
                         window.location.reload();
                     }
-                }
+                });
             }
         }
 
@@ -1127,13 +1113,11 @@
 
         function selectCompanyForLogin(select) {
             const selectedCompany = select.value;
-            originSelectedCompanyName = selectedCompany; // Store for tracking edits
+            originSelectedCompanyName = selectedCompany; 
             if (selectedCompany) {
-                // Remove immediate save and reload so user can edit before applying
-                // localStorage.setItem('softifyx_active_company', selectedCompany);
-                
                 let found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
                 if (found) {
+                    originSelectedCompanyId = found.id || null;
                     if (typeof found === 'string') {
                         companyData = { name: found, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
                     } else {
@@ -1141,14 +1125,11 @@
                     }
                 } else {
                     companyData.name = selectedCompany;
+                    originSelectedCompanyId = null;
                 }
                 
                 // Update form fields immediately
-                const n = id => { const el = document.getElementById(id); if (el) return el; else return { value: '' }; };
-                const nameEl = n('modalCompanyName');
-                if (nameEl) nameEl.value = companyData.name || '';
-                
-                // Also update the fields in the 'List of Companies' form specifically
+                document.getElementById('modalCompanyName').value = companyData.name || '';
                 if (document.getElementById('modalCompanyAddress')) document.getElementById('modalCompanyAddress').value = companyData.address || '';
                 if (document.getElementById('modalCompanyPhone')) document.getElementById('modalCompanyPhone').value = companyData.phone || '';
                 if (document.getElementById('modalCompanyFax')) document.getElementById('modalCompanyFax').value = companyData.fax || '';
@@ -1157,8 +1138,6 @@
                 if (document.getElementById('modalCompanyGST')) document.getElementById('modalCompanyGST').value = companyData.gst || '';
                 if (document.getElementById('modalCompanyNTN')) document.getElementById('modalCompanyNTN').value = companyData.ntn || '';
                 if (document.getElementById('modalCompanyDealsIn')) document.getElementById('modalCompanyDealsIn').value = companyData.dealsIn || '';
-                
-                // If the user wants to login to THIS company, they must click 'Save Changes'
             }
         }
         function initUserRightsView() {
@@ -1258,27 +1237,28 @@
 
         function saveUserRights() {
             const userId = document.getElementById('urUserSelect').value;
-            const userRole = document.getElementById('urUserRole').value;
-            let rightsData = {
-                __USER_ROLE__: userRole
-            };
+            const rights = [];
             
             document.querySelectorAll('#urTableBody tr').forEach(row => {
                 const rightName = row.getAttribute('data-right');
                 const statusCell = row.querySelector('.right-status');
-                rightsData[rightName] = (statusCell.textContent !== 'Not Allowed');
+                rights.push({
+                    name: rightName,
+                    allowed: (statusCell.textContent !== 'Not Allowed')
+                });
             });
             
-            localStorage.setItem(getCoKey('softifyx_user_rights_' + userId), JSON.stringify(rightsData));
-            
-            // Sync the user's role in the main users list as well
-            const userIdx = users.findIndex(u => u.id == userId);
-            if (userIdx !== -1) {
-                users[userIdx].role = userRole;
-                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
-            }
-
-            alert('User rights and role saved successfully!');
+            fetch('api/manage_user_rights.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, rights: rights })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                }
+            });
         }
 
         // === MODULAR POPUP SYSTEM ARCHITECTURE ===
@@ -1299,8 +1279,6 @@
             const confPwd = document.getElementById('pwdConfirm').value.trim();
             const errorMsg = document.getElementById('pwdErrorMsg');
             
-            errorMsg.textContent = '';
-            
             if(!oldPwd || !newPwd || !confPwd) {
                 errorMsg.textContent = 'All fields are required!';
                 return;
@@ -1309,27 +1287,21 @@
                 errorMsg.textContent = 'New Password and Re-Type Password do not match!';
                 return;
             }
-            
-            const userIndex = users.findIndex(u => u.id === userId);
-            if (userIndex !== -1) {
-                const user = users[userIndex];
-                // Admin can override any user's password without knowing old password
-                const isAdminReset = (currentUser === 'Administrator' && user.username !== 'Administrator');
-                
-                if (!isAdminReset && user.password !== oldPwd && oldPwd !== '123') { 
-                    errorMsg.textContent = 'Old Password does not match our records!';
-                    return;
+
+            fetch('api/change_password.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, old_password: oldPwd, new_password: newPwd })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    closeModal();
+                } else {
+                    errorMsg.textContent = data.message;
                 }
-                
-                // Update password
-                users[userIndex].password = newPwd;
-                localStorage.setItem(getCoKey('softifyx_users'), JSON.stringify(users));
-                
-                alert('Success: Password for user "' + user.username + '" has been updated successfully!');
-                closeModal();
-            } else {
-                errorMsg.textContent = 'System Error: Selected user not found!';
-            }
+            });
         }
 
         // --- FINANCIAL YEAR LOGIC --- //
@@ -1387,22 +1359,27 @@
                 errorMsg.textContent = 'Please fill all related fields.';
                 return;
             }
-            if(editId) {
-                const fy = financialYears.find(f => f.id == editId);
-                if(fy) {
-                    fy.start = start; fy.end = end; fy.abbr = abbr;
+
+            const payload = { id: editId, startDate: start, endDate: end, abbreviation: abbr };
+
+            fetch('api/save_financial_year.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    errorMsg.style.color = '#27ae60';
+                    errorMsg.textContent = data.message;
+                    setTimeout(() => { if(errorMsg) errorMsg.textContent=''; closeModal(); }, 1500);
+                } else {
+                    errorMsg.textContent = data.message;
                 }
-            } else {
-                const newId = financialYears.length ? Math.max(...financialYears.map(f=>f.id)) + 1 : 1;
-                financialYears.push({ id: newId, start, end, abbr });
-                document.getElementById('fyEditId').value = newId;
-            }
-            
-            errorMsg.style.color = '#27ae60';
-            errorMsg.textContent = 'Saved successfully!';
-            localStorage.setItem(getCoKey('softifyx_financial_years'), JSON.stringify(financialYears));
-            setTimeout(() => { if(errorMsg) errorMsg.textContent=''; }, 2000);
-            renderFinancialYearList();
+            })
+            .catch(err => {
+                errorMsg.textContent = "Server Connection Error!";
+            });
         }
 
         // --- CLEAR TRANSACTIONS LOGIC --- //
@@ -1416,38 +1393,27 @@
                 errorMsg.textContent = 'Hardware Authorization: Admin Password is required!';
                 return;
             }
-            
-            // Match against Administrator's current password
-            const adminUser = users.find(u => u.username.toLowerCase() === 'administrator' || u.username.toLowerCase() === 'admin');
-            const storedPassword = adminUser ? adminUser.password : '123';
-            
-            if(pwdInput !== storedPassword && pwdInput !== '123') {
-                errorMsg.textContent = 'Incorrect Password! Authorization denied.';
-                return;
-            }
-            
-            const confirmed = confirm('FINAL WARNING: This will clear all transactions (Sales, Payments, Receipts) for the current company. Master Data (Inventory, Chart of Accounts, etc.) will be PRESERVED. Are you absolutely sure?');
-            if(confirmed) {
-                // Company-Specific Reset (Isolation)
-                const prefix = getCoKey('').replace('__', '_'); // Get the prefix like softifyx_CoName_
-                const keepKeywords = ['inventory', 'accounts', 'users', 'rights', 'company', 'logo', 'currency', 'note', 'companies', 'session', 'financial_years'];
-                
-                Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith(prefix)) {
-                        const isProtected = keepKeywords.some(kw => key.toLowerCase().includes(kw));
-                        if (!isProtected) {
-                            localStorage.removeItem(key);
-                        }
-                    }
-                });
-                
-                // Also reset the dashboard numbers
-                resetDashboardModel();
-                saveSummary();
-                
-                alert('Transactions successfully cleared. Master data was preserved.');
-                window.location.reload();
-            }
+
+            if(!confirm("Are you sure? This will delete ALL Vouchers while keeping COA and Inventory!")) return;
+
+            fetch('api/clear_transactions.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pwdInput })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    closeModal();
+                    if(window.loadView) window.loadView('components/dashboard.html');
+                } else {
+                    errorMsg.textContent = data.message;
+                }
+            })
+            .catch(err => {
+                errorMsg.textContent = "Execution Failed. Try again.";
+            });
         }
 
         // --- CURRENCY LOGIC --- //
@@ -1590,28 +1556,35 @@
         }
 
         function saveCurrencySettings() {
-            const c = document.getElementById('currCountry').value;
-            const n = document.getElementById('currName').value;
-            const s = document.getElementById('currSymbol').value;
+            const country = document.getElementById('currCountry').value;
+            const name = document.getElementById('currName').value;
+            const symbol = document.getElementById('currSymbol').value;
             const err = document.getElementById('currErrorMsg');
             
-            if(!c || !n || !s) {
+            if(!country || !name || !symbol) {
                 err.style.color = '#d63031';
                 err.textContent = 'Please fill all related fields.';
                 return;
             }
-            
-            localStorage.setItem(getCoKey('softifyx_currency'), JSON.stringify({ country: c, name: n, symbol: s }));
-            err.style.color = '#27ae60';
-            err.textContent = 'Settings saved successfully!';
-            
-            applyGlobalCurrencySymbol();
-            updateDashboardSummary();
-            
-            setTimeout(() => {
-                if(err) err.textContent = '';
-                closeModal();
-            }, 800);
+
+            fetch('api/save_currency.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country, name, symbol })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    err.style.color = '#27ae60';
+                    err.textContent = 'Settings saved successfully!';
+                    setTimeout(() => { if(err) err.textContent = ''; closeModal(); }, 1000);
+                } else {
+                    err.textContent = data.message;
+                }
+            })
+            .catch(err => {
+                err.textContent = "Server Connection Error!";
+            });
         }
 
         function applyGlobalCurrencySymbol() {
@@ -1937,56 +1910,28 @@
         window.executeRestore = executeRestore;
 
 // === BACKUP LOGIC ===
-        function executeBackup(isAuto = false) {
-            const fullBackupData = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                fullBackupData[key] = localStorage.getItem(key);
-            }
-            
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackupData));
-            
-            const today = new Date();
-            const dd = String(today.getDate()).padStart(2, '0');
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const yyyy = today.getFullYear();
-            const formattedDate = `${dd}-${mm}-${yyyy}`;
-            
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `${formattedDate}_Data_Backup.json`);
-            document.body.appendChild(downloadAnchorNode); 
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-
-            if (!isAuto) {
-                alert("Backup Extracted Successfully! Please store this generated file in a secure location or assigned directory.");
-                closeModal();
-            }
+        function executeBackup() {
+            window.location.href = 'api/backup_db.php?action=export';
         }
 
         function executeRestore(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (confirm("WARNING: ALL current data will be erased and completely replaced by the back-up data. Are you absolutely sure you want to proceed with restore?")) {
-                        localStorage.clear();
-                        Object.keys(data).forEach(key => {
-                            localStorage.setItem(key, data[key]);
-                        });
-                        alert("Backup Restored Successfully! Data restored globally. The system will now automatically reload to reflect these changes.");
-                        window.location.reload();
-                    }
-                } catch(err) {
-                    alert("System Restore Error: The selected file is not a valid backup architecture. Restoration canceled.");
-                }
-                event.target.value = ''; // Reset input to allow re-selection
-            };
-            reader.readAsText(file);
+            const formData = new FormData();
+            formData.append('backup_file', file);
+            formData.append('action', 'restore');
+
+            fetch('api/backup_db.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === 'success') window.location.reload();
+            })
+            .catch(err => alert("Restore Failed: Connection Error."));
         }
 
         function setupAutoBackupScheduler() {
@@ -2214,15 +2159,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const component = componentInput.value;
 
             if(!code || !name) return alert("Code and Name are required!");
-            
-            const idx = coaMain.findIndex(m => m.code == code);
-            if(idx !== -1) coaMain[idx] = { code, name, component };
-            else coaMain.push({ code, name, component });
 
-            localStorage.setItem(getCoKey('softifyx_coa_main'), JSON.stringify(coaMain));
-            renderCOAMainList();
-            resetMainForm(); // Reset and re-enable dropdown
-            alert("Main Account Type Saved!");
+            fetch('api/save_coa_main.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, name, component })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert(data.message);
+                    resetMainForm();
+                    // Optional: Fetch latest from API and re-render
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
         }
 
         function deleteCOAMain() {
@@ -2283,27 +2235,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!name) return alert("Sub Account Name is required!");
 
             let code = document.getElementById('subAccountCode').value;
-            if(!code) {
-                // Generate new code: MainCode + 2 digits
-                const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
-                let nextNum = 1;
-                if(siblings.length > 0) {
-                    const lastCodes = siblings.map(s => {
-                        const sCode = s.code.toString();
-                        return parseInt(sCode.substring(selectedMainCode.toString().length));
-                    });
-                    nextNum = Math.max(...lastCodes) + 1;
+
+            fetch('api/save_coa_sub.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mainCode: selectedMainCode, code, name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert(data.message);
+                    renderCOASubList();
+                } else {
+                    alert("Error: " + data.message);
                 }
-                code = selectedMainCode.toString() + nextNum.toString().padStart(2, '0');
-            }
-
-            const idx = coaSub.findIndex(s => s.code == code);
-            if(idx !== -1) coaSub[idx] = { code, name, mainCode: selectedMainCode };
-            else coaSub.push({ code, name, mainCode: selectedMainCode });
-
-            localStorage.setItem(getCoKey('softifyx_coa_sub'), JSON.stringify(coaSub));
-            renderCOASubList();
-            alert("Sub Account Type Saved!");
+            });
         }
 
         function deleteCOASub() {
@@ -2374,27 +2320,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!name) return alert("Account Name is required!");
 
             let code = document.getElementById('accountCode').value;
-            if(!code) {
-                // Generate new code: SubCode + 3 digits
-                const siblings = coaList.filter(l => l.subCode == selectedSubCode);
-                let nextNum = 1;
-                if(siblings.length > 0) {
-                    const lastCodes = siblings.map(l => {
-                        const lCode = l.code.toString();
-                        return parseInt(lCode.substring(selectedSubCode.toString().length));
-                    });
-                    nextNum = Math.max(...lastCodes) + 1;
+
+            fetch('api/save_coa_list.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subCode: selectedSubCode, code, name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert(data.message);
+                    renderCOAListList();
+                } else {
+                    alert("Error: " + data.message);
                 }
-                code = selectedSubCode.toString() + nextNum.toString().padStart(3, '0');
-            }
-
-            const idx = coaList.findIndex(l => l.code == code);
-            if(idx !== -1) coaList[idx] = { code, name, subCode: selectedSubCode };
-            else coaList.push({ code, name, subCode: selectedSubCode });
-
-            localStorage.setItem(getCoKey('softifyx_coa_list'), JSON.stringify(coaList));
-            renderCOAListList();
-            alert("Account Saved!");
+            });
         }
 
         function deleteCOAList() {
