@@ -185,82 +185,66 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
-        // Populate Data from LocalStorage
-        const companies = JSON.parse(localStorage.getItem('softifyx_companies') || '["Softifyx Company"]');
-        const financialYears = JSON.parse(localStorage.getItem('softifyx_financial_years') || '["2021-22","2022-23","2023-24"]');
-        const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
+        let allData = { companies: [], users: [], financial_years: [] };
 
         const userSelect = document.getElementById('userDropdown');
         const companySelect = document.getElementById('companyDropdown');
         const yearSelect = document.getElementById('yearDropdown');
 
-        // 1. Populate Companies
-        companies.forEach(c => { 
-            const cName = (typeof c === 'string') ? c : (c.name || "Unknown Company");
-            if (cName !== "[object Object]") {
-                const op = new Option(cName, cName); 
-                companySelect.add(op); 
-            }
-        });
-
-        // 2. Populate Years
-        financialYears.forEach(y => { 
-            const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
-            const op = new Option(yName, yName); 
-            yearSelect.add(op); 
-        });
-
-        // 3. Logic to update users AND financial years based on selected company
-        function updateUsersAndData() {
-            const coName = companySelect.value || 'default';
-            const userKey = `softifyx_${coName}_users`;
-            const fyKey = `softifyx_${coName}_financial_years`;
-            
-            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
-            const companyFYs = JSON.parse(localStorage.getItem(fyKey) || '["2021-22","2022-23","2023-24","2024-25"]');
-            
-            // Update Users
-            const currentSelectedUser = userSelect.value;
-            userSelect.innerHTML = '';
-            const adminOp = new Option("Administrator", "Administrator");
-            userSelect.add(adminOp);
-            
-            companyUsers.forEach(u => {
-                if (u.username && u.username !== "Administrator") {
-                    const op = new Option(u.username, u.username);
-                    userSelect.add(op);
+        // Fetch Initial Data
+        fetch('api/get_login_data.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    allData = data;
+                    populateInitialDropdowns();
+                } else {
+                    alert("System Error: Could not load configuration data.");
                 }
+            })
+            .catch(err => {
+                alert("Connection Error. Please check your internet.");
             });
-            if (currentSelectedUser && Array.from(userSelect.options).some(o => o.value === currentSelectedUser)) {
-                userSelect.value = currentSelectedUser;
-            }
 
-            // Update Financial Years
-            const currentSelectedFY = yearSelect.value;
+        function populateInitialDropdowns() {
+            // 1. Populate Companies
+            companySelect.innerHTML = '';
+            allData.companies.forEach(c => {
+                const op = new Option(c.name, c.name);
+                op.dataset.id = c.id;
+                companySelect.add(op);
+            });
+
+            // 2. Populate Users
+            userSelect.innerHTML = '';
+            allData.users.forEach(u => {
+                userSelect.add(new Option(u.username, u.username));
+            });
+
+            // 3. Populate Financial Years for first company
+            updateFinancialYears();
+            
+            // Apply Defaults if any from local storage (UI helper)
+            const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
+            if (savedDefaults.company) companySelect.value = savedDefaults.company;
+            if (savedDefaults.username) userSelect.value = savedDefaults.username;
+            updateFinancialYears();
+            if (savedDefaults.year) yearSelect.value = savedDefaults.year;
+        }
+
+        function updateFinancialYears() {
+            const selectedCoName = companySelect.value;
+            const company = allData.companies.find(c => c.name === selectedCoName);
+            if (!company) return;
+
             yearSelect.innerHTML = '';
-            companyFYs.forEach(y => {
-                const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
-                const op = new Option(yName, yName); 
-                yearSelect.add(op); 
+            const companyFYs = allData.financial_years.filter(fy => fy.company_id == company.id);
+            companyFYs.forEach(fy => {
+                yearSelect.add(new Option(fy.abbr, fy.abbr));
             });
-            if (currentSelectedFY && Array.from(yearSelect.options).some(o => o.value === currentSelectedFY)) {
-                yearSelect.value = currentSelectedFY;
-            }
         }
 
-        companySelect.addEventListener('change', updateUsersAndData);
-
-        // --- LOGIN DEFAULTS LOGIC ---
-        if (savedDefaults.company) companySelect.value = savedDefaults.company;
-        if (savedDefaults.year) yearSelect.value = savedDefaults.year;
-        
-        // Populate users and data for the initially selected company
-        updateUsersAndData();
-        
-        // Now set the user default if it worked
-        if (savedDefaults.username && Array.from(userSelect.options).some(o => o.value === savedDefaults.username)) {
-            userSelect.value = savedDefaults.username;
-        }
+        companySelect.addEventListener('change', updateFinancialYears);
 
         document.getElementById('setDefaultBtn').addEventListener('click', () => {
             const defaults = {
@@ -270,45 +254,32 @@
             };
             localStorage.setItem('softifyx_login_defaults', JSON.stringify(defaults));
             
-            // Visual feedback
             const btn = document.getElementById('setDefaultBtn');
             const originalText = btn.textContent;
             btn.textContent = 'Saved! ✅';
-            btn.style.borderColor = '#27ae60';
-            btn.style.color = '#27ae60';
-            
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.borderColor = '#ced4da';
-                btn.style.color = '#495057';
-            }, 2000);
+            setTimeout(() => { btn.textContent = originalText; }, 2000);
         });
 
-        // AUTHENTIC YETI LOGIC for User-Provided SVG
+        // Yeti (GSAP) Animation Logic - Untouched for visual excellence
         const armL = document.querySelector('.armL');
         const armR = document.querySelector('.armR');
         const pupilL = document.querySelector('.pupil-L');
         const pupilR = document.querySelector('.pupil-R');
         const passwordInput = document.getElementById('password');
 
-        // Initial setup for the folding arms
-        // Calibrated for the specific paths in the provided SVG
         gsap.set(armL, { x: -93, y: 10 });
         gsap.set(armR, { x: -93, y: 10 });
 
         passwordInput.addEventListener('focus', () => {
-            // Fold up to cover eyes (Authentic motion)
             gsap.to(armL, { x: -10, y: 2, ease: "power2.out", duration: 0.6 });
             gsap.to(armR, { x: -178, y: 2, ease: "power2.out", duration: 0.6 });
         });
 
         passwordInput.addEventListener('blur', () => {
-            // Fold back down
             gsap.to(armL, { x: -93, y: 10, ease: "power2.in", duration: 0.5 });
             gsap.to(armR, { x: -93, y: 10, ease: "power2.in", duration: 0.5 });
         });
 
-        // Interaction (Eye Tracking)
         document.addEventListener('mousemove', (e) => {
             if (document.activeElement === passwordInput) return;
             const x = (e.clientX / window.innerWidth - 0.5) * 12;
@@ -316,35 +287,39 @@
             gsap.to([pupilL, pupilR], { x: x, y: y, duration: 0.2 });
         });
 
-        // Form Submit
+        // LIVE LOGIN SUBMIT
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const u = userSelect.value;
-            const p = passwordInput.value;
+            const payload = {
+                username: userSelect.value,
+                password: passwordInput.value,
+                company: companySelect.value,
+                year: yearSelect.value
+            };
             
-            const coName = companySelect.value || 'default';
-            const userKey = `softifyx_${coName}_users`;
-            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
-            const userObj = companyUsers.find(usr => usr.username === u);
-            
-            // Global Admin Check
-            const globalAdminPwd = localStorage.getItem('softifyx_admin_password') || '123';
-            const isDefaultAdmin = (u === 'Administrator' && (p === globalAdminPwd || p === 'admin123'));
-
-            if ((userObj && p === userObj.password) || isDefaultAdmin) {
-                localStorage.setItem('softifyx_session', JSON.stringify({
-                    username: u,
-                    role: (u === 'Administrator') ? 'Admin' : (userObj ? (userObj.role || 'Operator') : 'Operator'),
-                    company: coName,
-                    year: yearSelect.value,
-                    loginTime: Date.now()
-                }));
-                window.location.href = 'index.html';
-            } else {
-                alert("Invalid username or password!");
-                gsap.to("form", 0.05, { x: 10, repeat: 5, yoyo: true });
-            }
+            fetch('api/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update main session from database values
+                    localStorage.setItem('softifyx_session', JSON.stringify(data.session));
+                    // Also update the local companyData object for immediate app.js startup
+                    localStorage.setItem('softifyx_active_company', data.session.company);
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.message);
+                    gsap.to("form", 0.05, { x: 10, repeat: 5, yoyo: true });
+                }
+            })
+            .catch(err => {
+                alert("Login Error: Server Connection Fail.");
+            });
         });
+    </script>
     </script>
 </body>
 </html>
