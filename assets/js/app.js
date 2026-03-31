@@ -2130,76 +2130,36 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
             }
         };
 
-/**
- * Global App Initialization
- * Fetches and injects modular HTML components
- */
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const cb = `_cb=${Date.now()}`;
-        // Load Navbar
-        const navRes = await fetch(`components/navbar.html?${cb}`);
-        if(navRes.ok) {
-            document.getElementById('navbar-container').innerHTML = await navRes.text();
-            
-            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            const navMenuEl = document.getElementById('navMenu');
-            if (mobileMenuToggle && navMenuEl) {
-                mobileMenuToggle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation(); 
-                    navMenuEl.classList.toggle('active');
-                });
+        // --- GLOBAL APP INITIALIZATION ---
+        // Load UI components sequentially
+        async function bootstrapUI() {
+            try {
+                // 1. Load Navbar
+                const navRes = await fetch('components/navbar.html');
+                if(navRes.ok) {
+                    document.getElementById('navbar-container').innerHTML = await navRes.text();
+                    setupDropdowns();
+                    setupMenuButtons();
+                }
+                
+                // 2. Load Sidebar
+                const sideRes = await fetch('components/sidebar.html');
+                if(sideRes.ok) {
+                    document.getElementById('sidebar-container').innerHTML = await sideRes.text();
+                }
+
+                // 3. Load Default View and wait for it
+                if (window.loadView) {
+                    await window.loadView('components/dashboard.html');
+                }
+
+                // 4. Start the engine
+                await init();
+                console.log('Softifyx ERP Engine Connected Successfully.');
+            } catch(err) {
+                console.error('Bootstrap Error:', err);
             }
-
-            // Attach SPA event listeners to all generic dropdown menus using Popup System
-            document.querySelectorAll('.dropdown-item[data-target], .nested-item[data-target]').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    let targetUrl = item.getAttribute('data-target');
-                    let moduleName = item.getAttribute('data-module');
-                    let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
-                    
-                    if (window.hideAllDropdowns) window.hideAllDropdowns();
-                    // Close ALL mobile layers
-                    const navMenu = document.getElementById('navMenu');
-                    if(navMenu) navMenu.classList.remove('active');
-                    document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show'));
-                });
-            });
         }
-        
-        // Load Sidebar
-        const sideRes = await fetch(`components/sidebar.html?${cb}`);
-        if(sideRes.ok) {
-            document.getElementById('sidebar-container').innerHTML = await sideRes.text();
-            
-            // Attach SPA event listeners to all sidebar menus using Popup System
-            document.querySelectorAll('.sidebar-item[data-target]').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    let targetUrl = item.getAttribute('data-target');
-                    let moduleName = item.getAttribute('data-module');
-                    let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
-                    let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
-                });
-            });
-        }
-
-        // Load Default View FIRST
-        await window.loadView('components/dashboard.html');
-
-        // Initialize general app variables and behaviors
-        init();
-
-    } catch(err) {
-        console.error('Failed to load components:', err);
-    }
-});
 // --- CHART OF ACCOUNTS (COA) LOGIC ---
         let selectedMainCode = null;
         let selectedSubCode = null;
@@ -2599,15 +2559,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.checkUserRights = checkUserRights;
 
 
+        // EXPOSE ALL MODULES GLOBALLY (Required for navbar onclick support)
+        window.openUserLogins = async function() {
+            if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            try {
+                const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                if (res.ok) users = await res.json();
+            } catch (err) { console.error('Live Sync Error:', err); }
+            openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
+        };
+
+        window.openUserRights = function() {
+            if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
+            openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
+        };
+
+        window.performSearch = performSearch;
+        window.showInventoryDetails = showInventoryDetails;
+        window.showAccessDenied = showAccessDenied;
+
         // --- FINAL STARTUP ---
-        // Ensure UI stays updated on mobile and desktop
-        window.addEventListener('resize', updateDashboardSummary);
-        
-        // Start the engine
-        init().then(() => {
-            console.log('Softifyx ERP Engine Started Successfully.');
-        }).catch(err => {
-            console.error('Core Engine Failure:', err);
-        });
+        bootstrapUI();
 
 });
