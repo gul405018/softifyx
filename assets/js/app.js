@@ -44,96 +44,84 @@
 
         async function loadSavedData() {
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
+            if (!sessionData.company_id) return;
+            const companyId = sessionData.company_id;
 
             try {
-                // 1. Fetch Company Data & Logo
-                const companyRes = await fetch(`api/admin.php?action=get_company&company_id=${companyId}`);
+                // --- PARALLEL CLOUD FETCH (Speed Boost) ---
+                const [
+                    companyRes, companiesRes, usersRes, summaryRes, 
+                    coaMainRes, coaSubRes, coaListRes, 
+                    currRes, rightsRes, fyRes
+                ] = await Promise.all([
+                    fetch(`api/admin.php?action=get_company&company_id=${companyId}`),
+                    fetch('api/admin.php?action=get_companies'),
+                    fetch(`api/admin.php?action=get_users&company_id=${companyId}`),
+                    fetch(`api/admin.php?action=get_summary&company_id=${companyId}`),
+                    fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}`),
+                    fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL`),
+                    fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL`),
+                    fetch(`api/admin.php?action=get_currency&company_id=${companyId}`),
+                    fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}`),
+                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}`)
+                ]);
+
+                // 1. Process Company
                 if (companyRes.ok) {
                     const data = await companyRes.json();
                     if (data) {
-                        companyData = {
-                            name: data.name,
-                            address: data.address,
-                            phone: data.phone,
-                            fax: data.fax,
-                            email: data.email,
-                            website: data.website,
-                            gst: data.gst,
-                            ntn: data.ntn,
-                            dealsIn: data.deals_in
-                        };
+                        companyData = { name: data.name, address: data.address, phone: data.phone, fax: data.fax, email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, dealsIn: data.deals_in };
                         logoData = data.logo_data || null;
                     }
                 }
 
-                // 2. Fetch Companies List (Global)
-                const companiesRes = await fetch('api/admin.php?action=get_companies');
-                if (companiesRes.ok) {
-                    companies = await companiesRes.json();
-                }
+                // 2. Global Companies
+                if (companiesRes.ok) companies = await companiesRes.json();
 
-                // 3. Fetch Users for current company (Explicit ID)
-                const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                // 3. User List
                 if (usersRes.ok) users = await usersRes.json();
 
-                // 4. Fetch Dashboard Summary (Explicit ID)
-                const summaryRes = await fetch(`api/admin.php?action=get_summary&company_id=${companyId}`);
+                // 4. Dashboard Summary
                 if (summaryRes.ok) {
                     const summary = await summaryRes.json();
                     if (summary) {
                         dailySummary = {
-                            sales: parseFloat(summary.sales),
-                            cashOpening: parseFloat(summary.cash_opening),
-                            cashReceipts: parseFloat(summary.cash_receipts),
-                            cashPayments: parseFloat(summary.cash_payments),
-                            bankBalance: parseFloat(summary.bank_balance),
-                            recOpening: parseFloat(summary.rec_opening),
-                            recSales: parseFloat(summary.rec_sales),
-                            recReceipts: parseFloat(summary.rec_receipts),
-                            payOpening: parseFloat(summary.pay_opening),
-                            payPurchases: parseFloat(summary.pay_purchases),
-                            payPayments: parseFloat(summary.pay_payments),
-                            newInvoices: parseInt(summary.new_invoices),
-                            customerReceipts: parseFloat(summary.customer_receipts),
-                            overdue: parseFloat(summary.overdue),
-                            newPurchases: parseInt(summary.new_purchases),
-                            vendorPayments: parseFloat(summary.vendor_payments),
-                            outstanding: parseFloat(summary.outstanding)
+                            sales: parseFloat(summary.sales), cashOpening: parseFloat(summary.cash_opening), cashReceipts: parseFloat(summary.cash_receipts), cashPayments: parseFloat(summary.cash_payments),
+                            bankBalance: parseFloat(summary.bank_balance), recOpening: parseFloat(summary.rec_opening), recSales: parseFloat(summary.rec_sales), recReceipts: parseFloat(summary.rec_receipts),
+                            payOpening: parseFloat(summary.pay_opening), payPurchases: parseFloat(summary.pay_purchases), payPayments: parseFloat(summary.pay_payments), newInvoices: parseInt(summary.new_invoices),
+                            customerReceipts: parseFloat(summary.customer_receipts), overdue: parseFloat(summary.overdue), newPurchases: parseInt(summary.new_purchases), vendorPayments: parseFloat(summary.vendor_payments), outstanding: parseFloat(summary.outstanding)
                         };
                     }
                 }
 
-                // 5. Fetch Chart of Accounts (COA)
-                const coaMainRes = await fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}`);
+                // 5. Chart Of Accounts
                 if (coaMainRes.ok) coaMain = await coaMainRes.json();
-
-                const coaSubRes = await fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL`);
                 if (coaSubRes.ok) coaSub = await coaSubRes.json();
-
-                const coaListRes = await fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL`);
                 if (coaListRes.ok) coaList = await coaListRes.json();
 
-                // 6. Fetch Currency Settings
-                const currRes = await fetch(`api/admin.php?action=get_currency&company_id=${companyId}`);
+                // 6. Currency
                 if (currRes.ok) {
                     const cData = await currRes.json();
-                    if (cData) {
-                        window.globalCurrencySymbol = cData.symbol || 'Rs.';
-                    } else {
-                        window.globalCurrencySymbol = 'Rs.';
-                    }
+                    window.globalCurrencySymbol = (cData && cData.symbol) ? cData.symbol : 'Rs.';
                 }
 
-                // 7. Fetch Live Rights for CURRENT USER
-                const rightsRes = await fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}`);
+                // 7. User Rights Sync
                 if (rightsRes.ok) {
                     const rightsArr = await rightsRes.json();
                     window.currentUserRights = {};
                     if (Array.isArray(rightsArr)) {
                         rightsArr.forEach(r => {
-                            window.currentUserRights[r.module_name] = parseInt(r.is_allowed) === 1;
+                            // Trim to avoid mismatches
+                            window.currentUserRights[r.module_name.trim()] = parseInt(r.is_allowed) === 1;
                         });
+                    }
+                }
+
+                // 8. Financial Years Sync
+                if (fyRes.ok) {
+                    const fyData = await fyRes.json();
+                    if (Array.isArray(fyData)) {
+                        financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
                     }
                 }
 
@@ -1524,34 +1512,49 @@
             }
         }
 
-        function saveFinancialYear() {
+        async function saveFinancialYear() {
             const start = document.getElementById('fyStartDate').value;
             const end = document.getElementById('fyEndDate').value;
             const abbr = document.getElementById('fyAbbreviation').value;
             const editId = document.getElementById('fyEditId').value;
             const errorMsg = document.getElementById('fyErrorMsg');
             
-            errorMsg.style.color = '#d63031';
             if(!start || !end || !abbr) {
+                errorMsg.style.color = '#d63031';
                 errorMsg.textContent = 'Please fill all related fields.';
                 return;
             }
-            if(editId) {
-                const fy = financialYears.find(f => f.id == editId);
-                if(fy) {
-                    fy.start = start; fy.end = end; fy.abbr = abbr;
+
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+
+            try {
+                const response = await fetch(`api/admin.php?action=save_fy&company_id=${companyId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: editId, start, end, abbr })
+                });
+
+                if (response.ok) {
+                    // Update Local State for speed
+                    if (editId) {
+                        const fy = financialYears.find(f => f.id == editId);
+                        if (fy) { fy.start = start; fy.end = end; fy.abbr = abbr; }
+                    } else {
+                        // Re-fetch to get new ID
+                        const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${companyId}`);
+                        if (fyRes.ok) {
+                            const fyData = await fyRes.json();
+                            financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
+                        }
+                    }
+
+                    errorMsg.style.color = '#27ae60';
+                    errorMsg.textContent = 'Settings saved and synced successfully!';
+                    renderFinancialYearList();
+                    setTimeout(() => closeModal(), 800);
                 }
-            } else {
-                const newId = financialYears.length ? Math.max(...financialYears.map(f=>f.id)) + 1 : 1;
-                financialYears.push({ id: newId, start, end, abbr });
-                document.getElementById('fyEditId').value = newId;
-            }
-            
-            errorMsg.style.color = '#27ae60';
-            errorMsg.textContent = 'Saved successfully!';
-            localStorage.setItem(getCoKey('softifyx_financial_years'), JSON.stringify(financialYears));
-            setTimeout(() => { if(errorMsg) errorMsg.textContent=''; }, 2000);
-            renderFinancialYearList();
+            } catch (err) { alert('Sync Failed.'); }
         }
 
         // --- CLEAR TRANSACTIONS LOGIC --- //
@@ -1784,6 +1787,7 @@
         }
 
         function checkUserRights(rightName) {
+            if (!rightName) return true; // Safety
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
             // 1. SYSTEM MASTER BYPASS: 'Administrator' username ALWAYS has 100% access
@@ -1798,10 +1802,13 @@
             if (userRole === 'Admin') return true;
 
             // 4. Check Cloud-Synced Rights (Global Object)
-            if (!window.currentUserRights) return false; // Safety fallback
+            if (!window.currentUserRights) return false; 
             
-            // If the right is explicitly TRUE in the DB, allow it.
-            return window.currentUserRights[rightName] === true;
+            const rName = rightName.trim();
+            // Case-insensitive / Trimmed check for maximum reliability
+            const allowed = window.currentUserRights[rName];
+            
+            return allowed === true;
         }
  
         function applyViewerRestrictions(container) {
