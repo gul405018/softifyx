@@ -25,6 +25,7 @@
         let coaMain = [];
         let coaSub = [];
         let coaList = [];
+        let financialYears = []; // Start empty to ensure fresh cloud data
 
         const DEFAULT_COA_MAIN = [];
 
@@ -1458,7 +1459,6 @@
         }
 
         // --- FINANCIAL YEAR LOGIC --- //
-        let financialYears = []; // Start empty to ensure fresh cloud data
 
         function initFinancialYearView() {
             renderFinancialYearList();
