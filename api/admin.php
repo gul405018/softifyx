@@ -51,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
+    $company_id = $data['company_id'] ?? $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
     if ($action === 'save_company') {
         if (!empty($data['id']) || !empty($_GET['company_id'])) {

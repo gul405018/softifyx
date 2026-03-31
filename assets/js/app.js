@@ -558,11 +558,11 @@
 
                 if (response.ok) {
                     closeModal();
-                    // Refresh users list
+                    // CRITICAL SYNC: Fetch new list from server
                     const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
                     users = await usersRes.json();
                     
-                    alert('User added and synchronized live!');
+                    alert('User added and synchronized live to database!');
                     document.getElementById('userLoginsBtn').click();
                 }
             } catch (err) { alert('Sync Failed.'); }
@@ -784,7 +784,6 @@
                     });
 
                     if (response.ok) {
-                        localStorage.setItem(getCoKey('softifyx_company'), JSON.stringify(companyData));
                         updateNames();
                         updateDashboardSummary();
                         alert('Company settings saved and synchronized live!');
@@ -794,6 +793,28 @@
                     console.error('Company Save Error:', err);
                     alert('Sync Failed. Please check your internet connection.');
                 }
+            }
+        }
+
+        async function saveCurrency() {
+            const name = document.getElementById('currencyName').value.trim();
+            const symbol = document.getElementById('currencySymbol').value.trim();
+            
+            if (name && symbol) {
+                const payload = { name, symbol };
+                try {
+                    const response = await fetch('api/admin.php?action=save_currency', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        alert('Currency settings saved and synchronized!');
+                        closeModal();
+                    }
+                } catch (err) { alert('Sync Failed.'); }
+            } else {
+                alert('Both fields are required!');
             }
         }
 
@@ -824,7 +845,6 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ logo: logoData })
                         });
-                        localStorage.setItem(getCoKey('softifyx_logo'), logoData);
                         displayLogo();
                         closeModal();
                     } catch (err) {
@@ -920,28 +940,6 @@
             localStorage.setItem(getCoKey('softifyx_note'), '');
         }
 
-        function deleteCompany() {
-            const nameToDelete = document.getElementById('modalCompanyName')?.value || originSelectedCompanyName;
-            if (!nameToDelete) return;
-
-            if (confirm(`Are you sure you want to PERMANENTLY delete "${nameToDelete}"? This action cannot be undone.`)) {
-                const index = companies.findIndex(c => (typeof c === 'string' ? c : c.name) === nameToDelete);
-                if (index !== -1) {
-                    companies.splice(index, 1);
-                    localStorage.setItem('softifyx_companies', JSON.stringify(companies));
-                    
-                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                    if (session.company === nameToDelete) {
-                        // If active company deleted, logout
-                        localStorage.removeItem('softifyx_session');
-                        window.location.href = 'login.html';
-                    } else {
-                        alert('Company deleted successfully.');
-                        window.location.reload();
-                    }
-                }
-            }
-        }
 
         function performSearch() {
             const searchTerm = document.getElementById('globalSearch')?.value;
@@ -1435,6 +1433,28 @@
             document.getElementById('fyEditId').value = '';
             document.getElementById('fyErrorMsg').textContent = '';
             renderFinancialYearList();
+        }
+
+        async function updateFinancialYear() {
+            const start = document.getElementById('fyStart').value;
+            const end = document.getElementById('fyEnd').value;
+            const abbr = document.getElementById('fyAbbr').value;
+            
+            if (start && end && abbr) {
+                const payload = { start, end, abbr };
+                try {
+                    const response = await fetch('api/admin.php?action=save_fy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        alert('Financial year updated and synchronized!');
+                        closeModal();
+                        window.location.reload();
+                    }
+                } catch (err) { alert('Sync Failed.'); }
+            }
         }
 
         function saveFinancialYear() {
