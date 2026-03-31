@@ -185,82 +185,90 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
-        // Populate Data from LocalStorage
-        const companies = JSON.parse(localStorage.getItem('softifyx_companies') || '["Softifyx Company"]');
-        const financialYears = JSON.parse(localStorage.getItem('softifyx_financial_years') || '["2021-22","2022-23","2023-24"]');
+        let companies = [];
+        let users = [];
+        let financialYears = [];
         const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
 
         const userSelect = document.getElementById('userDropdown');
         const companySelect = document.getElementById('companyDropdown');
         const yearSelect = document.getElementById('yearDropdown');
 
-        // 1. Populate Companies
-        companies.forEach(c => { 
-            const cName = (typeof c === 'string') ? c : (c.name || "Unknown Company");
-            if (cName !== "[object Object]") {
-                const op = new Option(cName, cName); 
-                companySelect.add(op); 
-            }
-        });
+        // 1. Initial Load: Fetch All Companies from Database
+        async function loadInitialData() {
+            try {
+                // Fetch Companies
+                const res = await fetch('api/admin.php?action=get_companies');
+                if (res.ok) {
+                    companies = await res.json();
+                    companySelect.innerHTML = '';
+                    companies.forEach(c => { 
+                        const cName = c.name || "Default Business";
+                        const cId = c.id;
+                        const op = new Option(cName, cName);
+                        op.dataset.id = cId;
+                        companySelect.add(op);
+                    });
 
-        // 2. Populate Years
-        financialYears.forEach(y => { 
-            const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
-            const op = new Option(yName, yName); 
-            yearSelect.add(op); 
-        });
-
-        // 3. Logic to update users AND financial years based on selected company
-        function updateUsersAndData() {
-            const coName = companySelect.value || 'default';
-            const userKey = `softifyx_${coName}_users`;
-            const fyKey = `softifyx_${coName}_financial_years`;
-            
-            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
-            const companyFYs = JSON.parse(localStorage.getItem(fyKey) || '["2021-22","2022-23","2023-24","2024-25"]');
-            
-            // Update Users
-            const currentSelectedUser = userSelect.value;
-            userSelect.innerHTML = '';
-            const adminOp = new Option("Administrator", "Administrator");
-            userSelect.add(adminOp);
-            
-            companyUsers.forEach(u => {
-                if (u.username && u.username !== "Administrator") {
-                    const op = new Option(u.username, u.username);
-                    userSelect.add(op);
+                    // Set default if saved
+                    if (savedDefaults.company) companySelect.value = savedDefaults.company;
+                    
+                    // After companies are loaded, load users and years for the selected company
+                    updateUsersAndData();
                 }
-            });
-            if (currentSelectedUser && Array.from(userSelect.options).some(o => o.value === currentSelectedUser)) {
-                userSelect.value = currentSelectedUser;
-            }
+            } catch (err) { console.error('Initial Load Error:', err); }
+        }
 
-            // Update Financial Years
-            const currentSelectedFY = yearSelect.value;
-            yearSelect.innerHTML = '';
-            companyFYs.forEach(y => {
-                const yName = (typeof y === 'string') ? y : (y.abbr || y.year || "FY");
-                const op = new Option(yName, yName); 
-                yearSelect.add(op); 
-            });
-            if (currentSelectedFY && Array.from(yearSelect.options).some(o => o.value === currentSelectedFY)) {
-                yearSelect.value = currentSelectedFY;
-            }
+        // 2. Dynamic Data: Fetch Users & Years based on selected company
+        async function updateUsersAndData() {
+            const selectedOp = companySelect.options[companySelect.selectedIndex];
+            if (!selectedOp) return;
+            
+            const coName = selectedOp.value;
+            const coId = selectedOp.dataset.id;
+            
+            try {
+                // Update Users for this company
+                const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${coId}`);
+                if (usersRes.ok) {
+                    users = await usersRes.json();
+                    userSelect.innerHTML = '';
+                    
+                    // Ensure Administrator is always first
+                    if (!users.some(u => u.username === "Administrator")) {
+                        userSelect.add(new Option("Administrator", "Administrator"));
+                    }
+
+                    users.forEach(u => {
+                        const op = new Option(u.username, u.username);
+                        userSelect.add(op);
+                    });
+
+                    // Set default user if saved
+                    if (savedDefaults.username) userSelect.value = savedDefaults.username;
+                }
+
+                // Update Financial Years for this company
+                const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${coId}`);
+                if (fyRes.ok) {
+                    financialYears = await fyRes.json();
+                    yearSelect.innerHTML = '';
+                    financialYears.forEach(y => {
+                        const yName = y.abbreviation || y.year || "FY";
+                        const op = new Option(yName, yName); 
+                        yearSelect.add(op); 
+                    });
+
+                    // Set default year if saved
+                    if (savedDefaults.year) yearSelect.value = savedDefaults.year;
+                }
+            } catch (err) { console.error('Update Users Error:', err); }
         }
 
         companySelect.addEventListener('change', updateUsersAndData);
 
-        // --- LOGIN DEFAULTS LOGIC ---
-        if (savedDefaults.company) companySelect.value = savedDefaults.company;
-        if (savedDefaults.year) yearSelect.value = savedDefaults.year;
-        
-        // Populate users and data for the initially selected company
-        updateUsersAndData();
-        
-        // Now set the user default if it worked
-        if (savedDefaults.username && Array.from(userSelect.options).some(o => o.value === savedDefaults.username)) {
-            userSelect.value = savedDefaults.username;
-        }
+        // Initial Initialization
+        loadInitialData();
 
         document.getElementById('setDefaultBtn').addEventListener('click', () => {
             const defaults = {
@@ -333,14 +341,15 @@
                 const result = await response.json();
                 
                 if (response.ok && result.status === 'success') {
-                    localStorage.setItem('softifyx_session', JSON.stringify({
+                    const sessionInfo = {
                         user_id: result.user.id,
                         username: result.user.username,
                         role: result.user.role,
                         company_id: result.user.company_id,
-                        company: coName,
+                        company_name: coName,
                         loginTime: Date.now()
-                    }));
+                    };
+                    localStorage.setItem('softifyx_session', JSON.stringify(sessionInfo));
                     window.location.href = 'index.html';
                 } else {
                     alert(result.error || "Invalid username or password!");

@@ -18,17 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $company = $stmt->fetch();
         
         if (!$company) {
-            // Auto-create company if none exist (similar to localStorage logic)
-            $stmt = $pdo->prepare("INSERT INTO companies (name) VALUES (?)");
-            $stmt->execute([$companyName]);
-            $companyId = $pdo->lastInsertId();
-            
-            // Auto-create Admin for new company
-            $stmt = $pdo->prepare("INSERT INTO users (company_id, username, password, role) VALUES (?, ?, ?, 'Admin')");
-            $stmt->execute([$companyId, 'Administrator', '123']);
-        } else {
-            $companyId = $company['id'];
+            sendResponse(['error' => 'Business not found. Please check name or spelling.'], 404);
         }
+        $companyId = $company['id'];
         
         // 2. Auth User
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND password = ? AND company_id = ?");
