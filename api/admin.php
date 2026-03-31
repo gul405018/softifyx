@@ -3,6 +3,8 @@ require_once 'db_config.php';
 // checkAuth(); // Optional: Enable for strict security
 
 $action = $_GET['action'] ?? '';
+
+// Robust ID Retrieval: Prefer GET parameter, then session, then default.
 $company_id = $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {

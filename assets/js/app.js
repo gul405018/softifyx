@@ -98,11 +98,11 @@
                     companies = await companiesRes.json();
                 }
 
-                // 3. Fetch Users for current company
+                // 3. Fetch Users for current company (Explicit ID)
                 const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
                 if (usersRes.ok) users = await usersRes.json();
 
-                // 4. Fetch Dashboard Summary
+                // 4. Fetch Dashboard Summary (Explicit ID)
                 const summaryRes = await fetch(`api/admin.php?action=get_summary&company_id=${companyId}`);
                 if (summaryRes.ok) {
                     const summary = await summaryRes.json();
@@ -550,20 +550,25 @@
             const companyId = sessionData.company_id || 1;
 
             try {
-                const response = await fetch('api/admin.php?action=save_user', {
+                const response = await fetch(`api/admin.php?action=save_user&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ company_id: companyId, username, password, role, email })
                 });
 
                 if (response.ok) {
-                    closeModal();
-                    // CRITICAL SYNC: Fetch new list from server
-                    const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                    users = await usersRes.json();
-                    
-                    alert('User added and synchronized live to database!');
-                    document.getElementById('userLoginsBtn').click();
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        closeModal();
+                        // CRITICAL SYNC: Fetch new list from server
+                        const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                        users = await usersRes.json();
+                        
+                        alert('User added and synchronized live to database!');
+                        document.getElementById('userLoginsBtn').click();
+                    } else {
+                        alert('Error: ' + (result.message || 'Save failed.'));
+                    }
                 }
             } catch (err) { alert('Sync Failed.'); }
         }
@@ -619,20 +624,23 @@
             };
 
             try {
-                const response = await fetch('api/admin.php?action=save_user', {
+                const response = await fetch(`api/admin.php?action=save_user&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    closeModal();
-                    // Refresh users list
-                    const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                    users = await usersRes.json();
-                    
-                    alert('User updated and synchronized!');
-                    document.getElementById('userLoginsBtn').click();
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        closeModal();
+                        // Refresh users list
+                        const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                        users = await usersRes.json();
+                        
+                        alert('User updated and synchronized!');
+                        document.getElementById('userLoginsBtn').click();
+                    }
                 }
             } catch (err) { alert('Sync Failed.'); }
         }
@@ -641,6 +649,9 @@
             const user = users.find(u => u.id === userId);
             if (!user) return;
             
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+
             if (user.username.toLowerCase() === 'administrator') {
                 alert("Cannot delete the system Administrator account!");
                 return;
@@ -648,10 +659,8 @@
 
             if (confirm(`Are you sure you want to delete user "${user.username}"?`)) {
                 try {
-                    const response = await fetch(`api/admin.php?action=delete_user&id=${userId}`, { method: 'DELETE' });
+                    const response = await fetch(`api/admin.php?action=delete_user&id=${userId}&company_id=${companyId}`, { method: 'DELETE' });
                     if (response.ok) {
-                        const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                        const companyId = sessionData.company_id || 1;
                         const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
                         users = await usersRes.json();
                         
