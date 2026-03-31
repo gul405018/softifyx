@@ -1156,24 +1156,12 @@ let currentUser = "Administrator";
 
             const userLoginsBtn = document.getElementById('userLoginsBtn');
             if (userLoginsBtn) {
-                userLoginsBtn.addEventListener('click', async function() {
-                    if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
-                    const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                    const companyId = sessionData.company_id || 1;
-                    try {
-                        const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                        if (res.ok) users = await res.json();
-                    } catch (err) { console.error('Live Sync Error:', err); }
-                    openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
-                });
+                userLoginsBtn.addEventListener('click', openUserLogins);
             }
 
             const userRightsBtn = document.getElementById('userRightsBtn');
             if (userRightsBtn) {
-                userRightsBtn.addEventListener('click', function() {
-                    if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
-                    openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
-                });
+                userRightsBtn.addEventListener('click', openUserRights);
             }
         }
 
@@ -2574,6 +2562,10 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
         window.openUserRights = function() {
             if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
             openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
+        };
+
+        window.selectCompanyForLogin = function(selectEl) {
+            console.log("Company selection disabled in single-business mode.");
         };
 
         window.performSearch = performSearch;
