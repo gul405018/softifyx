@@ -121,8 +121,14 @@
                 // 8. Financial Years Sync
                 if (fyRes.ok) {
                     const fyData = await fyRes.json();
-                    if (Array.isArray(fyData)) {
+                    if (Array.isArray(fyData) && fyData.length > 0) {
                         financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
+                    } else {
+                        // Fallback Default: Start with 2026-2027 if DB is empty
+                        financialYears = [
+                            { id: 'new1', start: '2026-07-01', end: '2027-06-30', abbr: '2026-27' },
+                            { id: 'new2', start: '2027-07-01', end: '2028-06-30', abbr: '2027-28' }
+                        ];
                     }
                 }
 
@@ -1452,9 +1458,7 @@
         }
 
         // --- FINANCIAL YEAR LOGIC --- //
-        let financialYears = [
-            { id: 1, start: '2020-07-01', end: '2021-06-30', abbr: '2020-21' }
-        ];
+        let financialYears = []; // Start empty to ensure fresh cloud data
 
         function initFinancialYearView() {
             renderFinancialYearList();
