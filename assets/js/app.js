@@ -1,5 +1,31 @@
 // SoftifyX ERP: Main Application Logic
 let currentUser = "Administrator";
+
+// --- GLOBAL EXPORTS (Hoisted for Navbar) ---
+window.openUserLogins = async function() {
+    if (typeof checkUserRights === "function" && !checkUserRights("User Logins")) return showAccessDenied("User Logins");
+    const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const companyId = sessionData.company_id || 1;
+    try {
+        const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) window.users = data;
+        }
+    } catch (err) { console.error('Live Sync Error:', err); }
+    if (typeof openModal === "function" && typeof renderUserTable === "function") {
+        openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
+    }
+};
+
+window.openUserRights = function() {
+    if (typeof checkUserRights === "function" && !checkUserRights("User Rights")) return showAccessDenied("User Rights");
+    if (typeof openModularPopup === "function") {
+        openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', window.initUserRightsView, "User Rights");
+    }
+};
+
+window.selectCompanyForLogin = function(el) { console.log("Single business mode."); };
         let companyData = {
             name: "",
             address: "",
@@ -2544,35 +2570,13 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
             }
         };
 
-        window.checkUserRights = checkUserRights;
-
-
-        // EXPOSE ALL MODULES GLOBALLY (Required for navbar onclick support)
-        window.openUserLogins = async function() {
-            if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-            try {
-                const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                if (res.ok) users = await res.json();
-            } catch (err) { console.error('Live Sync Error:', err); }
-            openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
-        };
-
-        window.openUserRights = function() {
-            if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
-            openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
-        };
-
-        window.selectCompanyForLogin = function(selectEl) {
-            console.log("Company selection disabled in single-business mode.");
-        };
-
-        window.performSearch = performSearch;
-        window.showInventoryDetails = showInventoryDetails;
-        window.showAccessDenied = showAccessDenied;
-
         // --- FINAL STARTUP ---
-        document.addEventListener('DOMContentLoaded', () => {
-            bootstrapUI();
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await bootstrapUI();
+                console.log('Softifyx ERP Engine Connected Successfully.');
+            } catch (err) {
+                console.error('Fatal Startup Error:', err);
+                alert('Software Startup Error: ' + err.message + '\nPlease report this to support.');
+            }
         });
