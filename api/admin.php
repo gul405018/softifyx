@@ -63,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $company_id = $data['company_id'] ?? $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
     if ($action === 'save_company') {
-        if (!empty($data['id']) || !empty($_GET['company_id'])) {
-            $id = $data['id'] ?? $_GET['company_id'];
+        $id = $data['id'] ?? $_GET['id'] ?? $_GET['company_id'] ?? null;
+        if (!empty($id)) {
             $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ? WHERE id = ?");
             $stmt->execute([
                 $data['name'], $data['address'], $data['phone'], $data['fax'], 

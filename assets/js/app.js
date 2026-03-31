@@ -794,19 +794,16 @@
                     const response = await fetch(`api/admin.php?action=save_company&company_id=${companyId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(companyData)
+                        body: JSON.stringify({ ...companyData, id: companyId }) // PASS ID HERE FOR UPDATE
                     });
 
                     if (response.ok) {
                         updateNames();
-                        updateDashboardSummary();
-                        alert('Company settings saved and synchronized live!');
+                        alert('Company settings updated and synchronized live!');
                         closeModal();
+                        window.location.reload(); // Force refresh to show changes everywhere
                     }
-                } catch (err) {
-                    console.error('Company Save Error:', err);
-                    alert('Sync Failed. Please check your internet connection.');
-                }
+                } catch (err) { alert('Sync Error: ' + err.message); }
             }
         }
 
@@ -910,17 +907,17 @@
             const targetCompany = companies.find(c => (typeof c === 'string' ? c : c.name) === oldName);
 
             try {
-                const response = await fetch(`api/admin.php?action=save_company&company_id=${targetCompany?.id || ''}`, {
+                const response = await fetch(`api/admin.php?action=save_company&id=${targetCompany?.id || ''}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ ...payload, id: targetCompany?.id }) // PASS ID HERE FOR UPDATE
                 });
 
                 if (response.ok) {
-                    alert('Company details saved and synchronized live! Application will refresh.');
+                    alert('Business details updated and synchronized live!');
                     window.location.reload();
                 }
-            } catch (err) { alert('Sync Failed.'); }
+            } catch (err) { alert('Sync Error: ' + err.message); }
         }
 
         async function deleteCompany() {
@@ -1015,8 +1012,32 @@
         }
 
         function setupMenuButtons() {
-            document.getElementById('myCompanyBtn').addEventListener('click', function() {
+            document.getElementById('myCompanyBtn').addEventListener('click', async function() {
                 if (!checkUserRights("My Company")) return showAccessDenied("My Company");
+                
+                // LIVE SYNC: Fetch latest company info before opening
+                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const companyId = sessionData.company_id || 1;
+                try {
+                    const res = await fetch(`api/admin.php?action=get_company&company_id=${companyId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data) {
+                            companyData = {
+                                name: data.name || '',
+                                address: data.address || '',
+                                phone: data.phone || '',
+                                fax: data.fax || '',
+                                email: data.email || '',
+                                website: data.website || '',
+                                gst: data.gst || '',
+                                ntn: data.ntn || '',
+                                dealsIn: data.deals_in || ''
+                            };
+                        }
+                    }
+                } catch (err) { console.error('Live Sync Error:', err); }
+
                 openModal(
                     { icon: 'fa-building', text: 'Company Setup' },
                     `<div>
@@ -1195,16 +1216,35 @@
                 );
             });
 
-            document.getElementById('userLoginsBtn').addEventListener('click', function() {
+            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
+                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
+                
+                // LIVE SYNC: Fetch latest companies list before opening
+                try {
+                    const res = await fetch('api/admin.php?action=get_companies');
+                    if (res.ok) companies = await res.json();
+                } catch (err) { console.error('Live Sync Error:', err); }
+
+                openModal(
+                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
+                    renderCompanyTable()
+                );
+            });
+            
+            document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+                
+                // LIVE SYNC: Fetch latest users list before opening
+                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const companyId = sessionData.company_id || 1;
+                try {
+                    const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                    if (res.ok) users = await res.json();
+                } catch (err) { console.error('Live Sync Error:', err); }
+
                 openModal(
                     { icon: 'fa-users', text: 'User Logins' },
-                    `<div>
-                        ${renderUserTable()}
-                        <div class="modal-actions">
-                            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                        </div>
-                    </div>`
+                    renderUserTable()
                 );
             });
 
