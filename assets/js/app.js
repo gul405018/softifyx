@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', async () => {
-        let currentUser = "Administrator";
+// SoftifyX ERP: Main Application Logic
+let currentUser = "Administrator";
         let companyData = {
             name: "",
             address: "",
@@ -2581,6 +2581,6 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
         window.showAccessDenied = showAccessDenied;
 
         // --- FINAL STARTUP ---
-        bootstrapUI();
-
-});
+        document.addEventListener('DOMContentLoaded', () => {
+            bootstrapUI();
+        });
