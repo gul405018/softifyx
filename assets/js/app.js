@@ -1013,6 +1013,7 @@
             updateDashboardSummary();
         }
 
+        function setupMenuButtons() {
             const myCoBtn = document.getElementById('myCompanyBtn');
             if (myCoBtn) {
                 myCoBtn.addEventListener('click', async function() {
@@ -1134,34 +1135,6 @@
                     );
                 });
             }
-
-            const uLoginsBtn = document.getElementById('userLoginsBtn');
-            if (uLoginsBtn) {
-                uLoginsBtn.addEventListener('click', async function() {
-                    if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
-                    
-                    const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                    const companyId = sessionData.company_id || 1;
-                    try {
-                        const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                        if (res.ok) users = await res.json();
-                    } catch (err) { console.error('Live Sync Error:', err); }
-
-                    openModal(
-                        { icon: 'fa-users', text: 'User Logins' },
-                        renderUserTable()
-                    );
-                });
-            }
-
-            const uRightsBtn = document.getElementById('userRightsBtn');
-            if(uRightsBtn) {
-                uRightsBtn.addEventListener('click', function() {
-                    if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
-                    openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
-                });
-            }
-
         }
 
         function initUserRightsView() {
@@ -1976,6 +1949,27 @@
         window.toggleCountryList = toggleCountryList;
         window.filterCountryList = filterCountryList;
         window.selectCustomCountry = selectCustomCountry;
+        window.openUserLogins = async function() {
+            if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+            
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            try {
+                const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                if (res.ok) users = await res.json();
+            } catch (err) { console.error('Live Sync Error:', err); }
+
+            openModal(
+                { icon: 'fa-users', text: 'User Logins' },
+                renderUserTable()
+            );
+        };
+
+        window.openUserRights = function() {
+            if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
+            openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
+        };
+
         window.executeBackup = executeBackup;
         window.executeRestore = executeRestore;
 
@@ -2584,3 +2578,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         window.checkUserRights = checkUserRights;
+
+        window.openUserLogins = async function() {
+            if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+            
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            try {
+                const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                if (res.ok) users = await res.json();
+            } catch (err) { console.error('Live Sync Error:', err); }
+
+            openModal(
+                { icon: 'fa-users', text: 'User Logins' },
+                renderUserTable()
+            );
+        };
+
+        window.openUserRights = function() {
+            if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
+            openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
+        };
