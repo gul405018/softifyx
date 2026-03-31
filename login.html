@@ -317,32 +317,38 @@
         });
 
         // Form Submit
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
-            
             const coName = companySelect.value || 'default';
-            const userKey = `softifyx_${coName}_users`;
-            const companyUsers = JSON.parse(localStorage.getItem(userKey) || '[]');
-            const userObj = companyUsers.find(usr => usr.username === u);
             
-            // Global Admin Check
-            const globalAdminPwd = localStorage.getItem('softifyx_admin_password') || '123';
-            const isDefaultAdmin = (u === 'Administrator' && (p === globalAdminPwd || p === 'admin123'));
-
-            if ((userObj && p === userObj.password) || isDefaultAdmin) {
-                localStorage.setItem('softifyx_session', JSON.stringify({
-                    username: u,
-                    role: (u === 'Administrator') ? 'Admin' : (userObj ? (userObj.role || 'Operator') : 'Operator'),
-                    company: coName,
-                    year: yearSelect.value,
-                    loginTime: Date.now()
-                }));
-                window.location.href = 'index.html';
-            } else {
-                alert("Invalid username or password!");
-                gsap.to("form", 0.05, { x: 10, repeat: 5, yoyo: true });
+            try {
+                const response = await fetch('api/auth.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p, company: coName })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    localStorage.setItem('softifyx_session', JSON.stringify({
+                        user_id: result.user.id,
+                        username: result.user.username,
+                        role: result.user.role,
+                        company_id: result.user.company_id,
+                        company: coName,
+                        loginTime: Date.now()
+                    }));
+                    window.location.href = 'index.html';
+                } else {
+                    alert(result.error || "Invalid username or password!");
+                    gsap.to("form", 0.05, { x: 10, repeat: 5, yoyo: true });
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                alert("Server Connection Failed. Please try again later.");
             }
         });
     </script>
