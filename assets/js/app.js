@@ -403,6 +403,21 @@
             document.getElementById('modalOverlay').classList.remove('active');
         }
 
+        function showAccessDenied(moduleName) {
+            openModal(
+                { icon: 'fa-lock', text: 'Access Denied' },
+                `<div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-shield-alt" style="font-size: 50px; color: #e74c3c; margin-bottom: 20px; display: block;"></i>
+                    <p style="font-size: 16px; color: #2d3436; font-weight: 600;">Access Restricted</p>
+                    <p style="color: #636e72; font-size: 14px; margin-top: 10px;">You do not have permission to access the <strong>${moduleName}</strong> module.</p>
+                    <p style="color: #b2bec3; font-size: 12px; margin-top: 15px;">Please contact the system administrator for authorization.</p>
+                    <div class="modal-actions" style="justify-content: center; margin-top: 25px;">
+                        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                    </div>
+                </div>`
+            );
+        }
+
         function showInventoryDetails() {
             let lowStockItems = inventoryItems.filter(item => item.stock < item.reorderLevel);
             let tableRows = '';
@@ -486,6 +501,40 @@
             `;
             
             return tableHtml;
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('globalSearch').value.trim().toLowerCase();
+            if(!query) return;
+            
+            let results = [];
+            
+            // Search accounts
+            coaList.forEach(acc => {
+                if(acc.name.toLowerCase().includes(query) || acc.code.toString().includes(query)) {
+                    results.push({ type: 'Account', name: acc.name, code: acc.code });
+                }
+            });
+            
+            // Search inventory
+            inventoryItems.forEach(item => {
+                if(item.name.toLowerCase().includes(query)) {
+                    results.push({ type: 'Inventory', name: item.name, code: 'Stock: ' + item.stock });
+                }
+            });
+
+            if(results.length === 0) {
+                alert('No results found for: ' + query);
+            } else {
+                let listHtml = results.map(r => `
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                        <span><strong>[${r.type}]</strong> ${r.name}</span>
+                        <span style="color: #666;">${r.code}</span>
+                    </div>
+                `).join('');
+                
+                openModal({ icon: 'fa-search', text: 'Search Results' }, `<div>${listHtml}</div>`);
+            }
         }
 
         function showAddUserForm() {
@@ -978,32 +1027,38 @@
         }
 
 
-        function performSearch() {
-            const searchTerm = document.getElementById('globalSearch')?.value;
-            if (searchTerm && searchTerm.trim() !== '') {
-                const results = inventoryItems.filter(item => 
-                    item.name.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-                
-                if (results.length > 0) {
-                    let resultsHtml = '';
-                    results.forEach(item => {
-                        resultsHtml += `<div style="padding: 8px; border-bottom: 1px solid #eee;">
-                            <strong>${item.name}</strong> - Stock: ${item.stock} (Reorder at: ${item.reorderLevel})
-                        </div>`;
-                    });
-                    
-                    openModal(
-                        { icon: 'fa-search', text: 'Search Results' },
-                        `<div>
-                            <p>Found ${results.length} item(s) matching "${searchTerm}":</p>
-                            ${resultsHtml}
-                            <div class="modal-actions">
-                                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                            </div>
-                        </div>`
-                    );
+        // Search Functionality
+        async function performSearch() {
+            const query = document.getElementById('globalSearch')?.value.trim().toLowerCase();
+            if(!query) return;
+            
+            let results = [];
+            
+            // Search accounts
+            coaList.forEach(acc => {
+                if(acc.name.toLowerCase().includes(query) || acc.code.toString().includes(query)) {
+                    results.push({ type: 'Account', name: acc.name, code: acc.code });
                 }
+            });
+            
+            // Search inventory
+            inventoryItems.forEach(item => {
+                if(item.name.toLowerCase().includes(query)) {
+                    results.push({ type: 'Inventory', name: item.name, code: 'Stock: ' + item.stock });
+                }
+            });
+
+            if(results.length === 0) {
+                alert('No results found for: ' + query);
+            } else {
+                let listHtml = results.map(r => `
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                        <span><strong>[${r.type}]</strong> ${r.name}</span>
+                        <span style="color: #666;">${r.code}</span>
+                    </div>
+                `).join('');
+                
+                openModal({ icon: 'fa-search', text: 'Search Results' }, `<div>${listHtml}</div>`);
             }
         }
 
@@ -1910,7 +1965,6 @@
         window.addNewCompany = addNewCompany;
         window.showInventoryDetails = showInventoryDetails;
         window.previewLogo = previewLogo;
-        window.selectCompanyForLogin = selectCompanyForLogin;
         window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
