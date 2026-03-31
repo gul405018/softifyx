@@ -57,7 +57,6 @@
                     currRes, rightsRes, fyRes
                 ] = await Promise.all([
                     fetch(`api/admin.php?action=get_company&company_id=${companyId}&${cb}`),
-                    fetch(`api/admin.php?action=get_companies&${cb}`),
                     fetch(`api/admin.php?action=get_users&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_summary&company_id=${companyId}&${cb}`),
                     fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}&${cb}`),
@@ -140,9 +139,9 @@
                 
                 // CRITICAL SYNC: Update all UI labels from Session
                 const businessNameTop = document.getElementById('businessNameTop');
-                if (businessNameTop) businessNameTop.textContent = sessionData.company_name || companyData.name;
+                if (businessNameTop) businessNameTop.textContent = companyData.name;
                 const dashTitle = document.getElementById('dashboardBusinessTitle');
-                if (dashTitle) dashTitle.textContent = sessionData.company_name || companyData.name;
+                if (dashTitle) dashTitle.textContent = companyData.name;
 
             } catch (err) {
                 console.error('Data Sync Error:', err);
@@ -1132,108 +1131,6 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                let companyOptions = '';
-                companies.forEach(company => {
-                    const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
-                    companyOptions += `<option value="${companyName}">${companyName}</option>`;
-                });
-                
-                openModal(
-                    { icon: 'fa-list', text: 'List of Companies - Select for Login' },
-                    `<div id="listOfCompaniesModal">
-                        <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
-                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
-                                    ${companyOptions}
-                                </select>
-                                <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
-                            </div>
-                        </div>
-                        <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to login. Company details will be loaded automatically.</p>
-                        </div>
-                        <div class="form-group">
-                            <label>Business Name</label>
-                            <input type="text" class="form-control" id="modalCompanyName" value="${companyData.name}">
-                        </div>
-                        <div class="form-group">
-                            <label>Address</label>
-                            <input type="text" class="form-control" id="modalCompanyAddress" value="${companyData.address}">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Phone(s)</label>
-                                <input type="text" class="form-control" id="modalCompanyPhone" value="${companyData.phone}">
-                            </div>
-                            <div class="form-group">
-                                <label>Fax</label>
-                                <input type="text" class="form-control" id="modalCompanyFax" value="${companyData.fax}">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>E-Mail</label>
-                                <input type="email" class="form-control" id="modalCompanyEmail" value="${companyData.email}">
-                            </div>
-                            <div class="form-group">
-                                <label>Website</label>
-                                <input type="text" class="form-control" id="modalCompanyWebsite" value="${companyData.website}">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>G.S.T. Regn. No.</label>
-                                <input type="text" class="form-control" id="modalCompanyGST" value="${companyData.gst}">
-                            </div>
-                            <div class="form-group">
-                                <label>N.T.N.</label>
-                                <input type="text" class="form-control" id="modalCompanyNTN" value="${companyData.ntn}">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn}">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
-                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive</label>
-                        </div>
-                        <div class="modal-actions" style="justify-content: space-between;">
-                            <div>
-                                <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
-                                    <i class="fas fa-trash-alt"></i> Delete Company
-                                </button>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-primary" onclick="saveCompanyDetails()">
-                                    <i class="fas fa-save"></i> Save Changes
-                                </button>
-                                <button class="btn btn-secondary" onclick="closeModal()">
-                                    <i class="fas fa-times"></i> Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>`
-                );
-            });
-
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                
-                // LIVE SYNC: Fetch latest companies list before opening
-                try {
-                    const res = await fetch('api/admin.php?action=get_companies');
-                    if (res.ok) companies = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
-
-                openModal(
-                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
-                    renderCompanyTable()
-                );
-            });
-            
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
                 
@@ -1260,24 +1157,6 @@
             }
         }
 
-        async function selectCompanyForLogin(select) {
-            const selectedCompany = select.value;
-            if (!selectedCompany) return;
-            
-            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
-            if (found) {
-                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                sessionData.company_id = found.id || 1;
-                sessionData.company_name = found.name || selectedCompany;
-                
-                // LOCK THE SELECTION PERMANENTLY
-                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-                
-                // NOTIFY USER & REFRESH DASHBOARD
-                alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
-                window.location.reload(); 
-            }
-        }
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
@@ -1287,7 +1166,7 @@
             let rightsRows = '';
             
             const explicitRights = [
-                "My Company", "My Logo", "List Of Companies", "User Logins",
+                "My Company", "My Logo", "User Logins",
                 "User Rights", "Passwords", "Financial Year", "Clear Transactions",
                 "Currency", "BackUp Utility", "Chart of Accounts", "Customers",
                 "Vendors/Suppliers", "Bank Accounts", "Accounts Opening Balances",
