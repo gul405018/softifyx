@@ -114,6 +114,17 @@
                 const coaListRes = await fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL`);
                 if (coaListRes.ok) coaList = await coaListRes.json();
 
+                // 6. Fetch Currency Settings
+                const currRes = await fetch(`api/admin.php?action=get_currency&company_id=${companyId}`);
+                if (currRes.ok) {
+                    const cData = await currRes.json();
+                    if (cData) {
+                        window.globalCurrencySymbol = cData.symbol || 'Rs.';
+                    } else {
+                        window.globalCurrencySymbol = 'Rs.';
+                    }
+                }
+
                 // Apply UI Updates
                 displayLogo();
                 updateNames();
@@ -144,8 +155,7 @@
 
         function updateDashboardSummary() {
             const get = id => document.getElementById(id);
-            const savedCurr = localStorage.getItem(getCoKey('softifyx_currency'));
-            const currencySymbol = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
+            const currencySymbol = (window.globalCurrencySymbol || 'Rs.') + ' ';
             const fmt = val => currencySymbol + (val || 0).toLocaleString('en-IN');
 
                     // --- 1. MAIN DASHBOARD CONTENT (dashboard.html) ---
@@ -645,7 +655,11 @@
 
             if (confirm(`Are you sure you want to delete user "${user.username}"?`)) {
                 try {
-                    const response = await fetch(`api/admin.php?action=delete_user&id=${userId}&company_id=${companyId}`, { method: 'DELETE' });
+                    const response = await fetch(`api/admin.php?action=delete_user&company_id=${companyId}`, { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: userId, company_id: companyId })
+                    });
                     if (response.ok) {
                         const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
                         users = await usersRes.json();
@@ -1728,29 +1742,23 @@
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = sessionData.company_id || 1;
 
-                await fetch(`api/admin.php?action=save_currency&company_id=${companyId}`, {
+                const response = await fetch(`api/admin.php?action=save_currency&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: n, symbol: s })
                 });
 
-                localStorage.setItem(getCoKey('softifyx_currency'), JSON.stringify({ country: c, name: n, symbol: s }));
-                err.style.color = '#27ae60';
-                err.textContent = 'Settings saved and synced successfully!';
-                
-                applyGlobalCurrencySymbol();
-                updateDashboardSummary();
-                
-                setTimeout(() => {
-                    if(err) err.textContent = '';
+                if (response.ok) {
+                    window.globalCurrencySymbol = s;
+                    alert('Currency settings saved and synchronized live!');
+                    updateDashboardSummary();
                     closeModal();
-                }, 800);
+                }
             } catch (err) { alert('Sync Failed.'); }
         }
 
         function applyGlobalCurrencySymbol() {
-            const savedCurr = localStorage.getItem(getCoKey('softifyx_currency'));
-            const newSym = (savedCurr ? JSON.parse(savedCurr).symbol : 'Rs.') + ' ';
+            const newSym = (window.globalCurrencySymbol || 'Rs.') + ' ';
             
             // Only update elements specifically marked as money
             const moneyElements = document.querySelectorAll('.money');

@@ -89,6 +89,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $stmt = $pdo->prepare("INSERT INTO users (company_id, username, password, role, email) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['username'], $data['password'], $data['role'], $data['email']]);
+            $newUserId = $pdo->lastInsertId();
+            
+            // AUTO-INITIALIZE RIGHTS based on role
+            // List of all modules (matching app.js explicitRights)
+            $modules = [
+                "My Company", "My Logo", "List Of Companies", "User Logins", "User Rights", "Passwords", "Financial Year", 
+                "Clear Transactions", "Currency", "BackUp Utility", "Chart of Accounts", "Customers", "Vendors/Suppliers", 
+                "Bank Accounts", "Accounts Opening Balances", "Chart Of Inventory", "Inventory Opening Balances", 
+                "Inventory Brands", "Inventory Locations", "Item Price Settings", "Item Sales Tax Rates", "Item Pre-Order Levels", 
+                "Item Cost Valuation Method", "Chart Of Services", "Voucher Posting Preferences", "Inventory Movement Settings", 
+                "Customer Regions", "Business Sectors", "Employees", "Jobs", "Purchase Orders", "Purchases (Sales Tax)", 
+                "Purchases (Non Tax)", "Purchases Return/Debit Notes", "Cash Payments", "Bank Payments", "Customer Follow-Up", 
+                "Quotations", "Sale Orders", "Delivery Challans", "Sales Tax Invoices", "Sale Invoices (Non Tax)", 
+                "Sale Return/Credit Notes", "Cash Receipts", "Bank Receipts", "Inward Gate Passes", "Outward Gate Passes", 
+                "Material Issue Notes", "Production Notes", "Inventory Transfers", "Add Inventory Adjustments", 
+                "Reduce Inventory Adjustments", "Send Ledger Summary", "Send Payment Reminder", "SMS Templates", 
+                "Bulk Messages", "Journal Notes", "General Journal Voucher", "Journal Report", "Print Voucher", 
+                "Product Serials Tracking", "Item Below Re-Order Level", "Purchase Order Tracking", "Sale Order Tracking", 
+                "Purchase Summary", "Purchase Register", "Party Purchase Summary", "Payments Reports", 
+                "Purchase Activity Report - Invoice Wise", "Purchase Activity Report - Party Wise", "Item Purchase Summary", 
+                "Item Purchase Analysis", "Accounts Payable Aging", "Material Consumption Report", "Production Report", 
+                "Sale Summary", "Sale Register", "Party Sale Summary", "Recovery/Receipts Reports", 
+                "Sale Activity Report - Invoice Wise", "Sale Activity Report - Party Wise", "Item Sale Summary", 
+                "Item Sale Analysis", "Services Analysis", "Accounts Receivable Aging", "View Inventory Ledgers", 
+                "Print Inventory Ledgers", "Item-Wise Profit/Loss", "Inventory Balances", "Job Ledgers", "View Account Ledger", 
+                "Print Account Ledger", "Cash & Bank Balances", "Customer Balances", "Vendor Balances", "Trial Balance", 
+                "Income Statement", "Balance Sheet"
+            ];
+            
+            $isAllowed = ($data['role'] === 'Admin') ? 1 : 0;
+            $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed) VALUES (?, ?, ?)");
+            foreach ($modules as $mod) {
+                $stmt->execute([$newUserId, $mod, $isAllowed]);
+            }
         }
         sendResponse(['status' => 'success']);
     }
@@ -125,10 +159,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         sendResponse(['status' => 'success']);
     }
 
-    if ($action === 'delete_user' && isset($_GET['id'])) {
-        $pdo->prepare("DELETE FROM user_rights WHERE user_id = ?")->execute([$_GET['id']]);
-        $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$_GET['id']]);
-        sendResponse(['status' => 'success']);
+    if ($action === 'delete_user') {
+        $userId = $data['id'] ?? $_GET['id'] ?? null;
+        if ($userId) {
+            $pdo->prepare("DELETE FROM user_rights WHERE user_id = ?")->execute([$userId]);
+            $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
+            sendResponse(['status' => 'success']);
+        } else {
+            sendResponse(['error' => 'User ID missing'], 400);
+        }
     }
     
     if ($action === 'save_currency') {
