@@ -49,6 +49,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         sendResponse($stmt->fetch());
     }
+    
+    if ($action === 'get_note') {
+        $stmt = $pdo->prepare("SELECT note_text FROM business_notes WHERE company_id = ?");
+        $stmt->execute([$company_id]);
+        $row = $stmt->fetch();
+        sendResponse(['note' => $row ? $row['note_text'] : '']);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -135,6 +142,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$data['logo'], $company_id]);
         sendResponse(['status' => 'success']);
     }
+    
+    if ($action === 'save_note') {
+        $stmt = $pdo->prepare("REPLACE INTO business_notes (company_id, note_text) VALUES (?, ?)");
+        $stmt->execute([$company_id, $data['note']]);
+        sendResponse(['status' => 'success']);
+    }
+
     if ($action === 'delete_company' && isset($_GET['id'])) {
         $pdo->prepare("DELETE FROM companies WHERE id = ?")->execute([$_GET['id']]);
         sendResponse(['status' => 'success']);

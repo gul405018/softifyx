@@ -129,9 +129,15 @@
                     }
                 }
 
-                // 4. Fetch COA Main
-                const coaRes = await fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}`);
-                if (coaRes.ok) coaMain = await coaRes.json();
+                // 5. Fetch Chart of Accounts (COA)
+                const coaMainRes = await fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}`);
+                if (coaMainRes.ok) coaMain = await coaMainRes.json();
+
+                const coaSubRes = await fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL`);
+                if (coaSubRes.ok) coaSub = await coaSubRes.json();
+
+                const coaListRes = await fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL`);
+                if (coaListRes.ok) coaList = await coaListRes.json();
 
                 // Apply UI Updates
                 displayLogo();
@@ -242,7 +248,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dailySummary)
                 });
-                localStorage.setItem(getCoKey('softifyx_summary'), JSON.stringify(dailySummary));
             } catch (err) {
                 console.error('Summary Sync Error:', err);
             }
@@ -935,18 +940,42 @@
             }
         }
 
-        function saveNote() {
+        async function saveNote() {
             const noteText = document.getElementById('notesText')?.value;
-            if (noteText) {
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+
+            if (noteText !== undefined) {
                 currentNote = noteText;
-                localStorage.setItem(getCoKey('softifyx_note'), currentNote);
+                try {
+                    const response = await fetch(`api/admin.php?action=save_note&company_id=${companyId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ note: currentNote })
+                    });
+                    if (!response.ok) throw new Error('Server responded with ' + response.status);
+                } catch (err) {
+                    console.error('Save Note Error:', err);
+                    alert('Sync Error: Failed to save notepad to database (' + err.message + ')');
+                }
             }
         }
 
-        function clearNote() {
-            document.getElementById('notesText').value = '';
+        async function clearNote() {
+            const noteEl = document.getElementById('notesText');
+            if (noteEl) noteEl.value = '';
             currentNote = '';
-            localStorage.setItem(getCoKey('softifyx_note'), '');
+            
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+
+            try {
+                await fetch(`api/admin.php?action=save_note&company_id=${companyId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: '' })
+                });
+            } catch (err) { console.error('Clear Note Error:', err); }
         }
 
 
@@ -2257,13 +2286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const list = document.getElementById('mainAccountList');
                 if (list) {
                     clearInterval(checkAndRender);
-                    // Force re-load from localStorage to ensure latest data is visible
-                    coaMain = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_main')) || '[]');
-                    coaSub = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_sub')) || '[]');
-                    coaList = JSON.parse(localStorage.getItem(getCoKey('softifyx_coa_list')) || '[]');
-                    
-                    if (coaMain.length === 0) coaMain = [...DEFAULT_COA_MAIN];
-
                     renderCOAMainList();
                     resetMainForm();
                     resetSubForm();
@@ -2305,40 +2327,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveCOAMain() {
-            const codeInput = document.getElementById('mainTypeCode');
-            const nameInput = document.getElementById('mainAccountType');
-            const componentInput = document.getElementById('financialStatementComponent');
+            const code = document.getElementById('mainTypeCode').value.trim();
+            const mainName = document.getElementById('mainAccountType').value.trim();
+            const component = document.getElementById('financialStatementComponent').value;
             
-            if(!codeInput || !nameInput || !componentInput) return;
-
-            const code = codeInput.value.trim();
-            const name = nameInput.value.trim();
-            const component = componentInput.value;
-
-            if(!code || !name) return alert("Code and Name are required!");
+            if(!code || !mainName) return alert("Code and Name are required!");
             
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
-            const existing = coaMain.find(m => m.code == code);
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_main&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: existing?.id, code, name, component })
+                    body: JSON.stringify({ code, name: mainName, component })
                 });
-
                 if (response.ok) {
-                    // Refresh Main List from server
-                    const res = await fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}`);
-                    coaMain = await res.json();
-                    renderCOAMainList();
-                    resetMainForm();
-                    alert("Main Account Type Saved!");
+                    alert('Main account saved and synchronized!');
+                    closeModal();
+                    window.location.reload();
                 }
-            } catch (err) {
-                alert("Save Failed: Connection Error");
-            }
+            } catch (err) { alert('Sync Error: ' + err.message); }
         }
 
         async function deleteCOAMain() {
@@ -2396,26 +2405,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function saveCOASub() {
             if(!selectedMainCode) return alert("Select a Main Account Type first!");
-            const name = document.getElementById('subAccountType').value.trim();
-            if(!name) return alert("Sub Account Name is required!");
+            const subName = document.getElementById('subAccountType').value.trim();
+            if(!subName) return alert("Sub Account Name is required!");
 
             const main = coaMain.find(m => m.code == selectedMainCode);
             let code = document.getElementById('subAccountCode').value;
             
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
-            const existing = coaSub.find(s => s.code == code);
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_sub&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: existing?.id, main_id: main.id, code, name })
+                    body: JSON.stringify({ main_id: main.id, code, name: subName })
                 });
 
                 if (response.ok) {
-                    onMainAccountSelect(selectedMainCode);
-                    alert("Sub Account Type Saved!");
+                    alert('Sub account saved and synchronized!');
+                    closeModal();
+                    window.location.reload();
                 }
             } catch (err) { alert("Save Failed."); }
         }
@@ -2431,8 +2440,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if(confirm("Are you sure you want to delete this Sub Account Type?")) {
-                coaSub = coaSub.filter(s => s.code != selectedSubCode);
-                localStorage.setItem(getCoKey('softifyx_coa_sub'), JSON.stringify(coaSub));
                 selectedSubCode = null;
                 renderCOASubList();
                 resetSubForm();
@@ -2484,36 +2491,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function saveCOAList() {
             if(!selectedSubCode) return alert("Select a Sub Account Type first!");
-            const name = document.getElementById('accountName').value.trim();
-            if(!name) return alert("Account Name is required!");
+            const listName = document.getElementById('accountName').value.trim();
+            if(!listName) return alert("Account Name is required!");
 
             const sub = coaSub.find(s => s.code == selectedSubCode);
             let code = document.getElementById('accountCode').value;
+            let subId = sub.id;
             
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
-            const existing = coaList.find(l => l.code == code);
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_list&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: existing?.id, sub_id: sub.id, code, name })
+                    body: JSON.stringify({ sub_id: subId, code, name: listName })
                 });
-
                 if (response.ok) {
-                    onSubAccountSelect(selectedSubCode);
-                    alert("Account Saved!");
+                    alert('Account entry saved and synchronized!');
+                    closeModal();
+                    window.location.reload();
                 }
-            } catch (err) { alert("Save Failed."); }
+            } catch (err) { alert('Sync Error: ' + err.message); }
         }
 
         function deleteCOAList() {
             const code = document.getElementById('accountCode').value;
             if(!code) return;
             if(confirm("Are you sure?")) {
-                coaList = coaList.filter(l => l.code != code);
-                localStorage.setItem(getCoKey('softifyx_coa_list'), JSON.stringify(coaList));
                 renderCOAListList();
                 resetListForm();
             }
