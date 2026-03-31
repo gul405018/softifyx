@@ -125,6 +125,18 @@
                     }
                 }
 
+                // 7. Fetch Live Rights for CURRENT USER
+                const rightsRes = await fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}`);
+                if (rightsRes.ok) {
+                    const rightsArr = await rightsRes.json();
+                    window.currentUserRights = {};
+                    if (Array.isArray(rightsArr)) {
+                        rightsArr.forEach(r => {
+                            window.currentUserRights[r.module_name] = parseInt(r.is_allowed) === 1;
+                        });
+                    }
+                }
+
                 // Apply UI Updates
                 displayLogo();
                 updateNames();
@@ -1774,49 +1786,36 @@
         function checkUserRights(rightName) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
-            // 1. HARD ADMIN CHECK: The main 'Administrator' account always has 100% access.
+            // 1. SYSTEM MASTER BYPASS: 'Administrator' username ALWAYS has 100% access
             if (session.username === 'Administrator') return true;
             
-            // 2. Resolve User ID
-            const userId = users.find(u => u.username === session.username)?.id;
-            if (!userId) return false;
-
-            // 3. Resolve Role from User List (More reliable than session)
-            const userObj = users.find(u => u.id == userId);
-            const userRole = userObj?.role || 'Operator';
+            // 2. ROLE MASTER BYPASS: Any user with the 'Admin' role ALWAYS has 100% access
+            if (session.role === 'Admin') return true;
             
-            // 4. ADMIN ROLE CHECK: Secondary Admin accounts also have 100% access.
+            // 3. Fallback to Role from User Object (Extra safety)
+            const userObj = (users || []).find(u => u.username === session.username);
+            const userRole = userObj?.role || session.role || 'Operator';
             if (userRole === 'Admin') return true;
 
-            // 5. Check Explicit Rights
-            const savedRights = localStorage.getItem(getCoKey('softifyx_user_rights_' + userId));
-            if (!savedRights) {
-                // Default: All non-admins have zero access until rights are saved.
-                return false; 
-            }
-
-            const rightsData = JSON.parse(savedRights);
+            // 4. Check Cloud-Synced Rights (Global Object)
+            if (!window.currentUserRights) return false; // Safety fallback
             
-            // STRICT ALLOW-LIST: User MUST have the right explicitly set to TRUE.
-            // If it is 'false' or 'undefined', it is BLOCKED.
-            return rightsData[rightName] === true;
+            // If the right is explicitly TRUE in the DB, allow it.
+            return window.currentUserRights[rightName] === true;
         }
-
+ 
         function applyViewerRestrictions(container) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            // We need to check both session role and user rights role
-            const userId = users.find(u => u.username === session.username)?.id;
-            let currentRole = session.role || 'Viewer';
             
-            if (userId) {
-                const savedRights = localStorage.getItem(getCoKey('softifyx_user_rights_' + userId));
-                if (savedRights) {
-                    const rightsData = JSON.parse(savedRights);
-                    currentRole = rightsData.__USER_ROLE__ || currentRole;
-                }
-            }
+            // MASTER BYPASS: 'Administrator' and 'Admin' roles should NEVER be restricted.
+            if (session.username === 'Administrator') return;
+            if (session.role === 'Admin') return;
+            
+            const userObj = (users || []).find(u => u.username === session.username);
+            if (userObj?.role === 'Admin') return;
 
-            if (currentRole !== 'Viewer') return;
+            // Only apply restrictions if the role is 'Viewer' or if they are restricted by module rights
+            if (session.role !== 'Viewer') return;
 
             // 1. Disable all standard input fields
             const inputs = container.querySelectorAll('input, select, textarea');
