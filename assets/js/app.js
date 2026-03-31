@@ -143,10 +143,16 @@
                 displayLogo();
                 updateNames();
                 updateDashboardSummary();
+                
+                // CRITICAL SYNC: Update all UI labels from Session
+                const businessNameTop = document.getElementById('businessNameTop');
+                if (businessNameTop) businessNameTop.textContent = sessionData.company_name || companyData.name;
+                const dashTitle = document.getElementById('dashboardBusinessTitle');
+                if (dashTitle) dashTitle.textContent = sessionData.company_name || companyData.name;
 
             } catch (err) {
                 console.error('Data Sync Error:', err);
-                // Fallback to local storage if needed, but alerting user is safer for live data
+                alert('Connection Error while loading live data: ' + err.message);
             }
         }
 
@@ -1257,40 +1263,22 @@
             }
         }
 
-        function selectCompanyForLogin(select) {
+        async function selectCompanyForLogin(select) {
             const selectedCompany = select.value;
-            originSelectedCompanyName = selectedCompany; // Store for tracking edits
-            if (selectedCompany) {
-                // Remove immediate save and reload so user can edit before applying
-                // localStorage.setItem('softifyx_active_company', selectedCompany);
+            if (!selectedCompany) return;
+            
+            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
+            if (found) {
+                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                sessionData.company_id = found.id || 1;
+                sessionData.company_name = found.name || selectedCompany;
                 
-                let found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
-                if (found) {
-                    if (typeof found === 'string') {
-                        companyData = { name: found, address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: "" };
-                    } else {
-                        companyData = { ...found };
-                    }
-                } else {
-                    companyData.name = selectedCompany;
-                }
+                // LOCK THE SELECTION PERMANENTLY
+                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
                 
-                // Update form fields immediately
-                const n = id => { const el = document.getElementById(id); if (el) return el; else return { value: '' }; };
-                const nameEl = n('modalCompanyName');
-                if (nameEl) nameEl.value = companyData.name || '';
-                
-                // Also update the fields in the 'List of Companies' form specifically
-                if (document.getElementById('modalCompanyAddress')) document.getElementById('modalCompanyAddress').value = companyData.address || '';
-                if (document.getElementById('modalCompanyPhone')) document.getElementById('modalCompanyPhone').value = companyData.phone || '';
-                if (document.getElementById('modalCompanyFax')) document.getElementById('modalCompanyFax').value = companyData.fax || '';
-                if (document.getElementById('modalCompanyEmail')) document.getElementById('modalCompanyEmail').value = companyData.email || '';
-                if (document.getElementById('modalCompanyWebsite')) document.getElementById('modalCompanyWebsite').value = companyData.website || '';
-                if (document.getElementById('modalCompanyGST')) document.getElementById('modalCompanyGST').value = companyData.gst || '';
-                if (document.getElementById('modalCompanyNTN')) document.getElementById('modalCompanyNTN').value = companyData.ntn || '';
-                if (document.getElementById('modalCompanyDealsIn')) document.getElementById('modalCompanyDealsIn').value = companyData.dealsIn || '';
-                
-                // If the user wants to login to THIS company, they must click 'Save Changes'
+                // NOTIFY USER & REFRESH DASHBOARD
+                alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
+                window.location.reload(); 
             }
         }
         function initUserRightsView() {
