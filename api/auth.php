@@ -1,7 +1,7 @@
 <?php
 require_once 'db_config.php';
 
-// SoftifyX Auth API
+// SoftifyX Auth API - Simplified for Single-Business (ID 1)
 $action = $_GET['action'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -10,19 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'login') {
         $username = $data['username'] ?? '';
         $password = $data['password'] ?? '';
-        $companyName = $data['company'] ?? '';
         
-        // 1. Find Company
-        $stmt = $pdo->prepare("SELECT id FROM companies WHERE name = ?");
-        $stmt->execute([$companyName]);
-        $company = $stmt->fetch();
+        // --- SINGLE-BUSINESS LOCK ---
+        // All logins are now permanently linked to Company ID 1
+        $companyId = 1; 
         
-        if (!$company) {
-            sendResponse(['error' => 'Business not found. Please check name or spelling.'], 404);
-        }
-        $companyId = $company['id'];
-        
-        // 2. Auth User
+        // Auth User within this business
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND password = ? AND company_id = ?");
         $stmt->execute([$username, $password, $companyId]);
         $user = $stmt->fetch();
@@ -43,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]
             ]);
         } else {
-            sendResponse(['error' => 'Invalid credentials'], 401);
+            sendResponse(['error' => 'Invalid username or password for your business.'], 401);
         }
     }
 }
