@@ -1,7 +1,7 @@
 import re
 import os
 
-file_path = r'c:\Users\Hamza\Desktop\1122\softifyx\components\navbar.html'
+file_path = r'components\navbar.html'
 
 with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
