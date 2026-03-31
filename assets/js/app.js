@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', async () => {
         let currentUser = "Administrator";
         let companyData = {
             name: "",
@@ -2653,3 +2654,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
             openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
         };
+
+        // --- FINAL STARTUP ---
+        // Ensure UI stays updated on mobile and desktop
+        window.addEventListener('resize', updateDashboardSummary);
+        
+        // Start the engine
+        init().then(() => {
+            console.log('Softifyx ERP Engine Started Successfully.');
+        }).catch(err => {
+            console.error('Core Engine Failure:', err);
+        });
+
+});
