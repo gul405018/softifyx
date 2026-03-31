@@ -48,22 +48,23 @@
             const companyId = sessionData.company_id;
 
             try {
-                // --- PARALLEL CLOUD FETCH (Speed Boost) ---
+                const cb = `_cb=${Date.now()}`;
+                // --- PARALLEL CLOUD FETCH (Speed Boost + Cache Busting) ---
                 const [
                     companyRes, companiesRes, usersRes, summaryRes, 
                     coaMainRes, coaSubRes, coaListRes, 
                     currRes, rightsRes, fyRes
                 ] = await Promise.all([
-                    fetch(`api/admin.php?action=get_company&company_id=${companyId}`),
-                    fetch('api/admin.php?action=get_companies'),
-                    fetch(`api/admin.php?action=get_users&company_id=${companyId}`),
-                    fetch(`api/admin.php?action=get_summary&company_id=${companyId}`),
-                    fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}`),
-                    fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL`),
-                    fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL`),
-                    fetch(`api/admin.php?action=get_currency&company_id=${companyId}`),
-                    fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}`),
-                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}`)
+                    fetch(`api/admin.php?action=get_company&company_id=${companyId}&${cb}`),
+                    fetch(`api/admin.php?action=get_companies&${cb}`),
+                    fetch(`api/admin.php?action=get_users&company_id=${companyId}&${cb}`),
+                    fetch(`api/admin.php?action=get_summary&company_id=${companyId}&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}`),
+                    fetch(`api/admin.php?action=get_currency&company_id=${companyId}&${cb}`),
+                    fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}&${cb}`),
+                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`)
                 ]);
 
                 // 1. Process Company
@@ -1390,6 +1391,9 @@
                     body: JSON.stringify({ user_id: userId, rights: rightsPayload })
                 });
                 
+                // CRITICAL: Fresh load after save to ensure UI matches DB exactly
+                await loadSavedData();
+                
                 // 2. Update User Role
                 await fetch('api/admin.php?action=save_user', {
                     method: 'POST',
@@ -1926,7 +1930,8 @@
                     return;
                 }
 
-                const res = await fetch(url);
+                const cb = `_cb=${Date.now()}`;
+                const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
                 if (res.ok) {
                     let html = await res.text();
                     
@@ -2190,7 +2195,8 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
                 const mainContent = document.getElementById('main-content');
                 if (!mainContent) return;
                 
-                const res = await fetch(url);
+                const cb = `_cb=${Date.now()}`;
+                const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
                 if (res.ok) {
                     const html = await res.text();
                     
