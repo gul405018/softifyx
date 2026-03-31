@@ -6,6 +6,12 @@ $action = $_GET['action'] ?? '';
 $company_id = $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if ($action === 'get_companies') {
+        $stmt = $pdo->prepare("SELECT * FROM companies ORDER BY name ASC");
+        $stmt->execute();
+        sendResponse($stmt->fetchAll());
+    }
+    
     if ($action === 'get_company') {
         $stmt = $pdo->prepare("SELECT * FROM companies WHERE id = ?");
         $stmt->execute([$company_id]);
@@ -47,12 +53,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 
     if ($action === 'save_company') {
-        $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ? WHERE id = ?");
-        $stmt->execute([
-            $data['name'], $data['address'], $data['phone'], $data['fax'], 
-            $data['email'], $data['website'], $data['gst'], $data['ntn'], 
-            $data['deals_in'], $company_id
-        ]);
+        if (!empty($data['id']) || !empty($_GET['company_id'])) {
+            $id = $data['id'] ?? $_GET['company_id'];
+            $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ? WHERE id = ?");
+            $stmt->execute([
+                $data['name'], $data['address'], $data['phone'], $data['fax'], 
+                $data['email'], $data['website'], $data['gst'], $data['ntn'], 
+                $data['deals_in'], $id
+            ]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO companies (name, address, phone, fax, email, website, gst, ntn, deals_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $data['name'], $data['address'], $data['phone'], $data['fax'], 
+                $data['email'], $data['website'], $data['gst'], $data['ntn'], 
+                $data['deals_in']
+            ]);
+        }
         sendResponse(['status' => 'success']);
     }
     
@@ -99,6 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         sendResponse(['status' => 'success']);
     }
 
+    if ($action === 'delete_user' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM user_rights WHERE user_id = ?")->execute([$_GET['id']]);
+        $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$_GET['id']]);
+        sendResponse(['status' => 'success']);
+    }
+    
     if ($action === 'save_currency') {
         $stmt = $pdo->prepare("REPLACE INTO currencies (company_id, name, symbol) VALUES (?, ?, ?)");
         $stmt->execute([$company_id, $data['name'], $data['symbol']]);
@@ -108,6 +130,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save_logo') {
         $stmt = $pdo->prepare("UPDATE companies SET logo_data = ? WHERE id = ?");
         $stmt->execute([$data['logo'], $company_id]);
+        sendResponse(['status' => 'success']);
+    }
+    if ($action === 'delete_company' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM companies WHERE id = ?")->execute([$_GET['id']]);
         sendResponse(['status' => 'success']);
     }
 }
