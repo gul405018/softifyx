@@ -1001,21 +1001,39 @@
 
 
             
+            // 1. Specific Button Handlers
+            const myCompanyBtn = document.getElementById('myCompanyBtn');
+            if (myCompanyBtn) {
+                myCompanyBtn.onclick = function() {
+                    if (!checkUserRights("My Company")) return showAccessDenied("My Company");
+                    openModularPopup('Navigation/Administrator/my_company.html', 'fa-building', 'My Company Settings', setupCompanyForm, "My Company");
+                };
+            }
+
+            const myLogoBtn = document.getElementById('myLogoBtn');
+            if (myLogoBtn) {
+                myLogoBtn.onclick = function() {
+                    if (!checkUserRights("My Logo")) return showAccessDenied("My Logo");
+                    openModularPopup('Navigation/Administrator/my_logo.html', 'fa-image', 'My Logo Settings', function() {
+                        const preview = document.getElementById('logoPreview');
+                        if (preview && logoData) {
+                            preview.src = logoData;
+                            preview.style.display = 'block';
+                            if (document.getElementById('noLogoText')) document.getElementById('noLogoText').style.display = 'none';
+                        }
+                    }, "My Logo");
+                };
+            }
+
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
-                
-                // LIVE SYNC: Fetch latest users list before opening
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = sessionData.company_id || 1;
                 try {
                     const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
                     if (res.ok) users = await res.json();
                 } catch (err) { console.error('Live Sync Error:', err); }
-
-                openModal(
-                    { icon: 'fa-users', text: 'User Logins' },
-                    renderUserTable()
-                );
+                openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
             });
 
             const userRightsBtn = document.getElementById('userRightsBtn');
@@ -1025,6 +1043,17 @@
                     openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
                 });
             }
+
+            // 2. Centralized Click Handler for ALL elements with data-target
+            document.querySelectorAll('.dropdown-item[data-target]').forEach(item => {
+                item.onclick = function(e) {
+                    const target = this.getAttribute('data-target');
+                    const module = this.getAttribute('data-module');
+                    if (module && !checkUserRights(module)) return showAccessDenied(module);
+                    const icon = this.closest('.menu-item')?.querySelector('i')?.className.split(' ').find(c => c.startsWith('fa-')) || 'fa-folder-open';
+                    openModularPopup(target, icon, module);
+                };
+            });
         }
 
 
@@ -2447,3 +2476,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         window.checkUserRights = checkUserRights;
+
+        // --- APPLICATION INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initial Data Fetch (Cloud)
+            if (typeof loadSavedData === 'function') loadSavedData();
+            // 2. Setup Navigation Event Listeners
+            if (typeof setupMenuButtons === 'function') setupMenuButtons();
+            // 3. Start Dropdown Logic
+            if (typeof setupDropdowns === 'function') setupDropdowns();
+        });

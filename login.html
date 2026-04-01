@@ -204,18 +204,22 @@
                 const res = await fetch('api/admin.php?action=get_companies');
                 if (res.ok) {
                     const companies = await res.json();
-                    if (companies.length > 0) {
+                    if (Array.isArray(companies) && companies.length > 0) {
+                        // Use the very first company as the primary business
                         const primaryCompany = companies[0];
-                        const cName = primaryCompany.name || "Default Business";
+                        const cName = primaryCompany.name || "My Business";
                         const cId = primaryCompany.id;
                         
+                        // Sync UI and Inputs
                         companyDisplay.textContent = cName;
                         companyIdInput.value = cId;
                         companyNameInput.value = cName;
                         
+                        // Proceed to load other data (Users, financial years)
                         updateUsersAndData();
                     } else {
                         companyDisplay.textContent = "No Business Registered";
+                        console.warn("No companies found in database.");
                     }
                 }
             } catch (err) { console.error('Initial Load Error:', err); }
