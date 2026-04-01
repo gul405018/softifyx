@@ -157,6 +157,10 @@
             <select id="userDropdown"></select>
         </div>
         <div class="field-row">
+            <label>Company</label>
+            <select id="companyDropdown"></select>
+        </div>
+        <div class="field-row">
             <label>Financial Year</label>
             <div style="display:flex; gap:5px; flex:1;">
                 <select id="yearDropdown" style="flex:1;"></select>
@@ -181,19 +185,51 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
+        let companies = [];
         let users = [];
         let financialYears = [];
-        const companyId = 1; // Locked to Single Business
         const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
 
         const userSelect = document.getElementById('userDropdown');
+        const companySelect = document.getElementById('companyDropdown');
         const yearSelect = document.getElementById('yearDropdown');
 
-        // 1. Initial Load: Fetch Users & Years for Company ID 1
+        // 1. Initial Load: Fetch All Companies from Database
         async function loadInitialData() {
             try {
+                // Fetch Companies
+                const res = await fetch('api/admin.php?action=get_companies');
+                if (res.ok) {
+                    companies = await res.json();
+                    companySelect.innerHTML = '';
+                    companies.forEach(c => { 
+                        const cName = c.name || "Default Business";
+                        const cId = c.id;
+                        const op = new Option(cName, cName);
+                        op.dataset.id = cId;
+                        companySelect.add(op);
+                    });
+
+                    // Set default if saved
+                    if (savedDefaults.company) companySelect.value = savedDefaults.company;
+                    
+                    // After companies are loaded, load users and years for the selected company
+                    updateUsersAndData();
+                }
+            } catch (err) { console.error('Initial Load Error:', err); }
+        }
+
+        // 2. Dynamic Data: Fetch Users & Years based on selected company
+        async function updateUsersAndData() {
+            const selectedOp = companySelect.options[companySelect.selectedIndex];
+            if (!selectedOp) return;
+            
+            const coName = selectedOp.value;
+            const coId = selectedOp.dataset.id;
+            
+            try {
                 // Update Users for this company
-                const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                const usersRes = await fetch(`api/admin.php?action=get_users&company_id=${coId}`);
                 if (usersRes.ok) {
                     users = await usersRes.json();
                     userSelect.innerHTML = '';
@@ -213,7 +249,7 @@
                 }
 
                 // Update Financial Years for this company
-                const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${companyId}`);
+                const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${coId}`);
                 if (fyRes.ok) {
                     financialYears = await fyRes.json();
                     yearSelect.innerHTML = '';
@@ -226,15 +262,18 @@
                     // Set default year if saved
                     if (savedDefaults.year) yearSelect.value = savedDefaults.year;
                 }
-            } catch (err) { console.error('Initial Load Error:', err); }
+            } catch (err) { console.error('Update Users Error:', err); }
         }
 
-        // Initialize Data for the only company
+        companySelect.addEventListener('change', updateUsersAndData);
+
+        // Initial Initialization
         loadInitialData();
 
         document.getElementById('setDefaultBtn').addEventListener('click', () => {
             const defaults = {
                 username: userSelect.value,
+                company: companySelect.value,
                 year: yearSelect.value
             };
             localStorage.setItem('softifyx_login_defaults', JSON.stringify(defaults));
@@ -261,15 +300,18 @@
         const passwordInput = document.getElementById('password');
 
         // Initial setup for the folding arms
+        // Calibrated for the specific paths in the provided SVG
         gsap.set(armL, { x: -93, y: 10 });
         gsap.set(armR, { x: -93, y: 10 });
 
         passwordInput.addEventListener('focus', () => {
+            // Fold up to cover eyes (Authentic motion)
             gsap.to(armL, { x: -10, y: 2, ease: "power2.out", duration: 0.6 });
             gsap.to(armR, { x: -178, y: 2, ease: "power2.out", duration: 0.6 });
         });
 
         passwordInput.addEventListener('blur', () => {
+            // Fold back down
             gsap.to(armL, { x: -93, y: 10, ease: "power2.in", duration: 0.5 });
             gsap.to(armR, { x: -93, y: 10, ease: "power2.in", duration: 0.5 });
         });
@@ -287,12 +329,13 @@
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
+            const coName = companySelect.value || 'default';
             
             try {
                 const response = await fetch('api/auth.php?action=login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
+                    body: JSON.stringify({ username: u, password: p, company: coName })
                 });
                 
                 const result = await response.json();
@@ -303,6 +346,7 @@
                         username: result.user.username,
                         role: result.user.role,
                         company_id: result.user.company_id,
+                        company_name: coName,
                         loginTime: Date.now()
                     };
                     localStorage.setItem('softifyx_session', JSON.stringify(sessionInfo));
