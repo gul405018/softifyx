@@ -1278,6 +1278,51 @@
                 window.location.reload(); 
             }
         }
+
+        function renderCompanyTable() {
+            let rows = '';
+            companies.forEach((c, index) => {
+                const cName = c.name || "Unknown Company";
+                const cId = c.id || 1;
+                rows += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; font-weight: 500;">${cName}</td>
+                    <td style="padding: 12px; font-size: 13px; color: #666;">${c.address || ''}</td>
+                    <td style="padding: 12px; text-align: right;">
+                        <button class="btn btn-primary btn-sm" onclick="selectCompanyForLoginById(${cId}, '${cName}')">
+                            <i class="fas fa-check"></i> Select
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            return `<div style="overflow-x: auto; margin-top: 10px;">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="showAddCompanyForm()">
+                        <i class="fas fa-plus"></i> New Business
+                    </button>
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafd; text-align: left;">
+                        <tr>
+                            <th style="padding: 12px; font-size: 13px; color: #1f4668;">Business Entity</th>
+                            <th style="padding: 12px; font-size: 13px; color: #1f4668;">Location</th>
+                            <th style="padding: 12px; text-align: right; font-size: 13px; color: #1f4668;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows || '<tr><td colspan="3" style="text-align:center; padding:20px; color:#888;">No companies found. Add a new one to begin.</td></tr>'}</tbody>
+                </table>
+            </div>`;
+        }
+
+        function selectCompanyForLoginById(id, name) {
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            sessionData.company_id = id;
+            sessionData.company_name = name;
+            localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+            alert(`Business switched to: ${name}. Application will refresh.`);
+            window.location.reload();
+        }
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
@@ -2053,6 +2098,9 @@
         window.previewLogo = previewLogo;
         window.selectCompanyForLogin = selectCompanyForLogin;
         window.saveCompanyDetails = saveCompanyDetails;
+        window.renderDashboard = renderDashboard;
+        window.renderCompanyTable = renderCompanyTable;
+        window.selectCompanyForLoginById = selectCompanyForLoginById;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;
