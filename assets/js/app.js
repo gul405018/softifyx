@@ -376,7 +376,6 @@
         }
 
         function openModal(title, content, isWide = false) {
-            const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
             if (isWide) container.classList.add('modal-wide');
@@ -1257,44 +1256,74 @@
             }
         }
 
+        /**
+         * Select a company from the list to view/edit details.
+         * Crucial: This populates the form but DOES NOT reload the page (no direct apply).
+         */
         async function selectCompanyForLogin(select) {
-            const selectedCompany = select.value;
-            if (!selectedCompany) return;
+            const selectedName = (select.value || "").trim();
+            if (!selectedName) return;
             
-            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
-            if (found) {
-                // Populate Modal Fields
-                document.getElementById('modalCompanyName').value = found.name || '';
-                document.getElementById('modalCompanyAddress').value = found.address || '';
-                document.getElementById('modalCompanyPhone').value = (found.phone || found.phone_s) || '';
-                document.getElementById('modalCompanyFax').value = found.fax || '';
-                document.getElementById('modalCompanyEmail').value = found.email || '';
-                document.getElementById('modalCompanyWebsite').value = found.website || '';
-                document.getElementById('modalCompanyGST').value = (found.gst || found.gst_no) || '';
-                document.getElementById('modalCompanyNTN').value = (found.ntn || found.ntn_no) || '';
-                document.getElementById('modalCompanyDealsIn').value = (found.deals_in || found.dealsIn) || '';
-                
-                // Track original name for saving
-                originSelectedCompanyName = found.name;
+            console.log("Attempting to load details for:", selectedName);
+            
+            // Re-fetch or use local companies list
+            const found = companies.find(c => {
+                const name = (typeof c === 'string' ? c : (c.name || "")).trim();
+                return name.toLowerCase() === selectedName.toLowerCase();
+            });
 
-                // Show "Switch Session" button
+            if (found) {
+                // Populate all fields consistently
+                const fields = {
+                    'modalCompanyName': found.name,
+                    'modalCompanyAddress': found.address,
+                    'modalCompanyPhone': found.phone || found.phone_s,
+                    'modalCompanyFax': found.fax,
+                    'modalCompanyEmail': found.email,
+                    'modalCompanyWebsite': found.website,
+                    'modalCompanyGST': found.gst || found.gst_no,
+                    'modalCompanyNTN': found.ntn || found.ntn_no,
+                    'modalCompanyDealsIn': found.deals_in || found.dealsIn
+                };
+
+                Object.keys(fields).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = fields[id] || "";
+                });
+                
+                // Set the global reference for saving
+                window.originSelectedCompanyName = found.name;
+
+                // Toggle visibility of the Switch button if it exists
                 const switchBtn = document.getElementById('switchSessionBtn');
                 if (switchBtn) switchBtn.style.display = 'inline-flex';
+                
+                console.log("Logic sync complete for:", found.name);
+            } else {
+                console.warn("Company not match in session list:", selectedName);
             }
         }
+        window.selectCompanyForLogin = selectCompanyForLogin;
 
+        /**
+         * Manual Switch & Login execution
+         */
         window.switchLoginSession = function() {
-            const coName = document.getElementById('companySelector')?.value;
-            if (!coName) return;
+            const coName = (document.getElementById('companySelector')?.value || "").trim();
+            if (!coName) return alert("Select a company first.");
             
-            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === coName);
+            const found = companies.find(c => {
+                const name = (typeof c === 'string' ? c : (c.name || "")).trim();
+                return name.toLowerCase() === coName.toLowerCase();
+            });
+
             if (found) {
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 sessionData.company_id = found.id || 1;
                 sessionData.company_name = found.name || coName;
                 localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
                 
-                alert(`Switched to: ${sessionData.company_name}.`);
+                alert(`Session Switched to: ${sessionData.company_name}.`);
                 window.location.reload();
             }
         };

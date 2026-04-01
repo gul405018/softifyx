@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Softifyx - My Company</title>
+    <title>Softifyx - ERP System</title>
     <script>
-        // Instant Login Check: Redirect if no session found before loading CSS/Body
+        // Instant Login Check: Redirect if no session found 
         if (!localStorage.getItem('softifyx_session')) {
             window.location.href = 'login.html';
         }
@@ -66,15 +66,16 @@
             </div>
         </div>
 
-        <div class="footer">
+        <div class="footer" style="padding: 10px; text-align: center; color: #7f8c8d; font-size: 13px;">
             Designed & Developed by Softifyx Technologies
         </div>
     </div>
 
+    <!-- Modal System Integration -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-container" id="modalContainer"></div>
     </div>
 
-    <script src="assets/js/app.js?v=2026"></script>
+    <script src="assets/js/app.js?v=2026-vFinal"></script>
 </body>
 </html>
