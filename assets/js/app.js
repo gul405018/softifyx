@@ -741,7 +741,9 @@
         }
 
         async function addNewCompany() {
+            console.log("addNewCompany triggered");
             const companyName = document.getElementById('newCompanyName')?.value;
+            console.log("Business Name:", companyName);
             if (!companyName) {
                 alert("Business Name is required!");
                 return;
@@ -1156,28 +1158,36 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
+            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
                 if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                let companyOptions = '';
+                
+                // LIVE SYNC: Fetch latest companies list before opening
+                try {
+                    const cb = `_cb=${Date.now()}`;
+                    const res = await fetch(`api/admin.php?action=get_companies&${cb}`);
+                    if (res.ok) companies = await res.json();
+                } catch (err) { console.error('Live Sync Error:', err); }
+
+                let companyOptions = '<option value="">-- Choose Business --</option>';
                 companies.forEach(company => {
                     const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
                     companyOptions += `<option value="${companyName}">${companyName}</option>`;
                 });
                 
                 openModal(
-                    { icon: 'fa-list', text: 'List of Companies - Select for Login' },
+                    { icon: 'fa-list', text: 'List of Companies - Edit Business Details' },
                     `<div id="listOfCompaniesModal">
                         <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
-                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
+                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="window.selectCompanyForEdit(this)">
                                     ${companyOptions}
                                 </select>
                                 <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
                             </div>
                         </div>
                         <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to login. Company details will be loaded automatically.</p>
+                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to automatically load its profile for editing.</p>
                         </div>
                         <div class="form-group">
                             <label>Business Name</label>
@@ -1287,6 +1297,39 @@
                 // NOTIFY USER & REFRESH DASHBOARD
                 alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
                 window.location.reload(); 
+            }
+        }
+
+        function selectCompanyForEdit(select) {
+            const selectedName = select.value;
+            if (!selectedName) return;
+
+            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedName);
+            if (found) {
+                originSelectedCompanyName = found.name; // Track for editing
+                
+                // Update form fields in the modal
+                const nameEl = document.getElementById('modalCompanyName');
+                const addrEl = document.getElementById('modalCompanyAddress');
+                const phoneEl = document.getElementById('modalCompanyPhone');
+                const faxEl = document.getElementById('modalCompanyFax');
+                const emailEl = document.getElementById('modalCompanyEmail');
+                const webEl = document.getElementById('modalCompanyWebsite');
+                const gstEl = document.getElementById('modalCompanyGST');
+                const ntnEl = document.getElementById('modalCompanyNTN');
+                const dealsEl = document.getElementById('modalCompanyDealsIn');
+                const inactEl = document.getElementById('inactiveCheckbox');
+
+                if (nameEl) nameEl.value = found.name || '';
+                if (addrEl) addrEl.value = found.address || '';
+                if (phoneEl) phoneEl.value = found.phone || '';
+                if (faxEl) faxEl.value = found.fax || '';
+                if (emailEl) emailEl.value = found.email || '';
+                if (webEl) webEl.value = found.website || '';
+                if (gstEl) gstEl.value = found.gst || '';
+                if (ntnEl) ntnEl.value = found.ntn || '';
+                if (dealsEl) dealsEl.value = found.deals_in || found.dealsIn || '';
+                if (inactEl) inactEl.checked = (parseInt(found.is_inactive) === 1);
             }
         }
         function initUserRightsView() {
@@ -2063,6 +2106,7 @@
         window.showInventoryDetails = showInventoryDetails;
         window.previewLogo = previewLogo;
         window.selectCompanyForLogin = selectCompanyForLogin;
+        window.selectCompanyForEdit = selectCompanyForEdit;
         window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
