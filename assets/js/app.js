@@ -72,7 +72,11 @@
                 if (companyRes.ok) {
                     const data = await companyRes.json();
                     if (data) {
-                        companyData = { name: data.name, address: data.address, phone: data.phone, fax: data.fax, email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, dealsIn: data.deals_in };
+                        companyData = { 
+                            name: data.name, address: data.address, phone: data.phone, fax: data.fax, 
+                            email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, 
+                            dealsIn: data.deals_in, is_inactive: parseInt(data.is_inactive) === 1
+                        };
                         logoData = data.logo_data || null;
                     }
                 }
@@ -725,6 +729,9 @@
                         <label>Deals In</label>
                         <input type="text" class="form-control" id="newCompanyDealsIn" placeholder="Deals In" value="">
                     </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                        <input type="checkbox" id="newCompanyInactive"> <label for="newCompanyInactive" style="font-size: 13px;">Mark as Inactive</label>
+                    </div>
                     <div class="modal-actions">
                         <button class="btn btn-primary" onclick="addNewCompany()"><i class="fas fa-save"></i> Save Company</button>
                         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -749,7 +756,8 @@
                 website: document.getElementById('newCompanyWebsite')?.value || '',
                 gst: document.getElementById('newCompanyGST')?.value || '',
                 ntn: document.getElementById('newCompanyNTN')?.value || '',
-                deals_in: document.getElementById('newCompanyDealsIn')?.value || ''
+                deals_in: document.getElementById('newCompanyDealsIn')?.value || '',
+                is_inactive: document.getElementById('newCompanyInactive')?.checked ? 1 : 0
             };
 
             try {
@@ -776,6 +784,7 @@
             const gst = document.getElementById('modalGST')?.value;
             const ntn = document.getElementById('modalNTN')?.value;
             const dealsIn = document.getElementById('modalDealsIn')?.value;
+            const isInactive = document.getElementById('modalInactive')?.checked ? 1 : 0;
             
             if (businessName) {
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
@@ -790,14 +799,15 @@
                     website: website || '',
                     gst: gst || '',
                     ntn: ntn || '',
-                    dealsIn: dealsIn || ''
+                    dealsIn: dealsIn || '',
+                    is_inactive: isInactive
                 };
                 
                 try {
                     const response = await fetch(`api/admin.php?action=save_company&company_id=${companyId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...companyData, id: companyId }) // PASS ID HERE FOR UPDATE
+                        body: JSON.stringify({ ...companyData, id: companyId, deals_in: dealsIn, is_inactive: isInactive }) // PASS ID HERE FOR UPDATE
                     });
 
                     if (response.ok) {
@@ -903,7 +913,8 @@
                 website: document.getElementById('modalCompanyWebsite')?.value || '',
                 gst: document.getElementById('modalCompanyGST')?.value || '',
                 ntn: document.getElementById('modalCompanyNTN')?.value || '',
-                deals_in: document.getElementById('modalCompanyDealsIn')?.value || ''
+                deals_in: document.getElementById('modalCompanyDealsIn')?.value || '',
+                is_inactive: document.getElementById('inactiveCheckbox')?.checked ? 1 : 0
             };
             
             // Find specific company record to update in the global companies array
@@ -1085,6 +1096,9 @@
                         <div class="form-group">
                             <label>Deals In</label>
                             <input type="text" class="form-control" id="modalDealsIn" value="${companyData.dealsIn}">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                            <input type="checkbox" id="modalInactive" ${companyData.is_inactive ? 'checked' : ''}> <label for="modalInactive" style="font-size: 13px;">Inactive (Company Locked)</label>
                         </div>
                         <div class="modal-actions">
                             <button class="btn btn-primary" onclick="saveCompanySettings()">Save</button>

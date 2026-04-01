@@ -65,18 +65,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save_company') {
         $id = $data['id'] ?? $_GET['id'] ?? $_GET['company_id'] ?? null;
         if (!empty($id)) {
-            $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ?, is_inactive = ? WHERE id = ?");
             $stmt->execute([
                 $data['name'], $data['address'], $data['phone'], $data['fax'], 
                 $data['email'], $data['website'], $data['gst'], $data['ntn'], 
-                $data['deals_in'], $id
+                $data['deals_in'] ?? $data['dealsIn'], $data['is_inactive'] ?? 0, $id
             ]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO companies (name, address, phone, fax, email, website, gst, ntn, deals_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO companies (name, address, phone, fax, email, website, gst, ntn, deals_in, is_inactive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $data['name'], $data['address'], $data['phone'], $data['fax'], 
                 $data['email'], $data['website'], $data['gst'], $data['ntn'], 
-                $data['deals_in']
+                $data['deals_in'] ?? $data['dealsIn'], $data['is_inactive'] ?? 0
             ]);
         }
         sendResponse(['status' => 'success']);
