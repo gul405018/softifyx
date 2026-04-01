@@ -120,13 +120,6 @@
                     window.financialYears = fyData;
                     financialYears = fyData;
                 }
-                
-                // 6. Financial Year List (CRITICAL FIX: Assignment was missing)
-                if (fyRes && fyRes.ok) {
-                    const fyData = await fyRes.json();
-                    window.financialYears = fyData;
-                    financialYears = fyData;
-                }
                 if (coaListRes.ok) coaList = await coaListRes.json();
 
                 // 6. Currency
