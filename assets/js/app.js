@@ -1,3 +1,5 @@
+        // SOFTIFYX APP VERSION 2026-v2-SYNC-FIX (NO_RELOAD_ON_DRP)
+        console.log("SoftifyX: Logic Loaded (v2)");
         let currentUser = "Administrator";
         let companyData = {
             name: "",
@@ -1277,16 +1279,18 @@
             }
         }
 
-        async function selectCompanyForLogin(select) {
+        async function switchCompanyDataMode(select) {
             const selectedCompany = select.value;
             if (!selectedCompany) return;
             
             const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
             if (found) {
-                // Populate the form instead of switching immediately
+                // Populate the form instead of switching sessions immediately
                 populateCompanyForm(select);
             }
         }
+        // DEPRECATED: Old function renamed to prevent cached calls
+        window.selectCompanyForLogin = switchCompanyDataMode;
 
         window.populateCompanyForm = function(select) {
             const selectedCompany = select.value;
@@ -2086,7 +2090,8 @@
         window.addNewCompany = addNewCompany;
         window.showInventoryDetails = showInventoryDetails;
         window.previewLogo = previewLogo;
-        window.selectCompanyForLogin = selectCompanyForLogin;
+        window.switchCompanyDataMode = switchCompanyDataMode;
+        window.selectCompanyForLogin = switchCompanyDataMode; // Support for potentially cached templates
         window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
