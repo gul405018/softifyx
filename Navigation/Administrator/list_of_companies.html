@@ -95,11 +95,8 @@
             let optionsHtml = '<option value="">-- Choose Company --</option>';
             window.companies.forEach(company => {
                 const cName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
-                const isInactive = (company.status == 0);
                 const selected = (window.companyData && window.companyData.name === cName) ? 'selected' : '';
-                const label = isInactive ? `${cName} (Inactive)` : cName;
-                const style = isInactive ? 'style="color: #999; font-style: italic;"' : '';
-                optionsHtml += `<option value="${cName}" ${selected} ${style}>${label}</option>`;
+                optionsHtml += `<option value="${cName}" ${selected}>${cName}</option>`;
             });
             selector.innerHTML = optionsHtml;
         }

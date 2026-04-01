@@ -1178,11 +1178,8 @@
                 let companyOptions = '';
                 companies.forEach(company => {
                     const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
-                    const isInactive = (company.status == 0);
                     const isSelected = (companyName === currentCoName) ? 'selected' : '';
-                    const label = isInactive ? `${companyName} (Inactive)` : companyName;
-                    const style = isInactive ? 'style="color: #999; font-style: italic;"' : '';
-                    companyOptions += `<option value="${companyName}" ${isSelected} ${style}>${label}</option>`;
+                    companyOptions += `<option value="${companyName}" ${isSelected}>${companyName}</option>`;
                 });
                 
                 openModal(
