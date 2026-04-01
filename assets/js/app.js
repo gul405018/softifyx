@@ -770,8 +770,11 @@
                 if (response.ok) {
                     alert('New business registered and synchronized live! Application will refresh.');
                     window.location.reload();
+                } else {
+                    const errorMsg = await response.text();
+                    alert('Business Registration Failed: ' + errorMsg);
                 }
-            } catch (err) { alert('Sync Failed.'); }
+            } catch (err) { alert('Sync Failed: ' + err.message); }
         }
 
         async function saveCompanySettings() {
@@ -815,6 +818,9 @@
                         alert('Company settings updated and synchronized live!');
                         closeModal();
                         window.location.reload(); // Force refresh to show changes everywhere
+                    } else {
+                        const errorMsg = await response.text();
+                        alert('Sync Failed: ' + errorMsg);
                     }
                 } catch (err) { alert('Sync Error: ' + err.message); }
             }
@@ -930,6 +936,9 @@
                 if (response.ok) {
                     alert('Business details updated and synchronized live!');
                     window.location.reload();
+                } else {
+                    const errorMsg = await response.text();
+                    alert('Sync Failed: ' + errorMsg);
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -1046,7 +1055,8 @@
                                 website: data.website || '',
                                 gst: data.gst || '',
                                 ntn: data.ntn || '',
-                                dealsIn: data.deals_in || ''
+                                dealsIn: data.deals_in || '',
+                                is_inactive: parseInt(data.is_inactive) === 1
                             };
                         }
                     }
@@ -1233,20 +1243,7 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                
-                // LIVE SYNC: Fetch latest companies list before opening
-                try {
-                    const res = await fetch('api/admin.php?action=get_companies');
-                    if (res.ok) companies = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
-
-                openModal(
-                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
-                    renderCompanyTable()
-                );
-            });
+            
             
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
