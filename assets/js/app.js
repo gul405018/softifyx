@@ -1014,241 +1014,247 @@
         }
 
         function setupMenuButtons() {
-            document.getElementById('myCompanyBtn').addEventListener('click', async function() {
-                if (!checkUserRights("My Company")) return showAccessDenied("My Company");
-                
-                // LIVE SYNC: Fetch latest company info before opening
-                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const companyId = sessionData.company_id || 1;
-                try {
-                    const res = await fetch(`api/admin.php?action=get_company&company_id=${companyId}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data) {
-                            companyData = {
-                                name: data.name || '',
-                                address: data.address || '',
-                                phone: data.phone || '',
-                                fax: data.fax || '',
-                                email: data.email || '',
-                                website: data.website || '',
-                                gst: data.gst || '',
-                                ntn: data.ntn || '',
-                                dealsIn: data.deals_in || ''
-                            };
+            // === 1. My Company Settings ===
+            const myCompanyBtn = document.getElementById('myCompanyBtn');
+            if (myCompanyBtn) {
+                myCompanyBtn.addEventListener('click', async function() {
+                    if (!checkUserRights("My Company")) return showAccessDenied("My Company");
+                    
+                    const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                    const companyId = sessionData.company_id || 1;
+                    try {
+                        const res = await fetch(`api/admin.php?action=get_company&company_id=${companyId}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data) {
+                                companyData = {
+                                    name: data.name || '',
+                                    address: data.address || '',
+                                    phone: data.phone || '',
+                                    fax: data.fax || '',
+                                    email: data.email || '',
+                                    website: data.website || '',
+                                    gst: data.gst || '',
+                                    ntn: data.ntn || '',
+                                    dealsIn: data.deals_in || ''
+                                };
+                            }
                         }
-                    }
-                } catch (err) { console.error('Live Sync Error:', err); }
+                    } catch (err) { console.error('Live Sync Error:', err); }
 
-                openModal(
-                    { icon: 'fa-building', text: 'Company Setup' },
-                    `<div>
-                        <div class="form-group">
-                            <label>Business Name</label>
-                            <input type="text" class="form-control" id="modalBusinessName" value="${companyData.name}">
-                        </div>
-                        <div class="form-group">
-                            <label>Address</label>
-                            <input type="text" class="form-control" id="modalAddress" value="${companyData.address}">
-                        </div>
-                        <div class="form-row">
+                    openModal(
+                        { icon: 'fa-city', text: 'My Company Settings' },
+                        `<div>
                             <div class="form-group">
-                                <label>Phone(s)</label>
-                                <input type="text" class="form-control" id="modalPhone" value="${companyData.phone}">
+                                <label>Business Name</label>
+                                <input type="text" class="form-control" id="modalBusinessName" value="${companyData.name}">
                             </div>
                             <div class="form-group">
-                                <label>Fax</label>
-                                <input type="text" class="form-control" id="modalFax" value="${companyData.fax}">
+                                <label>Address</label>
+                                <input type="text" class="form-control" id="modalAddress" value="${companyData.address}">
                             </div>
-                        </div>
-                        <div class="form-row">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Phone(s)</label>
+                                    <input type="text" class="form-control" id="modalPhone" value="${companyData.phone}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Fax</label>
+                                    <input type="text" class="form-control" id="modalFax" value="${companyData.fax}">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>E-Mail</label>
+                                    <input type="email" class="form-control" id="modalEmail" value="${companyData.email}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Website</label>
+                                    <input type="text" class="form-control" id="modalWebsite" value="${companyData.website}">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>G.S.T. Regn. No.</label>
+                                    <input type="text" class="form-control" id="modalGST" value="${companyData.gst}">
+                                </div>
+                                <div class="form-group">
+                                    <label>N.T.N.</label>
+                                    <input type="text" class="form-control" id="modalNTN" value="${companyData.ntn}">
+                                </div>
+                            </div>
                             <div class="form-group">
-                                <label>E-Mail</label>
-                                <input type="email" class="form-control" id="modalEmail" value="${companyData.email}">
+                                <label>Deals In</label>
+                                <input type="text" class="form-control" id="modalDealsIn" value="${companyData.dealsIn}">
                             </div>
-                            <div class="form-group">
-                                <label>Website</label>
-                                <input type="text" class="form-control" id="modalWebsite" value="${companyData.website}">
+                            <div class="modal-actions">
+                                <button class="btn btn-primary" onclick="window.saveCompanySettings()">Save</button>
+                                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>G.S.T. Regn. No.</label>
-                                <input type="text" class="form-control" id="modalGST" value="${companyData.gst}">
-                            </div>
-                            <div class="form-group">
-                                <label>N.T.N.</label>
-                                <input type="text" class="form-control" id="modalNTN" value="${companyData.ntn}">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalDealsIn" value="${companyData.dealsIn}">
-                        </div>
-                        <div class="modal-actions">
-                            <button class="btn btn-primary" onclick="saveCompanySettings()">Save</button>
-                            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        </div>
-                    </div>`
-                );
-            });
-
-            document.getElementById('myLogoBtn').addEventListener('click', function() {
-                if (!checkUserRights("My Logo")) return showAccessDenied("My Logo");
-                openModal(
-                    { icon: 'fa-image', text: 'Logo Settings' },
-                    `<div>
-                        <div style="background: #fff8e7; border-left: 4px solid #F5A623; padding: 10px; margin-bottom: 15px; border-radius: 0 6px 6px 0; font-size: 13px;">
-                            <i class="fas fa-info-circle" style="color: #F5A623; margin-right: 8px;"></i>
-                            Note: Only .jpeg, .jpg, .png or .gif files can be set as logo.
-                        </div>
-                        <div style="border: 1px dashed #b9c2ce; border-radius: 6px; padding: 25px; text-align: center; margin-bottom: 20px; background-color: #fbfdff; min-height: 80px; display: flex; align-items: center; justify-content: center;">
-                            <div id="noLogoText" style="color: #6b84a3; font-style: italic; font-size: 14px; ${logoData ? 'display: none;' : ''}">No Logo</div>
-                            <img id="logoPreview" class="logo-preview" src="${logoData || ''}" alt="Logo Preview" style="max-height: 80px; max-width: 100%; border: none; padding: 0; margin: 0; box-shadow: none; ${!logoData ? 'display: none;' : ''}">
-                        </div>
-                        <div style="margin: 15px 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <input type="radio" name="logoOption" id="setLogoOption" value="set" ${logoData ? 'checked' : ''}> 
-                                <label for="setLogoOption" style="font-size: 14px;">Set New Logo</label>
-                            </div>
-                            <div style="margin-left: 28px; display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-                                <input type="file" id="logoFile" accept=".jpg,.jpeg,.png,.gif" onchange="previewLogo()" style="font-size: 13px;">
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                                <input type="radio" name="logoOption" id="doNotShowOption" value="none" ${!logoData ? 'checked' : ''}> 
-                                <label for="doNotShowOption" style="font-size: 14px;">Do Not Show Logo</label>
-                            </div>
-                        </div>
-                        <div style="background: #f0f5fc; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 13px; color: #1f4668;">
-                            <i class="fas fa-info-circle" style="color: #F5A623; margin-right: 8px;"></i>
-                            Your selected logo will be printed on your documents.
-                        </div>
-                        <div class="modal-actions">
-                            <button class="btn btn-primary" onclick="saveLogoSettings()">Save</button>
-                            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        </div>
-                    </div>`
-                );
-            });
-
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                
-                // LIVE SYNC: Fetch latest companies list before opening
-                try {
-                    const res = await fetch('api/admin.php?action=get_companies');
-                    if (res.ok) companies = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
-
-                let companyOptions = '';
-                companies.forEach(company => {
-                    const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
-                    companyOptions += `<option value="${companyName}">${companyName}</option>`;
+                        </div>`
+                    );
                 });
-                
-                openModal(
-                    { icon: 'fa-list', text: 'List of Companies - Select for Login' },
-                    `<div id="listOfCompaniesModal">
-                        <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
-                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
-                                    <option value="" selected disabled>-- Select a Business --</option>
-                                    ${companyOptions}
-                                </select>
-                                <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
-                            </div>
-                        </div>
-                        <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 8px;"></i> Select a company above to load its details. Click "Save Changes" to update the database.</p>
-                        </div>
-                        <div class="form-group">
-                            <label>Business Name</label>
-                            <input type="text" class="form-control" id="modalCompanyName" placeholder="Name">
-                        </div>
-                        <div class="form-group">
-                            <label>Address</label>
-                            <input type="text" class="form-control" id="modalCompanyAddress" placeholder="Address">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Phone(s)</label>
-                                <input type="text" class="form-control" id="modalCompanyPhone" placeholder="Phone">
-                            </div>
-                            <div class="form-group">
-                                <label>Fax</label>
-                                <input type="text" class="form-control" id="modalCompanyFax" placeholder="Fax">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>E-Mail</label>
-                                <input type="email" class="form-control" id="modalCompanyEmail" placeholder="Email">
-                            </div>
-                            <div class="form-group">
-                                <label>Website</label>
-                                <input type="text" class="form-control" id="modalCompanyWebsite" placeholder="Website">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>G.S.T. Regn. No.</label>
-                                <input type="text" class="form-control" id="modalCompanyGST" placeholder="GST">
-                            </div>
-                            <div class="form-group">
-                                <label>N.T.N.</label>
-                                <input type="text" class="form-control" id="modalCompanyNTN" placeholder="NTN">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalCompanyDealsIn" placeholder="Deals In">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
-                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px; cursor: pointer;">Mark as Inactive</label>
-                        </div>
-                        <div class="modal-actions" style="justify-content: space-between;">
-                            <div>
-                                <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
-                                    <i class="fas fa-trash-alt"></i> Delete
-                                </button>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-success" onclick="switchLoginSession()" id="switchSessionBtn" style="display: none; background-color: #27ae60; border-color: #27ae60; color: #fff;">
-                                    <i class="fas fa-sign-in-alt"></i> Switch & Login
-                                </button>
-                                <button class="btn btn-primary" onclick="saveCompanyDetails()">
-                                    <i class="fas fa-save"></i> Save Changes
-                                </button>
-                                <button class="btn btn-secondary" onclick="closeModal()">
-                                    <i class="fas fa-times"></i> Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>`
-                );
-            });
+            }
 
-            
-            document.getElementById('userLoginsBtn').addEventListener('click', async function() {
-                if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
-                
-                // LIVE SYNC: Fetch latest users list before opening
-                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const companyId = sessionData.company_id || 1;
-                try {
-                    const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                    if (res.ok) users = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
+            // === 2. Company Logo Settings ===
+            const myLogoBtn = document.getElementById('myLogoBtn');
+            if (myLogoBtn) {
+                myLogoBtn.addEventListener('click', function() {
+                    if (!checkUserRights("My Logo")) return showAccessDenied("My Logo");
+                    openModal(
+                        { icon: 'fa-image', text: 'Company Logo Settings' },
+                        `<div>
+                            <div style="background: #fff8e7; border-left: 4px solid #F5A623; padding: 10px; margin-bottom: 15px; border-radius: 0 6px 6px 0; font-size: 13px;">
+                                <i class="fas fa-info-circle" style="color: #F5A623; margin-right: 8px;"></i>
+                                Note: Only .jpeg, .jpg, .png or .gif files can be set as logo.
+                            </div>
+                            <div style="border: 1px dashed #b9c2ce; border-radius: 6px; padding: 25px; text-align: center; margin-bottom: 20px; background-color: #fbfdff; min-height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <div id="noLogoText" style="color: #6b84a3; font-style: italic; font-size: 14px; ${logoData ? 'display: none;' : ''}">No Logo</div>
+                                <img id="logoPreview" class="logo-preview" src="${logoData || ''}" alt="Logo Preview" style="max-height: 80px; max-width: 100%; border: none; padding: 0; margin: 0; box-shadow: none; ${!logoData ? 'display: none;' : ''}">
+                            </div>
+                            <div style="margin: 15px 0;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <input type="radio" name="logoOption" id="setLogoOption" value="set" ${logoData ? 'checked' : ''}> 
+                                    <label for="setLogoOption" style="font-size: 14px;">Set New Logo</label>
+                                </div>
+                                <div style="margin-left: 28px; display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                                    <input type="file" id="logoFile" accept=".jpg,.jpeg,.png,.gif" onchange="previewLogo()" style="font-size: 13px;">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                                    <input type="radio" name="logoOption" id="doNotShowOption" value="none" ${!logoData ? 'checked' : ''}> 
+                                    <label for="doNotShowOption" style="font-size: 14px;">Do Not Show Logo</label>
+                                </div>
+                            </div>
+                            <div class="modal-actions">
+                                <button class="btn btn-primary" onclick="window.saveLogoSettings()">Save</button>
+                                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                            </div>
+                        </div>`
+                    );
+                });
+            }
 
-                openModal(
-                    { icon: 'fa-users', text: 'User Logins' },
-                    renderUserTable()
-                );
-            });
+            // === 3. List Of Companies ===
+            const listOfCompaniesBtn = document.getElementById('listOfCompaniesBtn');
+            if (listOfCompaniesBtn) {
+                listOfCompaniesBtn.addEventListener('click', async function() {
+                    if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
+                    
+                    try {
+                        const res = await fetch('api/admin.php?action=get_companies');
+                        if (res.ok) companies = await res.json();
+                    } catch (err) { console.error('Live Sync Error:', err); }
 
+                    let companyOptions = '';
+                    companies.forEach(company => {
+                        const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
+                        companyOptions += `<option value="${companyName}">${companyName}</option>`;
+                    });
+                    
+                    openModal(
+                        { icon: 'fa-list', text: 'List of Companies - Select for Login' },
+                        `<div id="listOfCompaniesModal">
+                            <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
+                                    <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="window.selectCompanyForLogin(this)">
+                                        <option value="" selected disabled>-- Select a Business --</option>
+                                        ${companyOptions}
+                                    </select>
+                                    <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
+                                </div>
+                            </div>
+                            <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                                <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 8px;"></i> Select a company above to load details. Click "Save Changes" to update database.</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Business Name</label>
+                                <input type="text" class="form-control" id="modalCompanyName" placeholder="Name">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" class="form-control" id="modalCompanyAddress" placeholder="Address">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Phone(s)</label>
+                                    <input type="text" class="form-control" id="modalCompanyPhone" placeholder="Phone">
+                                </div>
+                                <div class="form-group">
+                                    <label>Fax</label>
+                                    <input type="text" class="form-control" id="modalCompanyFax" placeholder="Fax">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>E-Mail</label>
+                                    <input type="email" class="form-control" id="modalCompanyEmail" placeholder="Email">
+                                </div>
+                                <div class="form-group">
+                                    <label>Website</label>
+                                    <input type="text" class="form-control" id="modalCompanyWebsite" placeholder="Website">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>G.S.T. Regn. No.</label>
+                                    <input type="text" class="form-control" id="modalCompanyGST" placeholder="GST">
+                                </div>
+                                <div class="form-group">
+                                    <label>N.T.N.</label>
+                                    <input type="text" class="form-control" id="modalCompanyNTN" placeholder="NTN">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Deals In</label>
+                                <input type="text" class="form-control" id="modalCompanyDealsIn" placeholder="Deals In">
+                            </div>
+                            <div class="modal-actions" style="justify-content: space-between;">
+                                <div>
+                                    <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-success" onclick="window.switchLoginSession()" id="switchSessionBtn" style="display: none; background-color: #27ae60; border-color: #27ae60; color: #fff;">
+                                        <i class="fas fa-sign-in-alt"></i> Switch & Login
+                                    </button>
+                                    <button class="btn btn-primary" onclick="saveCompanyDetails()">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="closeModal()">
+                                        <i class="fas fa-times"></i> Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`
+                    );
+                });
+            }
+
+            // === 4. User Logins ===
+            const userLoginsBtn = document.getElementById('userLoginsBtn');
+            if (userLoginsBtn) {
+                userLoginsBtn.addEventListener('click', async function() {
+                    if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+                    
+                    const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                    const companyId = sessionData.company_id || 1;
+                    try {
+                        const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                        if (res.ok) users = await res.json();
+                    } catch (err) { console.error('Live Sync Error:', err); }
+
+                    openModal(
+                        { icon: 'fa-users', text: 'User Logins' },
+                        renderUserTable()
+                    );
+                });
+            }
+
+            // === 5. User Rights ===
             const userRightsBtn = document.getElementById('userRightsBtn');
-            if(userRightsBtn) {
+            if (userRightsBtn) {
                 userRightsBtn.addEventListener('click', function() {
                     if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
                     openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
