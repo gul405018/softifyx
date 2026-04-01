@@ -15,7 +15,6 @@
         
         let companies = [];
         let currentNote = "";
-        let isAuditMode = false; // Flag to track if the system is in Read-Only mode
         
         let users = [
             { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }
@@ -113,13 +112,6 @@
                 // 5. Chart Of Accounts
                 if (coaMainRes.ok) coaMain = await coaMainRes.json();
                 if (coaSubRes.ok) coaSub = await coaSubRes.json();
-                
-                // 6. Financial Year List (CRITICAL FIX: Assignment was missing)
-                if (fyRes && fyRes.ok) {
-                    const fyData = await fyRes.json();
-                    window.financialYears = fyData;
-                    financialYears = fyData;
-                }
                 if (coaListRes.ok) coaList = await coaListRes.json();
 
                 // 6. Currency
@@ -165,88 +157,10 @@
                 const dashTitle = document.getElementById('dashboardBusinessTitle');
                 if (dashTitle) dashTitle.textContent = sessionData.company_name || companyData.name;
 
-                // 4. CHECK FINANCIAL YEAR CONSTRAINTS (Lock Editing if Dates don't match)
-                checkFinancialYearConstraint(sessionData);
-
             } catch (err) {
                 console.error('Data Sync Error:', err);
                 alert('Connection Error while loading live data: ' + err.message);
             }
-        }
-
-        function checkFinancialYearConstraint(session) {
-            if (!session.fy_start || !session.fy_end) return;
-
-            const today = new Date();
-            const start = new Date(session.fy_start);
-            const end = new Date(session.fy_end);
-            
-            // Set time to midnight for accurate day comparison
-            today.setHours(0,0,0,0);
-            start.setHours(0,0,0,0);
-            end.setHours(0,0,0,0);
-
-            if (today < start || today > end) {
-                isAuditMode = true;
-                console.warn("SoftifyX: Entering Audit Mode (Read-Only). Date mismatch detected.");
-                applyAuditModeLockout();
-            } else {
-                isAuditMode = false;
-            }
-        }
-
-        function applyAuditModeLockout() {
-            // 1. Add Visual Banner to Sidebar/Header
-            const banner = document.createElement('div');
-            banner.id = 'auditModeBanner';
-            banner.innerHTML = `<i class="fas fa-lock" style="margin-right: 8px;"></i> <b>Read-Only Mode Active:</b> You are auditing a year outside the current date range. Editing is disabled.`;
-            banner.className = 'audit-warning-banner';
-            
-            const header = document.querySelector('.main-header') || document.body;
-            header.prepend(banner);
-
-            // 2. Add Global CSS for Lockout
-            const style = document.createElement('style');
-            style.id = 'auditLockCSS';
-            style.innerHTML = `
-                /* Lock everything by default in Audit Mode */
-                .btn-primary, .btn-success, [onclick*="save"], [onclick*="Save"], [onclick*="Add"], [onclick*="Delete"], .action-buttons .btn {
-                    opacity: 0.5 !important;
-                    pointer-events: none !important;
-                    filter: grayscale(1) !important;
-                    cursor: not-allowed !important;
-                }
-                .form-control, input, select, textarea {
-                    background-color: #f8f9fa !important;
-                    border-color: #eee !important;
-                    color: #777 !important;
-                    cursor: not-allowed !important;
-                    pointer-events: none !important;
-                }
-
-                /* EXEMPTION: Financial Year module MUST stay active */
-                [data-module="Financial Year"], 
-                [data-module="Financial Year"] *,
-                [onclick*="saveFY"], [onclick*="save_fy"], [onclick*="addNewFY"] {
-                    opacity: 1 !important;
-                    pointer-events: auto !important;
-                    filter: none !important;
-                    cursor: auto !important;
-                }
-                [data-module="Financial Year"] input, 
-                [data-module="Financial Year"] select {
-                    background-color: #fff !important;
-                    pointer-events: auto !important;
-                    cursor: text !important;
-                }
-
-                #auditModeBanner {
-                    background: #ff7675; color: white; padding: 10px; text-align: center;
-                    font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                    position: sticky; top: 0; z-index: 9999;
-                }
-            `;
-            document.head.appendChild(style);
         }
 
         function resetDashboardModel() {
@@ -481,7 +395,6 @@
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
             
-            // 1. Set the HTML (scripts won't run yet)
             container.innerHTML = `
                 <div class="modal-header">
                     <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
@@ -493,19 +406,8 @@
             `;
             
             overlay.classList.add('active');
-            
-            // 2. Extract and Manually Execute Scripts (using eval for reliability)
-            const scripts = container.querySelectorAll('script');
-            scripts.forEach(s => {
-                try {
-                    window.eval(s.innerHTML);
-                    s.parentNode.removeChild(s); // Clean up
-                } catch (e) {
-                    console.error('Modal Script Execution Error:', e);
-                }
-            });
 
-            // 3. Apply Viewer Restrictions
+            // Apply Viewer Restrictions if necessary
             setTimeout(() => {
                 applyViewerRestrictions(container);
             }, 50);

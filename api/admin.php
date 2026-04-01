@@ -7,24 +7,14 @@ $action = $_GET['action'] ?? '';
 // Robust ID Retrieval: Prefer GET parameter, then session, then default.
 $company_id = $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
-// ONE-TIME MIGRATION: Ensure tables and columns exist
+// ONE-TIME MIGRATION: Ensure 'status' column exists in companies table
 try {
-    // 1. Check 'status' in 'companies'
+    // Check if column exists by attempting to fetch it (standard SQL approach for compatibility)
     $stmt = $pdo->query("SHOW COLUMNS FROM companies LIKE 'status'");
     if (!$stmt->fetch()) {
         $pdo->exec("ALTER TABLE companies ADD COLUMN status TINYINT(1) DEFAULT 1");
     }
-
-    // 2. Create 'financial_years' table if missing
-    $pdo->exec("CREATE TABLE IF NOT EXISTS financial_years (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
-        abbreviation VARCHAR(20) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )");
-} catch (Exception $e) { /* Tables/Columns likely exist */ }
+} catch (Exception $e) { /* Already exists or not supported */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'get_companies') {
