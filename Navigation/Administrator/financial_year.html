@@ -37,7 +37,7 @@
 
             <div class="form-group" style="display: flex; align-items: center; margin-bottom: 12px;">
                 <label style="width: 140px; font-weight: 600; color: #1f4668;">Abbreviation</label>
-                <input type="text" class="form-control" id="fyAbbreviation" style="flex: 1; border: 1px solid #ccc;" placeholder="e.g. 2020-21">
+                <input type="text" class="form-control" id="fyAbbreviation" style="flex: 1; border: 1px solid #ccc; background-color: #f8f9fa;" readonly placeholder="Auto-generated">
             </div>
             
             <!-- Hidden ID field to track edit mode -->
@@ -53,4 +53,11 @@
         <button class="btn btn-primary" onclick="saveFinancialYear()"><i class="fas fa-check"></i> Save</button>
         <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Cancel</button>
     </div>
+    
+    <script>
+        // Ensure the list renders when the module is loaded
+        if (typeof renderFinancialYearList === 'function') {
+            renderFinancialYearList();
+        }
+    </script>
 </div>

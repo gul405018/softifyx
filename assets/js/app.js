@@ -2,19 +2,12 @@
         console.log("SoftifyX: Logic Loaded (v2)");
         let currentUser = "Administrator";
         let companyData = {
-            name: "",
-            address: "",
-            phone: "",
-            fax: "",
-            email: "",
-            website: "",
-            gst: "",
-            ntn: "",
-            dealsIn: ""
+            name: "", address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: ""
         };
         
         let companies = [];
         let currentNote = "";
+        window.isReadOnly = false; // Financial Year Control Flag
         
         let users = [
             { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }
@@ -48,6 +41,26 @@
             if (globalKeys.includes(key)) return key;
             // Company-specific keys
             return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
+        }
+
+        function checkFinancialYearAccess() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            if (!session.fy_start || !session.fy_end) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const start = new Date(session.fy_start);
+            const end = new Date(session.fy_end);
+            
+            if (today < start || today > end) {
+                window.isReadOnly = true;
+                const msg = "Aap ka selected financial year current date se match nahi karta";
+                // Show a global warning in the dashboard/title
+                const dashTitle = document.getElementById('dashboardCompanyName');
+                if (dashTitle) {
+                    dashTitle.innerHTML += `<div style="color: #e74c3c; font-size: 14px; margin-top: 5px;"><i class="fas fa-exclamation-triangle"></i> ${msg} (Read-Only)</div>`;
+                }
+            }
         }
 
         async function loadSavedData() {
@@ -135,21 +148,14 @@
                 // 8. Financial Years Sync
                 if (fyRes.ok) {
                     const fyData = await fyRes.json();
-                    if (Array.isArray(fyData) && fyData.length > 0) {
-                        financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
-                    } else {
-                        // Fallback Default: Start with 2026-2027 if DB is empty
-                        financialYears = [
-                            { id: 'new1', start: '2026-07-01', end: '2027-06-30', abbr: '2026-27' },
-                            { id: 'new2', start: '2027-07-01', end: '2028-06-30', abbr: '2027-28' }
-                        ];
-                    }
+                    financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
                 }
 
                 // Apply UI Updates
                 displayLogo();
                 updateNames();
                 updateDashboardSummary();
+                checkFinancialYearAccess(); // Trigger Read-Only Check
                 
                 // CRITICAL SYNC: Update all UI labels from Session
                 const businessNameTop = document.getElementById('businessNameTop');
@@ -1547,6 +1553,31 @@
             listObj.innerHTML = html;
         }
 
+        function renderFinancialYearList() {
+            const listContainer = document.getElementById('fyListBox');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = '';
+            const editId = document.getElementById('fyEditId').value;
+
+            financialYears.forEach(fy => {
+                const item = document.createElement('div');
+                item.className = `listbox-item ${fy.id == editId ? 'active' : ''}`;
+                item.textContent = fy.abbr;
+                item.onclick = () => selectFinancialYear(fy.id);
+                listContainer.appendChild(item);
+            });
+        }
+
+        function calculateAbbreviation(start, end) {
+            if (!start || !end) return '';
+            const startYear = new Date(start).getFullYear();
+            const endYear = new Date(end).getFullYear();
+            // Example: 2024-07-01 to 2025-06-30 -> 2024-25
+            const endShort = endYear.toString().slice(-2);
+            return `${startYear}-${endShort}`;
+        }
+
         function selectFinancialYear(id) {
             const fy = financialYears.find(f => f.id == id);
             if(fy) {
@@ -1593,13 +1624,15 @@
         async function saveFinancialYear() {
             const start = document.getElementById('fyStartDate').value;
             const end = document.getElementById('fyEndDate').value;
-            const abbr = document.getElementById('fyAbbreviation').value;
             const editId = document.getElementById('fyEditId').value;
             const errorMsg = document.getElementById('fyErrorMsg');
             
+            // Auto-Generate Abbreviation
+            const abbr = calculateAbbreviation(start, end);
+            
             if(!start || !end || !abbr) {
                 errorMsg.style.color = '#d63031';
-                errorMsg.textContent = 'Please fill all related fields.';
+                errorMsg.textContent = 'Invalid dates selected.';
                 return;
             }
 
@@ -1614,23 +1647,18 @@
                 });
 
                 if (response.ok) {
-                    // Update Local State for speed
-                    if (editId) {
-                        const fy = financialYears.find(f => f.id == editId);
-                        if (fy) { fy.start = start; fy.end = end; fy.abbr = abbr; }
-                    } else {
-                        // Re-fetch to get new ID
-                        const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${companyId}`);
-                        if (fyRes.ok) {
-                            const fyData = await fyRes.json();
-                            financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
-                        }
+                    // Refresh from server to ensure IDs and labels are correct
+                    const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${companyId}`);
+                    if (fyRes.ok) {
+                        const fyData = await fyRes.json();
+                        financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
                     }
 
                     errorMsg.style.color = '#27ae60';
                     errorMsg.textContent = 'Settings saved and synced successfully!';
                     renderFinancialYearList();
-                    setTimeout(() => closeModal(), 800);
+                    // Clear fields for next entry if was new
+                    if(!editId) addFinancialYear();
                 }
             } catch (err) { alert('Sync Failed.'); }
         }
@@ -1899,8 +1927,11 @@
             const userObj = (users || []).find(u => u.username === session.username);
             if (userObj?.role === 'Admin') return;
 
-            // Only apply restrictions if the role is 'Viewer' or if they are restricted by module rights
-            if (session.role !== 'Viewer') return;
+            // Only apply restrictions if the role is 'Viewer', restricted by module rights, OR Financial Year is Mismatched
+            const isViewer = session.role === 'Viewer';
+            const isFYMismatched = window.isReadOnly;
+
+            if (!isViewer && !isFYMismatched) return;
 
             // 1. Disable all standard input fields
             const inputs = container.querySelectorAll('input, select, textarea');

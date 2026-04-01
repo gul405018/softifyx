@@ -251,7 +251,7 @@
                     if (savedDefaults.username) userSelect.value = savedDefaults.username;
                 }
 
-                // Update Financial Years for this company
+                    // Update Financial Years for this company
                 const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${coId}`);
                 if (fyRes.ok) {
                     financialYears = await fyRes.json();
@@ -344,13 +344,21 @@
                 const result = await response.json();
                 
                 if (response.ok && result.status === 'success') {
+                    const selectedYearLabel = yearSelect.value;
+                    const selectedYearData = financialYears.find(y => (y.abbreviation || y.year) === selectedYearLabel) || {};
+
                     const sessionInfo = {
                         user_id: result.user.id,
                         username: result.user.username,
                         role: result.user.role,
                         company_id: result.user.company_id,
                         company_name: coName,
-                        loginTime: Date.now()
+                        loginTime: Date.now(),
+                        // Financial Year Metadata
+                        fy_id: selectedYearData.id || 0,
+                        fy_label: selectedYearLabel,
+                        fy_start: selectedYearData.start_date || '',
+                        fy_end: selectedYearData.end_date || ''
                     };
                     localStorage.setItem('softifyx_session', JSON.stringify(sessionInfo));
                     window.location.href = 'index.html';
