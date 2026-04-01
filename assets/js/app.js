@@ -32,15 +32,11 @@
         let dailySummary = { /* default state ... */ }; 
         // Initial empty state (will be populated from summary prefix)
         
-        // Helper for Multi-Company Isolation (Separate Databases)
+        // Simplified for Single-Company Model (Remove coName isolation)
         function getCoKey(key) {
-            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const coName = session.company_name || 'default';
-            // Global keys that should NOT be isolated
-            const globalKeys = ['softifyx_companies', 'softifyx_session'];
+            const globalKeys = ['softifyx_companies', 'softifyx_session', 'softifyx_logo'];
             if (globalKeys.includes(key)) return key;
-            // Company-specific keys
-            return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
+            return `softifyx_v2_${key.replace('softifyx_', '')}`;
         }
 
         async function loadSavedData() {
@@ -53,7 +49,7 @@
                 const [
                     companyRes, companiesRes, usersRes, summaryRes, 
                     coaMainRes, coaSubRes, coaListRes, 
-                    currRes, rightsRes, fyRes
+                    currRes, rightsRes, fyRes, inventoryRes
                 ] = await Promise.all([
                     fetch(`api/admin.php?action=get_company&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_companies&${cb}`),
@@ -64,7 +60,8 @@
                     fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}`),
                     fetch(`api/admin.php?action=get_currency&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}&${cb}`),
-                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`)
+                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`),
+                    fetch(`api/admin.php?action=get_inventory&company_id=${companyId}&${cb}`)
                 ]);
 
                 // 1. Process Company
@@ -118,7 +115,10 @@
                     }
                 }
 
-                // 8. Financial Years Sync
+                // 8. Inventory Sync
+                if (inventoryRes.ok) inventoryItems = await inventoryRes.json();
+                
+                // 9. Financial Years Sync
                 if (fyRes.ok) {
                     const fyData = await fyRes.json();
                     if (Array.isArray(fyData) && fyData.length > 0) {
@@ -2519,6 +2519,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                       openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
                    };
                 }
+
+                // 5. Dashboard Specific Listeners (Search & Inventory)
+                const searchBtn = document.getElementById('searchBtn');
+                if (searchBtn) searchBtn.onclick = performSearch;
+
+                const globalSearch = document.getElementById('globalSearch');
+                if (globalSearch) {
+                    globalSearch.onkeyup = function(e) {
+                        if (e.key === 'Enter') performSearch();
+                    };
+                }
+
+                // Inventory Alerts Widget Click
+                const inventoryCard = document.getElementById('inventoryAlertsCard');
+                if (inventoryCard) inventoryCard.onclick = showInventoryDetails;
 
             } catch (err) {
                 console.error('Partial Loading Failed:', err);

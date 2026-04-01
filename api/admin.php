@@ -49,6 +49,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         sendResponse($stmt->fetch());
     }
+
+    if ($action === 'get_inventory') {
+        // First check if the table exists, and if not, create it (for first-time setup)
+        try {
+            $pdo->query("SELECT 1 FROM inventory LIMIT 1");
+        } catch (Exception $e) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS `inventory` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `company_id` int(11) NOT NULL,
+                `name` varchar(255) NOT NULL,
+                `stock` int(11) DEFAULT 0,
+                `reorderLevel` int(11) DEFAULT 10,
+                PRIMARY KEY (`id`),
+                FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            
+            // Seed with some example data if empty
+            $pdo->prepare("INSERT INTO inventory (company_id, name, stock, reorderLevel) VALUES 
+                (?, 'Laptop Core i5', 5, 10),
+                (?, 'Wireless Mouse', 45, 15),
+                (?, 'USB Keyboard', 8, 20)")->execute([$company_id, $company_id, $company_id]);
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM inventory WHERE company_id = ?");
+        $stmt->execute([$company_id]);
+        sendResponse($stmt->fetchAll());
+    }
     
     if ($action === 'get_note') {
         $stmt = $pdo->prepare("SELECT note_text FROM business_notes WHERE company_id = ?");
