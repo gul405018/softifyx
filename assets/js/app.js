@@ -45,8 +45,7 @@
 
         async function loadSavedData() {
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            if (!sessionData.company_id) return;
-            const companyId = sessionData.company_id;
+            const companyId = sessionData.company_id || 1; // Default to 1 for the single-business model
 
             try {
                 const cb = `_cb=${Date.now()}`;
@@ -2477,12 +2476,60 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.checkUserRights = checkUserRights;
 
+        async function loadPartials() {
+            try {
+                // 1. Fetch HTML components
+                const [navRes, sideRes, dashRes] = await Promise.all([
+                    fetch('components/navbar.html'),
+                    fetch('components/sidebar.html'),
+                    fetch('components/dashboard.html')
+                ]);
+
+                if (navRes.ok) document.getElementById('navbar-container').innerHTML = await navRes.text();
+                if (sideRes.ok) document.getElementById('sidebar-container').innerHTML = await sideRes.text();
+                if (dashRes.ok) document.getElementById('main-content').innerHTML = await dashRes.text();
+
+                // 2. Refresh UI bindings after injection
+                setupMenuButtons();
+                setupDropdowns();
+                updateNames();
+                updateDashboardSummary();
+                displayLogo();
+                
+                // 3. User Table Listener (Explicit for User Logins)
+                const userLoginsBtn = document.getElementById('userLoginsBtn');
+                if (userLoginsBtn) {
+                   userLoginsBtn.onclick = async function() {
+                      if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+                      const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                      const companyId = sessionData.company_id || 1;
+                      try {
+                         const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+                         if (res.ok) users = await res.json();
+                      } catch (err) { console.error('User Fetch Error:', err); }
+                      openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
+                   };
+                }
+
+                // 4. User Rights Listener
+                const userRightsBtn = document.getElementById('userRightsBtn');
+                if (userRightsBtn) {
+                   userRightsBtn.onclick = function() {
+                      if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
+                      openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
+                   };
+                }
+
+            } catch (err) {
+                console.error('Partial Loading Failed:', err);
+                alert('App Interface Initialization Failed. Please refresh the page.');
+            }
+        }
+
         // --- APPLICATION INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Initial Data Fetch (Cloud)
+            // 1. Load Partials (UI Framework) - This handles Menu & Dropdown setup inside it
+            loadPartials();
+            // 2. Initial Data Fetch (Cloud)
             if (typeof loadSavedData === 'function') loadSavedData();
-            // 2. Setup Navigation Event Listeners
-            if (typeof setupMenuButtons === 'function') setupMenuButtons();
-            // 3. Start Dropdown Logic
-            if (typeof setupDropdowns === 'function') setupDropdowns();
         });
