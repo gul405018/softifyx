@@ -679,92 +679,7 @@
             }
         }
 
-        function showAddCompanyForm() {
-            openModal(
-                { icon: 'fa-building', text: 'Add New Company' },
-                `<div>
-                    <div class="form-group">
-                        <label>Business Name</label>
-                        <input type="text" class="form-control" id="newCompanyName" placeholder="Enter business name" value="">
-                    </div>
-                    <div class="form-group">
-                        <label>Address</label>
-                        <input type="text" class="form-control" id="newCompanyAddress" placeholder="Enter address" value="">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Phone(s)</label>
-                            <input type="text" class="form-control" id="newCompanyPhone" placeholder="Phone" value="">
-                        </div>
-                        <div class="form-group">
-                            <label>Fax</label>
-                            <input type="text" class="form-control" id="newCompanyFax" placeholder="Fax" value="">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>E-Mail</label>
-                            <input type="email" class="form-control" id="newCompanyEmail" placeholder="Email" value="">
-                        </div>
-                        <div class="form-group">
-                            <label>Website</label>
-                            <input type="text" class="form-control" id="newCompanyWebsite" placeholder="Website" value="">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>G.S.T. Regn. No.</label>
-                            <input type="text" class="form-control" id="newCompanyGST" placeholder="GST" value="">
-                        </div>
-                        <div class="form-group">
-                            <label>N.T.N.</label>
-                            <input type="text" class="form-control" id="newCompanyNTN" placeholder="NTN" value="">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Deals In</label>
-                        <input type="text" class="form-control" id="newCompanyDealsIn" placeholder="Deals In" value="">
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="addNewCompany()"><i class="fas fa-save"></i> Save Company</button>
-                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    </div>
-                </div>`
-            );
-        }
 
-        async function addNewCompany() {
-            const companyName = document.getElementById('newCompanyName')?.value;
-            if (!companyName) {
-                alert("Business Name is required!");
-                return;
-            }
-
-            const payload = {
-                name: companyName,
-                address: document.getElementById('newCompanyAddress')?.value || '',
-                phone: document.getElementById('newCompanyPhone')?.value || '',
-                fax: document.getElementById('newCompanyFax')?.value || '',
-                email: document.getElementById('newCompanyEmail')?.value || '',
-                website: document.getElementById('newCompanyWebsite')?.value || '',
-                gst: document.getElementById('newCompanyGST')?.value || '',
-                ntn: document.getElementById('newCompanyNTN')?.value || '',
-                deals_in: document.getElementById('newCompanyDealsIn')?.value || ''
-            };
-
-            try {
-                const response = await fetch('api/admin.php?action=save_company', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    alert('New business registered and synchronized live! Application will refresh.');
-                    window.location.reload();
-                }
-            } catch (err) { alert('Sync Failed.'); }
-        }
 
         async function saveCompanySettings() {
             const businessName = document.getElementById('modalBusinessName')?.value;
@@ -890,55 +805,7 @@
             }
         }
 
-        async function saveCompanyDetails() {
-            const oldName = originSelectedCompanyName || companyData.name;
-            const newName = document.getElementById('modalCompanyName')?.value || companyData.name;
 
-            const payload = {
-                name: newName,
-                address: document.getElementById('modalCompanyAddress')?.value || '',
-                phone: document.getElementById('modalCompanyPhone')?.value || '',
-                fax: document.getElementById('modalCompanyFax')?.value || '',
-                email: document.getElementById('modalCompanyEmail')?.value || '',
-                website: document.getElementById('modalCompanyWebsite')?.value || '',
-                gst: document.getElementById('modalCompanyGST')?.value || '',
-                ntn: document.getElementById('modalCompanyNTN')?.value || '',
-                deals_in: document.getElementById('modalCompanyDealsIn')?.value || ''
-            };
-            
-            // Find specific company record to update in the global companies array
-            const targetCompany = companies.find(c => (typeof c === 'string' ? c : c.name) === oldName);
-
-            try {
-                const response = await fetch(`api/admin.php?action=save_company&id=${targetCompany?.id || ''}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...payload, id: targetCompany?.id }) // PASS ID HERE FOR UPDATE
-                });
-
-                if (response.ok) {
-                    alert('Business details updated and synchronized live!');
-                    window.location.reload();
-                }
-            } catch (err) { alert('Sync Error: ' + err.message); }
-        }
-
-        async function deleteCompany() {
-            const oldName = originSelectedCompanyName || companyData.name;
-            const targetCompany = companies.find(c => (typeof c === 'string' ? c : c.name) === oldName);
-            
-            if (!targetCompany) return;
-
-            if (confirm(`Are you sure you want to PERMANENTLY delete the company "${oldName}"? This action cannot be undone.`)) {
-                try {
-                    const response = await fetch(`api/admin.php?action=delete_company&id=${targetCompany.id}`, { method: 'DELETE' });
-                    if (response.ok) {
-                        alert('Company deleted successfully.');
-                        window.location.reload();
-                    }
-                } catch (err) { alert('Delete Sync Failed.'); }
-            }
-        }
 
         async function saveNote() {
             const noteText = document.getElementById('notesText')?.value;
@@ -1132,107 +999,7 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                let companyOptions = '';
-                companies.forEach(company => {
-                    const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
-                    companyOptions += `<option value="${companyName}">${companyName}</option>`;
-                });
-                
-                openModal(
-                    { icon: 'fa-list', text: 'List of Companies - Select for Login' },
-                    `<div id="listOfCompaniesModal">
-                        <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
-                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
-                                    ${companyOptions}
-                                </select>
-                                <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
-                            </div>
-                        </div>
-                        <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to login. Company details will be loaded automatically.</p>
-                        </div>
-                        <div class="form-group">
-                            <label>Business Name</label>
-                            <input type="text" class="form-control" id="modalCompanyName" value="${companyData.name}">
-                        </div>
-                        <div class="form-group">
-                            <label>Address</label>
-                            <input type="text" class="form-control" id="modalCompanyAddress" value="${companyData.address}">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Phone(s)</label>
-                                <input type="text" class="form-control" id="modalCompanyPhone" value="${companyData.phone}">
-                            </div>
-                            <div class="form-group">
-                                <label>Fax</label>
-                                <input type="text" class="form-control" id="modalCompanyFax" value="${companyData.fax}">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>E-Mail</label>
-                                <input type="email" class="form-control" id="modalCompanyEmail" value="${companyData.email}">
-                            </div>
-                            <div class="form-group">
-                                <label>Website</label>
-                                <input type="text" class="form-control" id="modalCompanyWebsite" value="${companyData.website}">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>G.S.T. Regn. No.</label>
-                                <input type="text" class="form-control" id="modalCompanyGST" value="${companyData.gst}">
-                            </div>
-                            <div class="form-group">
-                                <label>N.T.N.</label>
-                                <input type="text" class="form-control" id="modalCompanyNTN" value="${companyData.ntn}">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn}">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
-                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive</label>
-                        </div>
-                        <div class="modal-actions" style="justify-content: space-between;">
-                            <div>
-                                <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
-                                    <i class="fas fa-trash-alt"></i> Delete Company
-                                </button>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-primary" onclick="saveCompanyDetails()">
-                                    <i class="fas fa-save"></i> Save Changes
-                                </button>
-                                <button class="btn btn-secondary" onclick="closeModal()">
-                                    <i class="fas fa-times"></i> Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>`
-                );
-            });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                
-                // LIVE SYNC: Fetch latest companies list before opening
-                try {
-                    const res = await fetch('api/admin.php?action=get_companies');
-                    if (res.ok) companies = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
-
-                openModal(
-                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
-                    renderCompanyTable()
-                );
-            });
             
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
@@ -1260,24 +1027,7 @@
             }
         }
 
-        async function selectCompanyForLogin(select) {
-            const selectedCompany = select.value;
-            if (!selectedCompany) return;
-            
-            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
-            if (found) {
-                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                sessionData.company_id = found.id || 1;
-                sessionData.company_name = found.name || selectedCompany;
-                
-                // LOCK THE SELECTION PERMANENTLY
-                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-                
-                // NOTIFY USER & REFRESH DASHBOARD
-                alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
-                window.location.reload(); 
-            }
-        }
+
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
@@ -1287,7 +1037,7 @@
             let rightsRows = '';
             
             const explicitRights = [
-                "My Company", "My Logo", "List Of Companies", "User Logins",
+                "My Company", "My Logo", "User Logins",
                 "User Rights", "Passwords", "Financial Year", "Clear Transactions",
                 "Currency", "BackUp Utility", "Chart of Accounts", "Customers",
                 "Vendors/Suppliers", "Bank Accounts", "Accounts Opening Balances",
@@ -2051,8 +1801,6 @@
         window.addNewCompany = addNewCompany;
         window.showInventoryDetails = showInventoryDetails;
         window.previewLogo = previewLogo;
-        window.selectCompanyForLogin = selectCompanyForLogin;
-        window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;

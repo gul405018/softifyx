@@ -158,7 +158,9 @@
         </div>
         <div class="field-row">
             <label>Company</label>
-            <select id="companyDropdown"></select>
+            <div id="companyDisplay" style="flex: 1; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-weight: 600; color: #2c3e50;">Loading...</div>
+            <input type="hidden" id="companyIdInput">
+            <input type="hidden" id="companyNameInput">
         </div>
         <div class="field-row">
             <label>Financial Year</label>
@@ -191,41 +193,39 @@
         const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
 
         const userSelect = document.getElementById('userDropdown');
-        const companySelect = document.getElementById('companyDropdown');
+        const companyDisplay = document.getElementById('companyDisplay');
+        const companyIdInput = document.getElementById('companyIdInput');
+        const companyNameInput = document.getElementById('companyNameInput');
         const yearSelect = document.getElementById('yearDropdown');
 
         // 1. Initial Load: Fetch All Companies from Database
         async function loadInitialData() {
             try {
-                // Fetch Companies
                 const res = await fetch('api/admin.php?action=get_companies');
                 if (res.ok) {
-                    companies = await res.json();
-                    companySelect.innerHTML = '';
-                    companies.forEach(c => { 
-                        const cName = c.name || "Default Business";
-                        const cId = c.id;
-                        const op = new Option(cName, cName);
-                        op.dataset.id = cId;
-                        companySelect.add(op);
-                    });
-
-                    // Set default if saved
-                    if (savedDefaults.company) companySelect.value = savedDefaults.company;
-                    
-                    // After companies are loaded, load users and years for the selected company
-                    updateUsersAndData();
+                    const companies = await res.json();
+                    if (companies.length > 0) {
+                        const primaryCompany = companies[0];
+                        const cName = primaryCompany.name || "Default Business";
+                        const cId = primaryCompany.id;
+                        
+                        companyDisplay.textContent = cName;
+                        companyIdInput.value = cId;
+                        companyNameInput.value = cName;
+                        
+                        updateUsersAndData();
+                    } else {
+                        companyDisplay.textContent = "No Business Registered";
+                    }
                 }
             } catch (err) { console.error('Initial Load Error:', err); }
         }
 
         // 2. Dynamic Data: Fetch Users & Years based on selected company
         async function updateUsersAndData() {
-            const selectedOp = companySelect.options[companySelect.selectedIndex];
-            if (!selectedOp) return;
-            
-            const coName = selectedOp.value;
-            const coId = selectedOp.dataset.id;
+            const coId = companyIdInput.value;
+            if (!coId) return;
+            const coName = companyNameInput.value;
             
             try {
                 // Update Users for this company
@@ -265,7 +265,7 @@
             } catch (err) { console.error('Update Users Error:', err); }
         }
 
-        companySelect.addEventListener('change', updateUsersAndData);
+        // Logic to track changes is no longer needed via listener as it is fixed.
 
         // Initial Initialization
         loadInitialData();
@@ -273,7 +273,7 @@
         document.getElementById('setDefaultBtn').addEventListener('click', () => {
             const defaults = {
                 username: userSelect.value,
-                company: companySelect.value,
+                company: companyNameInput.value,
                 year: yearSelect.value
             };
             localStorage.setItem('softifyx_login_defaults', JSON.stringify(defaults));
@@ -329,13 +329,14 @@
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
-            const coName = companySelect.value || 'default';
+            const coId = companyIdInput.value;
+            const coName = companyNameInput.value;
             
             try {
                 const response = await fetch('api/auth.php?action=login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p, company: coName })
+                    body: JSON.stringify({ username: u, password: p, company_id: coId, company: coName })
                 });
                 
                 const result = await response.json();
