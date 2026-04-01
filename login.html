@@ -158,7 +158,7 @@
         </div>
         <div class="field-row">
             <label>Company</label>
-            <div id="companyDisplay" style="flex: 1; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-weight: 600; color: #2c3e50;">Loading...</div>
+            <input type="text" id="companyDisplay" readonly value="Loading...">
             <input type="hidden" id="companyIdInput">
             <input type="hidden" id="companyNameInput">
         </div>
@@ -203,22 +203,25 @@
             try {
                 const res = await fetch('api/admin.php?action=get_companies');
                 if (res.ok) {
-                    const companies = await res.json();
-                    if (Array.isArray(companies) && companies.length > 0) {
-                        // Use the very first company as the primary business
-                        const primaryCompany = companies[0];
-                        const cName = primaryCompany.name || "My Business";
-                        const cId = primaryCompany.id;
+                    const data = await res.json();
+                    // Ensure we handle both array and object responses (PHP fetchAll/fetch)
+                    const companiesList = Array.isArray(data) ? data : [data];
+                    
+                    if (companiesList.length > 0 && companiesList[0]) {
+                        const primaryCompany = companiesList[0];
+                        // Robustly identify the name field (could be 'name', 'company_name', etc. in legacy codebases)
+                        const cName = primaryCompany.name || "Default Business";
+                        const cId = primaryCompany.id || 1;
                         
-                        // Sync UI and Inputs
-                        companyDisplay.textContent = cName;
+                        // Sync UI and Inputs (Use .value for input element)
+                        companyDisplay.value = cName;
                         companyIdInput.value = cId;
                         companyNameInput.value = cName;
                         
                         // Proceed to load other data (Users, financial years)
                         updateUsersAndData();
                     } else {
-                        companyDisplay.textContent = "No Business Registered";
+                        companyDisplay.value = "No Business Registered";
                         console.warn("No companies found in database.");
                     }
                 }
