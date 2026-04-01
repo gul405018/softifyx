@@ -2034,6 +2034,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Attach SPA event listeners to all generic dropdown menus using Popup System
             document.querySelectorAll('.dropdown-item[data-target], .nested-item[data-target]').forEach(item => {
                 item.addEventListener('click', (e) => {
+                    // Skip if item has a specific ID that we handle separately (e.g. Administrator items)
+                    const specialIds = ['userLoginsBtn', 'userRightsBtn', 'myCompanyBtn', 'myLogoBtn'];
+                    if (specialIds.includes(item.id)) return;
+
                     e.preventDefault();
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
@@ -2495,32 +2499,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateNames();
                 updateDashboardSummary();
                 displayLogo();
-                
-                // 3. User Table Listener (Explicit for User Logins)
-                const userLoginsBtn = document.getElementById('userLoginsBtn');
-                if (userLoginsBtn) {
-                   userLoginsBtn.onclick = async function() {
-                      if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
-                      const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                      const companyId = sessionData.company_id || 1;
-                      try {
-                         const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
-                         if (res.ok) users = await res.json();
-                      } catch (err) { console.error('User Fetch Error:', err); }
-                      openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
-                   };
-                }
 
-                // 4. User Rights Listener
-                const userRightsBtn = document.getElementById('userRightsBtn');
-                if (userRightsBtn) {
-                   userRightsBtn.onclick = function() {
-                      if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
-                      openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
-                   };
-                }
-
-                // 5. Dashboard Specific Listeners (Search & Inventory)
+                // 3. Dashboard Specific Listeners (Search & Inventory)
                 const searchBtn = document.getElementById('searchBtn');
                 if (searchBtn) searchBtn.onclick = performSearch;
 
