@@ -259,6 +259,8 @@
                     financialYears.forEach(y => {
                         const yName = y.abbreviation || y.year || "FY";
                         const op = new Option(yName, yName); 
+                        op.dataset.start = y.start_date || '';
+                        op.dataset.end = y.end_date || '';
                         yearSelect.add(op); 
                     });
 
@@ -344,12 +346,16 @@
                 const result = await response.json();
                 
                 if (response.ok && result.status === 'success') {
+                    const selectedYearOp = yearSelect.options[yearSelect.selectedIndex];
                     const sessionInfo = {
                         user_id: result.user.id,
                         username: result.user.username,
                         role: result.user.role,
                         company_id: result.user.company_id,
                         company_name: coName,
+                        fy_name: yearSelect.value,
+                        fy_start: selectedYearOp ? selectedYearOp.dataset.start : '',
+                        fy_end: selectedYearOp ? selectedYearOp.dataset.end : '',
                         loginTime: Date.now()
                     };
                     localStorage.setItem('softifyx_session', JSON.stringify(sessionInfo));

@@ -47,10 +47,106 @@
         </div>
     </div>
 
-    <!-- Actions matching consistency -->
     <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="addFinancialYear()"><i class="fas fa-plus"></i> Add</button>
-        <button class="btn btn-primary" onclick="saveFinancialYear()"><i class="fas fa-check"></i> Save</button>
-        <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Cancel</button>
+        <button class="btn btn-secondary" onclick="addNewFY()"><i class="fas fa-plus"></i> Add New</button>
+        <button class="btn btn-primary" onclick="saveFY()"><i class="fas fa-save"></i> Save Changes</button>
+        <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Close</button>
     </div>
 </div>
+
+<script>
+    (function initFY() {
+        const list = document.getElementById('fyListBox');
+        const startInput = document.getElementById('fyStartDate');
+        const endInput = document.getElementById('fyEndDate');
+        const abbrInput = document.getElementById('fyAbbreviation');
+        const editIdInput = document.getElementById('fyEditId');
+        const errorDiv = document.getElementById('fyErrorMsg');
+
+        // 1. Load List from Global State or Fetch
+        window.loadFYList = function() {
+            if (!window.financialYears) return;
+            list.innerHTML = '';
+            window.financialYears.forEach(fy => {
+                const item = document.createElement('div');
+                item.className = 'listbox-item';
+                item.textContent = fy.abbreviation || fy.year || 'Unknown';
+                item.onclick = () => selectFY(fy, item);
+                list.appendChild(item);
+            });
+        };
+
+        function selectFY(fy, element) {
+            // UI Selection
+            document.querySelectorAll('.listbox-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+
+            // Populate Form
+            startInput.value = fy.start_date || '';
+            endInput.value = fy.end_date || '';
+            abbrInput.value = fy.abbreviation || '';
+            editIdInput.value = fy.id || '';
+            errorDiv.textContent = '';
+        }
+
+        window.addNewFY = function() {
+            document.querySelectorAll('.listbox-item').forEach(i => i.classList.remove('active'));
+            startInput.value = '';
+            endInput.value = '';
+            abbrInput.value = '';
+            editIdInput.value = '';
+            errorDiv.textContent = '';
+        };
+
+        // 2. Auto-Abbreviation Logic
+        function updateAbbr() {
+            if (!startInput.value || !endInput.value) return;
+            const startYear = new Date(startInput.value).getFullYear();
+            const endFullYear = new Date(endInput.value).getFullYear();
+            const endShort = endFullYear.toString().slice(-2);
+            
+            // Format: 2025-26
+            if (!isNaN(startYear) && !isNaN(endFullYear)) {
+                abbrInput.value = `${startYear}-${endShort}`;
+            }
+        }
+
+        startInput.onchange = updateAbbr;
+        endInput.onchange = updateAbbr;
+
+        // 3. Save Logic
+        window.saveFY = async function() {
+            if (!startInput.value || !endInput.value || !abbrInput.value) {
+                errorDiv.textContent = 'Please fill all fields.';
+                return;
+            }
+
+            const payload = {
+                id: editIdInput.value || null,
+                start: startInput.value,
+                end: endInput.value,
+                abbr: abbrInput.value
+            };
+
+            try {
+                const res = await fetch(`api/admin.php?action=save_fy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert('Financial Year saved successfully!');
+                    window.location.reload(); // Refresh to sync global state
+                } else {
+                    errorDiv.textContent = result.error || 'Save failed.';
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Server Error.';
+            }
+        };
+
+        loadFYList();
+    })();
+</script>

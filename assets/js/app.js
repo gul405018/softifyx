@@ -15,6 +15,7 @@
         
         let companies = [];
         let currentNote = "";
+        let isAuditMode = false; // Flag to track if the system is in Read-Only mode
         
         let users = [
             { id: 1, username: "Administrator", role: "Admin", email: "admin@softifyx.com", status: "Active", password: "123" }
@@ -157,10 +158,92 @@
                 const dashTitle = document.getElementById('dashboardBusinessTitle');
                 if (dashTitle) dashTitle.textContent = sessionData.company_name || companyData.name;
 
+                // 4. CHECK FINANCIAL YEAR CONSTRAINTS (Lock Editing if Dates don't match)
+                checkFinancialYearConstraint(sessionData);
+
             } catch (err) {
                 console.error('Data Sync Error:', err);
                 alert('Connection Error while loading live data: ' + err.message);
             }
+        }
+
+        function checkFinancialYearConstraint(session) {
+            if (!session.fy_start || !session.fy_end) return;
+
+            const today = new Date();
+            const start = new Date(session.fy_start);
+            const end = new Date(session.fy_end);
+            
+            // Set time to midnight for accurate day comparison
+            today.setHours(0,0,0,0);
+            start.setHours(0,0,0,0);
+            end.setHours(0,0,0,0);
+
+            if (today < start || today > end) {
+                isAuditMode = true;
+                console.warn("SoftifyX: Entering Audit Mode (Read-Only). Date mismatch detected.");
+                applyAuditModeLockout();
+            } else {
+                isAuditMode = false;
+            }
+        }
+
+        function applyAuditModeLockout() {
+            // 1. Add Visual Banner to Sidebar/Header
+            const banner = document.createElement('div');
+            banner.id = 'auditModeBanner';
+            banner.innerHTML = `<i class="fas fa-lock" style="margin-right: 8px;"></i> <b>Read-Only Mode Active:</b> You are auditing a year outside the current date range. Editing is disabled.`;
+            banner.className = 'audit-warning-banner';
+            
+            // Inject into Top Header or Main Content
+            const header = document.querySelector('.main-header') || document.body;
+            header.prepend(banner);
+
+            // 2. Add Global CSS to disable pointer events on Save/Add buttons
+            const style = document.createElement('style');
+            style.id = 'auditLockCSS';
+            style.innerHTML = `
+                .btn-primary, .btn-success, [onclick*="save"], [onclick*="Save"], [onclick*="Add"], [onclick*="Delete"], .action-buttons .btn {
+                    opacity: 0.5 !important;
+                    pointer-events: none !important;
+                    filter: grayscale(1) !important;
+                    cursor: not-allowed !important;
+                }
+                .form-control, input, select, textarea {
+                    background-color: #f8f9fa !important;
+                    border-color: #eee !important;
+                    color: #777 !important;
+                    cursor: not-allowed !important;
+                    pointer-events: none !important;
+                }
+                #auditModeBanner {
+                    background: #ff7675;
+                    color: white;
+                    padding: 10px;
+                    text-align: center;
+                    font-size: 14px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    position: sticky;
+                    top: 0;
+                    z-index: 9999;
+                    animation: slideDown 0.5s ease;
+                }
+                @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+            `;
+            document.head.appendChild(style);
+
+            // 3. Monitor Dynamic Form Loads (Disable modal buttons after they open)
+            document.addEventListener('click', (e) => {
+                if (isAuditMode) {
+                    setTimeout(() => {
+                        // Disable buttons in newly opened modals
+                        document.querySelectorAll('.modal-actions .btn:not(.btn-secondary)').forEach(btn => {
+                            btn.style.opacity = '0.5';
+                            btn.style.pointerEvents = 'none';
+                        });
+                    }, 500);
+                }
+            }, true);
         }
 
         function resetDashboardModel() {
