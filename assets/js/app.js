@@ -32,11 +32,15 @@
         let dailySummary = { /* default state ... */ }; 
         // Initial empty state (will be populated from summary prefix)
         
-        // Simplified for Unified Model (No coName isolation)
+        // Helper for Multi-Company Isolation (Separate Databases)
         function getCoKey(key) {
-            const globalKeys = ['softifyx_companies', 'softifyx_session', 'softifyx_logo'];
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const coName = session.company_name || 'default';
+            // Global keys that should NOT be isolated
+            const globalKeys = ['softifyx_companies', 'softifyx_session'];
             if (globalKeys.includes(key)) return key;
-            return `softifyx_v2_${key.replace('softifyx_', '')}`;
+            // Company-specific keys
+            return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
         }
 
         async function loadSavedData() {
@@ -54,14 +58,14 @@
                 ] = await Promise.all([
                     fetch(`api/admin.php?action=get_company&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_companies&${cb}`),
-                    fetch(`api/admin.php?action=get_users&${cb}`),
-                    fetch(`api/admin.php?action=get_summary&${cb}`),
-                    fetch(`api/maintain.php?action=get_coa_main&${cb}`),
-                    fetch(`api/maintain.php?action=get_coa_sub&main_id=ALL&${cb}`),
-                    fetch(`api/maintain.php?action=get_coa_list&sub_id=ALL&${cb}`),
-                    fetch(`api/admin.php?action=get_currency&${cb}`),
+                    fetch(`api/admin.php?action=get_users&company_id=${companyId}&${cb}`),
+                    fetch(`api/admin.php?action=get_summary&company_id=${companyId}&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}`),
+                    fetch(`api/admin.php?action=get_currency&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}&${cb}`),
-                    fetch(`api/admin.php?action=get_fy&${cb}`)
+                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`)
                 ]);
 
                 // 1. Process Company
@@ -1772,15 +1776,8 @@
                     alert('Currency settings saved and synchronized live!');
                     updateDashboardSummary();
                     closeModal();
-                } else {
-                    const errorText = await response.text();
-                    console.error('Save Currency Failed:', errorText);
-                    alert('Save Failed: ' + (errorText || 'Server Error ' + response.status));
                 }
-            } catch (err) { 
-                console.error('Currency Save Error:', err);
-                alert('Save Error: ' + err.message); 
-            }
+            } catch (err) { alert('Sync Failed.'); }
         }
 
         function applyGlobalCurrencySymbol() {
@@ -1927,40 +1924,6 @@
 
             overlay.onclick = (e) => { if(e.target === overlay) close(); };
             card.querySelector('button').onclick = close;
-        }
-
-        // --- CORE MODAL ENGINE (RESTORATION) ---
-        function openModal(title, content, isWide = false) {
-            const modal = document.getElementById('modularModal');
-            const modalContent = document.getElementById('modal-content');
-            const modalTitle = document.getElementById('modal-title');
-            const modalIcon = document.getElementById('modal-icon');
-            const modalDialog = modal.querySelector('.modal-dialog');
-
-            if (!modal || !modalContent) return;
-
-            // Reset dialog width
-            if (isWide) {
-                modalDialog.style.maxWidth = '1000px';
-                modalDialog.style.width = '95%';
-            } else {
-                modalDialog.style.maxWidth = '650px';
-                modalDialog.style.width = '90%';
-            }
-
-            modalIcon.className = title.icon || 'fas fa-info-circle';
-            modalTitle.textContent = title.text || 'Information';
-            modalContent.innerHTML = content;
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('modularModal');
-            if (modal) {
-                modal.style.display = 'none';
-                // Clear content to prevent ID collisions
-                document.getElementById('modal-content').innerHTML = '';
-            }
         }
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
@@ -2736,51 +2699,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         window.checkUserRights = checkUserRights;
-
-        async function loadPartials() {
-            try {
-                // 1. Fetch HTML components
-                const [navRes, sideRes, dashRes] = await Promise.all([
-                    fetch('components/navbar.html'),
-                    fetch('components/sidebar.html'),
-                    fetch('components/dashboard.html')
-                ]);
-
-                if (navRes.ok) document.getElementById('navbar-container').innerHTML = await navRes.text();
-                if (sideRes.ok) document.getElementById('sidebar-container').innerHTML = await sideRes.text();
-                if (dashRes.ok) document.getElementById('main-content').innerHTML = await dashRes.text();
-
-                // 2. Refresh UI bindings after injection
-                setupMenuButtons();
-                setupDropdowns();
-                updateNames();
-                updateDashboardSummary();
-                displayLogo();
-
-                // 3. Dashboard Specific Listeners (Search & Inventory)
-                const searchBtn = document.getElementById('searchBtn');
-                if (searchBtn) searchBtn.onclick = performSearch;
-
-                const globalSearch = document.getElementById('globalSearch');
-                if (globalSearch) {
-                    globalSearch.onkeyup = function(e) {
-                        if (e.key === 'Enter') performSearch();
-                    };
-                }
-
-                // Inventory Alerts Widget Click
-                const inventoryCard = document.getElementById('inventoryAlertsCard');
-                if (inventoryCard) inventoryCard.onclick = showInventoryDetails;
-
-            } catch (err) {
-                console.error('Partial Loading Failed:', err);
-            }
-        }
-
-        // --- APPLICATION INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Load Partials (UI Framework)
-            loadPartials();
-            // 2. Initial Data Fetch (Unified Cloud)
-            if (typeof loadSavedData === 'function') loadSavedData();
-        });

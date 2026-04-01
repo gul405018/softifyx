@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `last_login` timestamp NULL DEFAULT NULL,
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`)
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE SET NULL,
+  UNIQUE KEY `user_company` (`username`, `company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3. User Rights Table (Administrator: User Rights)
@@ -56,17 +57,19 @@ CREATE TABLE IF NOT EXISTS `financial_years` (
   `end_date` date NOT NULL,
   `abbreviation` varchar(10) NOT NULL,
   `is_default` tinyint(1) DEFAULT 0,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 5. Currencies Table (Administrator: Currency)
 CREATE TABLE IF NOT EXISTS `currencies` (
-  `id` int(11) NOT NULL DEFAULT 1,
+  `company_id` int(11) NOT NULL,
   `name` varchar(100) DEFAULT 'Pakistani Rupee',
   `symbol` varchar(5) DEFAULT 'Rs.',
   `abbreviation` varchar(5) DEFAULT 'PKR',
   `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`company_id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 6. Chart of Accounts - Level 1 (Maintain: Chart of Accounts)
@@ -77,7 +80,8 @@ CREATE TABLE IF NOT EXISTS `coa_main` (
   `name` varchar(255) NOT NULL,
   `component` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `main_code` (`code`)
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `main_code_company` (`code`, `company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 7. Chart of Accounts - Level 2 (Maintain: Chart of Accounts)
@@ -89,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `coa_sub` (
   `name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`main_id`) REFERENCES `coa_main`(`id`) ON DELETE CASCADE,
-  UNIQUE KEY `sub_code` (`code`)
+  UNIQUE KEY `sub_code_company` (`code`, `company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 8. Chart of Accounts - Level 3 (Maintain: Chart of Accounts)
@@ -101,12 +105,12 @@ CREATE TABLE IF NOT EXISTS `coa_list` (
   `name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`sub_id`) REFERENCES `coa_sub`(`id`) ON DELETE CASCADE,
-  UNIQUE KEY `list_code` (`code`)
+  UNIQUE KEY `list_code_company` (`code`, `company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 9. Dashboard Summary Table (For Real-time Sync of Home View)
 CREATE TABLE IF NOT EXISTS `dashboard_summary` (
-  `id` int(11) NOT NULL DEFAULT 1,
+  `company_id` int(11) NOT NULL,
   `sales` decimal(20,2) DEFAULT 0,
   `cash_opening` decimal(20,2) DEFAULT 0,
   `cash_receipts` decimal(20,2) DEFAULT 0,
@@ -124,7 +128,8 @@ CREATE TABLE IF NOT EXISTS `dashboard_summary` (
   `new_purchases` int(11) DEFAULT 0,
   `vendor_payments` decimal(20,2) DEFAULT 0,
   `outstanding` decimal(20,2) DEFAULT 0,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`company_id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Initial Setup: Create Administrator User
