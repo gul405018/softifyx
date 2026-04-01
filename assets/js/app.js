@@ -195,14 +195,14 @@
             banner.innerHTML = `<i class="fas fa-lock" style="margin-right: 8px;"></i> <b>Read-Only Mode Active:</b> You are auditing a year outside the current date range. Editing is disabled.`;
             banner.className = 'audit-warning-banner';
             
-            // Inject into Top Header or Main Content
             const header = document.querySelector('.main-header') || document.body;
             header.prepend(banner);
 
-            // 2. Add Global CSS to disable pointer events on Save/Add buttons
+            // 2. Add Global CSS for Lockout
             const style = document.createElement('style');
             style.id = 'auditLockCSS';
             style.innerHTML = `
+                /* Lock everything by default in Audit Mode */
                 .btn-primary, .btn-success, [onclick*="save"], [onclick*="Save"], [onclick*="Add"], [onclick*="Delete"], .action-buttons .btn {
                     opacity: 0.5 !important;
                     pointer-events: none !important;
@@ -216,34 +216,30 @@
                     cursor: not-allowed !important;
                     pointer-events: none !important;
                 }
-                #auditModeBanner {
-                    background: #ff7675;
-                    color: white;
-                    padding: 10px;
-                    text-align: center;
-                    font-size: 14px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                    position: sticky;
-                    top: 0;
-                    z-index: 9999;
-                    animation: slideDown 0.5s ease;
+
+                /* EXEMPTION: Financial Year module MUST stay active */
+                [data-module="Financial Year"], 
+                [data-module="Financial Year"] *,
+                [onclick*="saveFY"], [onclick*="save_fy"], [onclick*="addNewFY"] {
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+                    filter: none !important;
+                    cursor: auto !important;
                 }
-                @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+                [data-module="Financial Year"] input, 
+                [data-module="Financial Year"] select {
+                    background-color: #fff !important;
+                    pointer-events: auto !important;
+                    cursor: text !important;
+                }
+
+                #auditModeBanner {
+                    background: #ff7675; color: white; padding: 10px; text-align: center;
+                    font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    position: sticky; top: 0; z-index: 9999;
+                }
             `;
             document.head.appendChild(style);
-
-            // 3. Monitor Dynamic Form Loads (Disable modal buttons after they open)
-            document.addEventListener('click', (e) => {
-                if (isAuditMode) {
-                    setTimeout(() => {
-                        // Disable buttons in newly opened modals
-                        document.querySelectorAll('.modal-actions .btn:not(.btn-secondary)').forEach(btn => {
-                            btn.style.opacity = '0.5';
-                            btn.style.pointerEvents = 'none';
-                        });
-                    }, 500);
-                }
-            }, true);
         }
 
         function resetDashboardModel() {
