@@ -493,18 +493,16 @@
             `;
             
             overlay.classList.add('active');
-
-            // 2. Extract and Manually Execute Scripts
+            
+            // 2. Extract and Manually Execute Scripts (using eval for reliability)
             const scripts = container.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                Array.from(oldScript.attributes).forEach(attr => {
-                    newScript.setAttribute(attr.name, attr.value);
-                });
-                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                document.body.appendChild(newScript);
-                // Clean up the shadow script to prevent duplicate runs if modal reopens
-                newScript.parentNode.removeChild(newScript);
+            scripts.forEach(s => {
+                try {
+                    window.eval(s.innerHTML);
+                    s.parentNode.removeChild(s); // Clean up
+                } catch (e) {
+                    console.error('Modal Script Execution Error:', e);
+                }
             });
 
             // 3. Apply Viewer Restrictions
