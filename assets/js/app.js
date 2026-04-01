@@ -917,6 +917,14 @@
                 });
 
                 if (response.ok) {
+                    // CRITICAL: If a company was selected from the list, apply it to the session now
+                    if (targetCompany) {
+                        const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                        sessionData.company_id = targetCompany.id;
+                        sessionData.company_name = newName;
+                        localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+                    }
+
                     alert('Business details updated and synchronized live!');
                     window.location.reload();
                 }
@@ -1146,14 +1154,14 @@
                         <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
-                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
+                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="populateCompanyForm(this)">
                                     ${companyOptions}
                                 </select>
                                 <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
                             </div>
                         </div>
                         <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to login. Company details will be loaded automatically.</p>
+                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to load its data. Click <b>Save Changes</b> to update and apply the selection.</p>
                         </div>
                         <div class="form-group">
                             <label>Business Name</label>
@@ -1219,20 +1227,7 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                
-                // LIVE SYNC: Fetch latest companies list before opening
-                try {
-                    const res = await fetch('api/admin.php?action=get_companies');
-                    if (res.ok) companies = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
 
-                openModal(
-                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
-                    renderCompanyTable()
-                );
-            });
             
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
@@ -1278,6 +1273,31 @@
                 window.location.reload(); 
             }
         }
+
+        window.populateCompanyForm = function(select) {
+            const selectedCompany = select.value;
+            if (!selectedCompany) return;
+            
+            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
+            if (found) {
+                // Set original name tracking for saveCompanyDetails()
+                originSelectedCompanyName = found.name || selectedCompany;
+                
+                // Populate Modal Fields
+                const get = id => document.getElementById(id);
+                if (get('modalCompanyName')) get('modalCompanyName').value = found.name || '';
+                if (get('modalCompanyAddress')) get('modalCompanyAddress').value = found.address || '';
+                if (get('modalCompanyPhone')) get('modalCompanyPhone').value = found.phone || '';
+                if (get('modalCompanyFax')) get('modalCompanyFax').value = found.fax || '';
+                if (get('modalCompanyEmail')) get('modalCompanyEmail').value = found.email || '';
+                if (get('modalCompanyWebsite')) get('modalCompanyWebsite').value = found.website || '';
+                if (get('modalCompanyGST')) get('modalCompanyGST').value = found.gst || '';
+                if (get('modalCompanyNTN')) get('modalCompanyNTN').value = found.ntn || '';
+                if (get('modalCompanyDealsIn')) get('modalCompanyDealsIn').value = found.deals_in || found.dealsIn || '';
+                
+                console.log(`Loaded data for: ${originSelectedCompanyName}`);
+            }
+        };
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
