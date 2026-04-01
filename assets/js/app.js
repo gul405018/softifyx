@@ -156,6 +156,7 @@
                 updateNames();
                 updateDashboardSummary();
                 checkFinancialYearAccess(); // Trigger Read-Only Check
+                renderFinancialYearList(); // Initial list rendering
                 
                 // CRITICAL SYNC: Update all UI labels from Session
                 const businessNameTop = document.getElementById('businessNameTop');
@@ -1683,6 +1684,13 @@
                 errorMsg.textContent = 'Connection Failed: ' + err.message;
             }
         }
+
+        // EXPOSE TO GLOBAL WINDOW SCOPE
+        window.renderFinancialYearList = renderFinancialYearList;
+        window.saveFinancialYear = saveFinancialYear;
+        window.addFinancialYear = addFinancialYear;
+        window.selectFinancialYear = selectFinancialYear;
+        window.calculateAbbreviation = calculateAbbreviation;
 
         // --- CLEAR TRANSACTIONS LOGIC --- //
         function executeClearTransactions() {
