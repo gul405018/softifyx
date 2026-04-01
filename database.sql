@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS `companies` (
   `ntn` varchar(100),
   `deals_in` varchar(255),
   `logo_data` LONGTEXT, -- Stores Base64 Logo (Administrator: My Logo)
-  `is_inactive` tinyint(1) DEFAULT 0, -- 0 for Active, 1 for Inactive
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

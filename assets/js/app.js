@@ -72,11 +72,7 @@
                 if (companyRes.ok) {
                     const data = await companyRes.json();
                     if (data) {
-                        companyData = { 
-                            name: data.name, address: data.address, phone: data.phone, fax: data.fax, 
-                            email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, 
-                            dealsIn: data.deals_in, is_inactive: parseInt(data.is_inactive) === 1
-                        };
+                        companyData = { name: data.name, address: data.address, phone: data.phone, fax: data.fax, email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, dealsIn: data.deals_in };
                         logoData = data.logo_data || null;
                     }
                 }
@@ -729,18 +725,12 @@
                         <label>Deals In</label>
                         <input type="text" class="form-control" id="newCompanyDealsIn" placeholder="Deals In" value="">
                     </div>
-                    <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
-                        <input type="checkbox" id="newCompanyInactive"> <label for="newCompanyInactive" style="font-size: 13px;">Mark as Inactive</label>
-                    </div>
                     <div class="modal-actions">
-                        <button class="btn btn-primary" id="saveNewCompanyBtn"><i class="fas fa-save"></i> Save Company</button>
+                        <button class="btn btn-primary" onclick="addNewCompany()"><i class="fas fa-save"></i> Save Company</button>
                         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                     </div>
                 </div>`
             );
-
-            // Use direct event listener for maximum reliability
-            document.getElementById('saveNewCompanyBtn')?.addEventListener('click', addNewCompany);
         }
 
         async function addNewCompany() {
@@ -759,8 +749,7 @@
                 website: document.getElementById('newCompanyWebsite')?.value || '',
                 gst: document.getElementById('newCompanyGST')?.value || '',
                 ntn: document.getElementById('newCompanyNTN')?.value || '',
-                deals_in: document.getElementById('newCompanyDealsIn')?.value || '',
-                is_inactive: document.getElementById('newCompanyInactive')?.checked ? 1 : 0
+                deals_in: document.getElementById('newCompanyDealsIn')?.value || ''
             };
 
             try {
@@ -773,11 +762,8 @@
                 if (response.ok) {
                     alert('New business registered and synchronized live! Application will refresh.');
                     window.location.reload();
-                } else {
-                    const error = await response.text();
-                    alert('Save Failed: ' + error + '\n(Make sure you have updated your database schema as requested)');
                 }
-            } catch (err) { alert('Sync Failed: ' + err.message); }
+            } catch (err) { alert('Sync Failed.'); }
         }
 
         async function saveCompanySettings() {
@@ -804,8 +790,7 @@
                     website: website || '',
                     gst: gst || '',
                     ntn: ntn || '',
-                    deals_in: dealsIn || '', // Fixed to match API deals_in
-                    is_inactive: document.getElementById('modalInactive')?.checked ? 1 : 0
+                    dealsIn: dealsIn || ''
                 };
                 
                 try {
@@ -820,9 +805,6 @@
                         alert('Company settings updated and synchronized live!');
                         closeModal();
                         window.location.reload(); // Force refresh to show changes everywhere
-                    } else {
-                        const error = await response.text();
-                        alert('Update Failed: ' + error + '\n(Make sure you have updated your database schema)');
                     }
                 } catch (err) { alert('Sync Error: ' + err.message); }
             }
@@ -921,8 +903,7 @@
                 website: document.getElementById('modalCompanyWebsite')?.value || '',
                 gst: document.getElementById('modalCompanyGST')?.value || '',
                 ntn: document.getElementById('modalCompanyNTN')?.value || '',
-                deals_in: document.getElementById('modalCompanyDealsIn')?.value || '',
-                is_inactive: document.getElementById('inactiveCheckbox')?.checked ? 1 : 0
+                deals_in: document.getElementById('modalCompanyDealsIn')?.value || ''
             };
             
             // Find specific company record to update in the global companies array
@@ -938,9 +919,6 @@
                 if (response.ok) {
                     alert('Business details updated and synchronized live!');
                     window.location.reload();
-                } else {
-                    const error = await response.text();
-                    alert('Update Failed: ' + error + '\n(Verify database schema)');
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -1057,8 +1035,7 @@
                                 website: data.website || '',
                                 gst: data.gst || '',
                                 ntn: data.ntn || '',
-                                dealsIn: data.deals_in || '',
-                                is_inactive: parseInt(data.is_inactive) === 1
+                                dealsIn: data.deals_in || ''
                             };
                         }
                     }
@@ -1107,10 +1084,7 @@
                         </div>
                         <div class="form-group">
                             <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalDealsIn" value="${companyData.dealsIn || companyData.deals_in || ''}">
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
-                            <input type="checkbox" id="modalInactive" ${companyData.is_inactive ? 'checked' : ''}> <label for="modalInactive" style="font-size: 13px;">Inactive (Company Locked)</label>
+                            <input type="text" class="form-control" id="modalDealsIn" value="${companyData.dealsIn}">
                         </div>
                         <div class="modal-actions">
                             <button class="btn btn-primary" onclick="saveCompanySettings()">Save</button>
@@ -1221,10 +1195,10 @@
                         </div>
                         <div class="form-group">
                             <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn || companyData.deals_in || ''}">
+                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn}">
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
-                            <input type="checkbox" id="inactiveCheckbox" ${companyData.is_inactive ? 'checked' : ''}> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive (Hide from Login)</label>
+                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive</label>
                         </div>
                         <div class="modal-actions" style="justify-content: space-between;">
                             <div>

@@ -203,7 +203,6 @@
                     companies = await res.json();
                     companySelect.innerHTML = '';
                     companies.forEach(c => { 
-                        if (parseInt(c.is_inactive) === 1) return; // Skip inactive companies
                         const cName = c.name || "Default Business";
                         const cId = c.id;
                         const op = new Option(cName, cName);
@@ -323,15 +322,6 @@
             const x = (e.clientX / window.innerWidth - 0.5) * 12;
             const y = (e.clientY / window.innerHeight - 0.5) * 12;
             gsap.to([pupilL, pupilR], { x: x, y: y, duration: 0.2 });
-        });
-
-        // Enter Key Support: Submit on pressing Enter in any field
-        [userSelect, companySelect, yearSelect, passwordInput].forEach(field => {
-            field.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') {
-                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-                }
-            });
         });
 
         // Form Submit
