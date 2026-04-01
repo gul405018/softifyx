@@ -19,7 +19,12 @@
         ];
 
         let logoData = null;
-        let originSelectedCompanyName = ""; // New: track original name to fix edit/duplicate bug
+        let originSelectedCompanyName = ""; 
+        
+        // EXPOSE TO WINDOW for synchronization with list_of_companies.html component
+        window.companyData = companyData;
+        window.companies = companies;
+        window.originSelectedCompanyName = originSelectedCompanyName;
 
         let inventoryItems = [];
         let coaMain = [];
@@ -897,7 +902,8 @@
         }
 
         async function saveCompanyDetails() {
-            const oldName = originSelectedCompanyName || companyData.name;
+            // Priority 1: Specifically selected name in list, Priority 2: Current active name
+            const oldName = window.originSelectedCompanyName || originSelectedCompanyName || companyData.name;
             const newName = document.getElementById('modalCompanyName')?.value || companyData.name;
 
             const payload = {
@@ -1290,6 +1296,7 @@
             if (found) {
                 // Set original name tracking for saveCompanyDetails()
                 originSelectedCompanyName = found.name || selectedCompany;
+                window.originSelectedCompanyName = originSelectedCompanyName;
                 
                 // Populate Modal Fields
                 const get = id => document.getElementById(id);

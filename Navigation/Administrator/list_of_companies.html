@@ -7,7 +7,7 @@
     <div style="background: #f8fafd; border-radius: 6px; padding: 15px; margin-bottom: 20px; border: 1px solid #e1e8f0;">
         <div style="display: flex; align-items: center; gap: 15px;">
             <label style="min-width: 120px; font-size: 14px; font-weight: 500;">Select Company</label>
-            <select class="form-control" style="flex: 1; height: 38px;" id="companySelector" onchange="window.selectCompanyForLogin && window.selectCompanyForLogin(this)">
+            <select class="form-control" style="flex: 1; height: 38px;" id="companySelector" onchange="window.populateCompanyForm && window.populateCompanyForm(this)">
                 <!-- Options populated via app.js companies array -->
             </select>
             <button class="btn btn-primary" onclick="window.showAddCompanyForm && window.showAddCompanyForm()">
@@ -17,7 +17,7 @@
     </div>
     
     <div style="background: #e8f0fe; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
-        <p style="font-size: 13px; color: #1f4668; margin: 0;"><i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 8px;"></i> Select a company above to switch the active session. Company details will be loaded automatically.</p>
+        <p style="font-size: 13px; color: #1f4668; margin: 0;"><i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 8px;"></i> Select a company above to load its data. Click <b>Save Changes</b> to update and apply the selection.</p>
     </div>
 
     <!-- Company Details Viewer (Mirroring what was in the modal) -->
@@ -86,9 +86,11 @@
 </div>
 
 <script>
-    // Initialize data when template loads
+    // Initialize data when template loads and sync with app.js
     setTimeout(() => {
         const selector = document.getElementById('companySelector');
+        
+        // 1. Setup Dropdown
         if (window.companies && selector) {
             let optionsHtml = '';
             window.companies.forEach(company => {
@@ -99,7 +101,12 @@
             selector.innerHTML = optionsHtml;
         }
 
-        if(window.companyData) {
+        // 2. Initialize Tracker for app.js saveCompanyDetails()
+        if (window.companyData) {
+            // Track the name we are starting with so we can update the correct record
+            window.originSelectedCompanyName = window.companyData.name;
+            
+            // Populate Fields
             document.getElementById('modalCompanyName').value = window.companyData.name || '';
             document.getElementById('modalCompanyAddress').value = window.companyData.address || '';
             document.getElementById('modalCompanyPhone').value = window.companyData.phone || '';
@@ -108,7 +115,8 @@
             document.getElementById('modalCompanyWebsite').value = window.companyData.website || '';
             document.getElementById('modalCompanyGST').value = window.companyData.gst || '';
             document.getElementById('modalCompanyNTN').value = window.companyData.ntn || '';
-            document.getElementById('modalCompanyDealsIn').value = window.companyData.dealsIn || '';
+            const dealsIn = window.companyData.dealsIn || window.companyData.deals_in || '';
+            document.getElementById('modalCompanyDealsIn').value = dealsIn;
         }
     }, 100);
 </script>
