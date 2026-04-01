@@ -1571,9 +1571,12 @@
 
         function calculateAbbreviation(start, end) {
             if (!start || !end) return '';
-            const startYear = new Date(start).getFullYear();
-            const endYear = new Date(end).getFullYear();
-            // Example: 2024-07-01 to 2025-06-30 -> 2024-25
+            const s = new Date(start);
+            const e = new Date(end);
+            if (isNaN(s) || isNaN(e)) return '';
+            
+            const startYear = s.getFullYear();
+            const endYear = e.getFullYear();
             const endShort = endYear.toString().slice(-2);
             return `${startYear}-${endShort}`;
         }
@@ -1627,14 +1630,24 @@
             const editId = document.getElementById('fyEditId').value;
             const errorMsg = document.getElementById('fyErrorMsg');
             
-            // Auto-Generate Abbreviation
-            const abbr = calculateAbbreviation(start, end);
+            errorMsg.textContent = ''; // Reset UI
             
-            if(!start || !end || !abbr) {
+            // 1. Core Validations
+            if(!start || !end) {
                 errorMsg.style.color = '#d63031';
-                errorMsg.textContent = 'Invalid dates selected.';
+                errorMsg.textContent = 'Starting and Ending dates are required.';
                 return;
             }
+
+            if (new Date(end) <= new Date(start)) {
+                errorMsg.style.color = '#d63031';
+                errorMsg.textContent = 'Ending Date must be greater than Starting Date.';
+                return;
+            }
+
+            // 2. Auto-Generate Abbreviation
+            const abbr = calculateAbbreviation(start, end);
+            document.getElementById('fyAbbreviation').value = abbr; // Show in UI
 
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
@@ -1646,8 +1659,10 @@
                     body: JSON.stringify({ id: editId, start, end, abbr })
                 });
 
-                if (response.ok) {
-                    // Refresh from server to ensure IDs and labels are correct
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    // Success Path
                     const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${companyId}`);
                     if (fyRes.ok) {
                         const fyData = await fyRes.json();
@@ -1657,10 +1672,16 @@
                     errorMsg.style.color = '#27ae60';
                     errorMsg.textContent = 'Settings saved and synced successfully!';
                     renderFinancialYearList();
-                    // Clear fields for next entry if was new
-                    if(!editId) addFinancialYear();
+                    if(!editId) addFinancialYear(); 
+                } else {
+                    // Enhanced Error Path
+                    errorMsg.style.color = '#d63031';
+                    errorMsg.textContent = result.message || 'Server Error while saving.';
                 }
-            } catch (err) { alert('Sync Failed.'); }
+            } catch (err) { 
+                errorMsg.style.color = '#d63031';
+                errorMsg.textContent = 'Connection Failed: ' + err.message;
+            }
         }
 
         // --- CLEAR TRANSACTIONS LOGIC --- //

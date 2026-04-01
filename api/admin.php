@@ -160,14 +160,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'save_fy') {
-        if (isset($data['id'])) {
-            $stmt = $pdo->prepare("UPDATE financial_years SET start_date = ?, end_date = ?, abbreviation = ? WHERE id = ?");
-            $stmt->execute([$data['start'], $data['end'], $data['abbr'], $data['id']]);
-        } else {
-            $stmt = $pdo->prepare("INSERT INTO financial_years (company_id, start_date, end_date, abbreviation) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$company_id, $data['start'], $data['end'], $data['abbr']]);
+        try {
+            if (isset($data['id'])) {
+                $stmt = $pdo->prepare("UPDATE financial_years SET start_date = ?, end_date = ?, abbreviation = ? WHERE id = ?");
+                $stmt->execute([$data['start'], $data['end'], $data['abbr'], $data['id']]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO financial_years (company_id, start_date, end_date, abbreviation) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$company_id, $data['start'], $data['end'], $data['abbr']]);
+            }
+            sendResponse(['status' => 'success']);
+        } catch (Exception $e) {
+            sendResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
         }
-        sendResponse(['status' => 'success']);
     }
 
     if ($action === 'delete_user') {
