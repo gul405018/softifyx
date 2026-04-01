@@ -50,23 +50,29 @@
 
             try {
                 const cb = `_cb=${Date.now()}`;
-                // --- PARALLEL CLOUD FETCH (Speed Boost + Cache Busting) ---
+                
+                // Define fetch operations in a clear array to prevent destructuring mismatches
+                const requests = [
+                    { key: 'company', url: `api/admin.php?action=get_company&company_id=${companyId}&${cb}` },
+                    { key: 'companies', url: `api/admin.php?action=get_companies&${cb}` },
+                    { key: 'users', url: `api/admin.php?action=get_users&company_id=${companyId}&${cb}` },
+                    { key: 'summary', url: `api/admin.php?action=get_summary&company_id=${companyId}&${cb}` },
+                    { key: 'coaMain', url: `api/maintain.php?action=get_coa_main&company_id=${companyId}&${cb}` },
+                    { key: 'coaSub', url: `api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL&${cb}` },
+                    { key: 'coaList', url: `api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}` },
+                    { key: 'currency', url: `api/admin.php?action=get_currency&company_id=${companyId}&${cb}` },
+                    { key: 'rights', url: `api/admin.php?action=get_rights&user_id=${sessionData.user_id || 0}&${cb}` },
+                    { key: 'fy', url: `api/admin.php?action=get_fy&company_id=${companyId}&${cb}` }
+                ];
+
+                const responses = await Promise.all(requests.map(req => fetch(req.url).catch(e => ({ ok: false, error: e }))));
+                
+                // Map responses back to meaningful variables
                 const [
                     companyRes, companiesRes, usersRes, summaryRes, 
                     coaMainRes, coaSubRes, coaListRes, 
                     currRes, rightsRes, fyRes
-                ] = await Promise.all([
-                    fetch(`api/admin.php?action=get_company&company_id=${companyId}&${cb}`),
-                    fetch(`api/admin.php?action=get_companies&${cb}`),
-                    fetch(`api/admin.php?action=get_users&company_id=${companyId}&${cb}`),
-                    fetch(`api/admin.php?action=get_summary&company_id=${companyId}&${cb}`),
-                    fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}&${cb}`),
-                    fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL&${cb}`),
-                    fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}`),
-                    fetch(`api/admin.php?action=get_currency&company_id=${companyId}&${cb}`),
-                    fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}&${cb}`),
-                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`)
-                ]);
+                ] = responses;
 
                 // 1. Process Company
                 if (companyRes.ok) {
@@ -920,9 +926,13 @@
                     // CRITICAL: If a company was selected from the list, apply it to the session now
                     if (targetCompany) {
                         const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                        sessionData.company_id = targetCompany.id;
-                        sessionData.company_name = newName;
-                        localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+                        // Update ONLY company-specific fields to preserve user_id, role, etc.
+                        const updatedSession = {
+                            ...sessionData,
+                            company_id: targetCompany.id,
+                            company_name: newName
+                        };
+                        localStorage.setItem('softifyx_session', JSON.stringify(updatedSession));
                     }
 
                     alert('Business details updated and synchronized live!');
