@@ -171,8 +171,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'save_currency') {
-        $stmt = $pdo->prepare("REPLACE INTO currencies (id, name, symbol) VALUES (1, ?, ?)");
-        $stmt->execute([$data['name'], $data['symbol']]);
+        // Unified Self-Healing Strategy
+        try {
+            // First, try to update if a record exists (any record)
+            $stmt = $pdo->prepare("UPDATE currencies SET name = ?, symbol = ?");
+            $stmt->execute([$data['name'], $data['symbol']]);
+            
+            if ($stmt->rowCount() == 0) {
+                // If update affected 0 rows, try inserting with ID=1 or company_id=1
+                try {
+                    $pdo->prepare("INSERT INTO currencies (id, name, symbol) VALUES (1, ?, ?)")->execute([$data['name'], $data['symbol']]);
+                } catch (Exception $e) {
+                    $pdo->prepare("INSERT INTO currencies (company_id, name, symbol) VALUES (1, ?, ?)")->execute([$data['name'], $data['symbol']]);
+                }
+            }
+        } catch (Exception $err) {
+            // If even update failed (likely structural columns mismatch), try to insert fresh
+            try {
+                $pdo->prepare("INSERT INTO currencies (id, name, symbol) VALUES (1, ?, ?)")->execute([$data['name'], $data['symbol']]);
+            } catch (Exception $e2) {
+                 sendResponse(['status' => 'error', 'message' => $e2->getMessage()]);
+                 exit;
+            }
+        }
         sendResponse(['status' => 'success']);
     }
     

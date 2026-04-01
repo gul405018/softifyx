@@ -61,13 +61,12 @@ CREATE TABLE IF NOT EXISTS `financial_years` (
 
 -- 5. Currencies Table (Administrator: Currency)
 CREATE TABLE IF NOT EXISTS `currencies` (
-  `company_id` int(11) NOT NULL,
+  `id` int(11) NOT NULL DEFAULT 1,
   `name` varchar(100) DEFAULT 'Pakistani Rupee',
   `symbol` varchar(5) DEFAULT 'Rs.',
   `abbreviation` varchar(5) DEFAULT 'PKR',
   `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  `id` int(11) NOT NULL DEFAULT 1
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 6. Chart of Accounts - Level 1 (Maintain: Chart of Accounts)
@@ -107,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `coa_list` (
 
 -- 9. Dashboard Summary Table (For Real-time Sync of Home View)
 CREATE TABLE IF NOT EXISTS `dashboard_summary` (
-  `company_id` int(11) NOT NULL,
+  `id` int(11) NOT NULL DEFAULT 1,
   `sales` decimal(20,2) DEFAULT 0,
   `cash_opening` decimal(20,2) DEFAULT 0,
   `cash_receipts` decimal(20,2) DEFAULT 0,
@@ -125,8 +124,7 @@ CREATE TABLE IF NOT EXISTS `dashboard_summary` (
   `new_purchases` int(11) DEFAULT 0,
   `vendor_payments` decimal(20,2) DEFAULT 0,
   `outstanding` decimal(20,2) DEFAULT 0,
-  PRIMARY KEY (`id`),
-  `id` int(11) NOT NULL DEFAULT 1
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Initial Setup: Create Administrator User

@@ -1772,8 +1772,15 @@
                     alert('Currency settings saved and synchronized live!');
                     updateDashboardSummary();
                     closeModal();
+                } else {
+                    const errorText = await response.text();
+                    console.error('Save Currency Failed:', errorText);
+                    alert('Save Failed: ' + (errorText || 'Server Error ' + response.status));
                 }
-            } catch (err) { alert('Sync Failed.'); }
+            } catch (err) { 
+                console.error('Currency Save Error:', err);
+                alert('Save Error: ' + err.message); 
+            }
         }
 
         function applyGlobalCurrencySymbol() {
@@ -1920,6 +1927,40 @@
 
             overlay.onclick = (e) => { if(e.target === overlay) close(); };
             card.querySelector('button').onclick = close;
+        }
+
+        // --- CORE MODAL ENGINE (RESTORATION) ---
+        function openModal(title, content, isWide = false) {
+            const modal = document.getElementById('modularModal');
+            const modalContent = document.getElementById('modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const modalIcon = document.getElementById('modal-icon');
+            const modalDialog = modal.querySelector('.modal-dialog');
+
+            if (!modal || !modalContent) return;
+
+            // Reset dialog width
+            if (isWide) {
+                modalDialog.style.maxWidth = '1000px';
+                modalDialog.style.width = '95%';
+            } else {
+                modalDialog.style.maxWidth = '650px';
+                modalDialog.style.width = '90%';
+            }
+
+            modalIcon.className = title.icon || 'fas fa-info-circle';
+            modalTitle.textContent = title.text || 'Information';
+            modalContent.innerHTML = content;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modularModal');
+            if (modal) {
+                modal.style.display = 'none';
+                // Clear content to prevent ID collisions
+                document.getElementById('modal-content').innerHTML = '';
+            }
         }
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
