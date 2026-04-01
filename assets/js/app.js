@@ -733,11 +733,14 @@
                         <input type="checkbox" id="newCompanyInactive"> <label for="newCompanyInactive" style="font-size: 13px;">Mark as Inactive</label>
                     </div>
                     <div class="modal-actions">
-                        <button class="btn btn-primary" onclick="addNewCompany()"><i class="fas fa-save"></i> Save Company</button>
+                        <button class="btn btn-primary" id="saveNewCompanyBtn"><i class="fas fa-save"></i> Save Company</button>
                         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                     </div>
                 </div>`
             );
+
+            // Use direct event listener for maximum reliability
+            document.getElementById('saveNewCompanyBtn')?.addEventListener('click', addNewCompany);
         }
 
         async function addNewCompany() {
@@ -1102,6 +1105,10 @@
                                 <input type="text" class="form-control" id="modalNTN" value="${companyData.ntn}">
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label>Deals In</label>
+                            <input type="text" class="form-control" id="modalDealsIn" value="${companyData.dealsIn || companyData.deals_in || ''}">
+                        </div>
                         <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
                             <input type="checkbox" id="modalInactive" ${companyData.is_inactive ? 'checked' : ''}> <label for="modalInactive" style="font-size: 13px;">Inactive (Company Locked)</label>
                         </div>
@@ -1214,7 +1221,7 @@
                         </div>
                         <div class="form-group">
                             <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn}">
+                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn || companyData.deals_in || ''}">
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
                             <input type="checkbox" id="inactiveCheckbox" ${companyData.is_inactive ? 'checked' : ''}> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive (Hide from Login)</label>
