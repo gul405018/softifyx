@@ -160,8 +160,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'save_fy') {
+        file_put_contents('debug_fy.log', date('Y-m-d H:i:s') . " - Data: " . json_encode($data) . " - CoID: " . $company_id . "\n", FILE_APPEND);
         try {
-            if (isset($data['id'])) {
+            if (isset($data['id']) && !empty($data['id'])) {
                 $stmt = $pdo->prepare("UPDATE financial_years SET start_date = ?, end_date = ?, abbreviation = ? WHERE id = ?");
                 $stmt->execute([$data['start'], $data['end'], $data['abbr'], $data['id']]);
             } else {
