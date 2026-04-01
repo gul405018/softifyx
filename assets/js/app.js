@@ -770,8 +770,11 @@
                 if (response.ok) {
                     alert('New business registered and synchronized live! Application will refresh.');
                     window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Save Failed: ' + error + '\n(Make sure you have updated your database schema as requested)');
                 }
-            } catch (err) { alert('Sync Failed.'); }
+            } catch (err) { alert('Sync Failed: ' + err.message); }
         }
 
         async function saveCompanySettings() {
@@ -798,7 +801,7 @@
                     website: website || '',
                     gst: gst || '',
                     ntn: ntn || '',
-                    dealsIn: dealsIn || '',
+                    deals_in: dealsIn || '', // Fixed to match API deals_in
                     is_inactive: document.getElementById('modalInactive')?.checked ? 1 : 0
                 };
                 
@@ -814,6 +817,9 @@
                         alert('Company settings updated and synchronized live!');
                         closeModal();
                         window.location.reload(); // Force refresh to show changes everywhere
+                    } else {
+                        const error = await response.text();
+                        alert('Update Failed: ' + error + '\n(Make sure you have updated your database schema)');
                     }
                 } catch (err) { alert('Sync Error: ' + err.message); }
             }
@@ -929,6 +935,9 @@
                 if (response.ok) {
                     alert('Business details updated and synchronized live!');
                     window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Update Failed: ' + error + '\n(Verify database schema)');
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
