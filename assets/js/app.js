@@ -2,27 +2,45 @@
 let currentUser = "Administrator";
 
 // --- GLOBAL EXPORTS (Hoisted for Navbar) ---
+// --- GLOBAL UTILITIES (Hoisted for Navigation) ---
+window.checkUserRights = function(rightName) {
+    if (!rightName) return true;
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    if (session.username === 'Administrator' || session.role === 'Admin') return true;
+    if (!window.currentUserRights) return false;
+    return window.currentUserRights[rightName.trim()] === true;
+};
+
+window.showAccessDenied = function(moduleName) {
+    if (typeof openModal === "function") {
+        openModal({ icon: 'fa-lock', text: 'Access Denied' }, 
+            `<div style="text-align: center; padding: 20px;">
+                <i class="fas fa-shield-alt" style="font-size: 50px; color: #e74c3c; margin-bottom: 20px; display: block;"></i>
+                <p style="font-size: 16px; color: #2d3436; font-weight: 600;">Access Restricted</p>
+                <p style="color: #636e72; font-size: 14px; margin-top: 10px;">No permission for <strong>${moduleName}</strong>.</p>
+                <div class="modal-actions" style="justify-content: center; margin-top: 25px;">
+                    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                </div>
+            </div>`);
+    } else { alert("Access Denied: " + moduleName); }
+};
+
 window.openUserLogins = async function() {
-    if (typeof checkUserRights === "function" && !checkUserRights("User Logins")) return showAccessDenied("User Logins");
+    if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
     const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-    const companyId = sessionData.company_id || 1;
     try {
-        const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
+        const res = await fetch(`api/admin.php?action=get_users&company_id=${sessionData.company_id || 1}`);
         if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data)) window.users = data;
         }
-    } catch (err) { console.error('Live Sync Error:', err); }
-    if (typeof openModal === "function" && typeof renderUserTable === "function") {
-        openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
-    }
+    } catch (err) { console.error('Sync Error:', err); }
+    openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
 };
 
 window.openUserRights = function() {
-    if (typeof checkUserRights === "function" && !checkUserRights("User Rights")) return showAccessDenied("User Rights");
-    if (typeof openModularPopup === "function") {
-        openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', window.initUserRightsView, "User Rights");
-    }
+    if (!checkUserRights("User Rights")) return showAccessDenied("User Rights");
+    openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', window.initUserRightsView, "User Rights");
 };
 
 window.selectCompanyForLogin = function(el) { console.log("Single business mode."); };
@@ -401,34 +419,31 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
             });
         }
 
-        function openModal(title, content, isWide = false) {
-            const overlay = document.getElementById('modalOverlay');
+        window.openModal = function(titleObj, content, isWide = false) {
+            const modal = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
+            if(!modal || !container) return;
             
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
             
             container.innerHTML = `
                 <div class="modal-header">
-                    <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
+                    <h2><i class="fas ${titleObj.icon}"></i> ${titleObj.text}</h2>
                     <button class="modal-close" onclick="closeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     ${content}
                 </div>
             `;
-            
-            overlay.classList.add('active');
+            modal.classList.add('active');
+            setTimeout(() => { applyViewerRestrictions(container); }, 50);
+        };
 
-            // Apply Viewer Restrictions if necessary
-            setTimeout(() => {
-                applyViewerRestrictions(container);
-            }, 50);
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
-        }
+        window.closeModal = function() {
+            const modal = document.getElementById('modalOverlay');
+            if(modal) modal.classList.remove('active');
+        };
 
         function showAccessDenied(moduleName) {
             openModal(
@@ -489,7 +504,7 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
             updateDashboardSummary();
         }
 
-        function renderUserTable() {
+        window.renderUserTable = function() {
             let tableHtml = `
                 <table class="user-table">
                     <thead>
@@ -504,12 +519,13 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
                     <tbody>
             `;
             
-            users.forEach(user => {
+            const usersList = window.users || [];
+            usersList.forEach(user => {
                 tableHtml += `
                     <tr>
                         <td>${user.username}</td>
                         <td>${user.role}</td>
-                        <td>${user.email}</td>
+                        <td>${user.email || ''}</td>
                         <td><span style="background: ${user.status === 'Active' ? '#d4edda' : '#f8d7da'}; color: ${user.status === 'Active' ? '#155724' : '#721c24'}; padding: 2px 8px; border-radius: 10px; font-size: 11px;">${user.status}</span></td>
                         <td class="user-actions">
                             <button class="btn btn-warning btn-sm" onclick="editUser(${user.id})"><i class="fas fa-edit"></i></button>
@@ -526,9 +542,8 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
                     <button class="btn btn-primary" onclick="showAddUserForm()"><i class="fas fa-plus"></i> Add New User</button>
                 </div>
             `;
-            
             return tableHtml;
-        }
+        };
 
         async function performSearch() {
             const query = document.getElementById('globalSearch').value.trim().toLowerCase();
@@ -1839,62 +1854,23 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+        window.openModularPopup = async function(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
             try {
-                // If moduleName is explicitly provided, check rights BEFORE any fetch to prevent loading
-                if (moduleName && !checkUserRights(moduleName)) {
+                if (moduleName && typeof checkUserRights === 'function' && !checkUserRights(moduleName)) {
                     showAccessDenied(moduleName);
                     return;
                 }
-
                 const cb = `_cb=${Date.now()}`;
                 const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
                 if (res.ok) {
-                    let html = await res.text();
-                    
-                    // --- AUTOMATED RIGHTS CHECK FOR POPUPS ---
-                    // Create a temporary element to parse the HTML and check for [data-module]
-                    // This is a fallback if moduleName wasn't passed to the function
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
-                    const moduleTag = tempDiv.querySelector('[data-module]');
-                    
-                    if (moduleTag && !moduleName) {
-                        const extractedName = moduleTag.getAttribute('data-module');
-                        if (!checkUserRights(extractedName)) {
-                            showAccessDenied(extractedName);
-                            return;
-                        }
-                    }
-                    
+                    const html = await res.text();
                     openModal({ icon: titleIcon, text: titleText }, html, isWide);
-                    
-                    if (typeof initCallback === 'function') {
-                        setTimeout(() => initCallback(), 10);
-                    } else {
-                        // Global Init Fallbacks based on modular URL mapping
-                        if (url.includes('passwords.html')) {
-                            setTimeout(() => initPasswordsView(), 10);
-                        } else if (url.includes('user_rights.html')) {
-                            setTimeout(() => initUserRightsView(), 10);
-                        } else if (url.includes('financial_year.html')) {
-                            setTimeout(() => initFinancialYearView(), 10);
-                        } else if (url.includes('currency.html')) {
-                            setTimeout(() => initCurrencyView(), 10);
-                        } else if (url.includes('chart_of_accounts.html')) {
-                            setTimeout(() => initChartOfAccountsView(), 10);
-                        }
-                    }
+                    if (typeof initCallback === 'function') setTimeout(() => initCallback(), 10);
                 } else {
-                    openModal({ icon: titleIcon, text: titleText }, 
-                        '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
-                        isWide
-                    );
+                    openModal({ icon: titleIcon, text: titleText }, `<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found</h3><p>${url} could not be loaded.</p></div>`, isWide);
                 }
-            } catch (err) {
-                console.error(err);
-            }
-        }
+            } catch (err) { console.error('Popup Error:', err); }
+        };
 
         async function init() {
             // --- 1. SESSION AUTHENTICATION CHECK ---
