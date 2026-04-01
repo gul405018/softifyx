@@ -1612,29 +1612,8 @@
             renderFinancialYearList();
         }
 
-        async function updateFinancialYear() {
-            const start = document.getElementById('fyStart').value;
-            const end = document.getElementById('fyEnd').value;
-            const abbr = document.getElementById('fyAbbr').value;
-            
-            if (start && end && abbr) {
-                const payload = { start, end, abbr };
-                try {
-                    const response = await fetch('api/admin.php?action=save_fy', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) {
-                        alert('Financial year updated and synchronized!');
-                        closeModal();
-                        window.location.reload();
-                    }
-                } catch (err) { alert('Sync Failed.'); }
-            }
-        }
-
-        async function saveFinancialYear() {
+        async function saveFinancialYear(event) {
+            if (event) event.preventDefault();
             const start = document.getElementById('fyStartDate').value;
             const end = document.getElementById('fyEndDate').value;
             const editId = document.getElementById('fyEditId').value;
