@@ -1132,8 +1132,15 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
+            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
                 if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
+                
+                // LIVE SYNC: Fetch latest companies list before opening
+                try {
+                    const res = await fetch('api/admin.php?action=get_companies');
+                    if (res.ok) companies = await res.json();
+                } catch (err) { console.error('Live Sync Error:', err); }
+
                 let companyOptions = '';
                 companies.forEach(company => {
                     const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
@@ -1147,66 +1154,70 @@
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
                                 <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
+                                    <option value="" selected disabled>-- Select a Business --</option>
                                     ${companyOptions}
                                 </select>
                                 <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
                             </div>
                         </div>
                         <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to login. Company details will be loaded automatically.</p>
+                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 8px;"></i> Select a company above to load its details. Click "Save Changes" to update the database.</p>
                         </div>
                         <div class="form-group">
                             <label>Business Name</label>
-                            <input type="text" class="form-control" id="modalCompanyName" value="${companyData.name}">
+                            <input type="text" class="form-control" id="modalCompanyName" placeholder="Name">
                         </div>
                         <div class="form-group">
                             <label>Address</label>
-                            <input type="text" class="form-control" id="modalCompanyAddress" value="${companyData.address}">
+                            <input type="text" class="form-control" id="modalCompanyAddress" placeholder="Address">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Phone(s)</label>
-                                <input type="text" class="form-control" id="modalCompanyPhone" value="${companyData.phone}">
+                                <input type="text" class="form-control" id="modalCompanyPhone" placeholder="Phone">
                             </div>
                             <div class="form-group">
                                 <label>Fax</label>
-                                <input type="text" class="form-control" id="modalCompanyFax" value="${companyData.fax}">
+                                <input type="text" class="form-control" id="modalCompanyFax" placeholder="Fax">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>E-Mail</label>
-                                <input type="email" class="form-control" id="modalCompanyEmail" value="${companyData.email}">
+                                <input type="email" class="form-control" id="modalCompanyEmail" placeholder="Email">
                             </div>
                             <div class="form-group">
                                 <label>Website</label>
-                                <input type="text" class="form-control" id="modalCompanyWebsite" value="${companyData.website}">
+                                <input type="text" class="form-control" id="modalCompanyWebsite" placeholder="Website">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>G.S.T. Regn. No.</label>
-                                <input type="text" class="form-control" id="modalCompanyGST" value="${companyData.gst}">
+                                <input type="text" class="form-control" id="modalCompanyGST" placeholder="GST">
                             </div>
                             <div class="form-group">
                                 <label>N.T.N.</label>
-                                <input type="text" class="form-control" id="modalCompanyNTN" value="${companyData.ntn}">
+                                <input type="text" class="form-control" id="modalCompanyNTN" placeholder="NTN">
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Deals In</label>
-                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn}">
+                            <input type="text" class="form-control" id="modalCompanyDealsIn" placeholder="Deals In">
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
-                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive</label>
+                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px; cursor: pointer;">Mark as Inactive</label>
                         </div>
                         <div class="modal-actions" style="justify-content: space-between;">
                             <div>
                                 <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
-                                    <i class="fas fa-trash-alt"></i> Delete Company
+                                    <i class="fas fa-trash-alt"></i> Delete
                                 </button>
                             </div>
                             <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-success" onclick="switchLoginSession()" id="switchSessionBtn" style="display: none; background-color: #27ae60; border-color: #27ae60; color: #fff;">
+                                    <i class="fas fa-sign-in-alt"></i> Switch & Login
+                                </button>
                                 <button class="btn btn-primary" onclick="saveCompanyDetails()">
                                     <i class="fas fa-save"></i> Save Changes
                                 </button>
@@ -1219,20 +1230,6 @@
                 );
             });
 
-            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
-                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
-                
-                // LIVE SYNC: Fetch latest companies list before opening
-                try {
-                    const res = await fetch('api/admin.php?action=get_companies');
-                    if (res.ok) companies = await res.json();
-                } catch (err) { console.error('Live Sync Error:', err); }
-
-                openModal(
-                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
-                    renderCompanyTable()
-                );
-            });
             
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
@@ -1266,18 +1263,41 @@
             
             const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
             if (found) {
-                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                sessionData.company_id = found.id || 1;
-                sessionData.company_name = found.name || selectedCompany;
+                // Populate Modal Fields
+                document.getElementById('modalCompanyName').value = found.name || '';
+                document.getElementById('modalCompanyAddress').value = found.address || '';
+                document.getElementById('modalCompanyPhone').value = (found.phone || found.phone_s) || '';
+                document.getElementById('modalCompanyFax').value = found.fax || '';
+                document.getElementById('modalCompanyEmail').value = found.email || '';
+                document.getElementById('modalCompanyWebsite').value = found.website || '';
+                document.getElementById('modalCompanyGST').value = (found.gst || found.gst_no) || '';
+                document.getElementById('modalCompanyNTN').value = (found.ntn || found.ntn_no) || '';
+                document.getElementById('modalCompanyDealsIn').value = (found.deals_in || found.dealsIn) || '';
                 
-                // LOCK THE SELECTION PERMANENTLY
-                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-                
-                // NOTIFY USER & REFRESH DASHBOARD
-                alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
-                window.location.reload(); 
+                // Track original name for saving
+                originSelectedCompanyName = found.name;
+
+                // Show "Switch Session" button
+                const switchBtn = document.getElementById('switchSessionBtn');
+                if (switchBtn) switchBtn.style.display = 'inline-flex';
             }
         }
+
+        window.switchLoginSession = function() {
+            const coName = document.getElementById('companySelector')?.value;
+            if (!coName) return;
+            
+            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === coName);
+            if (found) {
+                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                sessionData.company_id = found.id || 1;
+                sessionData.company_name = found.name || coName;
+                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+                
+                alert(`Switched to: ${sessionData.company_name}.`);
+                window.location.reload();
+            }
+        };
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
