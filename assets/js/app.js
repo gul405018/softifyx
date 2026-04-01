@@ -147,8 +147,17 @@
 
                 // 8. Financial Years Sync
                 if (fyRes.ok) {
-                    const fyData = await fyRes.json();
-                    financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
+                    try {
+                        const fyData = await fyRes.json();
+                        if (Array.isArray(fyData)) {
+                            financialYears = fyData.map(f => ({ 
+                                id: f.id, 
+                                start: f.start_date, 
+                                end: f.end_date, 
+                                abbr: f.year_label || f.abbreviation || f.year || 'FY' 
+                            }));
+                        }
+                    } catch (e) { console.warn('FY Parse Error:', e); }
                 }
 
                 // Apply UI Updates
@@ -1666,8 +1675,17 @@
                     // Success Path
                     const fyRes = await fetch(`api/admin.php?action=get_fy&company_id=${companyId}`);
                     if (fyRes.ok) {
-                        const fyData = await fyRes.json();
-                        financialYears = fyData.map(f => ({ id: f.id, start: f.start_date, end: f.end_date, abbr: f.abbreviation }));
+                        try {
+                            const fyData = await fyRes.json();
+                            if (Array.isArray(fyData)) {
+                                financialYears = fyData.map(f => ({ 
+                                    id: f.id, 
+                                    start: f.start_date, 
+                                    end: f.end_date, 
+                                    abbr: f.year_label || f.abbreviation || f.year || 'FY' 
+                                }));
+                            }
+                        } catch (e) { console.warn('FY Refresh Error:', e); }
                     }
 
                     errorMsg.style.color = '#27ae60';

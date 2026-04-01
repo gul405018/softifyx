@@ -162,10 +162,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save_fy') {
         try {
             if (isset($data['id'])) {
-                $stmt = $pdo->prepare("UPDATE financial_years SET start_date = ?, end_date = ?, abbreviation = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE financial_years SET start_date = ?, end_date = ?, year_label = ? WHERE id = ?");
                 $stmt->execute([$data['start'], $data['end'], $data['abbr'], $data['id']]);
             } else {
-                $stmt = $pdo->prepare("INSERT INTO financial_years (company_id, start_date, end_date, abbreviation) VALUES (?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO financial_years (company_id, start_date, end_date, year_label) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$company_id, $data['start'], $data['end'], $data['abbr']]);
             }
             sendResponse(['status' => 'success']);
