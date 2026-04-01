@@ -203,11 +203,14 @@
                     companies = await res.json();
                     companySelect.innerHTML = '';
                     companies.forEach(c => { 
-                        const cName = c.name || "Default Business";
-                        const cId = c.id;
-                        const op = new Option(cName, cName);
-                        op.dataset.id = cId;
-                        companySelect.add(op);
+                        // Only show active companies (status=1)
+                        if (c.status != 0) {
+                            const cName = c.name || "Default Business";
+                            const cId = c.id;
+                            const op = new Option(cName, cName);
+                            op.dataset.id = cId;
+                            companySelect.add(op);
+                        }
                     });
 
                     // Set default if saved

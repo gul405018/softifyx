@@ -917,11 +917,20 @@
                 website: document.getElementById('modalCompanyWebsite')?.value || '',
                 gst: document.getElementById('modalCompanyGST')?.value || '',
                 ntn: document.getElementById('modalCompanyNTN')?.value || '',
-                deals_in: document.getElementById('modalCompanyDealsIn')?.value || ''
+                deals_in: document.getElementById('modalCompanyDealsIn')?.value || '',
+                status: document.getElementById('inactiveCheckbox')?.checked ? 0 : 1
             };
             
             // Find specific company record to update in the global companies array
             const targetCompany = companies.find(c => (typeof c === 'string' ? c : c.name) === oldName);
+
+            // SAFETY PROTECTION for Default Company (usually ID=1, 'Softifyx')
+            if (targetCompany && targetCompany.id == 1 && payload.status === 0) {
+                alert("Critical System Error: Default company 'Softifyx' cannot be deactivated to prevent system-wide lockouts.");
+                const chk = document.getElementById('inactiveCheckbox');
+                if (chk) chk.checked = false;
+                return;
+            }
 
             try {
                 const response = await fetch(`api/admin.php?action=save_company&id=${targetCompany?.id || ''}`, {
@@ -1167,8 +1176,11 @@
                 let companyOptions = '';
                 companies.forEach(company => {
                     const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
+                    const isInactive = (company.status == 0);
                     const isSelected = (companyName === currentCoName) ? 'selected' : '';
-                    companyOptions += `<option value="${companyName}" ${isSelected}>${companyName}</option>`;
+                    const label = isInactive ? `${companyName} (Inactive)` : companyName;
+                    const style = isInactive ? 'style="color: #999; font-style: italic;"' : '';
+                    companyOptions += `<option value="${companyName}" ${isSelected} ${style}>${label}</option>`;
                 });
                 
                 openModal(
@@ -1313,6 +1325,12 @@
                 if (get('modalCompanyGST')) get('modalCompanyGST').value = found.gst || '';
                 if (get('modalCompanyNTN')) get('modalCompanyNTN').value = found.ntn || '';
                 if (get('modalCompanyDealsIn')) get('modalCompanyDealsIn').value = found.deals_in || found.dealsIn || '';
+                
+                // Set Inactive Checkbox Status
+                const inactiveChk = get('inactiveCheckbox');
+                if (inactiveChk) {
+                    inactiveChk.checked = (found.status == 0);
+                }
                 
                 console.log(`Loaded data for: ${originSelectedCompanyName}`);
             }

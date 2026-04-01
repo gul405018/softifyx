@@ -7,9 +7,14 @@ $action = $_GET['action'] ?? '';
 // Robust ID Retrieval: Prefer GET parameter, then session, then default.
 $company_id = $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
+// ONE-TIME MIGRATION: Ensure 'status' column exists in companies table
+try {
+    $pdo->exec("ALTER TABLE companies ADD COLUMN IF NOT EXISTS status TINYINT(1) DEFAULT 1");
+} catch (Exception $e) { /* Already exists or not supported */ }
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'get_companies') {
-        $stmt = $pdo->prepare("SELECT * FROM companies ORDER BY name ASC");
+        $stmt = $pdo->prepare("SELECT * FROM companies ORDER BY (id = 1) DESC, name ASC");
         $stmt->execute();
         sendResponse($stmt->fetchAll());
     }
@@ -64,19 +69,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'save_company') {
         $id = $data['id'] ?? $_GET['id'] ?? $_GET['company_id'] ?? null;
+        $status = isset($data['status']) ? (int)$data['status'] : 1;
+        
         if (!empty($id)) {
-            $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE companies SET name = ?, address = ?, phone = ?, fax = ?, email = ?, website = ?, gst = ?, ntn = ?, deals_in = ?, status = ? WHERE id = ?");
             $stmt->execute([
                 $data['name'], $data['address'], $data['phone'], $data['fax'], 
                 $data['email'], $data['website'], $data['gst'], $data['ntn'], 
-                $data['deals_in'], $id
+                $data['deals_in'], $status, $id
             ]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO companies (name, address, phone, fax, email, website, gst, ntn, deals_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO companies (name, address, phone, fax, email, website, gst, ntn, deals_in, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $data['name'], $data['address'], $data['phone'], $data['fax'], 
                 $data['email'], $data['website'], $data['gst'], $data['ntn'], 
-                $data['deals_in']
+                $data['deals_in'], $status
             ]);
         }
         sendResponse(['status' => 'success']);
