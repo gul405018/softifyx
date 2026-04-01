@@ -9,7 +9,11 @@ $company_id = $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
 // ONE-TIME MIGRATION: Ensure 'status' column exists in companies table
 try {
-    $pdo->exec("ALTER TABLE companies ADD COLUMN IF NOT EXISTS status TINYINT(1) DEFAULT 1");
+    // Check if column exists by attempting to fetch it (standard SQL approach for compatibility)
+    $stmt = $pdo->query("SHOW COLUMNS FROM companies LIKE 'status'");
+    if (!$stmt->fetch()) {
+        $pdo->exec("ALTER TABLE companies ADD COLUMN status TINYINT(1) DEFAULT 1");
+    }
 } catch (Exception $e) { /* Already exists or not supported */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {

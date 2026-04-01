@@ -120,6 +120,22 @@
             document.getElementById('modalCompanyNTN').value = window.companyData.ntn || '';
             const dealsIn = window.companyData.dealsIn || window.companyData.deals_in || '';
             document.getElementById('modalCompanyDealsIn').value = dealsIn;
+            
+            // 3. Initialize Inactive Checkbox & Lock
+            const inactiveChk = document.getElementById('inactiveCheckbox');
+            if (inactiveChk) {
+                // Set initial check state
+                inactiveChk.checked = (window.companyData.status == 0);
+                
+                // Lockdown ID=1 (Softifyx)
+                if (window.companyData.id == 1) {
+                    inactiveChk.checked = false; // Always active
+                    inactiveChk.disabled = true;
+                    inactiveChk.title = "Main system company cannot be deactivated.";
+                    inactiveChk.parentElement.style.opacity = '0.5';
+                    inactiveChk.parentElement.style.cursor = 'not-allowed';
+                }
+            }
         }
     }, 100);
 </script>

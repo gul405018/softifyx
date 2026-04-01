@@ -940,8 +940,8 @@
                 });
 
                 if (response.ok) {
-                    // CRITICAL: If a company was selected from the list, apply it to the session now
-                    if (targetCompany) {
+                    // CRITICAL: If a company was selected from the list, apply it ONLY IF ACTIVE
+                    if (targetCompany && payload.status === 1) {
                         const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                         // Update ONLY company-specific fields to preserve user_id, role, etc.
                         const updatedSession = {
@@ -950,6 +950,8 @@
                             company_name: newName
                         };
                         localStorage.setItem('softifyx_session', JSON.stringify(updatedSession));
+                    } else if (payload.status === 0) {
+                        console.log("Company deactivated. Skipping session switch.");
                     }
 
                     alert('Business details updated and synchronized live!');
@@ -1329,7 +1331,21 @@
                 // Set Inactive Checkbox Status
                 const inactiveChk = get('inactiveCheckbox');
                 if (inactiveChk) {
+                    // 1. SET CHECKED STATUS
                     inactiveChk.checked = (found.status == 0);
+                    
+                    // 2. LOCK FOR DEFAULT COMPANY (ID=1)
+                    if (found.id == 1) {
+                        inactiveChk.disabled = true;
+                        inactiveChk.parentElement.style.opacity = '0.5';
+                        inactiveChk.parentElement.style.cursor = 'not-allowed';
+                        inactiveChk.title = "Default company cannot be deactivated.";
+                    } else {
+                        inactiveChk.disabled = false;
+                        inactiveChk.parentElement.style.opacity = '1';
+                        inactiveChk.parentElement.style.cursor = 'pointer';
+                        inactiveChk.title = "";
+                    }
                 }
                 
                 console.log(`Loaded data for: ${originSelectedCompanyName}`);
