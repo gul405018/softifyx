@@ -1152,10 +1152,15 @@
 
             document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
                 if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
+                
+                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const currentCoName = sessionData.company_name || "";
+                
                 let companyOptions = '';
                 companies.forEach(company => {
                     const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
-                    companyOptions += `<option value="${companyName}">${companyName}</option>`;
+                    const isSelected = (companyName === currentCoName) ? 'selected' : '';
+                    companyOptions += `<option value="${companyName}" ${isSelected}>${companyName}</option>`;
                 });
                 
                 openModal(
@@ -1165,6 +1170,7 @@
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
                                 <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="populateCompanyForm(this)">
+                                    <option value="">-- Choose Company --</option>
                                     ${companyOptions}
                                 </select>
                                 <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
@@ -1271,16 +1277,8 @@
             
             const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
             if (found) {
-                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                sessionData.company_id = found.id || 1;
-                sessionData.company_name = found.name || selectedCompany;
-                
-                // LOCK THE SELECTION PERMANENTLY
-                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
-                
-                // NOTIFY USER & REFRESH DASHBOARD
-                alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
-                window.location.reload(); 
+                // Populate the form instead of switching immediately
+                populateCompanyForm(select);
             }
         }
 
