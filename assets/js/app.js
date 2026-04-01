@@ -1111,9 +1111,11 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
         }
 
         function setupMenuButtons() {
+            // 1. Specific ID-based Listeners (Existing)
             const myCoBtn = document.getElementById('myCompanyBtn');
             if (myCoBtn) {
-                myCoBtn.addEventListener('click', async function() {
+                myCoBtn.addEventListener('click', async function(e) {
+                    e.stopPropagation();
                     if (!checkUserRights("My Company")) return showAccessDenied("My Company");
                     const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                     const companyId = sessionData.company_id || 1;
@@ -1156,7 +1158,8 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
 
             const myLogoBtn = document.getElementById('myLogoBtn');
             if (myLogoBtn) {
-                myLogoBtn.addEventListener('click', function() {
+                myLogoBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     if (!checkUserRights("My Logo")) return showAccessDenied("My Logo");
                     openModal(
                         { icon: 'fa-image', text: 'Logo Settings' },
@@ -1177,7 +1180,8 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
 
             const listCoBtn = document.getElementById('listOfCompaniesBtn');
             if (listCoBtn) {
-                listCoBtn.addEventListener('click', async function() {
+                listCoBtn.addEventListener('click', async function(e) {
+                    e.stopPropagation();
                     if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
                     try {
                         const res = await fetch('api/admin.php?action=get_companies');
@@ -1197,13 +1201,54 @@ window.selectCompanyForLogin = function(el) { console.log("Single business mode.
 
             const userLoginsBtn = document.getElementById('userLoginsBtn');
             if (userLoginsBtn) {
-                userLoginsBtn.addEventListener('click', openUserLogins);
+                userLoginsBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openUserLogins();
+                });
             }
 
             const userRightsBtn = document.getElementById('userRightsBtn');
             if (userRightsBtn) {
-                userRightsBtn.addEventListener('click', openUserRights);
+                userRightsBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openUserRights();
+                });
             }
+
+            // 2. Centralized Handler for all other Navigation Items
+            document.querySelectorAll('.dropdown-item, .nested-item').forEach(item => {
+                // Skip if already assigned an ID listener to avoid duplicates
+                const id = item.id;
+                if (['myCompanyBtn', 'myLogoBtn', 'listOfCompaniesBtn', 'userLoginsBtn', 'userRightsBtn'].includes(id)) return;
+
+                item.addEventListener('click', function(e) {
+                    const target = this.getAttribute('data-target');
+                    const module = this.getAttribute('data-module');
+                    
+                    if (target) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Close all dropdowns
+                        hideAllDropdowns();
+                        
+                        // Determine Modal Parameters
+                        let icon = 'fa-folder-open';
+                        let initFn = null;
+                        let title = module || this.innerText.trim();
+
+                        // Icon & Init Mapping
+                        if (module === 'Passwords') { icon = 'fa-key'; initFn = window.initPasswordsView; }
+                        else if (module === 'Financial Year') { icon = 'fa-calendar-alt'; initFn = window.initFinancialYearView; }
+                        else if (module === 'Clear Transactions') { icon = 'fa-eraser'; initFn = window.executeClearTransactions; }
+                        else if (module === 'Currency') { icon = 'fa-money-bill-wave'; initFn = window.initCurrencyView; }
+                        else if (module === 'BackUp Utility') { icon = 'fa-database'; }
+                        else if (module === 'Chart of Accounts') { icon = 'fa-sitemap'; initFn = window.initChartOfAccountsView; }
+                        
+                        openModularPopup(target, icon, title, initFn, module);
+                    }
+                });
+            });
         }
 
         function initUserRightsView() {
