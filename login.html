@@ -158,9 +158,7 @@
         </div>
         <div class="field-row">
             <label>Company</label>
-            <input type="text" id="companyDisplay" readonly value="Loading...">
-            <input type="hidden" id="companyIdInput">
-            <input type="hidden" id="companyNameInput">
+            <select id="companyDropdown"></select>
         </div>
         <div class="field-row">
             <label>Financial Year</label>
@@ -193,46 +191,41 @@
         const savedDefaults = JSON.parse(localStorage.getItem('softifyx_login_defaults') || '{}');
 
         const userSelect = document.getElementById('userDropdown');
-        const companyDisplay = document.getElementById('companyDisplay');
-        const companyIdInput = document.getElementById('companyIdInput');
-        const companyNameInput = document.getElementById('companyNameInput');
+        const companySelect = document.getElementById('companyDropdown');
         const yearSelect = document.getElementById('yearDropdown');
 
         // 1. Initial Load: Fetch All Companies from Database
         async function loadInitialData() {
             try {
+                // Fetch Companies
                 const res = await fetch('api/admin.php?action=get_companies');
                 if (res.ok) {
-                    const data = await res.json();
-                    // Ensure we handle both array and object responses (PHP fetchAll/fetch)
-                    const companiesList = Array.isArray(data) ? data : [data];
+                    companies = await res.json();
+                    companySelect.innerHTML = '';
+                    companies.forEach(c => { 
+                        const cName = c.name || "Default Business";
+                        const cId = c.id;
+                        const op = new Option(cName, cName);
+                        op.dataset.id = cId;
+                        companySelect.add(op);
+                    });
+
+                    // Set default if saved
+                    if (savedDefaults.company) companySelect.value = savedDefaults.company;
                     
-                    if (companiesList.length > 0 && companiesList[0]) {
-                        const primaryCompany = companiesList[0];
-                        // Robustly identify the name field (could be 'name', 'company_name', etc. in legacy codebases)
-                        const cName = primaryCompany.name || "Default Business";
-                        const cId = primaryCompany.id || 1;
-                        
-                        // Sync UI and Inputs (Use .value for input element)
-                        companyDisplay.value = cName;
-                        companyIdInput.value = cId;
-                        companyNameInput.value = cName;
-                        
-                        // Proceed to load other data (Users, financial years)
-                        updateUsersAndData();
-                    } else {
-                        companyDisplay.value = "No Business Registered";
-                        console.warn("No companies found in database.");
-                    }
+                    // After companies are loaded, load users and years for the selected company
+                    updateUsersAndData();
                 }
             } catch (err) { console.error('Initial Load Error:', err); }
         }
 
         // 2. Dynamic Data: Fetch Users & Years based on selected company
         async function updateUsersAndData() {
-            const coId = companyIdInput.value;
-            if (!coId) return;
-            const coName = companyNameInput.value;
+            const selectedOp = companySelect.options[companySelect.selectedIndex];
+            if (!selectedOp) return;
+            
+            const coName = selectedOp.value;
+            const coId = selectedOp.dataset.id;
             
             try {
                 // Update Users for this company
@@ -272,7 +265,7 @@
             } catch (err) { console.error('Update Users Error:', err); }
         }
 
-        // Logic to track changes is no longer needed via listener as it is fixed.
+        companySelect.addEventListener('change', updateUsersAndData);
 
         // Initial Initialization
         loadInitialData();
@@ -280,7 +273,7 @@
         document.getElementById('setDefaultBtn').addEventListener('click', () => {
             const defaults = {
                 username: userSelect.value,
-                company: companyNameInput.value,
+                company: companySelect.value,
                 year: yearSelect.value
             };
             localStorage.setItem('softifyx_login_defaults', JSON.stringify(defaults));
@@ -336,14 +329,13 @@
             e.preventDefault();
             const u = userSelect.value;
             const p = passwordInput.value;
-            const coId = companyIdInput.value;
-            const coName = companyNameInput.value;
+            const coName = companySelect.value || 'default';
             
             try {
                 const response = await fetch('api/auth.php?action=login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p, company_id: coId, company: coName })
+                    body: JSON.stringify({ username: u, password: p, company: coName })
                 });
                 
                 const result = await response.json();

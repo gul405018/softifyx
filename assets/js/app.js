@@ -32,16 +32,21 @@
         let dailySummary = { /* default state ... */ }; 
         // Initial empty state (will be populated from summary prefix)
         
-        // Simplified for Single-Company Model (Remove coName isolation)
+        // Helper for Multi-Company Isolation (Separate Databases)
         function getCoKey(key) {
-            const globalKeys = ['softifyx_companies', 'softifyx_session', 'softifyx_logo'];
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const coName = session.company_name || 'default';
+            // Global keys that should NOT be isolated
+            const globalKeys = ['softifyx_companies', 'softifyx_session'];
             if (globalKeys.includes(key)) return key;
-            return `softifyx_v2_${key.replace('softifyx_', '')}`;
+            // Company-specific keys
+            return `softifyx_${coName}_${key.replace('softifyx_', '')}`;
         }
 
         async function loadSavedData() {
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1; // Default to 1 for the single-business model
+            if (!sessionData.company_id) return;
+            const companyId = sessionData.company_id;
 
             try {
                 const cb = `_cb=${Date.now()}`;
@@ -49,7 +54,7 @@
                 const [
                     companyRes, companiesRes, usersRes, summaryRes, 
                     coaMainRes, coaSubRes, coaListRes, 
-                    currRes, rightsRes, fyRes, inventoryRes
+                    currRes, rightsRes, fyRes
                 ] = await Promise.all([
                     fetch(`api/admin.php?action=get_company&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_companies&${cb}`),
@@ -60,8 +65,7 @@
                     fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}`),
                     fetch(`api/admin.php?action=get_currency&company_id=${companyId}&${cb}`),
                     fetch(`api/admin.php?action=get_rights&user_id=${sessionData.user_id}&${cb}`),
-                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`),
-                    fetch(`api/admin.php?action=get_inventory&company_id=${companyId}&${cb}`)
+                    fetch(`api/admin.php?action=get_fy&company_id=${companyId}&${cb}`)
                 ]);
 
                 // 1. Process Company
@@ -115,10 +119,7 @@
                     }
                 }
 
-                // 8. Inventory Sync
-                if (inventoryRes.ok) inventoryItems = await inventoryRes.json();
-                
-                // 9. Financial Years Sync
+                // 8. Financial Years Sync
                 if (fyRes.ok) {
                     const fyData = await fyRes.json();
                     if (Array.isArray(fyData) && fyData.length > 0) {
@@ -678,7 +679,92 @@
             }
         }
 
+        function showAddCompanyForm() {
+            openModal(
+                { icon: 'fa-building', text: 'Add New Company' },
+                `<div>
+                    <div class="form-group">
+                        <label>Business Name</label>
+                        <input type="text" class="form-control" id="newCompanyName" placeholder="Enter business name" value="">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" class="form-control" id="newCompanyAddress" placeholder="Enter address" value="">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phone(s)</label>
+                            <input type="text" class="form-control" id="newCompanyPhone" placeholder="Phone" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>Fax</label>
+                            <input type="text" class="form-control" id="newCompanyFax" placeholder="Fax" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>E-Mail</label>
+                            <input type="email" class="form-control" id="newCompanyEmail" placeholder="Email" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>Website</label>
+                            <input type="text" class="form-control" id="newCompanyWebsite" placeholder="Website" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>G.S.T. Regn. No.</label>
+                            <input type="text" class="form-control" id="newCompanyGST" placeholder="GST" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>N.T.N.</label>
+                            <input type="text" class="form-control" id="newCompanyNTN" placeholder="NTN" value="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Deals In</label>
+                        <input type="text" class="form-control" id="newCompanyDealsIn" placeholder="Deals In" value="">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="addNewCompany()"><i class="fas fa-save"></i> Save Company</button>
+                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    </div>
+                </div>`
+            );
+        }
 
+        async function addNewCompany() {
+            const companyName = document.getElementById('newCompanyName')?.value;
+            if (!companyName) {
+                alert("Business Name is required!");
+                return;
+            }
+
+            const payload = {
+                name: companyName,
+                address: document.getElementById('newCompanyAddress')?.value || '',
+                phone: document.getElementById('newCompanyPhone')?.value || '',
+                fax: document.getElementById('newCompanyFax')?.value || '',
+                email: document.getElementById('newCompanyEmail')?.value || '',
+                website: document.getElementById('newCompanyWebsite')?.value || '',
+                gst: document.getElementById('newCompanyGST')?.value || '',
+                ntn: document.getElementById('newCompanyNTN')?.value || '',
+                deals_in: document.getElementById('newCompanyDealsIn')?.value || ''
+            };
+
+            try {
+                const response = await fetch('api/admin.php?action=save_company', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('New business registered and synchronized live! Application will refresh.');
+                    window.location.reload();
+                }
+            } catch (err) { alert('Sync Failed.'); }
+        }
 
         async function saveCompanySettings() {
             const businessName = document.getElementById('modalBusinessName')?.value;
@@ -804,7 +890,55 @@
             }
         }
 
+        async function saveCompanyDetails() {
+            const oldName = originSelectedCompanyName || companyData.name;
+            const newName = document.getElementById('modalCompanyName')?.value || companyData.name;
 
+            const payload = {
+                name: newName,
+                address: document.getElementById('modalCompanyAddress')?.value || '',
+                phone: document.getElementById('modalCompanyPhone')?.value || '',
+                fax: document.getElementById('modalCompanyFax')?.value || '',
+                email: document.getElementById('modalCompanyEmail')?.value || '',
+                website: document.getElementById('modalCompanyWebsite')?.value || '',
+                gst: document.getElementById('modalCompanyGST')?.value || '',
+                ntn: document.getElementById('modalCompanyNTN')?.value || '',
+                deals_in: document.getElementById('modalCompanyDealsIn')?.value || ''
+            };
+            
+            // Find specific company record to update in the global companies array
+            const targetCompany = companies.find(c => (typeof c === 'string' ? c : c.name) === oldName);
+
+            try {
+                const response = await fetch(`api/admin.php?action=save_company&id=${targetCompany?.id || ''}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...payload, id: targetCompany?.id }) // PASS ID HERE FOR UPDATE
+                });
+
+                if (response.ok) {
+                    alert('Business details updated and synchronized live!');
+                    window.location.reload();
+                }
+            } catch (err) { alert('Sync Error: ' + err.message); }
+        }
+
+        async function deleteCompany() {
+            const oldName = originSelectedCompanyName || companyData.name;
+            const targetCompany = companies.find(c => (typeof c === 'string' ? c : c.name) === oldName);
+            
+            if (!targetCompany) return;
+
+            if (confirm(`Are you sure you want to PERMANENTLY delete the company "${oldName}"? This action cannot be undone.`)) {
+                try {
+                    const response = await fetch(`api/admin.php?action=delete_company&id=${targetCompany.id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        alert('Company deleted successfully.');
+                        window.location.reload();
+                    }
+                } catch (err) { alert('Delete Sync Failed.'); }
+            }
+        }
 
         async function saveNote() {
             const noteText = document.getElementById('notesText')?.value;
@@ -998,41 +1132,123 @@
                 );
             });
 
+            document.getElementById('listOfCompaniesBtn').addEventListener('click', function() {
+                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
+                let companyOptions = '';
+                companies.forEach(company => {
+                    const companyName = (typeof company === 'string') ? company : (company.name || "Unknown Company");
+                    companyOptions += `<option value="${companyName}">${companyName}</option>`;
+                });
+                
+                openModal(
+                    { icon: 'fa-list', text: 'List of Companies - Select for Login' },
+                    `<div id="listOfCompaniesModal">
+                        <div style="background: #f8fafd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label style="min-width: 100px; font-size: 13px; font-weight: 500;">Select Company</label>
+                                <select class="form-control" style="flex: 1; height: 36px;" id="companySelector" onchange="selectCompanyForLogin(this)">
+                                    ${companyOptions}
+                                </select>
+                                <button class="btn btn-primary btn-sm" onclick="showAddCompanyForm()"><i class="fas fa-plus"></i> New</button>
+                            </div>
+                        </div>
+                        <div style="background: #e8f0fe; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                            <p style="font-size: 13px; color: #1f4668;"><i class="fas fa-info-circle" style="color: #F5A623;"></i> Select a company above to login. Company details will be loaded automatically.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Business Name</label>
+                            <input type="text" class="form-control" id="modalCompanyName" value="${companyData.name}">
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input type="text" class="form-control" id="modalCompanyAddress" value="${companyData.address}">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Phone(s)</label>
+                                <input type="text" class="form-control" id="modalCompanyPhone" value="${companyData.phone}">
+                            </div>
+                            <div class="form-group">
+                                <label>Fax</label>
+                                <input type="text" class="form-control" id="modalCompanyFax" value="${companyData.fax}">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>E-Mail</label>
+                                <input type="email" class="form-control" id="modalCompanyEmail" value="${companyData.email}">
+                            </div>
+                            <div class="form-group">
+                                <label>Website</label>
+                                <input type="text" class="form-control" id="modalCompanyWebsite" value="${companyData.website}">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>G.S.T. Regn. No.</label>
+                                <input type="text" class="form-control" id="modalCompanyGST" value="${companyData.gst}">
+                            </div>
+                            <div class="form-group">
+                                <label>N.T.N.</label>
+                                <input type="text" class="form-control" id="modalCompanyNTN" value="${companyData.ntn}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Deals In</label>
+                            <input type="text" class="form-control" id="modalCompanyDealsIn" value="${companyData.dealsIn}">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0;">
+                            <input type="checkbox" id="inactiveCheckbox"> <label for="inactiveCheckbox" style="font-size: 13px;">Inactive</label>
+                        </div>
+                        <div class="modal-actions" style="justify-content: space-between;">
+                            <div>
+                                <button class="btn btn-danger" onclick="deleteCompany()" style="background-color: #d63031; border-color: #d63031;">
+                                    <i class="fas fa-trash-alt"></i> Delete Company
+                                </button>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary" onclick="saveCompanyDetails()">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <button class="btn btn-secondary" onclick="closeModal()">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>`
+                );
+            });
 
+            document.getElementById('listOfCompaniesBtn').addEventListener('click', async function() {
+                if (!checkUserRights("List Of Companies")) return showAccessDenied("List Of Companies");
+                
+                // LIVE SYNC: Fetch latest companies list before opening
+                try {
+                    const res = await fetch('api/admin.php?action=get_companies');
+                    if (res.ok) companies = await res.json();
+                } catch (err) { console.error('Live Sync Error:', err); }
+
+                openModal(
+                    { icon: 'fa-city', text: 'Listing Of Business / Company' },
+                    renderCompanyTable()
+                );
+            });
             
-            // 1. Specific Button Handlers
-            const myCompanyBtn = document.getElementById('myCompanyBtn');
-            if (myCompanyBtn) {
-                myCompanyBtn.onclick = function() {
-                    if (!checkUserRights("My Company")) return showAccessDenied("My Company");
-                    openModularPopup('Navigation/Administrator/my_company.html', 'fa-building', 'My Company Settings', setupCompanyForm, "My Company");
-                };
-            }
-
-            const myLogoBtn = document.getElementById('myLogoBtn');
-            if (myLogoBtn) {
-                myLogoBtn.onclick = function() {
-                    if (!checkUserRights("My Logo")) return showAccessDenied("My Logo");
-                    openModularPopup('Navigation/Administrator/my_logo.html', 'fa-image', 'My Logo Settings', function() {
-                        const preview = document.getElementById('logoPreview');
-                        if (preview && logoData) {
-                            preview.src = logoData;
-                            preview.style.display = 'block';
-                            if (document.getElementById('noLogoText')) document.getElementById('noLogoText').style.display = 'none';
-                        }
-                    }, "My Logo");
-                };
-            }
-
             document.getElementById('userLoginsBtn').addEventListener('click', async function() {
                 if (!checkUserRights("User Logins")) return showAccessDenied("User Logins");
+                
+                // LIVE SYNC: Fetch latest users list before opening
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = sessionData.company_id || 1;
                 try {
                     const res = await fetch(`api/admin.php?action=get_users&company_id=${companyId}`);
                     if (res.ok) users = await res.json();
                 } catch (err) { console.error('Live Sync Error:', err); }
-                openModal({ icon: 'fa-users', text: 'User Logins' }, renderUserTable());
+
+                openModal(
+                    { icon: 'fa-users', text: 'User Logins' },
+                    renderUserTable()
+                );
             });
 
             const userRightsBtn = document.getElementById('userRightsBtn');
@@ -1042,20 +1258,26 @@
                     openModularPopup('Navigation/Administrator/user_rights.html', 'fa-shield-alt', 'User Rights Settings', initUserRightsView, "User Rights");
                 });
             }
-
-            // 2. Centralized Click Handler for ALL elements with data-target
-            document.querySelectorAll('.dropdown-item[data-target]').forEach(item => {
-                item.onclick = function(e) {
-                    const target = this.getAttribute('data-target');
-                    const module = this.getAttribute('data-module');
-                    if (module && !checkUserRights(module)) return showAccessDenied(module);
-                    const icon = this.closest('.menu-item')?.querySelector('i')?.className.split(' ').find(c => c.startsWith('fa-')) || 'fa-folder-open';
-                    openModularPopup(target, icon, module);
-                };
-            });
         }
 
-
+        async function selectCompanyForLogin(select) {
+            const selectedCompany = select.value;
+            if (!selectedCompany) return;
+            
+            const found = companies.find(c => (typeof c === 'string' ? c : c.name) === selectedCompany);
+            if (found) {
+                const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                sessionData.company_id = found.id || 1;
+                sessionData.company_name = found.name || selectedCompany;
+                
+                // LOCK THE SELECTION PERMANENTLY
+                localStorage.setItem('softifyx_session', JSON.stringify(sessionData));
+                
+                // NOTIFY USER & REFRESH DASHBOARD
+                alert(`Switched to: ${sessionData.company_name}. Dashboard will now update.`);
+                window.location.reload(); 
+            }
+        }
         function initUserRightsView() {
             let userOptions = '';
             users.forEach(u => {
@@ -1065,7 +1287,7 @@
             let rightsRows = '';
             
             const explicitRights = [
-                "My Company", "My Logo", "User Logins",
+                "My Company", "My Logo", "List Of Companies", "User Logins",
                 "User Rights", "Passwords", "Financial Year", "Clear Transactions",
                 "Currency", "BackUp Utility", "Chart of Accounts", "Customers",
                 "Vendors/Suppliers", "Bank Accounts", "Accounts Opening Balances",
@@ -1829,6 +2051,8 @@
         window.addNewCompany = addNewCompany;
         window.showInventoryDetails = showInventoryDetails;
         window.previewLogo = previewLogo;
+        window.selectCompanyForLogin = selectCompanyForLogin;
+        window.saveCompanyDetails = saveCompanyDetails;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;
@@ -2034,10 +2258,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Attach SPA event listeners to all generic dropdown menus using Popup System
             document.querySelectorAll('.dropdown-item[data-target], .nested-item[data-target]').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    // Skip if item has a specific ID that we handle separately (e.g. Administrator items)
-                    const specialIds = ['userLoginsBtn', 'userRightsBtn', 'myCompanyBtn', 'myLogoBtn'];
-                    if (specialIds.includes(item.id)) return;
-
                     e.preventDefault();
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
@@ -2479,52 +2699,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         window.checkUserRights = checkUserRights;
-
-        async function loadPartials() {
-            try {
-                // 1. Fetch HTML components
-                const [navRes, sideRes, dashRes] = await Promise.all([
-                    fetch('components/navbar.html'),
-                    fetch('components/sidebar.html'),
-                    fetch('components/dashboard.html')
-                ]);
-
-                if (navRes.ok) document.getElementById('navbar-container').innerHTML = await navRes.text();
-                if (sideRes.ok) document.getElementById('sidebar-container').innerHTML = await sideRes.text();
-                if (dashRes.ok) document.getElementById('main-content').innerHTML = await dashRes.text();
-
-                // 2. Refresh UI bindings after injection
-                setupMenuButtons();
-                setupDropdowns();
-                updateNames();
-                updateDashboardSummary();
-                displayLogo();
-
-                // 3. Dashboard Specific Listeners (Search & Inventory)
-                const searchBtn = document.getElementById('searchBtn');
-                if (searchBtn) searchBtn.onclick = performSearch;
-
-                const globalSearch = document.getElementById('globalSearch');
-                if (globalSearch) {
-                    globalSearch.onkeyup = function(e) {
-                        if (e.key === 'Enter') performSearch();
-                    };
-                }
-
-                // Inventory Alerts Widget Click
-                const inventoryCard = document.getElementById('inventoryAlertsCard');
-                if (inventoryCard) inventoryCard.onclick = showInventoryDetails;
-
-            } catch (err) {
-                console.error('Partial Loading Failed:', err);
-                alert('App Interface Initialization Failed. Please refresh the page.');
-            }
-        }
-
-        // --- APPLICATION INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Load Partials (UI Framework) - This handles Menu & Dropdown setup inside it
-            loadPartials();
-            // 2. Initial Data Fetch (Cloud)
-            if (typeof loadSavedData === 'function') loadSavedData();
-        });
