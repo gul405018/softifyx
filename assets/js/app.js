@@ -488,6 +488,7 @@
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
             
+            // 1. Set the HTML (scripts won't run yet)
             container.innerHTML = `
                 <div class="modal-header">
                     <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
@@ -500,7 +501,20 @@
             
             overlay.classList.add('active');
 
-            // Apply Viewer Restrictions if necessary
+            // 2. Extract and Manually Execute Scripts
+            const scripts = container.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                document.body.appendChild(newScript);
+                // Clean up the shadow script to prevent duplicate runs if modal reopens
+                newScript.parentNode.removeChild(newScript);
+            });
+
+            // 3. Apply Viewer Restrictions
             setTimeout(() => {
                 applyViewerRestrictions(container);
             }, 50);
