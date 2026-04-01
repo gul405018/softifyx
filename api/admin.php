@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     
     if ($action === 'get_users') {
-        $stmt = $pdo->prepare("SELECT id, username, email, role, status FROM users WHERE company_id = ?");
-        $stmt->execute([$company_id]);
+        $stmt = $pdo->prepare("SELECT id, username, email, role, status FROM users");
+        $stmt->execute();
         sendResponse($stmt->fetchAll());
     }
     
@@ -33,26 +33,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     
     if ($action === 'get_fy') {
-        $stmt = $pdo->prepare("SELECT * FROM financial_years WHERE company_id = ?");
-        $stmt->execute([$company_id]);
+        $stmt = $pdo->prepare("SELECT * FROM financial_years ORDER BY start_date DESC");
+        $stmt->execute();
         sendResponse($stmt->fetchAll());
     }
     
     if ($action === 'get_currency') {
-        $stmt = $pdo->prepare("SELECT * FROM currencies WHERE company_id = ?");
-        $stmt->execute([$company_id]);
+        $stmt = $pdo->prepare("SELECT * FROM currencies LIMIT 1");
+        $stmt->execute();
         sendResponse($stmt->fetch());
     }
     
     if ($action === 'get_summary') {
-        $stmt = $pdo->prepare("SELECT * FROM dashboard_summary WHERE company_id = ?");
-        $stmt->execute([$company_id]);
+        $stmt = $pdo->prepare("SELECT * FROM dashboard_summary LIMIT 1");
+        $stmt->execute();
         sendResponse($stmt->fetch());
     }
     
     if ($action === 'get_note') {
-        $stmt = $pdo->prepare("SELECT note_text FROM business_notes WHERE company_id = ?");
-        $stmt->execute([$company_id]);
+        $stmt = $pdo->prepare("SELECT note_text FROM business_notes LIMIT 1");
+        $stmt->execute();
         $row = $stmt->fetch();
         sendResponse(['note' => $row ? $row['note_text'] : '']);
     }
@@ -87,8 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, role = ?, status = ? WHERE id = ?");
             $stmt->execute([$data['username'], $data['email'], $data['role'], $data['status'], $data['id']]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO users (company_id, username, password, role, email) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$company_id, $data['username'], $data['password'], $data['role'], $data['email']]);
+            $stmt = $pdo->prepare("INSERT INTO users (username, password, role, email) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$data['username'], $data['password'], $data['role'], $data['email']]);
             $newUserId = $pdo->lastInsertId();
             
             // AUTO-INITIALIZE RIGHTS based on role
@@ -137,9 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'save_summary') {
-        $stmt = $pdo->prepare("REPLACE INTO dashboard_summary (company_id, sales, cash_opening, cash_receipts, cash_payments, bank_balance, rec_opening, rec_sales, rec_receipts, pay_opening, pay_purchases, pay_payments, new_invoices, customer_receipts, overdue, new_purchases, vendor_payments, outstanding) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("REPLACE INTO dashboard_summary (id, sales, cash_opening, cash_receipts, cash_payments, bank_balance, rec_opening, rec_sales, rec_receipts, pay_opening, pay_purchases, pay_payments, new_invoices, customer_receipts, overdue, new_purchases, vendor_payments, outstanding) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
-            $company_id, $data['sales'], $data['cashOpening'], $data['cashReceipts'], $data['cashPayments'], 
+            $data['sales'], $data['cashOpening'], $data['cashReceipts'], $data['cashPayments'], 
             $data['bankBalance'], $data['recOpening'], $data['recSales'], $data['recReceipts'], 
             $data['payOpening'], $data['payPurchases'], $data['payPayments'], $data['newInvoices'], 
             $data['customerReceipts'], $data['overdue'], $data['newPurchases'], $data['vendorPayments'], 
@@ -153,8 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE financial_years SET start_date = ?, end_date = ?, abbreviation = ? WHERE id = ?");
             $stmt->execute([$data['start'], $data['end'], $data['abbr'], $data['id']]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO financial_years (company_id, start_date, end_date, abbreviation) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$company_id, $data['start'], $data['end'], $data['abbr']]);
+            $stmt = $pdo->prepare("INSERT INTO financial_years (start_date, end_date, abbreviation) VALUES (?, ?, ?)");
+            $stmt->execute([$data['start'], $data['end'], $data['abbr']]);
         }
         sendResponse(['status' => 'success']);
     }
@@ -171,8 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'save_currency') {
-        $stmt = $pdo->prepare("REPLACE INTO currencies (company_id, name, symbol) VALUES (?, ?, ?)");
-        $stmt->execute([$company_id, $data['name'], $data['symbol']]);
+        $stmt = $pdo->prepare("REPLACE INTO currencies (id, name, symbol) VALUES (1, ?, ?)");
+        $stmt->execute([$data['name'], $data['symbol']]);
         sendResponse(['status' => 'success']);
     }
     
@@ -183,8 +183,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'save_note') {
-        $stmt = $pdo->prepare("REPLACE INTO business_notes (company_id, note_text) VALUES (?, ?)");
-        $stmt->execute([$company_id, $data['note']]);
+        $stmt = $pdo->prepare("REPLACE INTO business_notes (id, note_text) VALUES (1, ?)");
+        $stmt->execute([$data['note']]);
         sendResponse(['status' => 'success']);
     }
 

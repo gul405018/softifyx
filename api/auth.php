@@ -22,9 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $companyId = $company['id'];
         
-        // 2. Auth User
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND password = ? AND company_id = ?");
-        $stmt->execute([$username, $password, $companyId]);
+        // 2. Auth User (Global Access)
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
+        $stmt->execute([$username, $password]);
         $user = $stmt->fetch();
         
         if ($user) {
