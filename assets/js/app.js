@@ -315,40 +315,44 @@
         }
 
         function setupDropdowns() {
+            // Main menu dropdown toggling
             document.querySelectorAll('.menu-item').forEach(menuItem => {
-                menuItem.addEventListener('click', function(e) {
-                    // Only toggle if they clicked the direct menu-item text, not inside its dropdown
-                    if (e.target === this || e.target.parentElement === this && !e.target.closest('.dropdown')) {
+                const trigger = menuItem.querySelector('.menu-link.has-dropdown');
+                if (trigger) {
+                    trigger.addEventListener('click', function(e) {
+                        e.preventDefault();
                         e.stopPropagation();
                         
-                        // Exclusive Toggle: Close all other main dropdowns
-                        const dropdown = this.querySelector('.dropdown');
+                        const dropdown = menuItem.querySelector('.dropdown');
                         const isAlreadyOpen = dropdown && (dropdown.style.display === 'block' || dropdown.classList.contains('show'));
                         
                         hideAllDropdowns();
                         
-                        if (!isAlreadyOpen) {
-                            toggleDropdown(this);
+                        if (!isAlreadyOpen && dropdown) {
+                            toggleDropdown(menuItem);
                         }
+                    });
+                }
+            });
+
+            // Prevent dropdown clicks (on items) from hiding the menu
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                dropdown.addEventListener('click', function(e) {
+                    // But allow link clicks to bubble up if they are generic modal targets
+                    if (!e.target.closest('.dropdown-item')) {
+                        e.stopPropagation(); 
                     }
                 });
             });
 
-            // Prevent dropdown clicks from bubbling up and hiding the menu-item
-            document.querySelectorAll('.dropdown').forEach(dropdown => {
-                dropdown.addEventListener('click', function(e) {
-                    e.stopPropagation(); 
-                });
-            });
-
-            // Handle nested dropdowns specifically for touch/click compatibility
+            // Nested (secondary) dropdown logic
             document.querySelectorAll('.has-nested').forEach(nested => {
                 nested.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     const nestedMenu = this.querySelector('.nested-dropdown');
                     if (nestedMenu) {
                         const isShown = nestedMenu.classList.contains('show-nested');
-                        // Close any other nested dropdowns first
                         document.querySelectorAll('.nested-dropdown').forEach(nd => nd.classList.remove('show-nested'));
                         if (!isShown) {
                             nestedMenu.classList.add('show-nested');
@@ -2108,6 +2112,8 @@
         window.previewLogo = previewLogo;
         window.selectCompanyForLogin = selectCompanyForLogin;
         window.saveCompanyDetails = saveCompanyDetails;
+        window.switchLoginSession = switchLoginSession;
+        window.deleteCompany = deleteCompany;
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;
