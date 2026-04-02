@@ -143,11 +143,13 @@
                     window.currentUserRights = {};
                     if (Array.isArray(rightsArr)) {
                         rightsArr.forEach(r => {
-                            // Map to a more detailed object structure
-                            window.currentUserRights[r.module_name.trim()] = {
-                                edit: parseInt(r.is_edit) === 1,
-                                view: parseInt(r.is_view) === 1
-                            };
+                            if (r && r.module_name) {
+                                // Map to a more detailed object structure
+                                window.currentUserRights[r.module_name.trim()] = {
+                                    edit: parseInt(r.is_edit || 0) === 1,
+                                    view: parseInt(r.is_view || 0) === 1
+                                };
+                            }
                         });
                     }
                 }

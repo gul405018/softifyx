@@ -30,6 +30,9 @@ try {
     if (!$stmt->fetch()) {
         $pdo->exec("ALTER TABLE user_rights ADD COLUMN is_view TINYINT(1) DEFAULT 0");
     }
+
+    // BACKFILL: Sync 'is_allowed' to new columns for existing data
+    $pdo->exec("UPDATE user_rights SET is_edit = 1, is_view = 1 WHERE is_allowed = 1 AND is_edit = 0 AND is_view = 0");
 } catch (Exception $e) { /* Already exists or not supported */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
