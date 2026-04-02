@@ -143,13 +143,8 @@
                     window.currentUserRights = {};
                     if (Array.isArray(rightsArr)) {
                         rightsArr.forEach(r => {
-                            if (r && r.module_name) {
-                                // Map to a more detailed object structure
-                                window.currentUserRights[r.module_name.trim()] = {
-                                    edit: parseInt(r.is_edit || 0) === 1,
-                                    view: parseInt(r.is_view || 0) === 1
-                                };
-                            }
+                            // Trim to avoid mismatches
+                            window.currentUserRights[r.module_name.trim()] = parseInt(r.is_allowed) === 1;
                         });
                     }
                 }
@@ -565,8 +560,9 @@
                     <div class="form-group" style="margin-bottom: 25px;">
                         <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Role</label>
                         <select class="form-control" id="newRole" style="height: 38px; border-radius: 8px;">
-                            <option value="Admin">Admin (Full Access)</option>
-                            <option value="User">User (Custom Rights)</option>
+                            <option value="Operator">Operator (Data Entry)</option>
+                            <option value="Viewer">Viewer (Read Only)</option>
+                            <option value="Admin">Admin (Manager)</option>
                         </select>
                     </div>
                     <div class="modal-actions" style="border-top: 1px solid #f1f5f9; padding-top: 20px;">
@@ -646,7 +642,8 @@
                             <label>Role</label>
                             <select class="form-control" id="editRole">
                                 <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                                <option value="User" ${user.role === 'User' ? 'selected' : ''}>User</option>
+                                <option value="Operator" ${user.role === 'Operator' ? 'selected' : ''}>Operator (Data Entry)</option>
+                                <option value="Viewer" ${user.role === 'Viewer' ? 'selected' : ''}>Viewer (Read Only)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1424,16 +1421,11 @@
             ];
 
             explicitRights.forEach(itemName => {
-                rightsRows += `<tr data-right="${itemName}">
+                rightsRows += `<tr data-right="${itemName}" ondblclick="toggleRightStatus(this)">
                     <td class="indent-level-1">
                         ${itemName}
                     </td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" class="is-edit-chk" onchange="onEditChange(this)">
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" class="is-view-chk" onchange="onViewChange(this)">
-                    </td>
+                    <td class="right-status" style="text-align: center; font-weight: 500; color: #d63031;">Not Allowed</td>
                 </tr>`;
             });
 
@@ -1448,23 +1440,16 @@
             }, 50);
         }
 
-        window.onEditChange = function(chk) {
-            // If Editor is checked, Viewer must also be checked
-            if (chk.checked) {
-                const row = chk.closest('tr');
-                const viewChk = row.querySelector('.is-view-chk');
-                if (viewChk) viewChk.checked = true;
+        function toggleRightStatus(row) {
+            const statusCell = row.querySelector('.right-status');
+            if (statusCell.textContent === 'Not Allowed') {
+                statusCell.textContent = 'Allowed';
+                statusCell.style.color = '#27ae60';
+            } else {
+                statusCell.textContent = 'Not Allowed';
+                statusCell.style.color = '#d63031';
             }
-        };
-
-        window.onViewChange = function(chk) {
-            // If Viewer is unchecked, Editor must also be unchecked
-            if (!chk.checked) {
-                const row = chk.closest('tr');
-                const editChk = row.querySelector('.is-edit-chk');
-                if (editChk) editChk.checked = false;
-            }
-        };
+        }
 
         async function loadUserRightsForm() {
             const userId = document.getElementById('urUserSelect')?.value;
@@ -1479,30 +1464,34 @@
                     rightsData[r.module_name] = (r.is_allowed == 1);
                 });
                 
+                // Assuming role is already in the 'users' global array
+                const user = users.find(u => u.id == userId);
+                document.getElementById('urUserRole').value = user ? user.role : 'Operator';
+                
                 document.querySelectorAll('#urTableBody tr').forEach(row => {
                     const rightName = row.getAttribute('data-right');
-                    const rightObj = rightsArray.find(r => r.module_name === rightName);
+                    const statusCell = row.querySelector('.right-status');
                     
-                    const editChk = row.querySelector('.is-edit-chk');
-                    const viewChk = row.querySelector('.is-view-chk');
-                    
-                    if (editChk) editChk.checked = (rightObj && rightObj.is_edit == 1);
-                    if (viewChk) viewChk.checked = (rightObj && rightObj.is_view == 1);
+                    if (rightsData[rightName] === true) {
+                        statusCell.textContent = 'Allowed';
+                        statusCell.style.color = '#27ae60';
+                    } else {
+                        statusCell.textContent = 'Not Allowed';
+                        statusCell.style.color = '#d63031';
+                    }
                 });
             } catch (err) { console.error('Rights Load Error:', err); }
         }
 
         async function saveUserRights() {
-            const userId = document.getElementById('urUserSelect')?.value;
-            if(!userId) return;
-
+            const userId = document.getElementById('urUserSelect').value;
+            const userRole = document.getElementById('urUserRole').value;
             let rightsPayload = [];
             
             document.querySelectorAll('#urTableBody tr').forEach(row => {
                 const rightName = row.getAttribute('data-right');
-                const isEdit = row.querySelector('.is-edit-chk')?.checked || false;
-                const isView = row.querySelector('.is-view-chk')?.checked || false;
-                rightsPayload.push({ module: rightName, edit: isEdit, view: isView });
+                const isAllowed = (row.querySelector('.right-status').textContent === 'Allowed');
+                rightsPayload.push({ module: rightName, allowed: isAllowed ? 1 : 0 });
             });
             
             try {
@@ -1513,11 +1502,17 @@
                     body: JSON.stringify({ user_id: userId, rights: rightsPayload })
                 });
                 
-                // 2. Refresh app state
+                // CRITICAL: Fresh load after save to ensure UI matches DB exactly
                 await loadSavedData();
-                updateNames();
+                
+                // 2. Update User Role
+                await fetch('api/admin.php?action=save_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: userId, role: userRole, username: users.find(u=>u.id==userId).username, status: 'Active' })
+                });
 
-                alert('User rights saved and synchronized successfully!');
+                alert('User rights and role saved and synced successfully!');
             } catch (err) { alert('Sync Failed.'); }
         }
 
@@ -1994,41 +1989,42 @@
             if (!rightName) return true; // Safety
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
-            // MASTER BYPASS: 'Administrator' and 'Admin' roles
-            if (session.username === 'Administrator' || session.role === 'Admin') return true;
+            // 1. SYSTEM MASTER BYPASS: 'Administrator' username ALWAYS has 100% access
+            if (session.username === 'Administrator') return true;
             
-            // Check Cloud-Synced Rights (Global Object)
+            // 2. ROLE MASTER BYPASS: Any user with the 'Admin' role ALWAYS has 100% access
+            if (session.role === 'Admin') return true;
+            
+            // 3. Fallback to Role from User Object (Extra safety)
+            const userObj = (users || []).find(u => u.username === session.username);
+            const userRole = userObj?.role || session.role || 'Operator';
+            if (userRole === 'Admin') return true;
+
+            // 4. Check Cloud-Synced Rights (Global Object)
             if (!window.currentUserRights) return false; 
             
             const rName = rightName.trim();
-            const rightsObj = window.currentUserRights[rName];
+            // Case-insensitive / Trimmed check for maximum reliability
+            const allowed = window.currentUserRights[rName];
             
-            // User can ACCESS if they have either View OR Edit rights
-            return (rightsObj && (rightsObj.view || rightsObj.edit));
+            return allowed === true;
         }
  
         function applyViewerRestrictions(container) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
             // MASTER BYPASS: 'Administrator' and 'Admin' roles should NEVER be restricted.
-            if (session.username === 'Administrator' || session.role === 'Admin') return;
-
-            // Detect current module to find specific rights
-            const moduleEl = container.querySelector('[data-module]');
-            const moduleName = moduleEl ? moduleEl.getAttribute('data-module')?.trim() : null;
+            if (session.username === 'Administrator') return;
+            if (session.role === 'Admin') return;
             
-            let canEdit = true;
-            if (moduleName && window.currentUserRights && window.currentUserRights[moduleName]) {
-                canEdit = window.currentUserRights[moduleName].edit;
-            } else if (moduleName) {
-                // If module is recognized but no rights found in current user's object, default to NO edit
-                canEdit = false;
-            }
+            const userObj = (users || []).find(u => u.username === session.username);
+            if (userObj?.role === 'Admin') return;
 
-            // Only apply restrictions if canEdit is false OR Financial Year is Mismatched
-            const isReadOnly = (canEdit === false) || window.isReadOnly;
+            // Only apply restrictions if the role is 'Viewer', restricted by module rights, OR Financial Year is Mismatched
+            const isViewer = session.role === 'Viewer';
+            const isFYMismatched = window.isReadOnly;
 
-            if (!isReadOnly) return;
+            if (!isViewer && !isFYMismatched) return;
 
             // 1. Disable all standard input fields
             const inputs = container.querySelectorAll('input, select, textarea');

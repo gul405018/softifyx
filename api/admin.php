@@ -20,19 +20,6 @@ try {
     if (!$stmt->fetch()) {
         $pdo->exec("ALTER TABLE users ADD COLUMN profile_photo LONGTEXT DEFAULT NULL");
     }
-
-    // ONE-TIME MIGRATION: Ensure 'is_edit' and 'is_view' exist in user_rights table
-    $stmt = $pdo->query("SHOW COLUMNS FROM user_rights LIKE 'is_edit'");
-    if (!$stmt->fetch()) {
-        $pdo->exec("ALTER TABLE user_rights ADD COLUMN is_edit TINYINT(1) DEFAULT 0");
-    }
-    $stmt = $pdo->query("SHOW COLUMNS FROM user_rights LIKE 'is_view'");
-    if (!$stmt->fetch()) {
-        $pdo->exec("ALTER TABLE user_rights ADD COLUMN is_view TINYINT(1) DEFAULT 0");
-    }
-
-    // BACKFILL: Sync 'is_allowed' to new columns for existing data
-    $pdo->exec("UPDATE user_rights SET is_edit = 1, is_view = 1 WHERE is_allowed = 1 AND is_edit = 0 AND is_view = 0");
 } catch (Exception $e) { /* Already exists or not supported */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -155,11 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Income Statement", "Balance Sheet"
             ];
             
-            $isEdit = ($data['role'] === 'Admin') ? 1 : 0;
-            $isView = ($data['role'] === 'Admin') ? 1 : 0;
-            $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_edit, is_view, is_allowed) VALUES (?, ?, ?, ?, ?)");
+            $isAllowed = ($data['role'] === 'Admin') ? 1 : 0;
+            $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed) VALUES (?, ?, ?)");
             foreach ($modules as $mod) {
-                $stmt->execute([$newUserId, $mod, $isEdit, $isView, $isEdit]);
+                $stmt->execute([$newUserId, $mod, $isAllowed]);
             }
         }
         sendResponse(['status' => 'success']);
@@ -167,12 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($action === 'save_rights') {
         $pdo->prepare("DELETE FROM user_rights WHERE user_id = ?")->execute([$data['user_id']]);
-        $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_edit, is_view, is_allowed) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed) VALUES (?, ?, ?)");
         foreach ($data['rights'] as $right) {
-            $isEdit = $right['edit'] ? 1 : 0;
-            $isView = $right['view'] ? 1 : 0;
-            $isAllowed = ($isEdit || $isView) ? 1 : 0;
-            $stmt->execute([$data['user_id'], $right['module'], $isEdit, $isView, $isAllowed]);
+            $stmt->execute([$data['user_id'], $right['module'], $right['allowed']]);
         }
         sendResponse(['status' => 'success']);
     }
