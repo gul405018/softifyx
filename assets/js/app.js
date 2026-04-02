@@ -2134,12 +2134,24 @@
             const userObj = (window.users || []).find(u => u.username === session.username);
             if (userObj?.role === 'Admin') return;
 
-            // 2. IDENTIFY MODULE: Look for data-module tag in body
-            const body = container.querySelector('.modal-body') || container;
-            const mTag = body.querySelector('[data-module]') || body;
-            let mName = mTag.getAttribute ? mTag.getAttribute('data-module') : null;
-            if (!mName && container.querySelector('h2')) {
-                mName = container.querySelector('h2').innerText.trim().replace(/^.*?\s/, '');
+            // 2. IDENTIFY MODULE
+            let mName = container.getAttribute('data-module');
+            const body = container.querySelector('.modal-body');
+            
+            if (!mName && body) {
+                mName = body.getAttribute('data-module');
+            }
+            
+            // Fallback: If no data-module, try to match via Header Title
+            if (!mName) {
+                const header = container.querySelector('.modal-header h2') || container.querySelector('h2');
+                if (header) {
+                    const fullTitle = header.innerText.trim();
+                    // Custom Mapping for "Company Setup" -> "My Company"
+                    if (fullTitle.includes("Company Setup")) mName = "My Company";
+                    else if (fullTitle.includes("Logo Settings")) mName = "My Logo";
+                    else mName = fullTitle;
+                }
             }
             
             if (!mName || !window.currentUserRights) return;
@@ -2149,15 +2161,17 @@
             if (!right) {
                 const lowerName = mName.toLowerCase().trim();
                 for (let key in window.currentUserRights) {
-                    if (key.toLowerCase().trim() === lowerName) {
+                    const cleanKey = key.toLowerCase().trim();
+                    if (cleanKey === lowerName || lowerName.includes(cleanKey) || cleanKey.includes(lowerName)) {
                         right = window.currentUserRights[key];
                         break;
                     }
                 }
             }
             
-            // 3. LOGIC CHECK: 
-            // - If NOT found in user rights at all, let's not restrict unless we're sure it's a gated module
+            console.log(`SoftifyX: Checking Permissions for [${mName}]`, right);
+
+            // 3. LOGIC CHECK
             if (!right) return;
 
             // - Editor (can_edit=1) HAS FULL ACCESS
