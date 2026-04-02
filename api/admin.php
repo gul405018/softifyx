@@ -160,6 +160,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         sendResponse(['status' => 'success']);
     }
 
+    if ($action === 'update_password') {
+        if (!isset($data['id']) || !isset($data['password'])) {
+            sendResponse(['error' => 'Missing ID or Password'], 400);
+        }
+        $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+        $stmt->execute([$data['password'], $data['id']]);
+        sendResponse(['status' => 'success']);
+    }
+
     if ($action === 'save_summary') {
         $stmt = $pdo->prepare("REPLACE INTO dashboard_summary (company_id, sales, cash_opening, cash_receipts, cash_payments, bank_balance, rec_opening, rec_sales, rec_receipts, pay_opening, pay_purchases, pay_payments, new_invoices, customer_receipts, overdue, new_purchases, vendor_payments, outstanding) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([

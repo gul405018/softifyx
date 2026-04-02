@@ -1562,6 +1562,44 @@
             } catch (err) { alert('Sync Failed.'); }
         }
 
+        async function resetUserPassword() {
+            const userId = parseInt(document.getElementById('pwdUserSelect').value);
+            const newPwd = document.getElementById('pwdNew').value.trim();
+            const confPwd = document.getElementById('pwdConfirm').value.trim();
+            const errorMsg = document.getElementById('pwdErrorMsg');
+            
+            if(!userId) return alert('Please select a user first.');
+            
+            errorMsg.textContent = '';
+            
+            if(!newPwd || !confPwd) {
+                errorMsg.textContent = 'Enter and confirm new password!';
+                return;
+            }
+            if(newPwd !== confPwd) {
+                errorMsg.textContent = 'Passwords do not match!';
+                return;
+            }
+            
+            const userName = users.find(u => u.id == userId)?.username || 'User';
+            if(!confirm(`Are you sure you want to RESET the password for "${userName}"? The old password will be overwritten.`)) return;
+
+            try {
+                const response = await fetch('api/admin.php?action=update_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: userId, password: newPwd })
+                });
+
+                if (response.ok) {
+                    alert(`Success: Password for "${userName}" has been reset successfully!`);
+                    closeModal();
+                } else {
+                    alert('Error: Failed to reset password. Please try again.');
+                }
+            } catch (err) { alert('Sync Failed: ' + err.message); }
+        }
+
         // --- FINANCIAL YEAR LOGIC --- //
 
         function initFinancialYearView() {
@@ -2226,6 +2264,7 @@
         window.loadUserRightsForm = loadUserRightsForm;
         window.saveUserRights = saveUserRights;
         window.savePasswordSettings = savePasswordSettings;
+        window.resetUserPassword = resetUserPassword;
         window.initFinancialYearView = initFinancialYearView;
         window.selectFinancialYear = selectFinancialYear;
         window.selectFinancialYear = selectFinancialYear;
