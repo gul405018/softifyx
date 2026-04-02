@@ -143,8 +143,11 @@
                     window.currentUserRights = {};
                     if (Array.isArray(rightsArr)) {
                         rightsArr.forEach(r => {
-                            // Trim to avoid mismatches
-                            window.currentUserRights[r.module_name.trim()] = parseInt(r.is_allowed) === 1;
+                            window.currentUserRights[r.module_name.trim()] = {
+                                allowed: parseInt(r.is_allowed) === 1,
+                                can_edit: parseInt(r.can_edit) === 1,
+                                can_view: parseInt(r.can_view) === 1
+                            };
                         });
                     }
                 }
@@ -560,8 +563,7 @@
                     <div class="form-group" style="margin-bottom: 25px;">
                         <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Role</label>
                         <select class="form-control" id="newRole" style="height: 38px; border-radius: 8px;">
-                            <option value="Operator">Operator (Data Entry)</option>
-                            <option value="Viewer">Viewer (Read Only)</option>
+                            <option value="User">User (Standard)</option>
                             <option value="Admin">Admin (Manager)</option>
                         </select>
                     </div>
@@ -642,8 +644,7 @@
                             <label>Role</label>
                             <select class="form-control" id="editRole">
                                 <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                                <option value="Operator" ${user.role === 'Operator' ? 'selected' : ''}>Operator (Data Entry)</option>
-                                <option value="Viewer" ${user.role === 'Viewer' ? 'selected' : ''}>Viewer (Read Only)</option>
+                                <option value="User" ${user.role === 'User' ? 'selected' : ''}>User</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1421,11 +1422,17 @@
             ];
 
             explicitRights.forEach(itemName => {
-                rightsRows += `<tr data-right="${itemName}" ondblclick="toggleRightStatus(this)">
-                    <td class="indent-level-1">
+                rightsRows += `<tr data-right="${itemName}" style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px 15px; color: #334155; font-size: 13.5px; font-weight: 500;">
                         ${itemName}
                     </td>
-                    <td class="right-status" style="text-align: center; font-weight: 500; color: #d63031;">Not Allowed</td>
+                    <td class="right-status" style="text-align: center; font-weight: 600; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 12px;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
+                    <td style="text-align: center; padding: 5px;">
+                        <input type="checkbox" class="editor-check" disabled style="opacity: 0.3; transform: scale(1.2); cursor: not-allowed;" title="Editor = Can edit & manage">
+                    </td>
+                    <td style="text-align: center; padding: 5px;">
+                        <input type="checkbox" class="viewer-check" disabled style="opacity: 0.3; transform: scale(1.2); cursor: not-allowed;" title="Viewer = Read only access">
+                    </td>
                 </tr>`;
             });
 
@@ -1440,14 +1447,28 @@
             }, 50);
         }
 
-        function toggleRightStatus(row) {
+        function toggleRightStatus(cell) {
+            const row = cell.closest('tr');
             const statusCell = row.querySelector('.right-status');
+            const checkboxes = row.querySelectorAll('input[type="checkbox"]');
+            
             if (statusCell.textContent === 'Not Allowed') {
                 statusCell.textContent = 'Allowed';
-                statusCell.style.color = '#27ae60';
+                statusCell.style.color = '#10b981';
+                checkboxes.forEach(cb => {
+                    cb.disabled = false;
+                    cb.style.opacity = '1';
+                    cb.style.cursor = 'pointer';
+                });
             } else {
                 statusCell.textContent = 'Not Allowed';
-                statusCell.style.color = '#d63031';
+                statusCell.style.color = '#ef4444';
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = true;
+                    cb.style.opacity = '0.3';
+                    cb.style.cursor = 'not-allowed';
+                });
             }
         }
 
@@ -1461,58 +1482,72 @@
                 
                 let rightsData = {};
                 rightsArray.forEach(r => {
-                    rightsData[r.module_name] = (r.is_allowed == 1);
+                    rightsData[r.module_name] = {
+                        allowed: (r.is_allowed == 1),
+                        edit: (r.can_edit == 1),
+                        view: (r.can_view == 1)
+                    };
                 });
-                
-                // Assuming role is already in the 'users' global array
-                const user = users.find(u => u.id == userId);
-                document.getElementById('urUserRole').value = user ? user.role : 'Operator';
                 
                 document.querySelectorAll('#urTableBody tr').forEach(row => {
                     const rightName = row.getAttribute('data-right');
                     const statusCell = row.querySelector('.right-status');
+                    const editorCb = row.querySelector('.editor-check');
+                    const viewerCb = row.querySelector('.viewer-check');
                     
-                    if (rightsData[rightName] === true) {
+                    const data = rightsData[rightName] || { allowed: false, edit: false, view: false };
+                    
+                    if (data.allowed) {
                         statusCell.textContent = 'Allowed';
-                        statusCell.style.color = '#27ae60';
+                        statusCell.style.color = '#10b981';
+                        [editorCb, viewerCb].forEach(cb => {
+                            cb.disabled = false;
+                            cb.style.opacity = '1';
+                            cb.style.cursor = 'pointer';
+                        });
                     } else {
                         statusCell.textContent = 'Not Allowed';
-                        statusCell.style.color = '#d63031';
+                        statusCell.style.color = '#ef4444';
+                        [editorCb, viewerCb].forEach(cb => {
+                            cb.disabled = true;
+                            cb.style.opacity = '0.3';
+                            cb.style.cursor = 'not-allowed';
+                        });
                     }
+                    
+                    editorCb.checked = data.edit;
+                    viewerCb.checked = data.view;
                 });
             } catch (err) { console.error('Rights Load Error:', err); }
         }
 
         async function saveUserRights() {
             const userId = document.getElementById('urUserSelect').value;
-            const userRole = document.getElementById('urUserRole').value;
             let rightsPayload = [];
             
             document.querySelectorAll('#urTableBody tr').forEach(row => {
                 const rightName = row.getAttribute('data-right');
                 const isAllowed = (row.querySelector('.right-status').textContent === 'Allowed');
-                rightsPayload.push({ module: rightName, allowed: isAllowed ? 1 : 0 });
+                const canEdit = row.querySelector('.editor-check').checked;
+                const canView = row.querySelector('.viewer-check').checked;
+                
+                rightsPayload.push({ 
+                    module: rightName, 
+                    allowed: isAllowed ? 1 : 0,
+                    can_edit: canEdit ? 1 : 0,
+                    can_view: canView ? 1 : 0
+                });
             });
             
             try {
-                // 1. Save Rights
                 await fetch('api/admin.php?action=save_rights', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userId, rights: rightsPayload })
                 });
                 
-                // CRITICAL: Fresh load after save to ensure UI matches DB exactly
                 await loadSavedData();
-                
-                // 2. Update User Role
-                await fetch('api/admin.php?action=save_user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: userId, role: userRole, username: users.find(u=>u.id==userId).username, status: 'Active' })
-                });
-
-                alert('User rights and role saved and synced successfully!');
+                alert('User rights saved and synced successfully!');
             } catch (err) { alert('Sync Failed.'); }
         }
 
@@ -1986,55 +2021,53 @@
         }
 
         function checkUserRights(rightName) {
-            if (!rightName) return true; // Safety
+            if (!rightName) return true;
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
-            // 1. SYSTEM MASTER BYPASS: 'Administrator' username ALWAYS has 100% access
             if (session.username === 'Administrator') return true;
-            
-            // 2. ROLE MASTER BYPASS: Any user with the 'Admin' role ALWAYS has 100% access
             if (session.role === 'Admin') return true;
             
-            // 3. Fallback to Role from User Object (Extra safety)
             const userObj = (users || []).find(u => u.username === session.username);
-            const userRole = userObj?.role || session.role || 'Operator';
-            if (userRole === 'Admin') return true;
+            if (userObj?.role === 'Admin') return true;
 
-            // 4. Check Cloud-Synced Rights (Global Object)
             if (!window.currentUserRights) return false; 
             
             const rName = rightName.trim();
-            // Case-insensitive / Trimmed check for maximum reliability
-            const allowed = window.currentUserRights[rName];
+            const right = window.currentUserRights[rName];
             
-            return allowed === true;
+            // Returns true if module is 'Allowed' AND has at least one permission checked
+            return right && right.allowed && (right.can_edit || right.can_view);
         }
  
         function applyViewerRestrictions(container) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
-            // MASTER BYPASS: 'Administrator' and 'Admin' roles should NEVER be restricted.
             if (session.username === 'Administrator') return;
             if (session.role === 'Admin') return;
             
             const userObj = (users || []).find(u => u.username === session.username);
             if (userObj?.role === 'Admin') return;
 
-            // Only apply restrictions if the role is 'Viewer', restricted by module rights, OR Financial Year is Mismatched
-            const isViewer = session.role === 'Viewer';
+            // Find module name from container
+            const moduleTag = container.querySelector('[data-module]');
+            const moduleName = moduleTag ? moduleTag.getAttribute('data-module') : null;
+            
+            if (!moduleName || !window.currentUserRights) return;
+
+            const right = window.currentUserRights[moduleName];
+            const isEditor = right && right.allowed && right.can_edit;
             const isFYMismatched = window.isReadOnly;
 
-            if (!isViewer && !isFYMismatched) return;
+            if (isEditor && !isFYMismatched) return;
 
-            // 1. Disable all standard input fields
+            // Apply restrictions if NOT an Editor or if FY is mismatched
             const inputs = container.querySelectorAll('input, select, textarea');
             inputs.forEach(el => {
                 el.disabled = true;
-                el.style.backgroundColor = '#f4f6f9'; // Visual cue for read-only
+                el.style.backgroundColor = '#f1f5f9';
                 el.style.cursor = 'not-allowed';
             });
 
-            // 2. Hide or disable Action buttons
             const actionKeywords = [
                 'Save', 'Add', 'Update', 'Delete', 'Clear', 'Restore', 'Backup', 
                 'Post', 'Record', 'New', 'Remove', 'Edit', 'Change'
@@ -2045,24 +2078,22 @@
                 const btnText = btn.innerText.trim();
                 const btnHtml = btn.innerHTML;
                 
-                // Keep "Close", "Cancel", "Back", "View", "Print", "Print Preview" icons/text
                 const isNavigation = btnText.match(/Close|Cancel|Back|Understand|View|Exit/i);
                 const isPrinting = btnHtml.match(/fa-print|fa-file-pdf/i) || btnText.match(/Print|Report/i);
                 
                 if (!isNavigation && !isPrinting) {
                     const isAction = actionKeywords.some(kw => btnText.includes(kw) || btnHtml.includes(kw.toLowerCase()));
                     if (isAction || btn.classList.contains('btn-primary') || btn.classList.contains('btn-danger') || btn.classList.contains('btn-warning')) {
-                        btn.style.display = 'none'; // Hide it completely for a cleaner "Viewer" look
+                        btn.style.display = 'none';
                     }
                 }
             });
 
-            // 3. Add a small badge indicating Read-Only mode
             const header = container.querySelector('.modal-header');
             if (header) {
                 const badge = document.createElement('span');
                 badge.innerHTML = '<i class="fas fa-eye"></i> Read Only Mode';
-                badge.style.cssText = 'background: #e1f5fe; color: #01579b; padding: 4px 10px; border-radius: 4px; font-size: 11px; margin-left: 15px; font-weight: 600; border: 1px solid #b3e5fc;';
+                badge.style.cssText = 'background: #f0f9ff; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 11px; margin-left: 15px; font-weight: 600; border: 1px solid #bae6fd;';
                 header.appendChild(badge);
             }
         }
