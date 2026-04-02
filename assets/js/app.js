@@ -1426,12 +1426,14 @@
                     <td style="padding: 10px 15px; color: #334155; font-size: 13.5px; font-weight: 500;">
                         ${itemName}
                     </td>
-                    <td class="right-status" style="text-align: center; font-weight: 600; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 12px;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
+                    <td class="right-status" style="text-align: center; font-weight: 700; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 11px; padding: 10px 5px;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
                     <td style="text-align: center; padding: 5px;">
-                        <input type="checkbox" class="editor-check" disabled style="opacity: 0.3; transform: scale(1.2); cursor: not-allowed;" title="Editor = Can edit & manage">
+                        <input type="checkbox" class="editor-check" disabled 
+                            style="width: 18px; height: 18px; cursor: not-allowed; appearance: checkbox !important; -webkit-appearance: checkbox !important; display: inline-block !important; opacity: 0.4;">
                     </td>
                     <td style="text-align: center; padding: 5px;">
-                        <input type="checkbox" class="viewer-check" disabled style="opacity: 0.3; transform: scale(1.2); cursor: not-allowed;" title="Viewer = Read only access">
+                        <input type="checkbox" class="viewer-check" disabled 
+                            style="width: 18px; height: 18px; cursor: not-allowed; appearance: checkbox !important; -webkit-appearance: checkbox !important; display: inline-block !important; opacity: 0.4;">
                     </td>
                 </tr>`;
             });
@@ -1489,14 +1491,23 @@
                     };
                 });
                 
+                const selectedUserId = document.getElementById('urUserSelect').value;
+                const userObj = users.find(u => u.id == selectedUserId);
+                const isAdmin = userObj && (userObj.username === 'Administrator' || userObj.role === 'Admin');
+
                 document.querySelectorAll('#urTableBody tr').forEach(row => {
                     const rightName = row.getAttribute('data-right');
                     const statusCell = row.querySelector('.right-status');
                     const editorCb = row.querySelector('.editor-check');
                     const viewerCb = row.querySelector('.viewer-check');
                     
-                    const data = rightsData[rightName] || { allowed: false, edit: false, view: false };
+                    let data = (rightsData && rightsData[rightName]) ? rightsData[rightName] : { allowed: false, edit: false, view: false };
                     
+                    // FORCE ALLOWED FOR ADMINS
+                    if (isAdmin) {
+                        data = { allowed: true, edit: true, view: true };
+                    }
+
                     if (data.allowed) {
                         statusCell.textContent = 'Allowed';
                         statusCell.style.color = '#10b981';
@@ -1510,7 +1521,7 @@
                         statusCell.style.color = '#ef4444';
                         [editorCb, viewerCb].forEach(cb => {
                             cb.disabled = true;
-                            cb.style.opacity = '0.3';
+                            cb.style.opacity = '0.4';
                             cb.style.cursor = 'not-allowed';
                         });
                     }

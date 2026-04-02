@@ -52,9 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     
     if ($action === 'get_rights' && isset($_GET['user_id'])) {
+        // First check user role
+        $uStmt = $pdo->prepare("SELECT username, role FROM users WHERE id = ?");
+        $uStmt->execute([$_GET['user_id']]);
+        $user = $uStmt->fetch();
+        
+        $rights = [];
+        // Note: Frontend will ALSO force Admin rights to ensure they are ALWAYS 1 in UI
         $stmt = $pdo->prepare("SELECT * FROM user_rights WHERE user_id = ?");
         $stmt->execute([$_GET['user_id']]);
-        sendResponse($stmt->fetchAll());
+        $rights = $stmt->fetchAll();
+        
+        sendResponse($rights);
     }
     
     if ($action === 'get_fy') {
