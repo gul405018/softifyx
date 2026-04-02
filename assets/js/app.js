@@ -15,6 +15,7 @@
         ];
 
         let logoData = null;
+        let userProfilePhoto = null;
         let originSelectedCompanyName = ""; 
         
         // EXPOSE TO WINDOW for synchronization with list_of_companies.html component
@@ -84,7 +85,8 @@
                     { key: 'coaList', url: `api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}` },
                     { key: 'currency', url: `api/admin.php?action=get_currency&company_id=${companyId}&${cb}` },
                     { key: 'rights', url: `api/admin.php?action=get_rights&user_id=${sessionData.user_id || 0}&${cb}` },
-                    { key: 'fy', url: `api/admin.php?action=get_fy&company_id=${companyId}&${cb}` }
+                    { key: 'fy', url: `api/admin.php?action=get_fy&company_id=${companyId}&${cb}` },
+                    { key: 'profile', url: `api/admin.php?action=get_profile_photo&${cb}` }
                 ];
 
                 const responses = await Promise.all(requests.map(req => fetch(req.url).catch(e => ({ ok: false, error: e }))));
@@ -93,7 +95,7 @@
                 const [
                     companyRes, companiesRes, usersRes, summaryRes, 
                     coaMainRes, coaSubRes, coaListRes, 
-                    currRes, rightsRes, fyRes
+                    currRes, rightsRes, fyRes, profileRes
                 ] = responses;
 
                 // 1. Process Company
@@ -160,6 +162,12 @@
                             }));
                         }
                     } catch (e) { console.warn('FY Parse Error:', e); }
+                }
+
+                // 9. Profile Photo Sync
+                if (profileRes && profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    userProfilePhoto = profileData.profile_photo || null;
                 }
 
                 // Apply UI Updates
@@ -322,7 +330,12 @@
             document.title = `Softifyx - ${companyData.name || 'Financials'}`;
 
             const welcomeEl = document.getElementById('welcomeUserDisplay');
-            if (welcomeEl) welcomeEl.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${displayName}</span>`;
+            if (welcomeEl) {
+                const iconHtml = userProfilePhoto 
+                    ? `<img src="${userProfilePhoto}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.3);">`
+                    : '<i class="fas fa-user-circle"></i>';
+                welcomeEl.innerHTML = `${iconHtml} <span>Welcome ${displayName}</span>`;
+            }
         }
 
         function hideAllDropdowns() {
@@ -2130,6 +2143,17 @@
             applyGlobalCurrencySymbol(); // Hook into page load
             setupAutoBackupScheduler();
 
+            // Setup Profile Photo Interaction
+            const welcomeEl = document.getElementById('welcomeUserDisplay');
+            if (welcomeEl) {
+                welcomeEl.addEventListener('click', handleProfilePhotoClick);
+            }
+            
+            const profileInput = document.getElementById('profilePhotoInput');
+            if (profileInput) {
+                profileInput.addEventListener('change', uploadProfilePhoto);
+            }
+
             // Refresh Dashboard Content
             updateNames();
 
@@ -2825,3 +2849,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         window.checkUserRights = checkUserRights;
+        
+        function handleProfilePhotoClick() {
+            const hasPhoto = !!userProfilePhoto;
+            const html = `
+                <div style="padding: 20px; text-align: center;">
+                    <div style="margin-bottom: 20px;">
+                        ${userProfilePhoto ? `<img src="${userProfilePhoto}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #eee; object-fit: cover;">` : `<i class="fas fa-user-circle" style="font-size: 80px; color: #ddd;"></i>`}
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn btn-primary" onclick="document.getElementById('profilePhotoInput').click()">
+                            <i class="fas fa-camera"></i> ${hasPhoto ? 'Change Photo' : 'Upload Photo'}
+                        </button>
+                        ${hasPhoto ? `
+                            <button class="btn btn-danger" onclick="removeProfilePhoto()">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        ` : ''}
+                    </div>
+                    <p style="font-size: 11px; color: #888; margin-top: 15px;">Note: Best size is square, e.g. 200x200</p>
+                </div>
+            `;
+            openModal({ icon: 'fa-user', text: 'Manage Profile Photo' }, html);
+        }
+
+        async function uploadProfilePhoto(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function() {
+                const base64 = reader.result;
+                try {
+                    const res = await fetch('api/admin.php?action=save_profile_photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ photo: base64 })
+                    });
+                    if (res.ok) {
+                        userProfilePhoto = base64;
+                        updateNames();
+                        closeModal();
+                        alert('Profile photo updated successfully!');
+                    }
+                } catch (err) {
+                    alert('Failed to upload photo.');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function removeProfilePhoto() {
+            if (confirm('Are you sure you want to remove your profile photo?')) {
+                try {
+                    const res = await fetch('api/admin.php?action=remove_profile_photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (res.ok) {
+                        userProfilePhoto = null;
+                        updateNames();
+                        closeModal();
+                        alert('Profile photo removed.');
+                    }
+                } catch (err) {
+                    alert('Failed to remove photo.');
+                }
+            }
+        }
+
+        window.removeProfilePhoto = removeProfilePhoto;

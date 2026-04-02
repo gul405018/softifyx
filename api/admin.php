@@ -14,6 +14,12 @@ try {
     if (!$stmt->fetch()) {
         $pdo->exec("ALTER TABLE companies ADD COLUMN status TINYINT(1) DEFAULT 1");
     }
+    
+    // ONE-TIME MIGRATION: Ensure 'profile_photo' column exists in users table
+    $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'profile_photo'");
+    if (!$stmt->fetch()) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN profile_photo LONGTEXT DEFAULT NULL");
+    }
 } catch (Exception $e) { /* Already exists or not supported */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -64,6 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         $row = $stmt->fetch();
         sendResponse(['note' => $row ? $row['note_text'] : '']);
+    }
+
+    if ($action === 'get_profile_photo' && isset($_SESSION['user_id'])) {
+        $stmt = $pdo->prepare("SELECT profile_photo FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $row = $stmt->fetch();
+        sendResponse(['profile_photo' => $row ? $row['profile_photo'] : null]);
     }
 }
 
@@ -201,6 +214,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save_note') {
         $stmt = $pdo->prepare("REPLACE INTO business_notes (company_id, note_text) VALUES (?, ?)");
         $stmt->execute([$company_id, $data['note']]);
+        sendResponse(['status' => 'success']);
+    }
+
+    if ($action === 'save_profile_photo' && isset($_SESSION['user_id'])) {
+        $stmt = $pdo->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
+        $stmt->execute([$data['photo'], $_SESSION['user_id']]);
+        sendResponse(['status' => 'success']);
+    }
+
+    if ($action === 'remove_profile_photo' && isset($_SESSION['user_id'])) {
+        $stmt = $pdo->prepare("UPDATE users SET profile_photo = NULL WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
         sendResponse(['status' => 'success']);
     }
 
