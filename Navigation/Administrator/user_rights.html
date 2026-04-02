@@ -6,13 +6,6 @@
                 <!-- Populated by initUserRightsView -->
             </select>
         </div>
-        <div style="border-left: 1px solid #ccc; padding-left: 15px;">
-            <label style="font-weight: 600; color: #1f4668;">User Role:</label>
-            <select class="form-control" id="urUserRole" style="display: inline-block; width: 180px; margin-left: 5px;">
-                <option value="Operator">Operator (Data Entry)</option>
-                <option value="Viewer">Viewer (Read Only)</option>
-            </select>
-        </div>
     </div>
     
     <p style="text-align: right; color: #d63031; font-style: italic; font-size: 11px; margin-bottom: 5px;">
@@ -23,8 +16,9 @@
         <table class="ur-table">
             <thead>
                 <tr>
-                    <th style="width: 70%;">Right Type</th>
-                    <th style="width: 30%; text-align: center;">Right Allowed Status</th>
+                    <th style="width: 60%;">Right Type</th>
+                    <th style="width: 20%; text-align: center;">Editor (Can Edit)</th>
+                    <th style="width: 20%; text-align: center;">Viewer (Can View)</th>
                 </tr>
             </thead>
             <tbody id="urTableBody">
