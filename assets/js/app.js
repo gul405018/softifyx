@@ -1,6 +1,7 @@
         // SOFTIFYX APP VERSION 2026-v2-SYNC-FIX (NO_RELOAD_ON_DRP)
         console.log("SoftifyX: Logic Loaded (v2)");
-        let currentUser = "Administrator";
+        const sessionDataHeader = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        let currentUser = sessionDataHeader.username || "Administrator";
         let companyData = {
             name: "", address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: ""
         };
@@ -308,6 +309,9 @@
         }
 
         function updateNames() {
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const displayName = sessionData.username || currentUser || "Administrator";
+
             const titleEl = document.getElementById('titleCompanyName');
             if (titleEl) titleEl.textContent = `- ${companyData.name}`;
             
@@ -318,7 +322,7 @@
             document.title = `Softifyx - ${companyData.name || 'Financials'}`;
 
             const welcomeEl = document.getElementById('welcomeUserDisplay');
-            if (welcomeEl) welcomeEl.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${currentUser}</span>`;
+            if (welcomeEl) welcomeEl.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${displayName}</span>`;
         }
 
         function hideAllDropdowns() {
