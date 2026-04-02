@@ -2219,14 +2219,6 @@
             });
 
             // 5. REMOVED UI FEEDBACK MODULE AS REQUESTED (NO "READ ONLY" MESSAGE)
-
-            const header = container.querySelector('.modal-header');
-            if (header) {
-                const badge = document.createElement('span');
-                badge.innerHTML = '<i class="fas fa-eye"></i> Read Only Mode';
-                badge.style.cssText = 'background: #f0f9ff; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 11px; margin-left: 15px; font-weight: 600; border: 1px solid #bae6fd;';
-                header.appendChild(badge);
-            }
         }
 
         function showAccessDenied(moduleName) {

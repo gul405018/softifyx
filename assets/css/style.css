@@ -864,14 +864,19 @@
         .modal-close {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
-            color: #999;
-            transition: color 0.2s;
+            color: #dc3545; /* Red as requested */
+            font-weight: 700;
+            line-height: 1;
+            transition: all 0.2s;
+            padding: 0 5px;
+            margin-right: -5px; /* Pull it slightly into the corner */
         }
 
         .modal-close:hover {
-            color: #dc3545;
+            color: #a71d2a;
+            transform: scale(1.1);
         }
 
         .modal-body {
