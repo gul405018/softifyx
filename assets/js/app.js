@@ -1563,28 +1563,31 @@
         }
 
         async function resetUserPassword() {
-            const userId = parseInt(document.getElementById('pwdUserSelect').value);
-            const newPwd = document.getElementById('pwdNew').value.trim();
-            const confPwd = document.getElementById('pwdConfirm').value.trim();
-            const errorMsg = document.getElementById('pwdErrorMsg');
-            
-            if(!userId) return alert('Please select a user first.');
-            
-            errorMsg.textContent = '';
-            
-            if(!newPwd || !confPwd) {
-                errorMsg.textContent = 'Enter and confirm new password!';
-                return;
-            }
-            if(newPwd !== confPwd) {
-                errorMsg.textContent = 'Passwords do not match!';
-                return;
-            }
-            
-            const userName = users.find(u => u.id == userId)?.username || 'User';
-            if(!confirm(`Are you sure you want to RESET the password for "${userName}"? The old password will be overwritten.`)) return;
-
             try {
+                const userSel = document.getElementById('pwdUserSelect');
+                if (!userSel) return alert('System Error: User list not found.');
+                
+                const userId = parseInt(userSel.value);
+                const newPwd = (document.getElementById('pwdNew')?.value || '').trim();
+                const confPwd = (document.getElementById('pwdConfirm')?.value || '').trim();
+                const errorMsg = document.getElementById('pwdErrorMsg');
+                
+                if (!userId || isNaN(userId)) return alert('Please select a user from the dropdown first.');
+                
+                if (errorMsg) errorMsg.textContent = '';
+                
+                if (!newPwd || !confPwd) {
+                    if (errorMsg) errorMsg.textContent = 'Enter and confirm new password!';
+                    return;
+                }
+                if (newPwd !== confPwd) {
+                    if (errorMsg) errorMsg.textContent = 'Passwords do not match!';
+                    return;
+                }
+                
+                const userName = (users || []).find(u => u.id == userId)?.username || 'User';
+                if (!confirm(`Are you sure you want to RESET the password for "${userName}"? The old password will be overwritten.`)) return;
+
                 const response = await fetch('api/admin.php?action=update_password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1593,12 +1596,21 @@
 
                 if (response.ok) {
                     alert(`Success: Password for "${userName}" has been reset successfully!`);
+                    // Clear the fields
+                    if(document.getElementById('pwdNew')) document.getElementById('pwdNew').value = '';
+                    if(document.getElementById('pwdConfirm')) document.getElementById('pwdConfirm').value = '';
+                    if(document.getElementById('pwdOld')) document.getElementById('pwdOld').value = '';
                     closeModal();
                 } else {
-                    alert('Error: Failed to reset password. Please try again.');
+                    const result = await response.json();
+                    alert('Server Error: ' + (result.error || 'Failed to reset password.'));
                 }
-            } catch (err) { alert('Sync Failed: ' + err.message); }
+            } catch (err) {
+                console.error('Password Reset Error:', err);
+                alert('System Error: ' + err.message);
+            }
         }
+        window.resetUserPassword = resetUserPassword;
 
         // --- FINANCIAL YEAR LOGIC --- //
 
@@ -2264,7 +2276,6 @@
         window.loadUserRightsForm = loadUserRightsForm;
         window.saveUserRights = saveUserRights;
         window.savePasswordSettings = savePasswordSettings;
-        window.resetUserPassword = resetUserPassword;
         window.initFinancialYearView = initFinancialYearView;
         window.selectFinancialYear = selectFinancialYear;
         window.selectFinancialYear = selectFinancialYear;
