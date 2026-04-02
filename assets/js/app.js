@@ -1440,14 +1440,31 @@
                     <td class="right-status" style="text-align: center; font-weight: 700; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 11px; padding: 12px 5px; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
                     <td style="text-align: center; padding: 5px; background: #fff !important;">
                         <input type="checkbox" class="editor-check" disabled 
+                            onclick="handleRightCheckboxClick(this, 'editor')"
                             style="width: 20px !important; height: 20px !important; cursor: not-allowed; opacity: 0.5; margin: 0; display: inline-block !important; visibility: visible !important;">
                     </td>
                     <td style="text-align: center; padding: 5px; background: #fff !important;">
                         <input type="checkbox" class="viewer-check" disabled 
+                            onclick="handleRightCheckboxClick(this, 'viewer')"
                             style="width: 20px !important; height: 20px !important; cursor: not-allowed; opacity: 0.5; margin: 0; display: inline-block !important; visibility: visible !important;">
                     </td>
                 </tr>`;
             });
+
+            // Mutual Exclusion Handler: Only one can be checked at a time (Editor OR Viewer)
+            window.handleRightCheckboxClick = function(checkbox, type) {
+                const row = checkbox.closest('tr');
+                const editorCb = row.querySelector('.editor-check');
+                const viewerCb = row.querySelector('.viewer-check');
+                
+                if (checkbox.checked) {
+                    if (type === 'editor') {
+                        viewerCb.checked = false;
+                    } else {
+                        editorCb.checked = false;
+                    }
+                }
+            };
 
             const urUserSelect = document.getElementById('urUserSelect');
             if(urUserSelect) urUserSelect.innerHTML = userOptions;
@@ -2129,12 +2146,17 @@
             // - If NOT found in user rights at all, let's not restrict unless we're sure it's a gated module
             if (!right) return;
 
-            // - If NOT Editor (can_edit=0) -> Restricted (Read-Only)
-            // - If FY Locked -> Restricted (Read-Only)
-            const isEditor = right && right.allowed && right.can_edit;
+            // - Editor (can_edit=1) HAS FULL ACCESS
+            // - Viewer (can_view=1) IS READ-ONLY
+            const isEditor = right.allowed && right.can_edit;
+            const isViewer = right.allowed && right.can_view;
             const isFYMismatched = window.isReadOnly;
 
+            // If user is Editor, they bypass restrictions UNLESS FY is mismatched
             if (isEditor && !isFYMismatched) return;
+            
+            // If user is NOT an Editor but IS a Viewer, they get read-only mode
+            // If user has NEITHER but somehow got here, restricted mode appy anyway
 
             // 4. APPLY RESTRICTIONS: Disable inputs & Hide Save Buttons
             const inputs = container.querySelectorAll('input, select, textarea');
@@ -2160,20 +2182,15 @@
                 if (!isNavigation && !isPrinting) {
                     const isAction = actionKeywords.some(kw => btnText.includes(kw) || btnHtml.includes(kw.toLowerCase()));
                     if (isAction || btn.classList.contains('btn-primary') || btn.classList.contains('btn-danger') || btn.classList.contains('btn-warning')) {
-                        btn.style.display = 'none';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        btn.style.pointerEvents = 'none';
                     }
                 }
             });
 
-            // 5. UI FEEDBACK: Add Read-Only Badge to Modal Header
-            const modalHeader = container.parentElement?.querySelector('.modal-header') || container.querySelector('.modal-header');
-            if (modalHeader && !modalHeader.querySelector('.readonly-badge')) {
-                const badge = document.createElement('span');
-                badge.className = 'readonly-badge';
-                badge.innerHTML = '<i class="fas fa-eye"></i> Read Only Mode';
-                badge.style.cssText = 'background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 11px; margin-left: 15px; font-weight: 700; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 5px;';
-                modalHeader.appendChild(badge);
-            }
+            // 5. REMOVED UI FEEDBACK MODULE AS REQUESTED (NO "READ ONLY" MESSAGE)
 
             const header = container.querySelector('.modal-header');
             if (header) {
