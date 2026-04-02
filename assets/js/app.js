@@ -582,7 +582,9 @@
                         <button class="btn btn-primary" onclick="addUser()" style="height: 42px; padding: 0 30px; font-weight: 600; border-radius: 10px;">Add User</button>
                         <button class="btn btn-secondary" onclick="closeModal()" style="height: 42px; padding: 0 30px; font-weight: 600; border-radius: 10px;">Cancel</button>
                     </div>
-                </div>`
+                </div>`,
+                false,
+                "User Logins"
             );
         }
 
@@ -669,7 +671,9 @@
                             <button class="btn btn-primary" onclick="updateUser(${userId})">Update</button>
                             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                         </div>
-                    </div>`
+                    </div>`,
+                    false,
+                    "User Logins"
                 );
             }
         }
@@ -788,7 +792,9 @@
                         <button class="btn btn-primary" onclick="addNewCompany()"><i class="fas fa-save"></i> Save Company</button>
                         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                     </div>
-                </div>`
+                </div>`,
+                false,
+                "List Of Companies"
             );
         }
 
@@ -1173,7 +1179,9 @@
                             <button class="btn btn-primary" onclick="saveCompanySettings()">Save</button>
                             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                         </div>
-                    </div>`
+                    </div>`,
+                    false,
+                    "My Company"
                 );
             });
 
@@ -1211,7 +1219,9 @@
                             <button class="btn btn-primary" onclick="saveLogoSettings()">Save</button>
                             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                         </div>
-                    </div>`
+                    </div>`,
+                    false,
+                    "My Logo"
                 );
             });
 
@@ -1304,7 +1314,9 @@
                                 </button>
                             </div>
                         </div>
-                    </div>`
+                    </div>`,
+                    false,
+                    "List Of Companies"
                 );
             });
 
@@ -1323,7 +1335,9 @@
 
                 openModal(
                     { icon: 'fa-users', text: 'User Logins' },
-                    renderUserTable()
+                    renderUserTable(),
+                    false,
+                    "User Logins"
                 );
             });
 
