@@ -433,19 +433,22 @@
             });
         }
 
-        function openModal(title, content, isWide = false) {
+        function openModal(title, content, isWide = false, moduleKey = null) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
             
+            // Use the provided moduleKey if available, otherwise fallback to title text for tagging
+            const dataModuleTag = moduleKey || title.text;
+            
             container.innerHTML = `
                 <div class="modal-header">
                     <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
                     <button class="modal-close" onclick="closeModal()">&times;</button>
                 </div>
-                <div class="modal-body" data-module="${title.text}">
+                <div class="modal-body" data-module="${dataModuleTag}">
                     ${content}
                 </div>
             `;
@@ -2101,14 +2104,31 @@
             if (userObj?.role === 'Admin') return;
 
             // 2. IDENTIFY MODULE: Look for data-module tag in body
-            const moduleTag = container.querySelector('[data-module]');
-            const moduleName = moduleTag ? moduleTag.getAttribute('data-module') : null;
+            const body = container.querySelector('.modal-body') || container;
+            const mTag = body.querySelector('[data-module]') || body;
+            let mName = mTag.getAttribute ? mTag.getAttribute('data-module') : null;
+            if (!mName && container.querySelector('h2')) {
+                mName = container.querySelector('h2').innerText.trim().replace(/^.*?\s/, '');
+            }
             
-            if (!moduleName || !window.currentUserRights) return;
+            if (!mName || !window.currentUserRights) return;
 
-            const right = window.currentUserRights[moduleName];
+            // Normalize lookup: Try direct and then case-insensitive
+            let right = window.currentUserRights[mName];
+            if (!right) {
+                const lowerName = mName.toLowerCase().trim();
+                for (let key in window.currentUserRights) {
+                    if (key.toLowerCase().trim() === lowerName) {
+                        right = window.currentUserRights[key];
+                        break;
+                    }
+                }
+            }
             
             // 3. LOGIC CHECK: 
+            // - If NOT found in user rights at all, let's not restrict unless we're sure it's a gated module
+            if (!right) return;
+
             // - If NOT Editor (can_edit=0) -> Restricted (Read-Only)
             // - If FY Locked -> Restricted (Read-Only)
             const isEditor = right && right.allowed && right.can_edit;
@@ -2219,9 +2239,12 @@
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
             try {
+                // IMPORTANT: Normalize module tracking for rights enforcement
+                const activeModuleKey = moduleName || titleText;
+                
                 // If moduleName is explicitly provided, check rights BEFORE any fetch to prevent loading
-                if (moduleName && !checkUserRights(moduleName)) {
-                    showAccessDenied(moduleName);
+                if (activeModuleKey && !checkUserRights(activeModuleKey)) {
+                    showAccessDenied(activeModuleKey);
                     return;
                 }
 
@@ -2245,7 +2268,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, isWide);
+                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
