@@ -65,6 +65,7 @@
 
         async function loadSavedData() {
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            currentUser = sessionData.username || "Administrator";
             if (!sessionData.company_id) return;
             const companyId = sessionData.company_id;
 
@@ -2125,13 +2126,6 @@
             applyGlobalCurrencySymbol(); // Hook into page load
             setupAutoBackupScheduler();
 
-            // Update Welcome Display
-            const sessionData = JSON.parse(session);
-            const welcomeUserDisplay = document.getElementById('welcomeUserDisplay');
-            if(welcomeUserDisplay && sessionData.username) {
-                welcomeUserDisplay.innerHTML = `<i class="fas fa-user-circle"></i> <span>Welcome ${sessionData.username}</span>`;
-            }
-            
             // Refresh Dashboard Content
             updateNames();
 
