@@ -1427,13 +1427,13 @@
                         ${itemName}
                     </td>
                     <td class="right-status" style="text-align: center; font-weight: 700; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 11px; padding: 12px 5px; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
-                    <td style="text-align: center; padding: 5px; background: #fff;">
+                    <td style="text-align: center; padding: 5px; background: #fff !important;">
                         <input type="checkbox" class="editor-check" disabled 
-                            style="width: 20px; height: 20px; cursor: not-allowed; opacity: 0.5; margin: 0; vertical-align: middle;">
+                            style="width: 20px !important; height: 20px !important; cursor: not-allowed; opacity: 0.5; margin: 0; display: inline-block !important; visibility: visible !important;">
                     </td>
-                    <td style="text-align: center; padding: 5px; background: #fff;">
+                    <td style="text-align: center; padding: 5px; background: #fff !important;">
                         <input type="checkbox" class="viewer-check" disabled 
-                            style="width: 20px; height: 20px; cursor: not-allowed; opacity: 0.5; margin: 0; vertical-align: middle;">
+                            style="width: 20px !important; height: 20px !important; cursor: not-allowed; opacity: 0.5; margin: 0; display: inline-block !important; visibility: visible !important;">
                     </td>
                 </tr>`;
             });
@@ -1493,24 +1493,41 @@
                 
                 const urUserSelect = document.getElementById('urUserSelect');
                 const selectedUserId = urUserSelect ? urUserSelect.value : null;
-                const userObj = users.find(u => u.id == selectedUserId);
-                const isAdmin = userObj && (userObj.username === 'Administrator' || userObj.role === 'Admin');
+                // Double-check users global variable
+                const currentUsersList = (typeof users !== 'undefined') ? users : [];
+                const userObj = currentUsersList.find(u => u.id == selectedUserId);
+                
+                // Force Admin Logic: Check by username or role
+                const isAdmin = (userObj && (userObj.username === 'Administrator' || userObj.role === 'Admin')) || (selectedUserId == 1);
 
                 document.querySelectorAll('#urTableBody tr').forEach(row => {
                     const rightNameRaw = row.getAttribute('data-right');
-                    const rightName = rightNameRaw ? rightNameRaw.trim() : "";
+                    const rightName = rightNameRaw ? rightNameRaw.trim().toLowerCase() : "";
                     const statusCell = row.querySelector('.right-status');
                     const editorCb = row.querySelector('.editor-check');
                     const viewerCb = row.querySelector('.viewer-check');
                     
-                    if (!statusCell || !editorCb || !viewerCb) return;
+                    if (!statusCell || !editorCb || !viewerCb) {
+                        console.error("Missing elements in row for", rightName);
+                        return;
+                    }
 
                     let data = { allowed: false, edit: false, view: false };
                     
                     // Normalizing rightsData lookup
-                    if (rightsData) {
+                    if (rightsData && Array.isArray(rightsData)) {
+                        const found = rightsData.find(r => r.module_name.trim().toLowerCase() === rightName);
+                        if (found) {
+                            data = {
+                                allowed: parseInt(found.is_allowed) === 1,
+                                edit: parseInt(found.can_edit) === 1,
+                                view: parseInt(found.can_view) === 1
+                            };
+                        }
+                    } else if (rightsData && typeof rightsData === 'object') {
+                        // Fallback for object-based rightsData
                         for (let mod in rightsData) {
-                            if (mod.trim() === rightName) {
+                            if (mod.trim().toLowerCase() === rightName) {
                                 data = rightsData[mod];
                                 break;
                             }
