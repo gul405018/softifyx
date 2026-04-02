@@ -21,7 +21,7 @@ try {
         $pdo->exec("ALTER TABLE users ADD COLUMN profile_photo LONGTEXT DEFAULT NULL");
     }
 
-    // NEW MIGRATION: Add can_edit and can_view columns to user_rights
+    // MIGRATION: Add can_edit and can_view columns to user_rights
     $stmt = $pdo->query("SHOW COLUMNS FROM user_rights LIKE 'can_edit'");
     if (!$stmt->fetch()) {
         $pdo->exec("ALTER TABLE user_rights ADD COLUMN can_edit TINYINT(1) DEFAULT 0");
@@ -30,7 +30,16 @@ try {
     if (!$stmt->fetch()) {
         $pdo->exec("ALTER TABLE user_rights ADD COLUMN can_view TINYINT(1) DEFAULT 0");
     }
-} catch (Exception $e) { /* Already exists or not supported */ }
+
+    // MIGRATION: Update users role enum to Admin/User and migrate old roles
+    try {
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('Admin', 'User') DEFAULT 'User'");
+        $pdo->exec("UPDATE users SET role = 'User' WHERE role NOT IN ('Admin', 'User')");
+    } catch (Exception $e) { /* Role enum already updated */ }
+} catch (Exception $e) { /* Final migration block end */ }
+
+// Explicitly set PDO error mode to Exception for robust error trapping
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'get_companies') {
@@ -136,60 +145,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'save_user') {
-        if (isset($data['id'])) {
-            $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, role = ?, status = ? WHERE id = ?");
-            $stmt->execute([$data['username'], $data['email'], $data['role'], $data['status'], $data['id']]);
-        } else {
-            $stmt = $pdo->prepare("INSERT INTO users (company_id, username, password, role, email) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$company_id, $data['username'], $data['password'], $data['role'], $data['email']]);
-            $newUserId = $pdo->lastInsertId();
-            
-            // AUTO-INITIALIZE RIGHTS based on role
-            // List of all modules (matching app.js explicitRights)
-            $modules = [
-                "My Company", "My Logo", "List Of Companies", "User Logins", "User Rights", "Passwords", "Financial Year", 
-                "Clear Transactions", "Currency", "BackUp Utility", "Chart of Accounts", "Customers", "Vendors/Suppliers", 
-                "Bank Accounts", "Accounts Opening Balances", "Chart Of Inventory", "Inventory Opening Balances", 
-                "Inventory Brands", "Inventory Locations", "Item Price Settings", "Item Sales Tax Rates", "Item Pre-Order Levels", 
-                "Item Cost Valuation Method", "Chart Of Services", "Voucher Posting Preferences", "Inventory Movement Settings", 
-                "Customer Regions", "Business Sectors", "Employees", "Jobs", "Purchase Orders", "Purchases (Sales Tax)", 
-                "Purchases (Non Tax)", "Purchases Return/Debit Notes", "Cash Payments", "Bank Payments", "Customer Follow-Up", 
-                "Quotations", "Sale Orders", "Delivery Challans", "Sales Tax Invoices", "Sale Invoices (Non Tax)", 
-                "Sale Return/Credit Notes", "Cash Receipts", "Bank Receipts", "Inward Gate Passes", "Outward Gate Passes", 
-                "Material Issue Notes", "Production Notes", "Inventory Transfers", "Add Inventory Adjustments", 
-                "Reduce Inventory Adjustments", "Send Ledger Summary", "Send Payment Reminder", "SMS Templates", 
-                "Bulk Messages", "Journal Notes", "General Journal Voucher", "Journal Report", "Print Voucher", 
-                "Product Serials Tracking", "Item Below Re-Order Level", "Purchase Order Tracking", "Sale Order Tracking", 
-                "Purchase Summary", "Purchase Register", "Party Purchase Summary", "Payments Reports", 
-                "Purchase Activity Report - Invoice Wise", "Purchase Activity Report - Party Wise", "Item Purchase Summary", 
-                "Item Purchase Analysis", "Accounts Payable Aging", "Material Consumption Report", "Production Report", 
-                "Sale Summary", "Sale Register", "Party Sale Summary", "Recovery/Receipts Reports", 
-                "Sale Activity Report - Invoice Wise", "Sale Activity Report - Party Wise", "Item Sale Summary", 
-                "Item Sale Analysis", "Services Analysis", "Accounts Receivable Aging", "View Inventory Ledgers", 
-                "Print Inventory Ledgers", "Item-Wise Profit/Loss", "Inventory Balances", "Job Ledgers", "View Account Ledger", 
-                "Print Account Ledger", "Cash & Bank Balances", "Customer Balances", "Vendor Balances", "Trial Balance", 
-                "Income Statement", "Balance Sheet"
-            ];
-            
-            $isAllowed = ($data['role'] === 'Admin') ? 1 : 0;
-            $canEdit = ($data['role'] === 'Admin') ? 1 : 0;
-            $canView = ($data['role'] === 'Admin') ? 1 : 0;
-            
-            $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed, can_edit, can_view) VALUES (?, ?, ?, ?, ?)");
-            foreach ($modules as $mod) {
-                $stmt->execute([$newUserId, $mod, $isAllowed, $canEdit, $canView]);
+        try {
+            if (isset($data['id'])) {
+                $status = $data['status'] ?? 'Active';
+                $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, role = ?, status = ? WHERE id = ?");
+                $stmt->execute([$data['username'], $data['email'], $data['role'], $status, $data['id']]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO users (company_id, username, password, role, email) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$company_id, $data['username'], $data['password'], $data['role'], $data['email']]);
+                $newUserId = $pdo->lastInsertId();
+                
+                // AUTO-INITIALIZE RIGHTS based on role
+                $modules = [
+                    "My Company", "My Logo", "List Of Companies", "User Logins", "User Rights", "Passwords", "Financial Year", 
+                    "Clear Transactions", "Currency", "BackUp Utility", "Chart of Accounts", "Customers", "Vendors/Suppliers", 
+                    "Bank Accounts", "Accounts Opening Balances", "Chart Of Inventory", "Inventory Opening Balances", 
+                    "Inventory Brands", "Inventory Locations", "Item Price Settings", "Item Sales Tax Rates", "Item Pre-Order Levels", 
+                    "Item Cost Valuation Method", "Chart Of Services", "Voucher Posting Preferences", "Inventory Movement Settings", 
+                    "Customer Regions", "Business Sectors", "Employees", "Jobs", "Purchase Orders", "Purchases (Sales Tax)", 
+                    "Purchases (Non Tax)", "Purchases Return/Debit Notes", "Cash Payments", "Bank Payments", "Customer Follow-Up", 
+                    "Quotations", "Sale Orders", "Delivery Challans", "Sales Tax Invoices", "Sale Invoices (Non Tax)", 
+                    "Sale Return/Credit Notes", "Cash Receipts", "Bank Receipts", "Inward Gate Passes", "Outward Gate Passes", 
+                    "Material Issue Notes", "Production Notes", "Inventory Transfers", "Add Inventory Adjustments", 
+                    "Reduce Inventory Adjustments", "Send Ledger Summary", "Send Payment Reminder", "SMS Templates", 
+                    "Bulk Messages", "Journal Notes", "General Journal Voucher", "Journal Report", "Print Voucher", 
+                    "Product Serials Tracking", "Item Below Re-Order Level", "Purchase Order Tracking", "Sale Order Tracking", 
+                    "Purchase Summary", "Purchase Register", "Party Purchase Summary", "Payments Reports", 
+                    "Purchase Activity Report - Invoice Wise", "Purchase Activity Report - Party Wise", "Item Purchase Summary", 
+                    "Item Purchase Analysis", "Accounts Payable Aging", "Material Consumption Report", "Production Report", 
+                    "Sale Summary", "Sale Register", "Party Sale Summary", "Recovery/Receipts Reports", 
+                    "Sale Activity Report - Invoice Wise", "Sale Activity Report - Party Wise", "Item Sale Summary", 
+                    "Item Sale Analysis", "Services Analysis", "Accounts Receivable Aging", "View Inventory Ledgers", 
+                    "Print Inventory Ledgers", "Item-Wise Profit/Loss", "Inventory Balances", "Job Ledgers", "View Account Ledger", 
+                    "Print Account Ledger", "Cash & Bank Balances", "Customer Balances", "Vendor Balances", "Trial Balance", 
+                    "Income Statement", "Balance Sheet"
+                ];
+                
+                $isAllowed = ($data['role'] === 'Admin') ? 1 : 0;
+                $canEdit = ($data['role'] === 'Admin') ? 1 : 0;
+                $canView = ($data['role'] === 'Admin') ? 1 : 0;
+                
+                $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed, can_edit, can_view) VALUES (?, ?, ?, ?, ?)");
+                foreach ($modules as $mod) {
+                    $stmt->execute([$newUserId, $mod, $isAllowed, $canEdit, $canView]);
+                }
             }
+            sendResponse(['status' => 'success']);
+        } catch (Exception $e) {
+            sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-        sendResponse(['status' => 'success']);
     }
     
     if ($action === 'save_rights') {
-        $pdo->prepare("DELETE FROM user_rights WHERE user_id = ?")->execute([$data['user_id']]);
-        $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed, can_edit, can_view) VALUES (?, ?, ?, ?, ?)");
-        foreach ($data['rights'] as $right) {
-            $stmt->execute([$data['user_id'], $right['module'], $right['allowed'], $right['can_edit'], $right['can_view']]);
+        try {
+            $pdo->prepare("DELETE FROM user_rights WHERE user_id = ?")->execute([$data['user_id']]);
+            $stmt = $pdo->prepare("INSERT INTO user_rights (user_id, module_name, is_allowed, can_edit, can_view) VALUES (?, ?, ?, ?, ?)");
+            foreach ($data['rights'] as $right) {
+                $stmt->execute([$data['user_id'], $right['module'], $right['allowed'], $right['can_edit'], $right['can_view']]);
+            }
+            sendResponse(['status' => 'success']);
+        } catch (Exception $e) {
+            sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-        sendResponse(['status' => 'success']);
     }
 
     if ($action === 'update_password') {
