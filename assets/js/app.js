@@ -1426,14 +1426,14 @@
                     <td style="padding: 10px 15px; color: #334155; font-size: 13.5px; font-weight: 500;">
                         ${itemName}
                     </td>
-                    <td class="right-status" style="text-align: center; font-weight: 700; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 11px; padding: 10px 5px;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
-                    <td style="text-align: center; padding: 5px;">
+                    <td class="right-status" style="text-align: center; font-weight: 700; color: #ef4444; cursor: pointer; user-select: none; transition: all 0.2s; font-size: 11px; padding: 12px 5px; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9;" ondblclick="toggleRightStatus(this)">Not Allowed</td>
+                    <td style="text-align: center; padding: 5px; background: #fff;">
                         <input type="checkbox" class="editor-check" disabled 
-                            style="width: 18px; height: 18px; cursor: not-allowed; appearance: checkbox !important; -webkit-appearance: checkbox !important; display: inline-block !important; opacity: 0.4;">
+                            style="width: 20px; height: 20px; cursor: not-allowed; opacity: 0.5; margin: 0; vertical-align: middle;">
                     </td>
-                    <td style="text-align: center; padding: 5px;">
+                    <td style="text-align: center; padding: 5px; background: #fff;">
                         <input type="checkbox" class="viewer-check" disabled 
-                            style="width: 18px; height: 18px; cursor: not-allowed; appearance: checkbox !important; -webkit-appearance: checkbox !important; display: inline-block !important; opacity: 0.4;">
+                            style="width: 20px; height: 20px; cursor: not-allowed; opacity: 0.5; margin: 0; vertical-align: middle;">
                     </td>
                 </tr>`;
             });
@@ -1491,17 +1491,31 @@
                     };
                 });
                 
-                const selectedUserId = document.getElementById('urUserSelect').value;
+                const urUserSelect = document.getElementById('urUserSelect');
+                const selectedUserId = urUserSelect ? urUserSelect.value : null;
                 const userObj = users.find(u => u.id == selectedUserId);
                 const isAdmin = userObj && (userObj.username === 'Administrator' || userObj.role === 'Admin');
 
                 document.querySelectorAll('#urTableBody tr').forEach(row => {
-                    const rightName = row.getAttribute('data-right');
+                    const rightNameRaw = row.getAttribute('data-right');
+                    const rightName = rightNameRaw ? rightNameRaw.trim() : "";
                     const statusCell = row.querySelector('.right-status');
                     const editorCb = row.querySelector('.editor-check');
                     const viewerCb = row.querySelector('.viewer-check');
                     
-                    let data = (rightsData && rightsData[rightName]) ? rightsData[rightName] : { allowed: false, edit: false, view: false };
+                    if (!statusCell || !editorCb || !viewerCb) return;
+
+                    let data = { allowed: false, edit: false, view: false };
+                    
+                    // Normalizing rightsData lookup
+                    if (rightsData) {
+                        for (let mod in rightsData) {
+                            if (mod.trim() === rightName) {
+                                data = rightsData[mod];
+                                break;
+                            }
+                        }
+                    }
                     
                     // FORCE ALLOWED FOR ADMINS
                     if (isAdmin) {
@@ -1520,8 +1534,9 @@
                         statusCell.textContent = 'Not Allowed';
                         statusCell.style.color = '#ef4444';
                         [editorCb, viewerCb].forEach(cb => {
+                            cb.checked = false;
                             cb.disabled = true;
-                            cb.style.opacity = '0.4';
+                            cb.style.opacity = '0.5';
                             cb.style.cursor = 'not-allowed';
                         });
                     }

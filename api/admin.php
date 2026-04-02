@@ -58,10 +58,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $user = $uStmt->fetch();
         
         $rights = [];
-        // Note: Frontend will ALSO force Admin rights to ensure they are ALWAYS 1 in UI
         $stmt = $pdo->prepare("SELECT * FROM user_rights WHERE user_id = ?");
         $stmt->execute([$_GET['user_id']]);
         $rights = $stmt->fetchAll();
+
+        // Admin Override Logic: If user is Administrator or has 'Admin' role, return all as allowed
+        if ($user && ($user['username'] === 'Administrator' || $user['role'] === 'Admin')) {
+            // We can either return the DB ones or overwrite them on the fly
+            // To be 100% sure the UI shows them as allowed, we return virtual 1s
+            foreach ($rights as &$r) {
+                $r['is_allowed'] = 1;
+                $r['can_edit'] = 1;
+                $r['can_view'] = 1;
+            }
+        }
         
         sendResponse($rights);
     }
