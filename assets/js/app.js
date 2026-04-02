@@ -1529,15 +1529,14 @@
 
         async function savePasswordSettings() {
             const userId = parseInt(document.getElementById('pwdUserSelect').value);
-            const oldPwd = document.getElementById('pwdOld').value.trim();
             const newPwd = document.getElementById('pwdNew').value.trim();
             const confPwd = document.getElementById('pwdConfirm').value.trim();
             const errorMsg = document.getElementById('pwdErrorMsg');
             
             errorMsg.textContent = '';
             
-            if(!oldPwd || !newPwd || !confPwd) {
-                errorMsg.textContent = 'All fields are required!';
+            if(!newPwd || !confPwd) {
+                errorMsg.textContent = 'Both New Password and Re-Type fields are required!';
                 return;
             }
             if(newPwd !== confPwd) {
