@@ -150,6 +150,14 @@
                             };
                         });
                     }
+                    
+                    // FORCE ADMIN RIGHTS: Ensure Administrator and Admins always have everything
+                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                    const userObj = (users || []).find(u => u.username === session.username);
+                    if (session.username === 'Administrator' || session.role === 'Admin' || userObj?.role === 'Admin') {
+                        // We will allow checkUserRights to handle this naturally by checking role first
+                        // but we also pre-fill common modules just in case
+                    }
                 }
 
                 // 8. Financial Years Sync
@@ -437,7 +445,7 @@
                     <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
                     <button class="modal-close" onclick="closeModal()">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" data-module="${title.text}">
                     ${content}
                 </div>
             `;
@@ -2085,35 +2093,40 @@
         function applyViewerRestrictions(container) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             
+            // 1. ADMIN BYPASS: Full access for Administrators
             if (session.username === 'Administrator') return;
             if (session.role === 'Admin') return;
             
-            const userObj = (users || []).find(u => u.username === session.username);
+            const userObj = (window.users || []).find(u => u.username === session.username);
             if (userObj?.role === 'Admin') return;
 
-            // Find module name from container
+            // 2. IDENTIFY MODULE: Look for data-module tag in body
             const moduleTag = container.querySelector('[data-module]');
             const moduleName = moduleTag ? moduleTag.getAttribute('data-module') : null;
             
             if (!moduleName || !window.currentUserRights) return;
 
             const right = window.currentUserRights[moduleName];
+            
+            // 3. LOGIC CHECK: 
+            // - If NOT Editor (can_edit=0) -> Restricted (Read-Only)
+            // - If FY Locked -> Restricted (Read-Only)
             const isEditor = right && right.allowed && right.can_edit;
             const isFYMismatched = window.isReadOnly;
 
             if (isEditor && !isFYMismatched) return;
 
-            // Apply restrictions if NOT an Editor or if FY is mismatched
+            // 4. APPLY RESTRICTIONS: Disable inputs & Hide Save Buttons
             const inputs = container.querySelectorAll('input, select, textarea');
             inputs.forEach(el => {
                 el.disabled = true;
-                el.style.backgroundColor = '#f1f5f9';
+                el.style.backgroundColor = '#f8fafc';
                 el.style.cursor = 'not-allowed';
             });
 
             const actionKeywords = [
                 'Save', 'Add', 'Update', 'Delete', 'Clear', 'Restore', 'Backup', 
-                'Post', 'Record', 'New', 'Remove', 'Edit', 'Change'
+                'Post', 'Record', 'New', 'Remove', 'Edit', 'Change', 'Sync'
             ];
             
             const buttons = container.querySelectorAll('button');
@@ -2131,6 +2144,16 @@
                     }
                 }
             });
+
+            // 5. UI FEEDBACK: Add Read-Only Badge to Modal Header
+            const modalHeader = container.parentElement?.querySelector('.modal-header') || container.querySelector('.modal-header');
+            if (modalHeader && !modalHeader.querySelector('.readonly-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'readonly-badge';
+                badge.innerHTML = '<i class="fas fa-eye"></i> Read Only Mode';
+                badge.style.cssText = 'background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 11px; margin-left: 15px; font-weight: 700; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 5px;';
+                modalHeader.appendChild(badge);
+            }
 
             const header = container.querySelector('.modal-header');
             if (header) {
