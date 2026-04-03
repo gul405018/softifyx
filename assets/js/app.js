@@ -2695,12 +2695,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('mainAccountType').value = main.name;
                 if(compSelect) {
                     compSelect.value = main.component;
-                    compSelect.disabled = true; // Lock for existing accounts
                 }
             }
+            // Lock fields on select
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
+            if(compSelect) compSelect.disabled = true;
+
             renderCOASubList();
-            resetSubFormFieldsOnly();
-            resetListForm();
+            
+            // Auto-select first sub-account if available
+            const subList = document.getElementById('subAccountList');
+            if (subList && subList.options.length > 0) {
+                subList.value = subList.options[0].value;
+                onSubAccountSelect(subList.value);
+            } else {
+                resetSubFormFieldsOnly();
+                renderCOAListList();
+                resetListForm();
+            }
         }
 
         function resetSubFormFieldsOnly() {
@@ -2726,9 +2739,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ code, name: mainName, component })
                 });
                 if (response.ok) {
+                    const resData = await response.json();
                     alert('Main account saved and synchronized!');
-                    closeModal();
-                    window.location.reload();
+                    
+                    // Local check/update
+                    const idx = coaMain.findIndex(m => m.code == code);
+                    if(idx > -1) coaMain[idx] = { ...coaMain[idx], name: mainName, component };
+                    else coaMain.push({ id: resData.id, code, name: mainName, component });
+                    
+                    renderCOAMainList();
+                    resetMainForm(); // Back to locked state
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -2753,16 +2773,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetMainForm() {
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').value = '';
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').value = '';
+        function resetMainForm(generate = false) {
+            if(document.getElementById('mainTypeCode')) {
+                document.getElementById('mainTypeCode').value = '';
+                document.getElementById('mainTypeCode').disabled = !generate;
+            }
+            if(document.getElementById('mainAccountType')) {
+                document.getElementById('mainAccountType').value = '';
+                document.getElementById('mainAccountType').disabled = !generate;
+            }
             if(document.getElementById('mainAccountList')) document.getElementById('mainAccountList').value = '';
+            
             const compSelect = document.getElementById('financialStatementComponent');
             if(compSelect) {
                 compSelect.value = 'current assets';
-                compSelect.disabled = false; // Re-enable for new entry
+                compSelect.disabled = !generate;
             }
-            selectedMainCode = null;
+            
+            if(!generate) selectedMainCode = null;
             renderCOASubList();
         }
 
@@ -2782,8 +2810,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountCode').value = sub.code;
                 document.getElementById('subAccountType').value = sub.name;
             }
+            // Lock fields on select
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = true;
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
+
             renderCOAListList();
-            if(typeof resetListForm === 'function') resetListForm();
+            
+            // Auto-select first list-account if available
+            const listList = document.getElementById('listAccountList');
+            if (listList && listList.options.length > 0) {
+                listList.value = listList.options[0].value;
+                onListAccountSelect(listList.value);
+            } else {
+                resetListForm();
+            }
         }
 
         async function saveCOASub() {
@@ -2805,9 +2845,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (response.ok) {
+                    const resData = await response.json();
                     alert('Sub account saved and synchronized!');
-                    closeModal();
-                    window.location.reload();
+                    
+                    // Local update
+                    const idx = coaSub.findIndex(s => s.code == code);
+                    if(idx > -1) coaSub[idx] = { ...coaSub[idx], name: subName };
+                    else coaSub.push({ id: resData.id, mainCode: selectedMainCode, code, name: subName });
+
+                    renderCOASubList();
+                    resetSubForm(); // Back to locked
                 }
             } catch (err) { alert("Save Failed."); }
         }
@@ -2830,10 +2877,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetSubForm(generate = false) {
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').value = '';
+            if(document.getElementById('subAccountType')) {
+                document.getElementById('subAccountType').value = '';
+                document.getElementById('subAccountType').disabled = !generate;
+            }
             if(document.getElementById('subAccountList')) document.getElementById('subAccountList').value = '';
-            selectedSubCode = null;
             
+            if(!generate) selectedSubCode = null;
+            
+            if(document.getElementById('subAccountCode')) {
+                document.getElementById('subAccountCode').disabled = !generate;
+            }
+
             // Only generate code if explicitly requested (clicked Add)
             if (generate && selectedMainCode) {
                 const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
@@ -2870,6 +2925,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('accountCode').value = acc.code;
                 document.getElementById('accountName').value = acc.name;
             }
+            // Lock fields on select
+            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = true;
+            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = true;
         }
 
         async function saveCOAList() {
@@ -2891,9 +2949,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ sub_id: subId, code, name: listName })
                 });
                 if (response.ok) {
+                    const resData = await response.json();
                     alert('Account entry saved and synchronized!');
-                    closeModal();
-                    window.location.reload();
+                    
+                    // Local update
+                    const idx = coaList.findIndex(l => l.code == code);
+                    if(idx > -1) coaList[idx] = { ...coaList[idx], name: listName };
+                    else coaList.push({ id: resData.id, subCode: selectedSubCode, code, name: listName });
+
+                    renderCOAListList();
+                    resetListForm(); // Back to locked
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -2908,9 +2973,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetListForm(generate = false) {
-            if(document.getElementById('accountName')) document.getElementById('accountName').value = '';
+            if(document.getElementById('accountName')) {
+                document.getElementById('accountName').value = '';
+                document.getElementById('accountName').disabled = !generate;
+            }
             if(document.getElementById('listAccountList')) document.getElementById('listAccountList').value = '';
             
+            if(document.getElementById('accountCode')) {
+                document.getElementById('accountCode').disabled = !generate;
+            }
+
             // Only generate code if explicitly requested (clicked Add)
             if (generate && selectedSubCode) {
                 const siblings = coaList.filter(l => l.subCode == selectedSubCode);

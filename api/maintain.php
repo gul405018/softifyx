@@ -31,33 +31,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($data['id'])) {
             $stmt = $pdo->prepare("UPDATE coa_main SET code = ?, name = ?, component = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['component'], $data['id']]);
+            $id = $data['id'];
         } else {
             $stmt = $pdo->prepare("INSERT INTO coa_main (company_id, code, name, component) VALUES (?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['code'], $data['name'], $data['component']]);
+            $id = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
+        sendResponse(['status' => 'success', 'id' => $id]);
     }
     
     if ($action === 'save_coa_sub') {
         if (isset($data['id'])) {
             $stmt = $pdo->prepare("UPDATE coa_sub SET code = ?, name = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['id']]);
+            $id = $data['id'];
         } else {
             $stmt = $pdo->prepare("INSERT INTO coa_sub (company_id, main_id, code, name) VALUES (?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['main_id'], $data['code'], $data['name']]);
+            $id = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
+        sendResponse(['status' => 'success', 'id' => $id]);
     }
 
     if ($action === 'save_coa_list') {
         if (isset($data['id'])) {
             $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['id']]);
+            $id = $data['id'];
         } else {
             $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
+            $id = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
+        sendResponse(['status' => 'success', 'id' => $id]);
     }
 }
 
