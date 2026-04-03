@@ -2669,15 +2669,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const list = document.getElementById('mainAccountList');
                 if (list) {
                     clearInterval(checkAndRender);
+                    // Harden: Force lock everything immediately
+                    lockAllCOAFields();
                     renderCOAMainList();
-                    resetMainForm();
-                    resetSubForm();
-                    resetListForm();
+                    resetMainForm(false);
+                    resetSubForm(false);
+                    resetListForm(false);
                 } else if (++retries >= maxRetries) {
                     clearInterval(checkAndRender);
                     console.error("COA: Failed to find mainAccountList.");
                 }
             }, 100);
+        }
+
+        function lockAllCOAFields() {
+            const container = document.getElementById('coaContainer');
+            if (!container) return;
+            const inputs = container.querySelectorAll('input, select');
+            inputs.forEach(el => {
+                if (el.id !== 'mainAccountList' && el.id !== 'subAccountList' && el.id !== 'listAccountList') {
+                    el.disabled = true;
+                    el.readOnly = true;
+                    el.style.background = '#f8fafc';
+                }
+            });
+        }
+
+        async function refreshCOAData() {
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            const cb = `_cb=${Date.now()}`;
+            try {
+                const [mRes, sRes, lRes] = await Promise.all([
+                    fetch(`api/maintain.php?action=get_coa_main&company_id=${companyId}&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_sub&company_id=${companyId}&main_id=ALL&${cb}`),
+                    fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&sub_id=ALL&${cb}`)
+                ]);
+                if (mRes.ok) coaMain = await mRes.json();
+                if (sRes.ok) coaSub = await sRes.json();
+                if (lRes.ok) coaList = await lRes.json();
+                
+                renderCOAMainList();
+                renderCOASubList();
+                renderCOAListList();
+            } catch (err) { console.error('COA Refresh Error:', err); }
         }
 
         function renderCOAMainList() {
@@ -2732,9 +2767,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ code, name: mainName, component })
                 });
                 if (response.ok) {
-                    alert('Main account saved and synchronized!');
-                    closeModal();
-                    window.location.reload();
+                    alert('Main account saved successfully!');
+                    await refreshCOAData();
+                    resetMainForm(false); 
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -2834,9 +2869,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (response.ok) {
-                    alert('Sub account saved and synchronized!');
-                    closeModal();
-                    window.location.reload();
+                    alert('Sub account saved successfully!');
+                    await refreshCOAData();
+                    resetSubForm(false); 
                 }
             } catch (err) { alert("Save Failed."); }
         }
@@ -2957,9 +2992,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ sub_id: subId, code, name: listName })
                 });
                 if (response.ok) {
-                    alert('Account entry saved and synchronized!');
-                    closeModal();
-                    window.location.reload();
+                    alert('Account entry saved successfully!');
+                    await refreshCOAData();
+                    resetListForm(false);
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
