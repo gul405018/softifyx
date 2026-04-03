@@ -2799,7 +2799,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const list = document.getElementById('subAccountList');
             if(!list) return;
             if(!selectedMainCode) { list.innerHTML = ''; return; }
-            const filtered = coaSub.filter(s => s.mainCode == selectedMainCode);
+            
+            const main = coaMain.find(m => m.code == selectedMainCode);
+            if(!main) { list.innerHTML = ''; return; }
+            
+            const filtered = coaSub.filter(s => s.main_id == main.id);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
 
@@ -2851,7 +2855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Local update
                     const idx = coaSub.findIndex(s => s.code == code);
                     if(idx > -1) coaSub[idx] = { ...coaSub[idx], name: subName };
-                    else coaSub.push({ id: resData.id, mainCode: selectedMainCode, code, name: subName });
+                    else coaSub.push({ id: resData.id, main_id: main.id, code, name: subName });
 
                     renderCOASubList();
                     resetSubForm(); // Back to locked
@@ -2891,7 +2895,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Only generate code if explicitly requested (clicked Add)
             if (generate && selectedMainCode) {
-                const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
+                const main = coaMain.find(m => m.code == selectedMainCode);
+                const siblings = main ? coaSub.filter(s => s.main_id == main.id) : [];
                 let nextNum = 1;
                 if(siblings.length > 0) {
                     const lastCodes = siblings.map(s => {
@@ -2915,7 +2920,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const list = document.getElementById('listAccountList');
             if(!list) return;
             if(!selectedSubCode) { list.innerHTML = ''; return; }
-            const filtered = coaList.filter(l => l.subCode == selectedSubCode);
+            
+            const sub = coaSub.find(s => s.code == selectedSubCode);
+            if(!sub) { list.innerHTML = ''; return; }
+            
+            const filtered = coaList.filter(l => l.sub_id == sub.id);
             list.innerHTML = filtered.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
         }
 
@@ -2955,7 +2964,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Local update
                     const idx = coaList.findIndex(l => l.code == code);
                     if(idx > -1) coaList[idx] = { ...coaList[idx], name: listName };
-                    else coaList.push({ id: resData.id, subCode: selectedSubCode, code, name: listName });
+                    else coaList.push({ id: resData.id, sub_id: sub.id, code, name: listName });
 
                     renderCOAListList();
                     resetListForm(); // Back to locked
@@ -2985,7 +2994,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Only generate code if explicitly requested (clicked Add)
             if (generate && selectedSubCode) {
-                const siblings = coaList.filter(l => l.subCode == selectedSubCode);
+                const sub = coaSub.find(s => s.code == selectedSubCode);
+                const siblings = sub ? coaList.filter(l => l.sub_id == sub.id) : [];
                 let nextNum = 1;
                 if(siblings.length > 0) {
                     const lastCodes = siblings.map(l => {

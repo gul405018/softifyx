@@ -12,14 +12,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     
     if ($action === 'get_coa_sub' && isset($_GET['main_id'])) {
-        $stmt = $pdo->prepare("SELECT * FROM coa_sub WHERE main_id = ? AND company_id = ? ORDER BY code ASC");
-        $stmt->execute([$_GET['main_id'], $company_id]);
+        if ($_GET['main_id'] === 'ALL') {
+            $stmt = $pdo->prepare("SELECT * FROM coa_sub WHERE company_id = ? ORDER BY code ASC");
+            $stmt->execute([$company_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM coa_sub WHERE main_id = ? AND company_id = ? ORDER BY code ASC");
+            $stmt->execute([$_GET['main_id'], $company_id]);
+        }
         sendResponse($stmt->fetchAll());
     }
     
     if ($action === 'get_coa_list' && isset($_GET['sub_id'])) {
-        $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE sub_id = ? AND company_id = ? ORDER BY code ASC");
-        $stmt->execute([$_GET['sub_id'], $company_id]);
+        if ($_GET['sub_id'] === 'ALL') {
+            $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE company_id = ? ORDER BY code ASC");
+            $stmt->execute([$company_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE sub_id = ? AND company_id = ? ORDER BY code ASC");
+            $stmt->execute([$_GET['sub_id'], $company_id]);
+        }
         sendResponse($stmt->fetchAll());
     }
 }
