@@ -2672,6 +2672,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Harden: Force lock everything immediately
                     lockAllCOAFields();
                     renderCOAMainList();
+                    // Explicitly pass false to lock on load
                     resetMainForm(false);
                     resetSubForm(false);
                     resetListForm(false);
@@ -2794,7 +2795,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetMainForm(isAdd = false) {
+        function resetMainForm(isAdd = true) {
             const codeEl = document.getElementById('mainTypeCode');
             const nameEl = document.getElementById('mainAccountType');
             const compSelect = document.getElementById('financialStatementComponent');
@@ -2893,7 +2894,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetSubForm(generate = false) {
+        function resetSubForm(generate = true) {
             const nameEl = document.getElementById('subAccountType');
             const codeEl = document.getElementById('subAccountCode');
             const listEl = document.getElementById('subAccountList');
@@ -2939,7 +2940,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             renderCOAListList();
-            resetListForm();
+            resetListForm(false); // Explicit lock
         }
 
         // List of Accounts
@@ -3008,7 +3009,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetListForm(generate = false) {
+        function resetListForm(generate = true) {
             const nameEl = document.getElementById('accountName');
             const codeEl = document.getElementById('accountCode');
             const listEl = document.getElementById('listAccountList');
