@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
-
+    if ($action === 'save_coa_main') {
         $status = 'success';
         $newId = null;
         if (isset($data['id'])) {
@@ -50,7 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newId = $pdo->lastInsertId();
         }
         sendResponse(['status' => $status, 'id' => $newId]);
-    
+    }
+
     if ($action === 'save_coa_sub') {
         $status = 'success';
         $newId = null;
