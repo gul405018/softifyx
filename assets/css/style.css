@@ -803,17 +803,31 @@
             z-index: 50000;
         }
 
-        .modal-overlay.active {
+        .modal-overlay.active,
+        .sub-modal-overlay.active {
             display: flex;
+        }
+
+        .sub-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 60000;
         }
 
         .modal-container {
             background: #FFFFFF;
             border-radius: 10px;
             padding: 20px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 85vh;
+            max-width: 800px; /* Increased from 600px */
+            width: 95%;
+            max-height: 90vh;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             position: relative;
             animation: modalFadeIn 0.2s ease;
@@ -822,6 +836,12 @@
             flex-direction: column;
             border: 2px solid #1f4668;
             transition: max-width 0.3s ease;
+        }
+
+        .sub-modal-container {
+            max-width: 800px;
+            width: 90%;
+            z-index: 60001;
         }
 
         .modal-container.modal-wide {

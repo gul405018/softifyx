@@ -433,20 +433,22 @@
             });
         }
 
-        function openModal(title, content, isWide = false, moduleKey = null) {
-            const overlay = document.getElementById('modalOverlay');
-            const container = document.getElementById('modalContainer');
+        function openModal(title, content, isWide = false, moduleKey = null, isSubModal = false) {
+            const overlayId = isSubModal ? 'subModalOverlay' : 'modalOverlay';
+            const containerId = isSubModal ? 'subModalContainer' : 'modalContainer';
+            const overlay = document.getElementById(overlayId);
+            const container = document.getElementById(containerId);
             
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
             
-            // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
+            const closeCall = isSubModal ? 'closeModal(true)' : 'closeModal()';
             
             container.innerHTML = `
                 <div class="modal-header">
                     <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
-                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                    <button class="modal-close" onclick="${closeCall}">&times;</button>
                 </div>
                 <div class="modal-body" data-module="${dataModuleTag}">
                     ${content}
@@ -454,15 +456,12 @@
             `;
             
             overlay.classList.add('active');
-
-            // Apply Viewer Restrictions if necessary
-            setTimeout(() => {
-                applyViewerRestrictions(container);
-            }, 50);
+            setTimeout(() => applyViewerRestrictions(container), 50);
         }
 
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
+        function closeModal(isSubModal = false) {
+            const overlayId = isSubModal ? 'subModalOverlay' : 'modalOverlay';
+            document.getElementById(overlayId).classList.remove('active');
         }
 
         function showInventoryDetails() {
@@ -2274,7 +2273,7 @@
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false, isSubModal = false) {
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
@@ -2290,9 +2289,6 @@
                 if (res.ok) {
                     let html = await res.text();
                     
-                    // --- AUTOMATED RIGHTS CHECK FOR POPUPS ---
-                    // Create a temporary element to parse the HTML and check for [data-module]
-                    // This is a fallback if moduleName wasn't passed to the function
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     const moduleTag = tempDiv.querySelector('[data-module]');
@@ -2305,7 +2301,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
+                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey, isSubModal);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -2334,7 +2330,7 @@
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
                         '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
-                        isWide
+                        isWide, null, isSubModal
                     );
                 }
             } catch (err) {
@@ -3359,7 +3355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const companyId = sessionData.company_id || 1;
 
             try {
-                // 1. Fetch Regions, Sectors, Employees first for dropdowns
+                // 1. Fetch auxiliary data
                 const [regRes, secRes, empRes] = await Promise.all([
                     fetch(`api/maintain.php?action=get_regions&company_id=${companyId}`),
                     fetch(`api/maintain.php?action=get_sectors&company_id=${companyId}`),
@@ -3370,13 +3366,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 businessSectors = await secRes.json();
                 employees = await empRes.json();
 
-                // 2. Populate Dropdowns in Customer Form
                 populateCustomerDropdowns();
 
-                // 3. Find Customers Main Account from coaMain
+                // 2. Load COA Data if not already present
+                if (coaMain.length === 0) await loadSavedData();
+
+                // 3. Populate Customer Types from coaSub
                 const custMain = coaMain.find(m => m.code == CUSTOMER_MAIN_CODE);
                 if (custMain) {
-                    // Filter coaSub for this main account
                     const subList = coaSub.filter(s => s.main_id == custMain.id);
                     list.innerHTML = subList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                     
@@ -3636,17 +3633,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.resetMainRegionForm = function(gen = false) {
             if(!gen) selectedMainRegId = null;
-            document.getElementById('mainRegionName').value = '';
-            document.getElementById('mainRegionName').disabled = !gen;
-            if(gen) document.getElementById('mainRegionName').focus();
+            const el = document.getElementById('mainRegionName');
+            if(el) {
+                el.value = '';
+                el.disabled = !gen;
+                if(gen) el.focus();
+            }
         };
 
         window.onSubRegionSelect = function(id) {
             selectedSubRegId = id;
             const r = regions.find(x => x.id == id);
             if(r) {
-                document.getElementById('subRegionName').value = r.name;
-                document.getElementById('subRegionName').disabled = false;
+                const el = document.getElementById('subRegionName');
+                if(el) {
+                    el.value = r.name;
+                    el.disabled = false;
+                }
             }
         };
 
@@ -3713,8 +3716,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.resetSectorForm = function(gen = false) {
             if(!gen) selectedSectorId = null;
-            document.getElementById('sectorName').value = '';
-            document.getElementById('sectorName').disabled = !gen;
+            const el = document.getElementById('sectorName');
+            if(el) {
+                el.value = '';
+                el.disabled = !gen;
+                if(gen) el.focus();
+            }
         };
 
         // --- EMPLOYEES LOGIC ---
@@ -3792,7 +3799,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fields.forEach(fid => {
                 const el = document.getElementById(fid);
                 if(el) {
-                    el.value = fid === 'empDept' ? 'None' : '';
+                    el.value = (fid === 'empDept' && gen) ? 'None' : '';
                     el.disabled = !gen;
                 }
             });
@@ -3800,5 +3807,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(chk) {
                 chk.checked = false;
                 chk.disabled = !gen;
+            }
+            if(gen) {
+                const nameEl = document.getElementById('empName');
+                if(nameEl) nameEl.focus();
             }
         };
