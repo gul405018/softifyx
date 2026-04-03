@@ -2811,7 +2811,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 compSelect.disabled = !generate;
             }
             
-            if(!generate) selectedMainCode = null;
+            if(generate) {
+                // If adding new, clear selection so it inserts instead of updates
+                selectedMainCode = null;
+            } else {
+                selectedMainCode = null;
+            }
             renderCOASubList();
         }
 
@@ -2942,7 +2947,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if(document.getElementById('subAccountList')) document.getElementById('subAccountList').value = '';
             
-            if(!generate) selectedSubCode = null;
+            if(generate) {
+                selectedSubCode = null;
+            } else {
+                selectedSubCode = null;
+            }
             
             if(document.getElementById('subAccountCode')) {
                 document.getElementById('subAccountCode').disabled = !generate;
@@ -3078,7 +3087,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('accountName').value = '';
                 document.getElementById('accountName').disabled = !generate;
             }
-            if(document.getElementById('listAccountList')) document.getElementById('listAccountList').value = '';
+            if(document.getElementById('listAccountList')) {
+                if(!generate) {
+                    document.getElementById('listAccountList').value = '';
+                } else {
+                    document.getElementById('listAccountList').selectedIndex = -1; // Deselect to allow insert
+                }
+            }
             
             if(document.getElementById('accountCode')) {
                 document.getElementById('accountCode').disabled = !generate;
