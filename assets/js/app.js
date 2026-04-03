@@ -2727,23 +2727,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const mainName = document.getElementById('mainAccountType').value.trim();
             const component = document.getElementById('financialStatementComponent').value;
             
-            if(!code || !mainName) return alert("Code and Name are required!");
+            if(!code || !mainName) return alert("Code aur Name dena zaroori hai!");
             
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
+
+            const payloadData = { code, name: mainName, component };
+            const idx = coaMain.findIndex(m => m.code == code);
+            if (idx > -1) {
+                payloadData.id = coaMain[idx].id;
+            }
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_main&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code, name: mainName, component })
+                    body: JSON.stringify(payloadData)
                 });
                 if (response.ok) {
                     const resData = await response.json();
-                    alert('Main account saved and synchronized!');
+                    alert('Main account save aur update ho gaya!');
                     
                     // Local check/update
-                    const idx = coaMain.findIndex(m => m.code == code);
                     if(idx > -1) {
                         coaMain[idx] = { ...coaMain[idx], name: mainName, component };
                     } else {
@@ -2765,11 +2770,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Strict Deletion Order: Check for Sub Accounts
             const hasSubAccounts = coaSub.some(s => String(s.main_id) === String(main.id));
             if (hasSubAccounts) {
-                alert("Cannot delete Main Account Type! There are still Sub Account Types in this category. Please delete all Sub Accounts first.");
+                alert("Main Account delete nahi ho sakta jab tak usme Sub Accounts maujood hain. Pehle Sub Accounts delete karein.");
                 return;
             }
 
-            if(confirm("Are you sure you want to delete this Main Account Type?")) {
+            if(confirm("Kya aap waqai is Main Account ko delete karna chahte hain?")) {
                 try {
                     const response = await fetch(`api/maintain.php?action=delete_coa_main&id=${main.id}`, { method: 'DELETE' });
                     if (response.ok) {
@@ -2777,7 +2782,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         selectedMainCode = null;
                         renderCOAMainList();
                         resetMainForm();
-                        alert("Main Account Type deleted successfully.");
+                        alert("Main Account safaee se delete ho gaya.");
                     }
                 } catch (err) { alert("Delete Failed: " + err.message); }
             }
@@ -2841,9 +2846,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveCOASub() {
-            if(!selectedMainCode) return alert("Select a Main Account Type first!");
+            if(!selectedMainCode) return alert("Pehle Main Account Type select karein!");
             const subName = document.getElementById('subAccountType').value.trim();
-            if(!subName) return alert("Sub Account Name is required!");
+            if(!subName) return alert("Sub Account Name dena zaroori hai!");
 
             const main = coaMain.find(m => m.code == selectedMainCode);
             let code = document.getElementById('subAccountCode').value;
@@ -2851,19 +2856,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
 
+            const payloadData = { main_id: main.id, code, name: subName };
+            const idx = coaSub.findIndex(s => s.code == code);
+            if (idx > -1) {
+                payloadData.id = coaSub[idx].id;
+            }
+
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_sub&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ main_id: main.id, code, name: subName })
+                    body: JSON.stringify(payloadData)
                 });
 
                 if (response.ok) {
                     const resData = await response.json();
-                    alert('Sub account saved and synchronized!');
+                    alert('Sub account save aur update ho gaya!');
                     
                     // Local update
-                    const idx = coaSub.findIndex(s => s.code == code);
                     if(idx > -1) {
                         coaSub[idx] = { ...coaSub[idx], name: subName };
                     } else {
@@ -2880,24 +2890,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Priority: Ensure we have a selection
             const codeToUse = selectedSubCode || document.getElementById('subAccountCode').value;
             if(!codeToUse) {
-                alert("Please select a Sub Account to delete first.");
+                alert("Delete karne ke liye pehle Sub Account select karein.");
                 return;
             }
 
             const sub = coaSub.find(s => s.code == codeToUse);
             if (!sub) {
-                alert("Sub Account not found in the list.");
+                alert("Sub Account list mein nahi mila.");
                 return;
             }
 
             // Strict Deletion Order: Check for List of Accounts
             const hasListItems = coaList.some(l => String(l.sub_id) === String(sub.id));
             if (hasListItems) {
-                alert("Cannot delete Sub Account Type! There are still accounts in the List of Accounts for this category. Please delete them first.");
+                alert("Sub Account delete nahi ho sakta jab tak uski List mein accounts maujood hain. Pehle List Accounts delete karein.");
                 return;
             }
 
-            if(confirm("Are you sure you want to delete this Sub Account Type?")) {
+            if(confirm("Kya aap waqai is Sub Account ko delete karna chahte hain?")) {
                 try {
                     const response = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'DELETE' });
                     if (response.ok) {
@@ -2905,9 +2915,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         selectedSubCode = null;
                         renderCOASubList();
                         resetSubForm();
-                        alert("Sub Account Type deleted successfully.");
+                        alert("Sub Account safaee se delete ho gaya.");
                     } else {
-                        alert("Server error while deleting Sub Account.");
+                        alert("Sub Account delete karte waqt server error aya.");
                     }
                 } catch (err) { alert("Delete Failed: " + err.message); }
             }
@@ -2973,9 +2983,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveCOAList() {
-            if(!selectedSubCode) return alert("Select a Sub Account Type first!");
+            if(!selectedSubCode) return alert("Pehle Sub Account Type select karein!");
             const listName = document.getElementById('accountName').value.trim();
-            if(!listName) return alert("Account Name is required!");
+            if(!listName) return alert("Account Name dena zaroori hai!");
 
             const sub = coaSub.find(s => s.code == selectedSubCode);
             let code = document.getElementById('accountCode').value;
@@ -2984,18 +2994,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const companyId = sessionData.company_id || 1;
 
+            const payloadData = { sub_id: subId, code, name: listName };
+            const idx = coaList.findIndex(l => l.code == code);
+            if (idx > -1) {
+                payloadData.id = coaList[idx].id;
+            }
+
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_list&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sub_id: subId, code, name: listName })
+                    body: JSON.stringify(payloadData)
                 });
                 if (response.ok) {
                     const resData = await response.json();
-                    alert('Account entry saved and synchronized!');
+                    alert('Account entry save aur update ho gaya!');
                     
                     // Local update
-                    const idx = coaList.findIndex(l => l.code == code);
                     if(idx > -1) {
                         coaList[idx] = { ...coaList[idx], name: listName };
                     } else {
@@ -3011,24 +3026,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         async function deleteCOAList() {
             const code = document.getElementById('accountCode').value;
             if(!code) {
-                alert("Please select an account entry to delete first.");
+                alert("Delete karne ke liye pehle Account select karein.");
                 return;
             }
 
             const acc = coaList.find(l => l.code == code);
             if (!acc) {
-                alert("Account entry not found in the list.");
+                alert("Account entry list mein nahi mila.");
                 return;
             }
 
-            if(confirm("Are you sure you want to delete this account entry? This action cannot be undone.")) {
+            if(confirm("Kya aap waqai is account ko delete karna chahte hain? Ye wapas nahi aye ga.")) {
                 try {
                     const response = await fetch(`api/maintain.php?action=delete_coa_list&id=${acc.id}`, { method: 'DELETE' });
                     if (response.ok) {
                         coaList = coaList.filter(l => l.code != code);
                         renderCOAListList();
                         resetListForm();
-                        alert("Account entry deleted successfully.");
+                        alert("Account safaee se delete ho gaya.");
                     } else {
                         alert("Server error while deleting account entry.");
                     }
