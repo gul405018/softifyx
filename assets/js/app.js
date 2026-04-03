@@ -2759,7 +2759,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetMainForm() {
+        function resetMainForm(isAdd = false) {
             const codeEl = document.getElementById('mainTypeCode');
             const nameEl = document.getElementById('mainAccountType');
             const compSelect = document.getElementById('financialStatementComponent');
@@ -2767,21 +2767,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(codeEl) { 
                 codeEl.value = ''; 
-                codeEl.disabled = false; 
-                codeEl.readOnly = false;
-                codeEl.style.background = '#fff';
+                codeEl.disabled = !isAdd; 
+                codeEl.readOnly = !isAdd;
+                codeEl.style.background = isAdd ? '#fff' : '#f8fafc';
             }
             if(nameEl) { 
                 nameEl.value = ''; 
-                nameEl.disabled = false; 
-                nameEl.readOnly = false;
-                nameEl.style.background = '#fff';
+                nameEl.disabled = !isAdd; 
+                nameEl.readOnly = !isAdd;
+                nameEl.style.background = isAdd ? '#fff' : '#f8fafc';
             }
             if(listEl) listEl.value = '';
             if(compSelect) {
                 compSelect.value = 'current assets';
-                compSelect.disabled = false; 
-                compSelect.style.background = '#fff';
+                compSelect.disabled = !isAdd; 
+                compSelect.style.background = isAdd ? '#fff' : '#f8fafc';
             }
             selectedMainCode = null;
             renderCOASubList();
