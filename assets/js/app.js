@@ -2765,12 +2765,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const compSelect = document.getElementById('financialStatementComponent');
             const listEl = document.getElementById('mainAccountList');
 
-            if(codeEl) { codeEl.value = ''; codeEl.disabled = false; }
-            if(nameEl) { nameEl.value = ''; nameEl.disabled = false; }
+            if(codeEl) { 
+                codeEl.value = ''; 
+                codeEl.disabled = false; 
+                codeEl.style.background = '#fff';
+            }
+            if(nameEl) { 
+                nameEl.value = ''; 
+                nameEl.disabled = false; 
+                nameEl.style.background = '#fff';
+            }
             if(listEl) listEl.value = '';
             if(compSelect) {
                 compSelect.value = 'current assets';
                 compSelect.disabled = false; 
+                compSelect.style.background = '#fff';
             }
             selectedMainCode = null;
             renderCOASubList();
@@ -2849,12 +2858,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             const codeEl = document.getElementById('subAccountCode');
             const listEl = document.getElementById('subAccountList');
 
-            if(nameEl) { nameEl.value = ''; nameEl.disabled = !generate; }
+            if(nameEl) { 
+                nameEl.value = ''; 
+                nameEl.disabled = !generate; 
+                nameEl.style.background = generate ? '#fff' : '#f8fafc';
+            }
             if(listEl) listEl.value = '';
             selectedSubCode = null;
             
             // Only generate code if explicitly requested (clicked Add)
-            if (generate && selectedMainCode) {
+            if (generate) {
+                if (!selectedMainCode) {
+                    alert("Please select a Main Account Type first before adding a Sub Account.");
+                    return;
+                }
                 const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
                 let nextNum = 1;
                 if(siblings.length > 0) {
@@ -2865,9 +2882,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     nextNum = Math.max(...lastCodes) + 1;
                 }
                 const code = selectedMainCode.toString() + nextNum.toString().padStart(2, '0');
-                if(codeEl) { codeEl.value = code; codeEl.disabled = false; }
+                if(codeEl) { 
+                    codeEl.value = code; 
+                    codeEl.disabled = false; 
+                    codeEl.style.background = '#fff';
+                }
             } else {
-                if(codeEl) { codeEl.value = ''; codeEl.disabled = true; }
+                if(codeEl) { 
+                    codeEl.value = ''; 
+                    codeEl.disabled = true; 
+                    codeEl.style.background = '#f8fafc';
+                }
             }
             
             renderCOAListList();
@@ -2942,11 +2967,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const codeEl = document.getElementById('accountCode');
             const listEl = document.getElementById('listAccountList');
 
-            if(nameEl) { nameEl.value = ''; nameEl.disabled = !generate; }
+            if(nameEl) { 
+                nameEl.value = ''; 
+                nameEl.disabled = !generate; 
+                nameEl.style.background = generate ? '#fff' : '#f8fafc';
+            }
             if(listEl) listEl.value = '';
             
             // Only generate code if explicitly requested (clicked Add)
-            if (generate && selectedSubCode) {
+            if (generate) {
+                if (!selectedSubCode) {
+                    alert("Please select a Sub Account Type first before adding a new Account.");
+                    return;
+                }
                 const siblings = coaList.filter(l => l.subCode == selectedSubCode);
                 let nextNum = 1;
                 if(siblings.length > 0) {
@@ -2957,9 +2990,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     nextNum = Math.max(...lastCodes) + 1;
                 }
                 const code = selectedSubCode.toString() + nextNum.toString().padStart(3, '0');
-                if(codeEl) { codeEl.value = code; codeEl.disabled = false; }
+                if(codeEl) { 
+                    codeEl.value = code; 
+                    codeEl.disabled = false; 
+                    codeEl.style.background = '#fff';
+                }
             } else {
-                if(codeEl) { codeEl.value = ''; codeEl.disabled = true; }
+                if(codeEl) { 
+                    codeEl.value = ''; 
+                    codeEl.disabled = true; 
+                    codeEl.style.background = '#f8fafc';
+                }
             }
         }
 
