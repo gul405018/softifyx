@@ -2698,8 +2698,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
             // Lock fields on select
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = false;
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = false;
             if(compSelect) compSelect.disabled = true;
 
             renderCOASubList();
@@ -2733,10 +2733,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const companyId = sessionData.company_id || 1;
 
             const payloadData = { code, name: mainName, component };
-            const idx = coaMain.findIndex(m => m.code == code);
-            if (idx > -1) {
-                payloadData.id = coaMain[idx].id;
+            let idToUpdate = null;
+            if (selectedMainCode) {
+                const ex = coaMain.find(x => x.code == selectedMainCode);
+                if (ex) idToUpdate = ex.id;
+            } else {
+                const ex = coaMain.find(x => x.code == code);
+                if (ex) idToUpdate = ex.id;
             }
+            if (idToUpdate) payloadData.id = idToUpdate;
+            const idx = idToUpdate ? coaMain.findIndex(m => m.id == idToUpdate) : -1;
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_main&company_id=${companyId}`, {
@@ -2776,7 +2782,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(confirm("Are you sure you want to delete this Main Account Type?")) {
                 try {
-                    const response = await fetch(`api/maintain.php?action=delete_coa_main&id=${main.id}`, { method: 'DELETE' });
+                    const response = await fetch(`api/maintain.php?action=delete_coa_main&id=${main.id}`, { method: 'POST' });
                     if (response.ok) {
                         coaMain = coaMain.filter(m => m.code != selectedMainCode);
                         selectedMainCode = null;
@@ -2830,8 +2836,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountType').value = sub.name;
             }
             // Lock fields on select
-            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = true;
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = false;
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = false;
 
             renderCOAListList();
             
@@ -2857,10 +2863,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const companyId = sessionData.company_id || 1;
 
             const payloadData = { main_id: main.id, code, name: subName };
-            const idx = coaSub.findIndex(s => s.code == code);
-            if (idx > -1) {
-                payloadData.id = coaSub[idx].id;
+            let idToUpdate = null;
+            if (selectedSubCode) {
+                const ex = coaSub.find(x => x.code == selectedSubCode);
+                if (ex) idToUpdate = ex.id;
+            } else {
+                const ex = coaSub.find(x => x.code == code);
+                if (ex) idToUpdate = ex.id;
             }
+            if (idToUpdate) payloadData.id = idToUpdate;
+            const idx = idToUpdate ? coaSub.findIndex(s => s.id == idToUpdate) : -1;
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_sub&company_id=${companyId}`, {
@@ -2909,7 +2921,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(confirm("Are you sure you want to delete this Sub Account Type?")) {
                 try {
-                    const response = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'DELETE' });
+                    const response = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
                     if (response.ok) {
                         coaSub = coaSub.filter(s => s.code != codeToUse);
                         selectedSubCode = null;
@@ -2978,8 +2990,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('accountName').value = acc.name;
             }
             // Lock fields on select
-            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = true;
-            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = true;
+            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = false;
+            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = false;
         }
 
         async function saveCOAList() {
@@ -2995,10 +3007,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             const companyId = sessionData.company_id || 1;
 
             const payloadData = { sub_id: subId, code, name: listName };
-            const idx = coaList.findIndex(l => l.code == code);
-            if (idx > -1) {
-                payloadData.id = coaList[idx].id;
+            let idToUpdate = null;
+            const existingCode = document.getElementById('accountCode').disabled ? code : null; 
+            // If they modify code, they must have selected it originally
+            const originalCode = document.getElementById('listAccountList').value;
+            
+            if (originalCode) {
+                const ex = coaList.find(x => x.code == originalCode);
+                if (ex) idToUpdate = ex.id;
+            } else {
+                const ex = coaList.find(x => x.code == code);
+                if (ex) idToUpdate = ex.id;
             }
+            if (idToUpdate) payloadData.id = idToUpdate;
+            const idx = idToUpdate ? coaList.findIndex(l => l.id == idToUpdate) : -1;
 
             try {
                 const response = await fetch(`api/maintain.php?action=save_coa_list&company_id=${companyId}`, {
@@ -3038,7 +3060,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(confirm("Are you sure you want to delete this account entry? This action cannot be undone.")) {
                 try {
-                    const response = await fetch(`api/maintain.php?action=delete_coa_list&id=${acc.id}`, { method: 'DELETE' });
+                    const response = await fetch(`api/maintain.php?action=delete_coa_list&id=${acc.id}`, { method: 'POST' });
                     if (response.ok) {
                         coaList = coaList.filter(l => l.code != code);
                         renderCOAListList();

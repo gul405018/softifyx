@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete_coa_main' && isset($_GET['id'])) {
         $pdo->prepare("DELETE FROM coa_main WHERE id = ?")->execute([$_GET['id']]);
         sendResponse(['status' => 'success']);
