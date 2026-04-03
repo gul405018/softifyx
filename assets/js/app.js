@@ -2321,6 +2321,14 @@
                             setTimeout(() => initCurrencyView(), 10);
                         } else if (url.includes('chart_of_accounts.html')) {
                             setTimeout(() => initChartOfAccountsView(), 10);
+                        } else if (url.includes('customers.html')) {
+                            setTimeout(() => initCustomersView(), 10);
+                        } else if (url.includes('customer_regions.html')) {
+                            setTimeout(() => initRegionsView(), 10);
+                        } else if (url.includes('business_sectors.html')) {
+                            setTimeout(() => initSectorsView(), 10);
+                        } else if (url.includes('employees.html')) {
+                            setTimeout(() => initEmployeesView(), 10);
                         }
                     }
                 } else {
@@ -2658,6 +2666,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to load components:', err);
     }
 });
+// --- GLOBAL STATE FOR NEW MODULES ---
+        let regions = [];
+        let businessSectors = [];
+        let employees = [];
+        let customersExt = {}; // Map of coa_list_id -> extra details
+        const CUSTOMER_MAIN_CODE = 12; // Assuming 12 is the Customers category
+
 // --- CHART OF ACCOUNTS (COA) LOGIC ---
         let selectedMainCode = null;
         let selectedSubCode = null;
@@ -3326,3 +3341,459 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.removeProfilePhoto = removeProfilePhoto;
+
+// --- CUSTOMERS MODULE LOGIC ---
+        let selectedCustSubId = null;
+        let selectedCustCoaId = null;
+
+        window.initCustomersView = async function() {
+            const list = document.getElementById('custTypeList');
+            if(!list) return setTimeout(initCustomersView, 100);
+
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+
+            try {
+                // 1. Fetch Regions, Sectors, Employees first for dropdowns
+                const [regRes, secRes, empRes] = await Promise.all([
+                    fetch(`api/maintain.php?action=get_regions&company_id=${companyId}`),
+                    fetch(`api/maintain.php?action=get_sectors&company_id=${companyId}`),
+                    fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`)
+                ]);
+                
+                regions = await regRes.json();
+                businessSectors = await secRes.json();
+                employees = await empRes.json();
+
+                // 2. Populate Dropdowns in Customer Form
+                populateCustomerDropdowns();
+
+                // 3. Find Customers Main Account from coaMain
+                const custMain = coaMain.find(m => m.code == CUSTOMER_MAIN_CODE);
+                if (custMain) {
+                    // Filter coaSub for this main account
+                    const subList = coaSub.filter(s => s.main_id == custMain.id);
+                    list.innerHTML = subList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    
+                    if (subList.length > 0) {
+                        list.value = subList[0].id;
+                        onCustomerTypeSelect(subList[0].id);
+                    }
+                }
+            } catch (err) { console.error("Customers Init Error:", err); }
+        };
+
+        function populateCustomerDropdowns() {
+            const regSel = document.getElementById('custRegion');
+            const secSel = document.getElementById('custSector');
+            const mgrSel = document.getElementById('custManager');
+
+            if (regSel) {
+                const mainRegs = regions.filter(r => r.type === 'Main');
+                regSel.innerHTML = '<option value="">None</option>' + mainRegs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            }
+            if (secSel) {
+                secSel.innerHTML = '<option value="">None</option>' + businessSectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            }
+            if (mgrSel) {
+                mgrSel.innerHTML = '<option value="">None</option>' + employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            }
+        }
+
+        window.loadSubRegions = function(mainRegId) {
+            const subRegSel = document.getElementById('custSubRegion');
+            if (!subRegSel) return;
+            if (!mainRegId) {
+                subRegSel.innerHTML = '<option value="">None</option>';
+                return;
+            }
+            const subs = regions.filter(r => r.parent_id == mainRegId);
+            subRegSel.innerHTML = '<option value="">None</option>' + subs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        };
+
+        window.onCustomerTypeSelect = function(subId) {
+            selectedCustSubId = subId;
+            const sub = coaSub.find(s => s.id == subId);
+            if (sub) {
+                const codeEl = document.getElementById('custTypeCode');
+                const descEl = document.getElementById('custTypeDesc');
+                if(codeEl) codeEl.value = sub.code;
+                if(descEl) descEl.value = sub.name;
+            }
+            
+            // Filter coaList for this subId
+            const custList = coaList.filter(l => l.sub_id == subId);
+            const listEl = document.getElementById('customersList');
+            if (listEl) {
+                listEl.innerHTML = custList.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                resetCustomerFormFields();
+            }
+        };
+
+        window.onCustomerSelect = async function(coaId) {
+            selectedCustCoaId = coaId;
+            const item = coaList.find(l => l.id == coaId);
+            if (!item) return;
+
+            document.getElementById('custAccCode').value = item.code;
+            document.getElementById('custAccName').value = item.name;
+
+            // Fetch extra details
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            
+            try {
+                const res = await fetch(`api/maintain.php?action=get_customer_details&coa_id=${coaId}&company_id=${companyId}`);
+                const detail = await res.json();
+                
+                // Populate fields
+                document.getElementById('custContact').value = detail.contact_person || '';
+                document.getElementById('custAddress').value = detail.address || '';
+                document.getElementById('custRegion').value = detail.region_id || '';
+                loadSubRegions(detail.region_id);
+                document.getElementById('custSubRegion').value = detail.sub_region_id || '';
+                document.getElementById('custTel').value = detail.telephone || '';
+                document.getElementById('custMobile').value = detail.mobile || '';
+                document.getElementById('custFax').value = detail.fax || '';
+                document.getElementById('custEmail').value = detail.email || '';
+                document.getElementById('custWebsite').value = detail.website || '';
+                document.getElementById('custSTReg').value = detail.st_reg || '';
+                document.getElementById('custNTN').value = detail.ntn_cnic || '';
+                document.getElementById('custSector').value = detail.sector_id || '';
+                document.getElementById('custManager').value = detail.manager_id || '';
+                document.getElementById('custCreditLimit').value = detail.credit_limit || 0;
+                document.getElementById('custCreditTerms').value = detail.credit_terms || 'CASH';
+                document.getElementById('custRemarks').value = detail.remarks || '';
+
+                // Enable all fields
+                toggleCustomerFields(false);
+            } catch (err) { console.error("Load Customer Error:", err); }
+        };
+
+        function toggleCustomerFields(disabled) {
+            const fields = ['custAccName', 'custContact', 'custAddress', 'custRegion', 'custSubRegion', 'custTel', 'custMobile', 'custFax', 'custEmail', 'custWebsite', 'custSTReg', 'custNTN', 'custSector', 'custManager', 'custCreditLimit', 'custCreditTerms', 'custRemarks'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = disabled;
+            });
+            // Also dots buttons
+            document.querySelectorAll('.dots-btn').forEach(btn => btn.disabled = disabled);
+        }
+
+        window.resetCustomerForm = function(generate = false) {
+            selectedCustCoaId = null;
+            resetCustomerFormFields();
+            if (generate) {
+                toggleCustomerFields(false);
+                // Auto-generate code: Prefix of sub + next index
+                const sub = coaSub.find(s => s.id == selectedCustSubId);
+                if (sub) {
+                    const existing = coaList.filter(l => l.sub_id == selectedCustSubId);
+                    const nextNum = existing.length + 1;
+                    document.getElementById('custAccCode').value = sub.code + String(nextNum).padStart(3, '0');
+                }
+                document.getElementById('custAccName').focus();
+            } else {
+                toggleCustomerFields(true);
+            }
+        };
+
+        function resetCustomerFormFields() {
+            const fields = ['custAccCode', 'custAccName', 'custContact', 'custAddress', 'custRegion', 'custSubRegion', 'custTel', 'custMobile', 'custFax', 'custEmail', 'custWebsite', 'custSTReg', 'custNTN', 'custSector', 'custManager', 'custRemarks'];
+            fields.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
+            if(document.getElementById('custCreditLimit')) document.getElementById('custCreditLimit').value = 0;
+            if(document.getElementById('custCreditTerms')) document.getElementById('custCreditTerms').value = 'CASH';
+        }
+
+        window.saveCustomerFull = async function() {
+            const coa_id = selectedCustCoaId;
+            const sub_id = selectedCustSubId;
+            const code = document.getElementById('custAccCode').value;
+            const name = document.getElementById('custAccName').value;
+            
+            if(!name) return alert("Account Name is required!");
+
+            const data = {
+                coa_id, sub_id, code, name,
+                contact_person: document.getElementById('custContact').value,
+                address: document.getElementById('custAddress').value,
+                region_id: document.getElementById('custRegion').value,
+                sub_region_id: document.getElementById('custSubRegion').value,
+                telephone: document.getElementById('custTel').value,
+                mobile: document.getElementById('custMobile').value,
+                fax: document.getElementById('custFax').value,
+                email: document.getElementById('custEmail').value,
+                website: document.getElementById('custWebsite').value,
+                st_reg: document.getElementById('custSTReg').value,
+                ntn_cnic: document.getElementById('custNTN').value,
+                sector_id: document.getElementById('custSector').value,
+                manager_id: document.getElementById('custManager').value,
+                credit_limit: document.getElementById('custCreditLimit').value,
+                credit_terms: document.getElementById('custCreditTerms').value,
+                remarks: document.getElementById('custRemarks').value
+            };
+
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+
+            try {
+                const res = await fetch(`api/maintain.php?action=save_customer_full&company_id=${companyId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert('Customer saved successfully!');
+                    // Refresh local COA list cache
+                    if (!coa_id) {
+                        coaList.push({ id: result.coa_id, sub_id, code, name, company_id: companyId });
+                    } else {
+                        const idx = coaList.findIndex(l => l.id == coa_id);
+                        if (idx > -1) coaList[idx] = { ...coaList[idx], name, code };
+                    }
+                    onCustomerTypeSelect(sub_id); // Refresh list display
+                }
+            } catch (err) { alert("Save Error: " + err.message); }
+        };
+
+        window.deleteCustomerFull = async function() {
+            if(!selectedCustCoaId) return;
+            if(confirm("Are you sure you want to delete this customer? This will also remove them from the Chart of Accounts.")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_coa_list&id=${selectedCustCoaId}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Customer deleted.");
+                        coaList = coaList.filter(l => l.id != selectedCustCoaId);
+                        onCustomerTypeSelect(selectedCustSubId);
+                    }
+                } catch (err) { alert("Delete Error: " + err.message); }
+            }
+        };
+
+        // --- REGIONS LOGIC ---
+        let selectedMainRegId = null;
+        let selectedSubRegId = null;
+
+        window.initRegionsView = function() {
+            const list = document.getElementById('mainRegionList');
+            if(!list) return setTimeout(initRegionsView, 100);
+            renderMainRegList();
+        };
+
+        function renderMainRegList() {
+            const list = document.getElementById('mainRegionList');
+            const mainRegs = regions.filter(r => r.type === 'Main');
+            list.innerHTML = mainRegs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        }
+
+        window.onMainRegionSelect = function(id) {
+            selectedMainRegId = id;
+            const reg = regions.find(r => r.id == id);
+            if(reg) {
+                document.getElementById('mainRegionName').value = reg.name;
+                document.getElementById('mainRegionName').disabled = false;
+            }
+            renderSubRegList();
+        };
+
+        function renderSubRegList() {
+            const list = document.getElementById('subRegionList');
+            const subs = regions.filter(r => r.parent_id == selectedMainRegId);
+            list.innerHTML = subs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            resetSubRegionForm();
+        }
+
+        window.saveMainRegion = async function() {
+            const name = document.getElementById('mainRegionName').value;
+            if(!name) return;
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            const data = { id: selectedMainRegId, name, type: 'Main', parent_id: null };
+            
+            const res = await fetch(`api/maintain.php?action=save_region&company_id=${companyId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                if(!selectedMainRegId) {
+                   regions.push({ id: result.id, name, type: 'Main', company_id: companyId });
+                } else {
+                   const r = regions.find(r => r.id == selectedMainRegId);
+                   if(r) r.name = name;
+                }
+                renderMainRegList();
+                populateCustomerDropdowns();
+            }
+        };
+
+        window.resetMainRegionForm = function(gen = false) {
+            if(!gen) selectedMainRegId = null;
+            document.getElementById('mainRegionName').value = '';
+            document.getElementById('mainRegionName').disabled = !gen;
+            if(gen) document.getElementById('mainRegionName').focus();
+        };
+
+        window.onSubRegionSelect = function(id) {
+            selectedSubRegId = id;
+            const r = regions.find(x => x.id == id);
+            if(r) {
+                document.getElementById('subRegionName').value = r.name;
+                document.getElementById('subRegionName').disabled = false;
+            }
+        };
+
+        window.saveSubRegion = async function() {
+            const name = document.getElementById('subRegionName').value;
+            if(!name) return;
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            const data = { id: selectedSubRegId, name, type: 'Sub', parent_id: selectedMainRegId };
+            const res = await fetch(`api/maintain.php?action=save_region&company_id=${companyId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                if(!selectedSubRegId) regions.push({ id: result.id, name, type: 'Sub', parent_id: selectedMainRegId, company_id: companyId });
+                else regions.find(x => x.id == selectedSubRegId).name = name;
+                renderSubRegList();
+            }
+        };
+
+        window.resetSubRegionForm = function(gen = false) {
+            if(!gen) selectedSubRegId = null;
+            document.getElementById('subRegionName').value = '';
+            document.getElementById('subRegionName').disabled = !gen || !selectedMainRegId;
+        };
+
+        // --- SECTORS LOGIC ---
+        window.initSectorsView = function() {
+            const list = document.getElementById('sectorList');
+            if(!list) return setTimeout(initSectorsView, 100);
+            list.innerHTML = businessSectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        };
+
+        let selectedSectorId = null;
+        window.onSectorSelect = function(id) {
+            selectedSectorId = id;
+            const s = businessSectors.find(x => x.id == id);
+            if(s) {
+                document.getElementById('sectorName').value = s.name;
+                document.getElementById('sectorName').disabled = false;
+            }
+        };
+
+        window.saveSector = async function() {
+            const name = document.getElementById('sectorName').value;
+            if(!name) return;
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            const res = await fetch(`api/maintain.php?action=save_sector&company_id=${companyId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: selectedSectorId, name })
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                if(!selectedSectorId) businessSectors.push({ id: result.id, name, company_id: companyId });
+                else businessSectors.find(x => x.id == selectedSectorId).name = name;
+                initSectorsView();
+                populateCustomerDropdowns();
+            }
+        };
+
+        window.resetSectorForm = function(gen = false) {
+            if(!gen) selectedSectorId = null;
+            document.getElementById('sectorName').value = '';
+            document.getElementById('sectorName').disabled = !gen;
+        };
+
+        // --- EMPLOYEES LOGIC ---
+        window.initEmployeesView = function() {
+            const list = document.getElementById('employeeList');
+            if(!list) return setTimeout(initEmployeesView, 100);
+            list.innerHTML = employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+        };
+
+        let selectedEmpId = null;
+        window.onEmployeeSelect = function(id) {
+            selectedEmpId = id;
+            const e = employees.find(x => x.id == id);
+            if(e) {
+                const map = {empName:'name', empFatherName:'father_name', empAddress:'address', empTel:'telephone', empEmail:'email', empNIC:'nic', empDOB:'dob', empJoining:'joining_date', empSalary:'salary', empDesignation:'designation', empDept:'department', empRemarks:'remarks', empReference:'reference', empLeavingDate:'leaving_date'};
+                Object.keys(map).forEach(fid => {
+                    const el = document.getElementById(fid);
+                    if(el) {
+                        el.value = e[map[fid]] || '';
+                        el.disabled = false;
+                    }
+                });
+                const chk = document.getElementById('empJobLeft');
+                if(chk) {
+                    chk.checked = !!e.job_left;
+                    chk.disabled = false;
+                }
+            }
+        };
+
+        window.saveEmployee = async function() {
+            const name = document.getElementById('empName').value;
+            if(!name) return alert("Employee Name is required!");
+            const data = {
+                id: selectedEmpId,
+                name,
+                father_name: document.getElementById('empFatherName').value,
+                address: document.getElementById('empAddress').value,
+                telephone: document.getElementById('empTel').value,
+                email: document.getElementById('empEmail').value,
+                nic: document.getElementById('empNIC').value,
+                dob: document.getElementById('empDOB').value,
+                joining_date: document.getElementById('empJoining').value,
+                salary: document.getElementById('empSalary').value,
+                designation: document.getElementById('empDesignation').value,
+                department: document.getElementById('empDept').value,
+                remarks: document.getElementById('empRemarks').value,
+                reference: document.getElementById('empReference').value,
+                job_left: document.getElementById('empJobLeft').checked ? 1 : 0,
+                leaving_date: document.getElementById('empLeavingDate').value
+            };
+            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = sessionData.company_id || 1;
+            const res = await fetch(`api/maintain.php?action=save_employee&company_id=${companyId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                if(!selectedEmpId) employees.push({ ...data, id: result.id, company_id: companyId });
+                else {
+                    const idx = employees.findIndex(x => x.id == selectedEmpId);
+                    employees[idx] = { ...data, company_id: companyId };
+                }
+                initEmployeesView();
+                populateCustomerDropdowns();
+                alert("Employee saved!");
+            }
+        };
+
+        window.resetEmployeeForm = function(gen = false) {
+            selectedEmpId = null;
+            const fields = ['empName', 'empFatherName', 'empAddress', 'empTel', 'empEmail', 'empNIC', 'empDOB', 'empJoining', 'empSalary', 'empDesignation', 'empDept', 'empRemarks', 'empReference', 'empLeavingDate'];
+            fields.forEach(fid => {
+                const el = document.getElementById(fid);
+                if(el) {
+                    el.value = fid === 'empDept' ? 'None' : '';
+                    el.disabled = !gen;
+                }
+            });
+            const chk = document.getElementById('empJobLeft');
+            if(chk) {
+                chk.checked = false;
+                chk.disabled = !gen;
+            }
+        };
