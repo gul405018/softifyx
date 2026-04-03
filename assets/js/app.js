@@ -3388,8 +3388,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 2. Load COA Data if not already present
                 if (coaMain.length === 0) await loadSavedData();
 
-                // 3. Populate Customer Types from coaSub
-                const custMain = coaMain.find(m => m.code == CUSTOMER_MAIN_CODE);
+                // 3. Find Customers Main Account from coaMain (Robust check)
+                let custMain = coaMain.find(m => m.code == CUSTOMER_MAIN_CODE || m.code == String(CUSTOMER_MAIN_CODE));
+                if (!custMain) {
+                    // Fallback to name search if code mismatch (covering common ERP terms)
+                    custMain = coaMain.find(m => {
+                        const n = (m.name || "").toLowerCase();
+                        return n.includes('customer') || n.includes('receivable') || n.includes('debtor');
+                    });
+                }
+
                 if (custMain) {
                     const subList = coaSub.filter(s => s.main_id == custMain.id);
                     list.innerHTML = subList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -3397,6 +3405,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (subList.length > 0) {
                         list.value = subList[0].id;
                         onCustomerTypeSelect(subList[0].id);
+                    }
+                } else {
+                    console.warn("Could not find Customers/Receivables main account in COA.");
+                    // Fallback to searching ALL subs if main account not identified
+                    list.innerHTML = coaSub.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    if (coaSub.length > 0) {
+                        list.value = coaSub[0].id;
+                        onCustomerTypeSelect(coaSub[0].id);
                     }
                 }
             } catch (err) { console.error("Customers Init Error:", err); }

@@ -850,7 +850,7 @@
         }
 
         .modal-container.modal-wide {
-            max-width: 1400px; /* Final increase to 1400px */
+            max-width: 1120px; /* Reduced from 1200px to 1120px per user feedback */
         }
 
         @keyframes modalFadeIn {
