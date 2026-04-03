@@ -12,21 +12,21 @@
             <!-- Right: Fields & All Buttons in One Line -->
             <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 4px;">
-                    <button class="coa-btn coa-primary" onclick="printCOA('main')">Chart</button>
-                    <button class="coa-btn coa-primary" onclick="resetMainForm(true)">Add</button>
+                    <button class="coa-btn coa-chart" onclick="printCOA('main')">Chart</button>
+                    <button class="coa-btn coa-add" onclick="resetMainForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOAMain()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetMainForm(false)">Cancel</button>
+                    <button class="coa-btn coa-cancel" onclick="resetMainForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOAMain()">Delete</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Main Type Code</label>
-                    <input type="number" id="mainTypeCode" disabled class="coa-input" style="width: 90px; background: #f8fafc;">
+                    <input type="number" id="mainTypeCode" class="coa-input" style="width: 90px;" disabled>
                     
                     <label class="coa-label">Main Account Type</label>
-                    <input type="text" id="mainAccountType" disabled class="coa-input" style="background: #f8fafc;">
+                    <input type="text" id="mainAccountType" class="coa-input" disabled>
                     
                     <label class="coa-label">Financial Statements Component</label>
-                    <select id="financialStatementComponent" disabled class="coa-input" style="background: #f8fafc;">
+                    <select id="financialStatementComponent" class="coa-input" style="background: white;" disabled>
                         <option value="current assets">current assets</option>
                         <option value="non-current assets">non-current assets</option>
                         <option value="Current Liabilities">Current Liabilities</option>
@@ -59,18 +59,18 @@
             <!-- Right: Fields & All Buttons in One Line -->
             <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 4px;">
-                    <button class="coa-btn coa-primary" onclick="printCOA('sub')">Chart</button>
-                    <button class="coa-btn coa-primary" onclick="resetSubForm(true)">Add</button>
+                    <button class="coa-btn coa-chart" onclick="printCOA('sub')">Chart</button>
+                    <button class="coa-btn coa-add" onclick="resetSubForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOASub()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetSubForm(false)">Cancel</button>
+                    <button class="coa-btn coa-cancel" onclick="resetSubForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOASub()">Delete</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Sub Account Code</label>
-                    <input type="text" id="subAccountCode" readonly class="coa-input" style="width: 110px; background: #f8fafc;">
+                    <input type="text" id="subAccountCode" readonly class="coa-input" style="width: 110px; background: #f8fafc;" disabled>
                     
                     <label class="coa-label">Sub Account Type</label>
-                    <input type="text" id="subAccountType" disabled class="coa-input" style="background: #f8fafc;">
+                    <input type="text" id="subAccountType" class="coa-input" disabled>
                 </div>
             </div>
         </div>
@@ -90,19 +90,21 @@
             <!-- Right: Fields & All Buttons in One Line -->
             <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 4px;">
-                    <button class="coa-btn coa-primary" onclick="printCOA('list')">Chart</button>
-                    <button class="coa-btn coa-primary" onclick="resetListForm(true)">Add</button>
+                    <button class="coa-btn coa-chart" onclick="printCOA('list')">Chart</button>
+                    <button class="coa-btn coa-add" onclick="resetListForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOAList()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetListForm(false)">Cancel</button>
+                    <button class="coa-btn coa-cancel" onclick="resetListForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOAList()">Delete</button>
                 </div>
+                
+
 
                 <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Account Code</label>
-                    <input type="text" id="accountCode" readonly class="coa-input" style="width: 130px; background: #f8fafc;">
+                    <input type="text" id="accountCode" readonly class="coa-input" style="width: 130px; background: #f8fafc;" disabled>
                     
                     <label class="coa-label">Account Name</label>
-                    <input type="text" id="accountName" disabled class="coa-input" style="background: #f8fafc;">
+                    <input type="text" id="accountName" class="coa-input" disabled>
                 </div>
             </div>
         </div>
@@ -131,8 +133,11 @@
         .coa-btn:hover { background: #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .coa-btn:active { transform: translateY(1px); }
         
-        .coa-primary { color: #1F4E79; border-color: #1F4E79; }
-        .coa-primary:hover { background: #1F4E79; color: white; }
+        .coa-chart { background: #17a2b8 !important; color: white !important; border-color: #17a2b8 !important; }
+        .coa-chart:hover { background: #138496 !important; }
+
+        .coa-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
+        .coa-add:hover { background: #218838 !important; }
 
         .coa-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
         .coa-save:hover { background: #153550 !important; }
