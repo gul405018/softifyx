@@ -439,8 +439,13 @@
             const overlay = document.getElementById(overlayId);
             const container = document.getElementById(containerId);
             
-            if (isWide) container.classList.add('modal-wide');
-            else container.classList.remove('modal-wide');
+            if (overlayId === 'modalOverlay') {
+                if (isWide) container.classList.add('modal-wide');
+                else container.classList.remove('modal-wide');
+            } else {
+                // For sub-modals, we always use a medium-wide layout
+                container.style.maxWidth = isWide ? '1200px' : '1000px';
+            }
             
             const dataModuleTag = moduleKey || title.text;
             const closeCall = isSubModal ? 'closeModal(true)' : 'closeModal()';
@@ -456,7 +461,19 @@
             `;
             
             overlay.classList.add('active');
-            setTimeout(() => applyViewerRestrictions(container), 50);
+            
+            // Re-apply restrictions after a longer delay to ensure DOM is ready
+            setTimeout(() => {
+                applyViewerRestrictions(container);
+                // Force enable fields if not viewer
+                if (checkUserRights(dataModuleTag) !== 'Viewer') {
+                    container.querySelectorAll('input, select, textarea').forEach(el => {
+                        if (!el.hasAttribute('data-readonly')) {
+                            el.removeAttribute('disabled');
+                        }
+                    });
+                }
+            }, 150);
         }
 
         function closeModal(isSubModal = false) {
@@ -3419,8 +3436,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (sub) {
                 const codeEl = document.getElementById('custTypeCode');
                 const descEl = document.getElementById('custTypeDesc');
-                if(codeEl) codeEl.value = sub.code;
-                if(descEl) descEl.value = sub.name;
+                if(codeEl) { codeEl.value = sub.code; codeEl.removeAttribute('disabled'); }
+                if(descEl) { descEl.value = sub.name; descEl.removeAttribute('disabled'); }
             }
             
             // Filter coaList for this subId
@@ -3428,7 +3445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const listEl = document.getElementById('customersList');
             if (listEl) {
                 listEl.innerHTML = custList.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-                resetCustomerFormFields();
+                resetCustomerFormFields(true); // Force enable
             }
         };
 
@@ -3636,7 +3653,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const el = document.getElementById('mainRegionName');
             if(el) {
                 el.value = '';
-                el.disabled = !gen;
+                if(gen) el.removeAttribute('disabled');
+                else el.setAttribute('disabled', 'true');
                 if(gen) el.focus();
             }
         };

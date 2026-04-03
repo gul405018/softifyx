@@ -814,38 +814,43 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.5); /* Darker overlay */
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 60000;
+            z-index: 100000; /* Much higher than main modal */
         }
 
         .modal-container {
             background: #FFFFFF;
             border-radius: 10px;
             padding: 20px;
-            max-width: 800px; /* Increased from 600px */
+            max-width: 900px; /* Increased from 800px */
             width: 95%;
-            max-height: 90vh;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-height: 92vh;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             position: relative;
             animation: modalFadeIn 0.2s ease;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             border: 2px solid #1f4668;
-            transition: max-width 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .sub-modal-container {
-            max-width: 800px;
+            max-width: 1000px; /* Increased from 800px */
             width: 90%;
-            z-index: 60001;
+            z-index: 100001;
+            background: #FFFFFF;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            border: 2px solid #F5A623; /* Orange border to distinguish sub-modal */
         }
 
         .modal-container.modal-wide {
-            max-width: 1100px;
+            max-width: 1400px; /* Final increase to 1400px */
         }
 
         @keyframes modalFadeIn {
