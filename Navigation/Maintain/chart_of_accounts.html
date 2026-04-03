@@ -20,13 +20,13 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Main Type Code</label>
-                    <input type="number" id="mainTypeCode" class="coa-input" style="width: 90px;">
+                    <input type="number" id="mainTypeCode" disabled class="coa-input" style="width: 90px; background: #f8fafc;">
                     
                     <label class="coa-label">Main Account Type</label>
-                    <input type="text" id="mainAccountType" class="coa-input">
+                    <input type="text" id="mainAccountType" disabled class="coa-input" style="background: #f8fafc;">
                     
                     <label class="coa-label">Financial Statements Component</label>
-                    <select id="financialStatementComponent" class="coa-input" style="background: white;">
+                    <select id="financialStatementComponent" disabled class="coa-input" style="background: #f8fafc;">
                         <option value="current assets">current assets</option>
                         <option value="non-current assets">non-current assets</option>
                         <option value="Current Liabilities">Current Liabilities</option>
@@ -70,7 +70,7 @@
                     <input type="text" id="subAccountCode" readonly class="coa-input" style="width: 110px; background: #f8fafc;">
                     
                     <label class="coa-label">Sub Account Type</label>
-                    <input type="text" id="subAccountType" class="coa-input">
+                    <input type="text" id="subAccountType" disabled class="coa-input" style="background: #f8fafc;">
                 </div>
             </div>
         </div>
@@ -91,23 +91,21 @@
             <div style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 4px;">
                     <button class="coa-btn coa-primary" onclick="printCOA('list')">Chart</button>
-                    <button class="coa-btn coa-primary" onclick="findCOA()">Find</button>
+
                     <button class="coa-btn coa-primary" onclick="resetListForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveCOAList()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="resetListForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOAList()">Delete</button>
                 </div>
                 
-                <div style="margin: 0; padding-left: 2px;">
-                    <a href="#" style="color: #1F4E79; font-size: 11px; font-weight: 700; font-style: italic; text-decoration: underline;">Click Here to Record Details of Bank Accounts ....</a>
-                </div>
+
 
                 <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Account Code</label>
                     <input type="text" id="accountCode" readonly class="coa-input" style="width: 130px; background: #f8fafc;">
                     
                     <label class="coa-label">Account Name</label>
-                    <input type="text" id="accountName" class="coa-input">
+                    <input type="text" id="accountName" disabled class="coa-input" style="background: #f8fafc;">
                 </div>
             </div>
         </div>
