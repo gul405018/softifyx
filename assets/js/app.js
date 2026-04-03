@@ -2689,22 +2689,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         function onMainAccountSelect(code) {
             selectedMainCode = code;
             const main = coaMain.find(m => m.code == code);
+            const codeEl = document.getElementById('mainTypeCode');
+            const nameEl = document.getElementById('mainAccountType');
             const compSelect = document.getElementById('financialStatementComponent');
             
-            // Disable fields on selection (User requested: only enable on Add button)
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
-            if(compSelect) compSelect.disabled = true;
+            // Lock fields on selection
+            if(codeEl) { codeEl.disabled = true; codeEl.readOnly = true; codeEl.style.background = '#f8fafc'; }
+            if(nameEl) { nameEl.disabled = true; nameEl.readOnly = true; nameEl.style.background = '#f8fafc'; }
+            if(compSelect) { compSelect.disabled = true; compSelect.style.background = '#f8fafc'; }
 
             if(main) {
-                document.getElementById('mainTypeCode').value = main.code;
-                document.getElementById('mainAccountType').value = main.name;
-                if(compSelect) {
-                    compSelect.value = main.component;
-                }
+                if(codeEl) codeEl.value = main.code;
+                if(nameEl) nameEl.value = main.name;
+                if(compSelect) compSelect.value = main.component;
             }
             renderCOASubList();
-            renderCOAListList(); // Cascade to account list
+            renderCOAListList(); 
             resetSubFormFieldsOnly();
             resetListForm();
         }
@@ -2768,11 +2768,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(codeEl) { 
                 codeEl.value = ''; 
                 codeEl.disabled = false; 
+                codeEl.readOnly = false;
                 codeEl.style.background = '#fff';
             }
             if(nameEl) { 
                 nameEl.value = ''; 
                 nameEl.disabled = false; 
+                nameEl.readOnly = false;
                 nameEl.style.background = '#fff';
             }
             if(listEl) listEl.value = '';
@@ -2798,13 +2800,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         function onSubAccountSelect(code) {
             selectedSubCode = code;
             const sub = coaSub.find(s => s.code == code);
+            const codeEl = document.getElementById('subAccountCode');
+            const nameEl = document.getElementById('subAccountType');
             
-            // Disable fields on selection
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
+            // Lock fields on selection
+            if(codeEl) { codeEl.disabled = true; codeEl.readOnly = true; codeEl.style.background = '#f8fafc'; }
+            if(nameEl) { nameEl.disabled = true; nameEl.readOnly = true; nameEl.style.background = '#f8fafc'; }
 
             if(sub) {
-                document.getElementById('subAccountCode').value = sub.code;
-                document.getElementById('subAccountType').value = sub.name;
+                if(codeEl) codeEl.value = sub.code;
+                if(nameEl) nameEl.value = sub.name;
             }
             renderCOAListList();
             if(typeof resetListForm === 'function') resetListForm();
@@ -2861,6 +2866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(nameEl) { 
                 nameEl.value = ''; 
                 nameEl.disabled = !generate; 
+                nameEl.readOnly = !generate;
                 nameEl.style.background = generate ? '#fff' : '#f8fafc';
             }
             if(listEl) listEl.value = '';
@@ -2885,12 +2891,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(codeEl) { 
                     codeEl.value = code; 
                     codeEl.disabled = false; 
+                    codeEl.readOnly = false;
                     codeEl.style.background = '#fff';
                 }
             } else {
                 if(codeEl) { 
                     codeEl.value = ''; 
                     codeEl.disabled = true; 
+                    codeEl.readOnly = true;
                     codeEl.style.background = '#f8fafc';
                 }
             }
@@ -2917,13 +2925,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function onListAccountSelect(code) {
             const acc = coaList.find(l => l.code == code);
+            const codeEl = document.getElementById('accountCode');
+            const nameEl = document.getElementById('accountName');
             
-            // Disable fields on selection
-            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = true;
+            // Lock fields on selection
+            if(codeEl) { codeEl.disabled = true; codeEl.readOnly = true; codeEl.style.background = '#f8fafc'; }
+            if(nameEl) { nameEl.disabled = true; nameEl.readOnly = true; nameEl.style.background = '#f8fafc'; }
 
             if(acc) {
-                document.getElementById('accountCode').value = acc.code;
-                document.getElementById('accountName').value = acc.name;
+                if(codeEl) codeEl.value = acc.code;
+                if(nameEl) nameEl.value = acc.name;
             }
         }
 
@@ -2970,6 +2981,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(nameEl) { 
                 nameEl.value = ''; 
                 nameEl.disabled = !generate; 
+                nameEl.readOnly = !generate;
                 nameEl.style.background = generate ? '#fff' : '#f8fafc';
             }
             if(listEl) listEl.value = '';
@@ -2993,12 +3005,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(codeEl) { 
                     codeEl.value = code; 
                     codeEl.disabled = false; 
+                    codeEl.readOnly = false;
                     codeEl.style.background = '#fff';
                 }
             } else {
                 if(codeEl) { 
                     codeEl.value = ''; 
                     codeEl.disabled = true; 
+                    codeEl.readOnly = true;
                     codeEl.style.background = '#f8fafc';
                 }
             }
