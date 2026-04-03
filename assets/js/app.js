@@ -130,7 +130,6 @@
                 if (coaMainRes.ok) coaMain = await coaMainRes.json();
                 if (coaSubRes.ok) coaSub = await coaSubRes.json();
                 if (coaListRes.ok) coaList = await coaListRes.json();
-                console.log(`COA Synchronized: ${coaMain.length} Main, ${coaSub.length} Sub, ${coaList.length} List Accounts.`);
 
                 // 6. Currency
                 if (currRes.ok) {
@@ -2696,25 +2695,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('mainAccountType').value = main.name;
                 if(compSelect) {
                     compSelect.value = main.component;
+                    compSelect.disabled = true; // Lock for existing accounts
                 }
             }
-            // Lock fields on select
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
-            if(compSelect) compSelect.disabled = true;
-
             renderCOASubList();
-            
-            // Auto-select first sub-account if available
-            const subList = document.getElementById('subAccountList');
-            if (subList && subList.options.length > 0) {
-                subList.value = subList.options[0].value;
-                onSubAccountSelect(subList.value);
-            } else {
-                resetSubFormFieldsOnly();
-                renderCOAListList();
-                resetListForm();
-            }
+            resetSubFormFieldsOnly();
+            resetListForm();
         }
 
         function resetSubFormFieldsOnly() {
@@ -2740,16 +2726,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ code, name: mainName, component })
                 });
                 if (response.ok) {
-                    const resData = await response.json();
                     alert('Main account saved and synchronized!');
-                    
-                    // Local check/update
-                    const idx = coaMain.findIndex(m => m.code == code);
-                    if(idx > -1) coaMain[idx] = { ...coaMain[idx], name: mainName, component };
-                    else coaMain.push({ id: resData.id, code, name: mainName, component });
-                    
-                    renderCOAMainList();
-                    resetMainForm(); // Back to locked state
+                    closeModal();
+                    window.location.reload();
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -2774,24 +2753,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetMainForm(generate = false) {
-            if(document.getElementById('mainTypeCode')) {
-                document.getElementById('mainTypeCode').value = '';
-                document.getElementById('mainTypeCode').disabled = !generate;
-            }
-            if(document.getElementById('mainAccountType')) {
-                document.getElementById('mainAccountType').value = '';
-                document.getElementById('mainAccountType').disabled = !generate;
-            }
+        function resetMainForm() {
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').value = '';
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').value = '';
             if(document.getElementById('mainAccountList')) document.getElementById('mainAccountList').value = '';
-            
             const compSelect = document.getElementById('financialStatementComponent');
             if(compSelect) {
                 compSelect.value = 'current assets';
-                compSelect.disabled = !generate;
+                compSelect.disabled = false; // Re-enable for new entry
             }
-            
-            if(!generate) selectedMainCode = null;
+            selectedMainCode = null;
             renderCOASubList();
         }
 
@@ -2800,17 +2771,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const list = document.getElementById('subAccountList');
             if(!list) return;
             if(!selectedMainCode) { list.innerHTML = ''; return; }
-            
-            const main = coaMain.find(m => m.code == selectedMainCode);
-            if(!main) { list.innerHTML = ''; return; }
-            
-            // Robust filtering for both string and number IDs
-            const filtered = coaSub.filter(s => String(s.main_id) === String(main.id));
+            const filtered = coaSub.filter(s => s.mainCode == selectedMainCode);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
-            
-            if (filtered.length === 0 && coaSub.length > 0) {
-                console.warn(`COA: No sub-accounts found for Main ID ${main.id}. Total COA Sub: ${coaSub.length}`);
-            }
         }
 
         function onSubAccountSelect(code) {
@@ -2820,20 +2782,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountCode').value = sub.code;
                 document.getElementById('subAccountType').value = sub.name;
             }
-            // Lock fields on select
-            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = true;
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
-
             renderCOAListList();
-            
-            // Auto-select first list-account if available
-            const listList = document.getElementById('listAccountList');
-            if (listList && listList.options.length > 0) {
-                listList.value = listList.options[0].value;
-                onListAccountSelect(listList.value);
-            } else {
-                resetListForm();
-            }
+            if(typeof resetListForm === 'function') resetListForm();
         }
 
         async function saveCOASub() {
@@ -2855,16 +2805,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (response.ok) {
-                    const resData = await response.json();
                     alert('Sub account saved and synchronized!');
-                    
-                    // Local update
-                    const idx = coaSub.findIndex(s => s.code == code);
-                    if(idx > -1) coaSub[idx] = { ...coaSub[idx], name: subName };
-                    else coaSub.push({ id: resData.id, main_id: main.id, code, name: subName });
-
-                    renderCOASubList();
-                    resetSubForm(); // Back to locked
+                    closeModal();
+                    window.location.reload();
                 }
             } catch (err) { alert("Save Failed."); }
         }
@@ -2887,22 +2830,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetSubForm(generate = false) {
-            if(document.getElementById('subAccountType')) {
-                document.getElementById('subAccountType').value = '';
-                document.getElementById('subAccountType').disabled = !generate;
-            }
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').value = '';
             if(document.getElementById('subAccountList')) document.getElementById('subAccountList').value = '';
+            selectedSubCode = null;
             
-            if(!generate) selectedSubCode = null;
-            
-            if(document.getElementById('subAccountCode')) {
-                document.getElementById('subAccountCode').disabled = !generate;
-            }
-
             // Only generate code if explicitly requested (clicked Add)
             if (generate && selectedMainCode) {
-                const main = coaMain.find(m => m.code == selectedMainCode);
-                const siblings = main ? coaSub.filter(s => s.main_id == main.id) : [];
+                const siblings = coaSub.filter(s => s.mainCode == selectedMainCode);
                 let nextNum = 1;
                 if(siblings.length > 0) {
                     const lastCodes = siblings.map(s => {
@@ -2926,16 +2860,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const list = document.getElementById('listAccountList');
             if(!list) return;
             if(!selectedSubCode) { list.innerHTML = ''; return; }
-            
-            const sub = coaSub.find(s => s.code == selectedSubCode);
-            if(!sub) { list.innerHTML = ''; return; }
-            
-            const filtered = coaList.filter(l => String(l.sub_id) === String(sub.id));
+            const filtered = coaList.filter(l => l.subCode == selectedSubCode);
             list.innerHTML = filtered.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
-
-            if (filtered.length === 0 && coaList.length > 0) {
-                console.warn(`COA: No accounts found for Sub ID ${sub.id}. Total COA List: ${coaList.length}`);
-            }
         }
 
         function onListAccountSelect(code) {
@@ -2944,9 +2870,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('accountCode').value = acc.code;
                 document.getElementById('accountName').value = acc.name;
             }
-            // Lock fields on select
-            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = true;
-            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = true;
         }
 
         async function saveCOAList() {
@@ -2968,16 +2891,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({ sub_id: subId, code, name: listName })
                 });
                 if (response.ok) {
-                    const resData = await response.json();
                     alert('Account entry saved and synchronized!');
-                    
-                    // Local update
-                    const idx = coaList.findIndex(l => l.code == code);
-                    if(idx > -1) coaList[idx] = { ...coaList[idx], name: listName };
-                    else coaList.push({ id: resData.id, sub_id: sub.id, code, name: listName });
-
-                    renderCOAListList();
-                    resetListForm(); // Back to locked
+                    closeModal();
+                    window.location.reload();
                 }
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
@@ -2992,20 +2908,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetListForm(generate = false) {
-            if(document.getElementById('accountName')) {
-                document.getElementById('accountName').value = '';
-                document.getElementById('accountName').disabled = !generate;
-            }
+            if(document.getElementById('accountName')) document.getElementById('accountName').value = '';
             if(document.getElementById('listAccountList')) document.getElementById('listAccountList').value = '';
             
-            if(document.getElementById('accountCode')) {
-                document.getElementById('accountCode').disabled = !generate;
-            }
-
             // Only generate code if explicitly requested (clicked Add)
             if (generate && selectedSubCode) {
-                const sub = coaSub.find(s => s.code == selectedSubCode);
-                const siblings = sub ? coaList.filter(l => l.sub_id == sub.id) : [];
+                const siblings = coaList.filter(l => l.subCode == selectedSubCode);
                 let nextNum = 1;
                 if(siblings.length > 0) {
                     const lastCodes = siblings.map(l => {
