@@ -2762,10 +2762,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const main = coaMain.find(m => m.code == selectedMainCode);
             if (!main) return;
 
-            // Protection: Check for Sub Accounts
-            const hasChildren = coaSub.some(s => s.main_id == main.id);
-            if (hasChildren) {
-                alert("Cannot delete Main Account Type! Sub Account Types exist for this category. Please delete them first.");
+            // Strict Deletion Order: Check for Sub Accounts
+            const hasSubAccounts = coaSub.some(s => String(s.main_id) === String(main.id));
+            if (hasSubAccounts) {
+                alert("Cannot delete Main Account Type! There are still Sub Account Types in this category. Please delete all Sub Accounts first.");
                 return;
             }
 
@@ -2877,15 +2877,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function deleteCOASub() {
-            if(!selectedSubCode) return;
+            // Priority: Ensure we have a selection
+            const codeToUse = selectedSubCode || document.getElementById('subAccountCode').value;
+            if(!codeToUse) {
+                alert("Please select a Sub Account to delete first.");
+                return;
+            }
 
-            const sub = coaSub.find(s => s.code == selectedSubCode);
-            if (!sub) return;
+            const sub = coaSub.find(s => s.code == codeToUse);
+            if (!sub) {
+                alert("Sub Account not found in the list.");
+                return;
+            }
 
-            // Delete Protection: Check for List of Accounts
-            const hasChildren = coaList.some(l => l.sub_id == sub.id);
-            if (hasChildren) {
-                alert("Cannot delete Sub Account Type! Items exist in the List of Accounts for this category. Please delete them first.");
+            // Strict Deletion Order: Check for List of Accounts
+            const hasListItems = coaList.some(l => String(l.sub_id) === String(sub.id));
+            if (hasListItems) {
+                alert("Cannot delete Sub Account Type! There are still accounts in the List of Accounts for this category. Please delete them first.");
                 return;
             }
 
@@ -2893,11 +2901,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const response = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'DELETE' });
                     if (response.ok) {
-                        coaSub = coaSub.filter(s => s.code != selectedSubCode);
+                        coaSub = coaSub.filter(s => s.code != codeToUse);
                         selectedSubCode = null;
                         renderCOASubList();
                         resetSubForm();
                         alert("Sub Account Type deleted successfully.");
+                    } else {
+                        alert("Server error while deleting Sub Account.");
                     }
                 } catch (err) { alert("Delete Failed: " + err.message); }
             }
@@ -3000,12 +3010,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteCOAList() {
             const code = document.getElementById('accountCode').value;
-            if(!code) return;
+            if(!code) {
+                alert("Please select an account entry to delete first.");
+                return;
+            }
 
             const acc = coaList.find(l => l.code == code);
-            if (!acc) return;
+            if (!acc) {
+                alert("Account entry not found in the list.");
+                return;
+            }
 
-            if(confirm("Are you sure you want to delete this account entry?")) {
+            if(confirm("Are you sure you want to delete this account entry? This action cannot be undone.")) {
                 try {
                     const response = await fetch(`api/maintain.php?action=delete_coa_list&id=${acc.id}`, { method: 'DELETE' });
                     if (response.ok) {
@@ -3013,6 +3029,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         renderCOAListList();
                         resetListForm();
                         alert("Account entry deleted successfully.");
+                    } else {
+                        alert("Server error while deleting account entry.");
                     }
                 } catch (err) { alert("Delete Failed: " + err.message); }
             }
