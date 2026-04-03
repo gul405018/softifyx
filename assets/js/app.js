@@ -130,6 +130,7 @@
                 if (coaMainRes.ok) coaMain = await coaMainRes.json();
                 if (coaSubRes.ok) coaSub = await coaSubRes.json();
                 if (coaListRes.ok) coaList = await coaListRes.json();
+                console.log(`COA Synchronized: ${coaMain.length} Main, ${coaSub.length} Sub, ${coaList.length} List Accounts.`);
 
                 // 6. Currency
                 if (currRes.ok) {
@@ -2803,8 +2804,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const main = coaMain.find(m => m.code == selectedMainCode);
             if(!main) { list.innerHTML = ''; return; }
             
-            const filtered = coaSub.filter(s => s.main_id == main.id);
+            // Robust filtering for both string and number IDs
+            const filtered = coaSub.filter(s => String(s.main_id) === String(main.id));
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
+            
+            if (filtered.length === 0 && coaSub.length > 0) {
+                console.warn(`COA: No sub-accounts found for Main ID ${main.id}. Total COA Sub: ${coaSub.length}`);
+            }
         }
 
         function onSubAccountSelect(code) {
@@ -2924,8 +2930,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = coaSub.find(s => s.code == selectedSubCode);
             if(!sub) { list.innerHTML = ''; return; }
             
-            const filtered = coaList.filter(l => l.sub_id == sub.id);
+            const filtered = coaList.filter(l => String(l.sub_id) === String(sub.id));
             list.innerHTML = filtered.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+
+            if (filtered.length === 0 && coaList.length > 0) {
+                console.warn(`COA: No accounts found for Sub ID ${sub.id}. Total COA List: ${coaList.length}`);
+            }
         }
 
         function onListAccountSelect(code) {

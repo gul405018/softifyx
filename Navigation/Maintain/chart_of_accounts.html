@@ -1,7 +1,7 @@
 <div id="coaContainer" data-module="Chart of Accounts" style="height: 600px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px;">
     
     <!-- Section 1: Main Account Types -->
-    <div style="flex: 1; display: flex; flex-direction: column; min-height: 165px;">
+    <div style="flex: 1; display: flex; flex-direction: column; min-height: 180px;">
         <div style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">1. Main Account Types</div>
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
@@ -18,7 +18,7 @@
                     <button class="coa-btn coa-cancel" onclick="resetMainForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOAMain()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Main Type Code</label>
                     <input type="number" id="mainTypeCode" class="coa-input" style="width: 90px;" disabled>
                     
@@ -48,7 +48,7 @@
     <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 6px 0;">
 
     <!-- Section 2: Sub Account Types -->
-    <div style="flex: 0.8; display: flex; flex-direction: column; min-height: 125px;">
+    <div style="flex: 0.8; display: flex; flex-direction: column; min-height: 145px;">
         <div style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">2. Sub Account Types</div>
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
@@ -65,7 +65,7 @@
                     <button class="coa-btn coa-cancel" onclick="resetSubForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteCOASub()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Sub Account Code</label>
                     <input type="text" id="subAccountCode" readonly class="coa-input" style="width: 110px; background: #f8fafc;" disabled>
                     
@@ -79,12 +79,12 @@
     <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 6px 0;">
 
     <!-- Section 3: List of Accounts -->
-    <div style="flex: 1; display: flex; flex-direction: column; min-height: 125px;">
+    <div style="flex: 1; display: flex; flex-direction: column; min-height: 145px;">
         <div style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">3. List of Accounts</div>
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
-                <select id="listAccountList" size="8" style="width: 100%; height: 140px; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onListAccountSelect(this.value)"></select>
+                <select id="listAccountList" size="8" class="coa-list-box" onchange="onListAccountSelect(this.value)"></select>
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
@@ -99,7 +99,7 @@
                 
 
 
-                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; flex: 1;">
                     <label class="coa-label">Account Code</label>
                     <input type="text" id="accountCode" readonly class="coa-input" style="width: 130px; background: #f8fafc;" disabled>
                     
@@ -151,6 +151,18 @@
         .coa-label { font-size: 12px; font-style: normal; font-weight: 600; color: #334155; }
         .coa-input { height: 30px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; font-size: 13px; outline: none; width: 100%; transition: border 0.2s; }
         .coa-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 1px rgba(31,78,121,0.1); }
+
+        .coa-list-box {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            padding: 2px;
+            font-size: 13px;
+            outline: none;
+            color: #1F4E79;
+            background: #fff;
+        }
         
         option:checked { background: #1F4E79 !important; color: white !important; }
         option { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
