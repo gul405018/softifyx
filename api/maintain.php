@@ -39,37 +39,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    if ($action === 'save_coa_main') {
+        $status = 'success';
+        $newId = null;
         if (isset($data['id'])) {
             $stmt = $pdo->prepare("UPDATE coa_main SET code = ?, name = ?, component = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['component'], $data['id']]);
         } else {
             $stmt = $pdo->prepare("INSERT INTO coa_main (company_id, code, name, component) VALUES (?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['code'], $data['name'], $data['component']]);
+            $newId = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
-    }
+        sendResponse(['status' => $status, 'id' => $newId]);
     
     if ($action === 'save_coa_sub') {
+        $status = 'success';
+        $newId = null;
         if (isset($data['id'])) {
             $stmt = $pdo->prepare("UPDATE coa_sub SET code = ?, name = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['id']]);
         } else {
             $stmt = $pdo->prepare("INSERT INTO coa_sub (company_id, main_id, code, name) VALUES (?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['main_id'], $data['code'], $data['name']]);
+            $newId = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
+        sendResponse(['status' => $status, 'id' => $newId]);
     }
 
     if ($action === 'save_coa_list') {
+        $status = 'success';
+        $newId = null;
         if (isset($data['id'])) {
             $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['id']]);
         } else {
             $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
+            $newId = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
+        sendResponse(['status' => $status, 'id' => $newId]);
     }
 }
 

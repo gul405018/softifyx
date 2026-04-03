@@ -2744,8 +2744,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // Local check/update
                     const idx = coaMain.findIndex(m => m.code == code);
-                    if(idx > -1) coaMain[idx] = { ...coaMain[idx], name: mainName, component };
-                    else coaMain.push({ id: resData.id, code, name: mainName, component });
+                    if(idx > -1) {
+                        coaMain[idx] = { ...coaMain[idx], name: mainName, component };
+                    } else {
+                        coaMain.push({ id: resData.id, code, name: mainName, component });
+                    }
                     
                     renderCOAMainList();
                     resetMainForm(); // Back to locked state
@@ -2861,8 +2864,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // Local update
                     const idx = coaSub.findIndex(s => s.code == code);
-                    if(idx > -1) coaSub[idx] = { ...coaSub[idx], name: subName };
-                    else coaSub.push({ id: resData.id, main_id: main.id, code, name: subName });
+                    if(idx > -1) {
+                        coaSub[idx] = { ...coaSub[idx], name: subName };
+                    } else {
+                        coaSub.push({ id: resData.id, main_id: main.id, code, name: subName });
+                    }
 
                     renderCOASubList();
                     resetSubForm(); // Back to locked
@@ -2980,8 +2986,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // Local update
                     const idx = coaList.findIndex(l => l.code == code);
-                    if(idx > -1) coaList[idx] = { ...coaList[idx], name: listName };
-                    else coaList.push({ id: resData.id, sub_id: sub.id, code, name: listName });
+                    if(idx > -1) {
+                        coaList[idx] = { ...coaList[idx], name: listName };
+                    } else {
+                        coaList.push({ id: resData.id, sub_id: sub.id, code, name: listName });
+                    }
 
                     renderCOAListList();
                     resetListForm(); // Back to locked
@@ -3045,7 +3054,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!query) return;
 
             const list = document.getElementById('listAccountList');
-            const items = coaList.filter(l => l.subCode == selectedSubCode);
+            const sub = coaSub.find(s => s.code == selectedSubCode);
+            if (!sub) return;
+            
+            const items = coaList.filter(l => l.sub_id == sub.id);
             const filtered = items.filter(l => 
                 l.name.toLowerCase().includes(query.toLowerCase()) || 
                 l.code.toString().includes(query)
@@ -3068,9 +3080,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let reportTitle = "CHART OF ACCOUNTS";
             let data = [];
-            if(level === 'main') { reportTitle = "MAIN ACCOUNT TYPES"; data = coaMain; }
-            else if(level === 'sub') { reportTitle = "SUB ACCOUNT TYPES"; data = selectedMainCode ? coaSub.filter(s=>s.mainCode==selectedMainCode) : coaSub; }
-            else { reportTitle = "LIST OF ACCOUNTS"; data = selectedSubCode ? coaList.filter(l=>l.subCode==selectedSubCode) : coaList; }
+            if(level === 'main') { 
+                reportTitle = "MAIN ACCOUNT TYPES"; 
+                data = coaMain; 
+            } else if(level === 'sub') { 
+                reportTitle = "SUB ACCOUNT TYPES"; 
+                const main = coaMain.find(m => m.code == selectedMainCode);
+                data = main ? coaSub.filter(s => s.main_id == main.id) : coaSub; 
+            } else { 
+                reportTitle = "LIST OF ACCOUNTS"; 
+                const sub = coaSub.find(s => s.code == selectedSubCode);
+                data = sub ? coaList.filter(l => l.sub_id == sub.id) : coaList; 
+            }
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
