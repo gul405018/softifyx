@@ -2642,7 +2642,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let isWide = isCoa || isCust;
+                    let isWide = false; // Always standard width to match Employees form as requested
                     let initCB = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : null);
                     
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCB, moduleName, isWide);
@@ -2669,7 +2669,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, false); // Match Employees width
                 });
             });
         }
