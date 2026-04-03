@@ -2759,6 +2759,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const main = coaMain.find(m => m.code == selectedMainCode);
             if (!main) return;
 
+            // Protection: Check for Sub Accounts
+            const hasChildren = coaSub.some(s => s.main_id == main.id);
+            if (hasChildren) {
+                alert("Cannot delete Main Account Type! Sub Account Types exist for this category. Please delete them first.");
+                return;
+            }
+
             if(confirm("Are you sure you want to delete this Main Account Type?")) {
                 try {
                     const response = await fetch(`api/maintain.php?action=delete_coa_main&id=${main.id}`, { method: 'DELETE' });
@@ -2767,9 +2774,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         selectedMainCode = null;
                         renderCOAMainList();
                         resetMainForm();
-                        alert("Deleted successfully.");
+                        alert("Main Account Type deleted successfully.");
                     }
-                } catch (err) { alert("Delete Failed."); }
+                } catch (err) { alert("Delete Failed: " + err.message); }
             }
         }
 
@@ -2863,20 +2870,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) { alert("Save Failed."); }
         }
 
-        function deleteCOASub() {
+        async function deleteCOASub() {
             if(!selectedSubCode) return;
 
+            const sub = coaSub.find(s => s.code == selectedSubCode);
+            if (!sub) return;
+
             // Delete Protection: Check for List of Accounts
-            const hasChildren = coaList.some(l => l.subCode == selectedSubCode);
+            const hasChildren = coaList.some(l => l.sub_id == sub.id);
             if (hasChildren) {
                 alert("Cannot delete Sub Account Type! Items exist in the List of Accounts for this category. Please delete them first.");
                 return;
             }
 
             if(confirm("Are you sure you want to delete this Sub Account Type?")) {
-                selectedSubCode = null;
-                renderCOASubList();
-                resetSubForm();
+                try {
+                    const response = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        coaSub = coaSub.filter(s => s.code != selectedSubCode);
+                        selectedSubCode = null;
+                        renderCOASubList();
+                        resetSubForm();
+                        alert("Sub Account Type deleted successfully.");
+                    }
+                } catch (err) { alert("Delete Failed: " + err.message); }
             }
         }
 
@@ -2972,12 +2989,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) { alert('Sync Error: ' + err.message); }
         }
 
-        function deleteCOAList() {
+        async function deleteCOAList() {
             const code = document.getElementById('accountCode').value;
             if(!code) return;
-            if(confirm("Are you sure?")) {
-                renderCOAListList();
-                resetListForm();
+
+            const acc = coaList.find(l => l.code == code);
+            if (!acc) return;
+
+            if(confirm("Are you sure you want to delete this account entry?")) {
+                try {
+                    const response = await fetch(`api/maintain.php?action=delete_coa_list&id=${acc.id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        coaList = coaList.filter(l => l.code != code);
+                        renderCOAListList();
+                        resetListForm();
+                        alert("Account entry deleted successfully.");
+                    }
+                } catch (err) { alert("Delete Failed: " + err.message); }
             }
         }
 
