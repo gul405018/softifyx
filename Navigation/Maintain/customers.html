@@ -52,7 +52,7 @@
                 </div>
 
                 <!-- Fields Grid -->
-                <div style="display: grid; grid-template-columns: 120px 1fr 120px 1fr; gap: 6px 10px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 125px 1fr 125px 1fr; gap: 10px 15px; align-items: center;">
                     <label class="coa-label">Account Code</label>
                     <input type="text" id="custAccCode" class="coa-input" style="width: 120px;" disabled>
                     <div></div><div></div>
@@ -114,8 +114,6 @@
                 </div>
             </div>
         </div>
-        <div style="color: #64748b; font-size: 11px; text-align: center; margin-top: 10px; font-style: italic; color: #dc3545;">
-            Press: <b>Ctrl+N</b> to add new customer, <b>Ctrl+S</b> to save changes and <b>ESC</b> to cancel
         </div>
     </div>
 
@@ -129,13 +127,12 @@
         .coa-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
         .coa-find { background: #60a5fa !important; color: white !important; border-color: #3b82f6 !important; }
         
-        .dots-btn { width: 22px; height: 30px; background: #e2e8f0; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .dots-btn:hover { background: #cbd5e0; }
-
-        .coa-label { font-size: 12px; font-weight: 600; color: #334155; }
-        .coa-input { height: 30px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; font-size: 13px; outline: none; width: 100%; }
-        .coa-input:focus { border-color: #1F4E79; }
-        .coa-input:disabled { background: #f1f5f9; cursor: not-allowed; }
+        .coa-label { font-size: 12.5px; font-weight: 600; color: #334155; display: flex; align-items: center; }
+        .coa-input { height: 34px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 10px; font-size: 13px; outline: none; width: 100%; transition: border-color 0.2s; }
+        .coa-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 2px rgba(31,78,121,0.1); }
+        .coa-input:disabled { background: #f8fafc; cursor: not-allowed; border-color: #e2e8f0; }
+        
+        .dots-btn { width: 28px; height: 34px; background: #e2e8f0; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         
         textarea.coa-input { resize: none; }
         option { padding: 4px 8px; }

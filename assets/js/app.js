@@ -3462,6 +3462,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (listEl) {
                 listEl.innerHTML = custList.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
                 resetCustomerFormFields(true); // Force enable
+                
+                // NEW: Auto-select and load data for the first customer in the list
+                if (custList.length > 0) {
+                    listEl.value = custList[0].id;
+                    onCustomerSelect(custList[0].id);
+                }
             }
         };
 
