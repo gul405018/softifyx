@@ -102,8 +102,20 @@
                 if (companyRes.ok) {
                     const data = await companyRes.json();
                     if (data) {
-                        companyData = { name: data.name, address: data.address, phone: data.phone, fax: data.fax, email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, dealsIn: data.deals_in };
+                        // Use Object.assign to keep the reference on window.companyData stable
+                        Object.assign(companyData, { 
+                            name: data.name || '', 
+                            address: data.address || '', 
+                            phone: data.phone || '', 
+                            fax: data.fax || '', 
+                            email: data.email || '', 
+                            website: data.website || '', 
+                            gst: data.gst || '', 
+                            ntn: data.ntn || '', 
+                            dealsIn: data.deals_in || '' 
+                        });
                         logoData = data.logo_data || null;
+                        window.logoData = logoData; // Expose logo
                     }
                 }
 
@@ -862,7 +874,8 @@
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = sessionData.company_id || 1;
 
-                companyData = {
+                // Update local companyData object properties to keep window.companyData in sync
+                Object.assign(companyData, {
                     name: businessName,
                     address: address || '',
                     phone: phone || '',
@@ -872,20 +885,22 @@
                     gst: gst || '',
                     ntn: ntn || '',
                     dealsIn: dealsIn || ''
-                };
+                });
                 
                 try {
                     const response = await fetch(`api/admin.php?action=save_company&company_id=${companyId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...companyData, id: companyId }) // PASS ID HERE FOR UPDATE
+                        body: JSON.stringify({ ...companyData, id: companyId })
                     });
 
                     if (response.ok) {
                         updateNames();
                         alert('Company settings updated and synchronized live!');
                         closeModal();
-                        window.location.reload(); // Force refresh to show changes everywhere
+                        // No longer strictly requiring reload if logic is solid, but dashboard name might need update
+                        const dashCoName = document.getElementById('dashboardCompanyName');
+                        if(dashCoName) dashCoName.textContent = companyData.name;
                     }
                 } catch (err) { alert('Sync Error: ' + err.message); }
             }
@@ -934,6 +949,7 @@
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     logoData = e.target.result;
+                    window.logoData = logoData; // SYNC TO WINDOW
                     try {
                         await fetch(`api/admin.php?action=save_logo&company_id=${companyId}`, {
                             method: 'POST',
@@ -3178,8 +3194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         function printCOA(level) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            // Use global companyData and logoData populated during loadSavedData
-            const co = window.companyData || companyData;
+            const co = window.companyData || companyData || { name: 'SoftifyX Business', address: '', phone: '' };
             const logo = window.logoData || logoData;
             
             let reportTitle = "CHART OF ACCOUNTS";
