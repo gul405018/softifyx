@@ -3198,8 +3198,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         function printCOA(level) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const co = window.companyData || companyData || { name: 'SoftifyX Business', address: '', phone: '' };
+            // Ensure we have the absolute latest data from all possible sources
+            const co = {
+                name: window.companyData?.name || companyData?.name || session.company_name || session.company || 'Business Name',
+                address: window.companyData?.address || companyData?.address || session.address || 'Address Details',
+                phone: window.companyData?.phone || companyData?.phone || session.phone || 'N/A',
+                email: window.companyData?.email || companyData?.email || session.email || 'N/A',
+                ntn: window.companyData?.ntn || companyData?.ntn || session.ntn || 'N/A',
+                gst: window.companyData?.gst || companyData?.gst || session.gst || 'N/A'
+            };
             const logo = window.logoData || logoData;
+            
+            console.log("Print Debug - Final Company Data:", co);
             
             let reportTitle = "CHART OF ACCOUNTS";
             let data = [];
@@ -3240,10 +3250,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <body>
                     <div class="header">
                         <div class="company-info">
-                            <h1>${co.name || session.company || 'Business Name'}</h1>
-                            <p>${co.address || 'Address Details'}</p>
-                            <p>Phone: ${co.phone || 'N/A'} | Email: ${co.email || 'N/A'}</p>
-                            <p>NTN: ${co.ntn || 'N/A'} | GST: ${co.gst || 'N/A'}</p>
+                            <h1>${co.name}</h1>
+                            <p>${co.address}</p>
+                            <p>Phone: ${co.phone} | Email: ${co.email}</p>
+                            <p>NTN: ${co.ntn} | GST: ${co.gst}</p>
                         </div>
                         <div class="logo">
                             ${logo ? '<img src="' + logo + '">' : ''}
