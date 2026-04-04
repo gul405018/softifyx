@@ -3178,8 +3178,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         function printCOA(level) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const company = JSON.parse(localStorage.getItem(getCoKey('softifyx_company')) || '{}');
-            const logo = localStorage.getItem(getCoKey('softifyx_logo'));
+            // Use global companyData and logoData populated during loadSavedData
+            const co = window.companyData || companyData;
+            const logo = window.logoData || logoData;
             
             let reportTitle = "CHART OF ACCOUNTS";
             let data = [];
@@ -3202,35 +3203,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <head>
                     <title>Report - ${reportTitle}</title>
                     <style>
-                        body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #333; }
-                        .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; }
-                        .company-info h1 { margin: 0; color: #2c3e50; font-size: 26px; font-weight: 800; text-transform: uppercase; }
-                        .company-info p { margin: 3px 0; color: #34495e; font-size: 14px; }
-                        .logo img { max-height: 100px; max-width: 250px; object-fit: contain; }
-                        .report-title-box { text-align: center; background: #f1f4f8; padding: 15px; margin-bottom: 30px; border-radius: 8px; border: 1px solid #d1d9e6; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-                        th, td { border: 1px solid #dee2e6; padding: 14px; text-align: left; }
-                        th { background: #2c3e50; color: white; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-                        td { font-size: 14px; }
-                        tr:nth-child(even) { background: #fcfdfe; }
-                        .footer { margin-top: 60px; font-size: 12px; color: #95a5a6; text-align: center; border-top: 1px solid #eee; padding-top: 15px; font-style: italic; }
+                        body { font-family: 'Segoe UI', sans-serif; padding: 20px 40px; color: #333; margin: 0; }
+                        .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #1F4E79; padding-bottom: 10px; margin-bottom: 15px; }
+                        .company-info h1 { margin: 0; color: #1F4E79; font-size: 22px; font-weight: 800; text-transform: uppercase; line-height: 1.2; }
+                        .company-info p { margin: 2px 0; color: #475569; font-size: 13px; font-weight: 500; }
+                        .logo img { max-height: 70px; max-width: 200px; object-fit: contain; }
+                        .report-title-box { text-align: center; background: #f8fafc; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #cbd5e0; padding: 10px; text-align: left; }
+                        th { background: #1F4E79; color: white; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+                        td { font-size: 13px; color: #334155; }
+                        tr:nth-child(even) { background: #f1f5f9; }
+                        .footer { margin-top: 40px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-style: italic; }
+                        @media print { body { padding: 10px 20px; } .header { margin-top: 0; } }
                     </style>
                 </head>
                 <body>
                     <div class="header">
                         <div class="company-info">
-                            <h1>${company.name || session.company || 'Business Name'}</h1>
-                            <p>${company.address || 'Address Details'}</p>
-                            <p>Phone: ${company.phone || 'N/A'} | Email: ${company.email || 'N/A'}</p>
-                            <p>NTN: ${company.ntn || 'N/A'} | GST: ${company.gst || 'N/A'}</p>
+                            <h1>${co.name || session.company || 'Business Name'}</h1>
+                            <p>${co.address || 'Address Details'}</p>
+                            <p>Phone: ${co.phone || 'N/A'} | Email: ${co.email || 'N/A'}</p>
+                            <p>NTN: ${co.ntn || 'N/A'} | GST: ${co.gst || 'N/A'}</p>
                         </div>
                         <div class="logo">
                             ${logo ? '<img src="' + logo + '">' : ''}
                         </div>
                     </div>
                     <div class="report-title-box">
-                        <h2 style="margin:0; color:#2c3e50;">${reportTitle}</h2>
-                        <p style="margin:8px 0 0; color:#7f8c8d; font-size:13px; font-weight:600;">Report Generation Date: ${new Date().toLocaleString()}</p>
+                        <h2 style="margin:0; color:#1F4E79; font-size: 18px;">${reportTitle}</h2>
+                        <p style="margin:4px 0 0; color:#64748b; font-size:12px; font-weight:600;">Report Generation Date: ${new Date().toLocaleString()}</p>
                     </div>
                     <table>
                         <thead>
