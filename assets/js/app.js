@@ -936,6 +936,7 @@
 
             if (doNotShowOption) {
                 logoData = null;
+                window.logoData = null; // SYNC TO WINDOW
                 await fetch(`api/admin.php?action=save_logo&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1147,7 +1148,8 @@
                     if (res.ok) {
                         const data = await res.json();
                         if (data) {
-                            companyData = {
+                            // Update existing object to keep global reference stable
+                            Object.assign(companyData, {
                                 name: data.name || '',
                                 address: data.address || '',
                                 phone: data.phone || '',
@@ -1157,7 +1159,9 @@
                                 gst: data.gst || '',
                                 ntn: data.ntn || '',
                                 dealsIn: data.deals_in || ''
-                            };
+                            });
+                            logoData = data.logo_data || null;
+                            window.logoData = logoData; // Sync logo too
                         }
                     }
                 } catch (err) { console.error('Live Sync Error:', err); }
