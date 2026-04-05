@@ -102,20 +102,8 @@
                 if (companyRes.ok) {
                     const data = await companyRes.json();
                     if (data) {
-                        // Use Object.assign to keep the reference on window.companyData stable
-                        Object.assign(companyData, { 
-                            name: data.name || '', 
-                            address: data.address || '', 
-                            phone: data.phone || '', 
-                            fax: data.fax || '', 
-                            email: data.email || '', 
-                            website: data.website || '', 
-                            gst: data.gst || '', 
-                            ntn: data.ntn || '', 
-                            dealsIn: data.deals_in || '' 
-                        });
+                        companyData = { name: data.name, address: data.address, phone: data.phone, fax: data.fax, email: data.email, website: data.website, gst: data.gst, ntn: data.ntn, dealsIn: data.deals_in };
                         logoData = data.logo_data || null;
-                        window.logoData = logoData; // Expose logo
                     }
                 }
 
@@ -445,27 +433,20 @@
             });
         }
 
-        function openModal(title, content, isWide = false, moduleKey = null, isSubModal = false) {
-            const overlayId = isSubModal ? 'subModalOverlay' : 'modalOverlay';
-            const containerId = isSubModal ? 'subModalContainer' : 'modalContainer';
-            const overlay = document.getElementById(overlayId);
-            const container = document.getElementById(containerId);
+        function openModal(title, content, isWide = false, moduleKey = null) {
+            const overlay = document.getElementById('modalOverlay');
+            const container = document.getElementById('modalContainer');
             
-            if (overlayId === 'modalOverlay') {
-                if (isWide) container.classList.add('modal-wide');
-                else container.classList.remove('modal-wide');
-            } else {
-                // For sub-modals, we always use a medium-wide layout
-                container.style.maxWidth = isWide ? '1200px' : '1000px';
-            }
+            if (isWide) container.classList.add('modal-wide');
+            else container.classList.remove('modal-wide');
             
+            // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
-            const closeCall = isSubModal ? 'closeModal(true)' : 'closeModal()';
             
             container.innerHTML = `
                 <div class="modal-header">
                     <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
-                    <button class="modal-close" onclick="${closeCall}">&times;</button>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
                 </div>
                 <div class="modal-body" data-module="${dataModuleTag}">
                     ${content}
@@ -473,24 +454,15 @@
             `;
             
             overlay.classList.add('active');
-            
-            // Re-apply restrictions after a longer delay to ensure DOM is ready
+
+            // Apply Viewer Restrictions if necessary
             setTimeout(() => {
                 applyViewerRestrictions(container);
-                // Force enable fields if not viewer
-                if (checkUserRights(dataModuleTag) !== 'Viewer') {
-                    container.querySelectorAll('input, select, textarea').forEach(el => {
-                        if (!el.hasAttribute('data-readonly')) {
-                            el.removeAttribute('disabled');
-                        }
-                    });
-                }
-            }, 150);
+            }, 50);
         }
 
-        function closeModal(isSubModal = false) {
-            const overlayId = isSubModal ? 'subModalOverlay' : 'modalOverlay';
-            document.getElementById(overlayId).classList.remove('active');
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
         }
 
         function showInventoryDetails() {
@@ -874,8 +846,7 @@
                 const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = sessionData.company_id || 1;
 
-                // Update local companyData object properties to keep window.companyData in sync
-                Object.assign(companyData, {
+                companyData = {
                     name: businessName,
                     address: address || '',
                     phone: phone || '',
@@ -885,22 +856,20 @@
                     gst: gst || '',
                     ntn: ntn || '',
                     dealsIn: dealsIn || ''
-                });
+                };
                 
                 try {
                     const response = await fetch(`api/admin.php?action=save_company&company_id=${companyId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...companyData, id: companyId })
+                        body: JSON.stringify({ ...companyData, id: companyId }) // PASS ID HERE FOR UPDATE
                     });
 
                     if (response.ok) {
                         updateNames();
                         alert('Company settings updated and synchronized live!');
                         closeModal();
-                        // No longer strictly requiring reload if logic is solid, but dashboard name might need update
-                        const dashCoName = document.getElementById('dashboardCompanyName');
-                        if(dashCoName) dashCoName.textContent = companyData.name;
+                        window.location.reload(); // Force refresh to show changes everywhere
                     }
                 } catch (err) { alert('Sync Error: ' + err.message); }
             }
@@ -936,7 +905,6 @@
 
             if (doNotShowOption) {
                 logoData = null;
-                window.logoData = null; // SYNC TO WINDOW
                 await fetch(`api/admin.php?action=save_logo&company_id=${companyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -950,7 +918,6 @@
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     logoData = e.target.result;
-                    window.logoData = logoData; // SYNC TO WINDOW
                     try {
                         await fetch(`api/admin.php?action=save_logo&company_id=${companyId}`, {
                             method: 'POST',
@@ -1148,8 +1115,7 @@
                     if (res.ok) {
                         const data = await res.json();
                         if (data) {
-                            // Update existing object to keep global reference stable
-                            Object.assign(companyData, {
+                            companyData = {
                                 name: data.name || '',
                                 address: data.address || '',
                                 phone: data.phone || '',
@@ -1159,9 +1125,7 @@
                                 gst: data.gst || '',
                                 ntn: data.ntn || '',
                                 dealsIn: data.deals_in || ''
-                            });
-                            logoData = data.logo_data || null;
-                            window.logoData = logoData; // Sync logo too
+                            };
                         }
                     }
                 } catch (err) { console.error('Live Sync Error:', err); }
@@ -2310,7 +2274,7 @@
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false, isSubModal = false) {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
@@ -2326,6 +2290,9 @@
                 if (res.ok) {
                     let html = await res.text();
                     
+                    // --- AUTOMATED RIGHTS CHECK FOR POPUPS ---
+                    // Create a temporary element to parse the HTML and check for [data-module]
+                    // This is a fallback if moduleName wasn't passed to the function
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     const moduleTag = tempDiv.querySelector('[data-module]');
@@ -2338,7 +2305,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey, isSubModal);
+                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -2354,27 +2321,18 @@
                             setTimeout(() => initCurrencyView(), 10);
                         } else if (url.includes('chart_of_accounts.html')) {
                             setTimeout(() => initChartOfAccountsView(), 10);
-                        } else if (url.includes('customers.html')) {
-                            setTimeout(() => initCustomersView(), 10);
-                        } else if (url.includes('customer_regions.html')) {
-                            setTimeout(() => initRegionsView(), 10);
-                        } else if (url.includes('business_sectors.html')) {
-                            setTimeout(() => initSectorsView(), 10);
-                        } else if (url.includes('employees.html')) {
-                            setTimeout(() => initEmployeesView(), 10);
                         }
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
                         '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
-                        isWide, null, isSubModal
+                        isWide
                     );
                 }
             } catch (err) {
                 console.error(err);
             }
         }
-        window.openModularPopup = openModularPopup;
 
         async function init() {
             // --- 1. SESSION AUTHENTICATION CHECK ---
@@ -2661,11 +2619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let isWide = false; // Always standard width to match Employees form as requested
-                    let initCB = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : null);
-                    
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCB, moduleName, isWide);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2689,7 +2643,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, false); // Match Employees width
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
                 });
             });
         }
@@ -2704,13 +2658,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to load components:', err);
     }
 });
-// --- GLOBAL STATE FOR NEW MODULES ---
-        let regions = [];
-        let businessSectors = [];
-        let employees = [];
-        let customersExt = {}; // Map of coa_list_id -> extra details
-        const CUSTOMER_MAIN_CODE = 12; // Assuming 12 is the Customers category
-
 // --- CHART OF ACCOUNTS (COA) LOGIC ---
         let selectedMainCode = null;
         let selectedSubCode = null;
@@ -3198,18 +3145,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         function printCOA(level) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            // Ensure we have the absolute latest data from all possible sources
-            const co = {
-                name: window.companyData?.name || companyData?.name || session.company_name || session.company || 'Business Name',
-                address: window.companyData?.address || companyData?.address || session.address || 'Address Details',
-                phone: window.companyData?.phone || companyData?.phone || session.phone || 'N/A',
-                email: window.companyData?.email || companyData?.email || session.email || 'N/A',
-                ntn: window.companyData?.ntn || companyData?.ntn || session.ntn || 'N/A',
-                gst: window.companyData?.gst || companyData?.gst || session.gst || 'N/A'
-            };
-            const logo = window.logoData || logoData;
-            
-            console.log("Print Debug - Final Company Data:", co);
+            const company = JSON.parse(localStorage.getItem(getCoKey('softifyx_company')) || '{}');
+            const logo = localStorage.getItem(getCoKey('softifyx_logo'));
             
             let reportTitle = "CHART OF ACCOUNTS";
             let data = [];
@@ -3232,36 +3169,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <head>
                     <title>Report - ${reportTitle}</title>
                     <style>
-                        body { font-family: 'Segoe UI', sans-serif; padding: 20px 40px; color: #333; margin: 0; }
-                        .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #1F4E79; padding-bottom: 10px; margin-bottom: 15px; }
-                        .company-info h1 { margin: 0; color: #1F4E79; font-size: 22px; font-weight: 800; text-transform: uppercase; line-height: 1.2; }
-                        .company-info p { margin: 2px 0; color: #475569; font-size: 13px; font-weight: 500; }
-                        .logo img { max-height: 70px; max-width: 200px; object-fit: contain; }
-                        .report-title-box { text-align: center; background: #f8fafc; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #cbd5e0; padding: 10px; text-align: left; }
-                        th { background: #1F4E79; color: white; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-                        td { font-size: 13px; color: #334155; }
-                        tr:nth-child(even) { background: #f1f5f9; }
-                        .footer { margin-top: 40px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-style: italic; }
-                        @media print { body { padding: 10px 20px; } .header { margin-top: 0; } }
+                        body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #333; }
+                        .header { display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; }
+                        .company-info h1 { margin: 0; color: #2c3e50; font-size: 26px; font-weight: 800; text-transform: uppercase; }
+                        .company-info p { margin: 3px 0; color: #34495e; font-size: 14px; }
+                        .logo img { max-height: 100px; max-width: 250px; object-fit: contain; }
+                        .report-title-box { text-align: center; background: #f1f4f8; padding: 15px; margin-bottom: 30px; border-radius: 8px; border: 1px solid #d1d9e6; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                        th, td { border: 1px solid #dee2e6; padding: 14px; text-align: left; }
+                        th { background: #2c3e50; color: white; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+                        td { font-size: 14px; }
+                        tr:nth-child(even) { background: #fcfdfe; }
+                        .footer { margin-top: 60px; font-size: 12px; color: #95a5a6; text-align: center; border-top: 1px solid #eee; padding-top: 15px; font-style: italic; }
                     </style>
                 </head>
                 <body>
                     <div class="header">
                         <div class="company-info">
-                            <h1>${co.name}</h1>
-                            <p>${co.address}</p>
-                            <p>Phone: ${co.phone} | Email: ${co.email}</p>
-                            <p>NTN: ${co.ntn} | GST: ${co.gst}</p>
+                            <h1>${company.name || session.company || 'Business Name'}</h1>
+                            <p>${company.address || 'Address Details'}</p>
+                            <p>Phone: ${company.phone || 'N/A'} | Email: ${company.email || 'N/A'}</p>
+                            <p>NTN: ${company.ntn || 'N/A'} | GST: ${company.gst || 'N/A'}</p>
                         </div>
                         <div class="logo">
                             ${logo ? '<img src="' + logo + '">' : ''}
                         </div>
                     </div>
                     <div class="report-title-box">
-                        <h2 style="margin:0; color:#1F4E79; font-size: 18px;">${reportTitle}</h2>
-                        <p style="margin:4px 0 0; color:#64748b; font-size:12px; font-weight:600;">Report Generation Date: ${new Date().toLocaleString()}</p>
+                        <h2 style="margin:0; color:#2c3e50;">${reportTitle}</h2>
+                        <p style="margin:8px 0 0; color:#7f8c8d; font-size:13px; font-weight:600;">Report Generation Date: ${new Date().toLocaleString()}</p>
                     </div>
                     <table>
                         <thead>
@@ -3390,497 +3326,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.removeProfilePhoto = removeProfilePhoto;
-
-// --- CUSTOMERS MODULE LOGIC ---
-        let selectedCustSubId = null;
-        let selectedCustCoaId = null;
-
-        window.initCustomersView = async function() {
-            const list = document.getElementById('custTypeList');
-            if(!list) return setTimeout(initCustomersView, 100);
-
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-
-            try {
-                // 1. Fetch auxiliary data
-                const [regRes, secRes, empRes] = await Promise.all([
-                    fetch(`api/maintain.php?action=get_regions&company_id=${companyId}`),
-                    fetch(`api/maintain.php?action=get_sectors&company_id=${companyId}`),
-                    fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`)
-                ]);
-                
-                regions = await regRes.json();
-                businessSectors = await secRes.json();
-                employees = await empRes.json();
-
-                populateCustomerDropdowns();
-
-                // 2. Load COA Data if not already present
-                if (coaMain.length === 0) await loadSavedData();
-
-                // 3. Find Customers Main Account from coaMain (Robust check)
-                let custMain = coaMain.find(m => m.code == CUSTOMER_MAIN_CODE || m.code == String(CUSTOMER_MAIN_CODE));
-                if (!custMain) {
-                    // Fallback to name search if code mismatch (covering common ERP terms)
-                    custMain = coaMain.find(m => {
-                        const n = (m.name || "").toLowerCase();
-                        return n.includes('customer') || n.includes('receivable') || n.includes('debtor');
-                    });
-                }
-
-                if (custMain) {
-                    const subList = coaSub.filter(s => s.main_id == custMain.id);
-                    list.innerHTML = subList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-                    
-                    if (subList.length > 0) {
-                        list.value = subList[0].id;
-                        onCustomerTypeSelect(subList[0].id);
-                    }
-                } else {
-                    console.warn("Could not find Customers/Receivables main account in COA.");
-                    // Fallback to searching ALL subs if main account not identified
-                    list.innerHTML = coaSub.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-                    if (coaSub.length > 0) {
-                        list.value = coaSub[0].id;
-                        onCustomerTypeSelect(coaSub[0].id);
-                    }
-                }
-            } catch (err) { console.error("Customers Init Error:", err); }
-        };
-
-        function populateCustomerDropdowns() {
-            const regSel = document.getElementById('custRegion');
-            const secSel = document.getElementById('custSector');
-            const mgrSel = document.getElementById('custManager');
-
-            if (regSel) {
-                const mainRegs = regions.filter(r => r.type === 'Main');
-                regSel.innerHTML = '<option value="">None</option>' + mainRegs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            }
-            if (secSel) {
-                secSel.innerHTML = '<option value="">None</option>' + businessSectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            }
-            if (mgrSel) {
-                mgrSel.innerHTML = '<option value="">None</option>' + employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-            }
-        }
-
-        window.loadSubRegions = function(mainRegId) {
-            const subRegSel = document.getElementById('custSubRegion');
-            if (!subRegSel) return;
-            if (!mainRegId) {
-                subRegSel.innerHTML = '<option value="">None</option>';
-                return;
-            }
-            const subs = regions.filter(r => r.parent_id == mainRegId);
-            subRegSel.innerHTML = '<option value="">None</option>' + subs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-        };
-
-        window.onCustomerTypeSelect = function(subId) {
-            selectedCustSubId = subId;
-            const sub = coaSub.find(s => s.id == subId);
-            if (sub) {
-                const codeEl = document.getElementById('custTypeCode');
-                const descEl = document.getElementById('custTypeDesc');
-                if(codeEl) { codeEl.value = sub.code; codeEl.removeAttribute('disabled'); }
-                if(descEl) { descEl.value = sub.name; descEl.removeAttribute('disabled'); }
-            }
-            
-            // Filter coaList for this subId
-            const custList = coaList.filter(l => l.sub_id == subId);
-            const listEl = document.getElementById('customersList');
-            if (listEl) {
-                listEl.innerHTML = custList.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-                resetCustomerFormFields(true); // Force enable
-                
-                // NEW: Auto-select and load data for the first customer in the list
-                if (custList.length > 0) {
-                    listEl.value = custList[0].id;
-                    onCustomerSelect(custList[0].id);
-                }
-            }
-        };
-
-        window.onCustomerSelect = async function(coaId) {
-            selectedCustCoaId = coaId;
-            const item = coaList.find(l => l.id == coaId);
-            if (!item) return;
-
-            document.getElementById('custAccCode').value = item.code;
-            document.getElementById('custAccName').value = item.name;
-
-            // Fetch extra details
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-            
-            try {
-                const res = await fetch(`api/maintain.php?action=get_customer_details&coa_id=${coaId}&company_id=${companyId}`);
-                const detail = await res.json();
-                
-                // Populate fields
-                document.getElementById('custContact').value = detail.contact_person || '';
-                document.getElementById('custAddress').value = detail.address || '';
-                document.getElementById('custRegion').value = detail.region_id || '';
-                loadSubRegions(detail.region_id);
-                document.getElementById('custSubRegion').value = detail.sub_region_id || '';
-                document.getElementById('custTel').value = detail.telephone || '';
-                document.getElementById('custMobile').value = detail.mobile || '';
-                document.getElementById('custFax').value = detail.fax || '';
-                document.getElementById('custEmail').value = detail.email || '';
-                document.getElementById('custWebsite').value = detail.website || '';
-                document.getElementById('custSTReg').value = detail.st_reg || '';
-                document.getElementById('custNTN').value = detail.ntn_cnic || '';
-                document.getElementById('custSector').value = detail.sector_id || '';
-                document.getElementById('custManager').value = detail.manager_id || '';
-                document.getElementById('custCreditLimit').value = detail.credit_limit || 0;
-                document.getElementById('custCreditTerms').value = detail.credit_terms || 'CASH';
-                document.getElementById('custRemarks').value = detail.remarks || '';
-
-                // Enable all fields
-                toggleCustomerFields(false);
-            } catch (err) { console.error("Load Customer Error:", err); }
-        };
-
-        function toggleCustomerFields(disabled) {
-            const fields = ['custAccName', 'custContact', 'custAddress', 'custRegion', 'custSubRegion', 'custTel', 'custMobile', 'custFax', 'custEmail', 'custWebsite', 'custSTReg', 'custNTN', 'custSector', 'custManager', 'custCreditLimit', 'custCreditTerms', 'custRemarks'];
-            fields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.disabled = disabled;
-            });
-            // Also dots buttons
-            document.querySelectorAll('.dots-btn').forEach(btn => btn.disabled = disabled);
-        }
-
-        window.resetCustomerForm = function(generate = false) {
-            selectedCustCoaId = null;
-            resetCustomerFormFields();
-            if (generate) {
-                toggleCustomerFields(false);
-                // Auto-generate code: Prefix of sub + next index
-                const sub = coaSub.find(s => s.id == selectedCustSubId);
-                if (sub) {
-                    const existing = coaList.filter(l => l.sub_id == selectedCustSubId);
-                    const nextNum = existing.length + 1;
-                    document.getElementById('custAccCode').value = sub.code + String(nextNum).padStart(3, '0');
-                }
-                document.getElementById('custAccName').focus();
-            } else {
-                toggleCustomerFields(true);
-            }
-        };
-
-        function resetCustomerFormFields() {
-            const fields = ['custAccCode', 'custAccName', 'custContact', 'custAddress', 'custRegion', 'custSubRegion', 'custTel', 'custMobile', 'custFax', 'custEmail', 'custWebsite', 'custSTReg', 'custNTN', 'custSector', 'custManager', 'custRemarks'];
-            fields.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
-            if(document.getElementById('custCreditLimit')) document.getElementById('custCreditLimit').value = 0;
-            if(document.getElementById('custCreditTerms')) document.getElementById('custCreditTerms').value = 'CASH';
-        }
-
-        window.saveCustomerFull = async function() {
-            const coa_id = selectedCustCoaId;
-            const sub_id = selectedCustSubId;
-            const code = document.getElementById('custAccCode').value;
-            const name = document.getElementById('custAccName').value;
-            
-            if(!name) return alert("Account Name is required!");
-
-            const data = {
-                coa_id, sub_id, code, name,
-                contact_person: document.getElementById('custContact').value,
-                address: document.getElementById('custAddress').value,
-                region_id: document.getElementById('custRegion').value,
-                sub_region_id: document.getElementById('custSubRegion').value,
-                telephone: document.getElementById('custTel').value,
-                mobile: document.getElementById('custMobile').value,
-                fax: document.getElementById('custFax').value,
-                email: document.getElementById('custEmail').value,
-                website: document.getElementById('custWebsite').value,
-                st_reg: document.getElementById('custSTReg').value,
-                ntn_cnic: document.getElementById('custNTN').value,
-                sector_id: document.getElementById('custSector').value,
-                manager_id: document.getElementById('custManager').value,
-                credit_limit: document.getElementById('custCreditLimit').value,
-                credit_terms: document.getElementById('custCreditTerms').value,
-                remarks: document.getElementById('custRemarks').value
-            };
-
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-
-            try {
-                const res = await fetch(`api/maintain.php?action=save_customer_full&company_id=${companyId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    alert('Customer saved successfully!');
-                    // Refresh local COA list cache
-                    if (!coa_id) {
-                        coaList.push({ id: result.coa_id, sub_id, code, name, company_id: companyId });
-                    } else {
-                        const idx = coaList.findIndex(l => l.id == coa_id);
-                        if (idx > -1) coaList[idx] = { ...coaList[idx], name, code };
-                    }
-                    onCustomerTypeSelect(sub_id); // Refresh list display
-                }
-            } catch (err) { alert("Save Error: " + err.message); }
-        };
-
-        window.deleteCustomerFull = async function() {
-            if(!selectedCustCoaId) return;
-            if(confirm("Are you sure you want to delete this customer? This will also remove them from the Chart of Accounts.")) {
-                try {
-                    const res = await fetch(`api/maintain.php?action=delete_coa_list&id=${selectedCustCoaId}`, { method: 'POST' });
-                    if(res.ok) {
-                        alert("Customer deleted.");
-                        coaList = coaList.filter(l => l.id != selectedCustCoaId);
-                        onCustomerTypeSelect(selectedCustSubId);
-                    }
-                } catch (err) { alert("Delete Error: " + err.message); }
-            }
-        };
-
-        // --- REGIONS LOGIC ---
-        let selectedMainRegId = null;
-        let selectedSubRegId = null;
-
-        window.initRegionsView = function() {
-            const list = document.getElementById('mainRegionList');
-            if(!list) return setTimeout(initRegionsView, 100);
-            renderMainRegList();
-        };
-
-        function renderMainRegList() {
-            const list = document.getElementById('mainRegionList');
-            const mainRegs = regions.filter(r => r.type === 'Main');
-            list.innerHTML = mainRegs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-        }
-
-        window.onMainRegionSelect = function(id) {
-            selectedMainRegId = id;
-            const reg = regions.find(r => r.id == id);
-            if(reg) {
-                document.getElementById('mainRegionName').value = reg.name;
-                document.getElementById('mainRegionName').disabled = false;
-            }
-            renderSubRegList();
-        };
-
-        function renderSubRegList() {
-            const list = document.getElementById('subRegionList');
-            const subs = regions.filter(r => r.parent_id == selectedMainRegId);
-            list.innerHTML = subs.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            resetSubRegionForm();
-        }
-
-        window.saveMainRegion = async function() {
-            const name = document.getElementById('mainRegionName').value;
-            if(!name) return;
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-            const data = { id: selectedMainRegId, name, type: 'Main', parent_id: null };
-            
-            const res = await fetch(`api/maintain.php?action=save_region&company_id=${companyId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if(result.status === 'success') {
-                if(!selectedMainRegId) {
-                   regions.push({ id: result.id, name, type: 'Main', company_id: companyId });
-                } else {
-                   const r = regions.find(r => r.id == selectedMainRegId);
-                   if(r) r.name = name;
-                }
-                renderMainRegList();
-                populateCustomerDropdowns();
-            }
-        };
-
-        window.resetMainRegionForm = function(gen = false) {
-            if(!gen) selectedMainRegId = null;
-            const el = document.getElementById('mainRegionName');
-            if(el) {
-                el.value = '';
-                if(gen) el.removeAttribute('disabled');
-                else el.setAttribute('disabled', 'true');
-                if(gen) el.focus();
-            }
-        };
-
-        window.onSubRegionSelect = function(id) {
-            selectedSubRegId = id;
-            const r = regions.find(x => x.id == id);
-            if(r) {
-                const el = document.getElementById('subRegionName');
-                if(el) {
-                    el.value = r.name;
-                    el.disabled = false;
-                }
-            }
-        };
-
-        window.saveSubRegion = async function() {
-            const name = document.getElementById('subRegionName').value;
-            if(!name) return;
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-            const data = { id: selectedSubRegId, name, type: 'Sub', parent_id: selectedMainRegId };
-            const res = await fetch(`api/maintain.php?action=save_region&company_id=${companyId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if(result.status === 'success') {
-                if(!selectedSubRegId) regions.push({ id: result.id, name, type: 'Sub', parent_id: selectedMainRegId, company_id: companyId });
-                else regions.find(x => x.id == selectedSubRegId).name = name;
-                renderSubRegList();
-            }
-        };
-
-        window.resetSubRegionForm = function(gen = false) {
-            if(!gen) selectedSubRegId = null;
-            document.getElementById('subRegionName').value = '';
-            document.getElementById('subRegionName').disabled = !gen || !selectedMainRegId;
-        };
-
-        // --- SECTORS LOGIC ---
-        window.initSectorsView = function() {
-            const list = document.getElementById('sectorList');
-            if(!list) return setTimeout(initSectorsView, 100);
-            list.innerHTML = businessSectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        };
-
-        let selectedSectorId = null;
-        window.onSectorSelect = function(id) {
-            selectedSectorId = id;
-            const s = businessSectors.find(x => x.id == id);
-            if(s) {
-                document.getElementById('sectorName').value = s.name;
-                document.getElementById('sectorName').disabled = false;
-            }
-        };
-
-        window.saveSector = async function() {
-            const name = document.getElementById('sectorName').value;
-            if(!name) return;
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-            const res = await fetch(`api/maintain.php?action=save_sector&company_id=${companyId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: selectedSectorId, name })
-            });
-            const result = await res.json();
-            if(result.status === 'success') {
-                if(!selectedSectorId) businessSectors.push({ id: result.id, name, company_id: companyId });
-                else businessSectors.find(x => x.id == selectedSectorId).name = name;
-                initSectorsView();
-                populateCustomerDropdowns();
-            }
-        };
-
-        window.resetSectorForm = function(gen = false) {
-            if(!gen) selectedSectorId = null;
-            const el = document.getElementById('sectorName');
-            if(el) {
-                el.value = '';
-                el.disabled = !gen;
-                if(gen) el.focus();
-            }
-        };
-
-        // --- EMPLOYEES LOGIC ---
-        window.initEmployeesView = function() {
-            const list = document.getElementById('employeeList');
-            if(!list) return setTimeout(initEmployeesView, 100);
-            list.innerHTML = employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-        };
-
-        let selectedEmpId = null;
-        window.onEmployeeSelect = function(id) {
-            selectedEmpId = id;
-            const e = employees.find(x => x.id == id);
-            if(e) {
-                const map = {empName:'name', empFatherName:'father_name', empAddress:'address', empTel:'telephone', empEmail:'email', empNIC:'nic', empDOB:'dob', empJoining:'joining_date', empSalary:'salary', empDesignation:'designation', empDept:'department', empRemarks:'remarks', empReference:'reference', empLeavingDate:'leaving_date'};
-                Object.keys(map).forEach(fid => {
-                    const el = document.getElementById(fid);
-                    if(el) {
-                        el.value = e[map[fid]] || '';
-                        el.disabled = false;
-                    }
-                });
-                const chk = document.getElementById('empJobLeft');
-                if(chk) {
-                    chk.checked = !!e.job_left;
-                    chk.disabled = false;
-                }
-            }
-        };
-
-        window.saveEmployee = async function() {
-            const name = document.getElementById('empName').value;
-            if(!name) return alert("Employee Name is required!");
-            const data = {
-                id: selectedEmpId,
-                name,
-                father_name: document.getElementById('empFatherName').value,
-                address: document.getElementById('empAddress').value,
-                telephone: document.getElementById('empTel').value,
-                email: document.getElementById('empEmail').value,
-                nic: document.getElementById('empNIC').value,
-                dob: document.getElementById('empDOB').value,
-                joining_date: document.getElementById('empJoining').value,
-                salary: document.getElementById('empSalary').value,
-                designation: document.getElementById('empDesignation').value,
-                department: document.getElementById('empDept').value,
-                remarks: document.getElementById('empRemarks').value,
-                reference: document.getElementById('empReference').value,
-                job_left: document.getElementById('empJobLeft').checked ? 1 : 0,
-                leaving_date: document.getElementById('empLeavingDate').value
-            };
-            const sessionData = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = sessionData.company_id || 1;
-            const res = await fetch(`api/maintain.php?action=save_employee&company_id=${companyId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if(result.status === 'success') {
-                if(!selectedEmpId) employees.push({ ...data, id: result.id, company_id: companyId });
-                else {
-                    const idx = employees.findIndex(x => x.id == selectedEmpId);
-                    employees[idx] = { ...data, company_id: companyId };
-                }
-                initEmployeesView();
-                populateCustomerDropdowns();
-                alert("Employee saved!");
-            }
-        };
-
-        window.resetEmployeeForm = function(gen = false) {
-            selectedEmpId = null;
-            const fields = ['empName', 'empFatherName', 'empAddress', 'empTel', 'empEmail', 'empNIC', 'empDOB', 'empJoining', 'empSalary', 'empDesignation', 'empDept', 'empRemarks', 'empReference', 'empLeavingDate'];
-            fields.forEach(fid => {
-                const el = document.getElementById(fid);
-                if(el) {
-                    el.value = (fid === 'empDept' && gen) ? 'None' : '';
-                    el.disabled = !gen;
-                }
-            });
-            const chk = document.getElementById('empJobLeft');
-            if(chk) {
-                chk.checked = false;
-                chk.disabled = !gen;
-            }
-            if(gen) {
-                const nameEl = document.getElementById('empName');
-                if(nameEl) nameEl.focus();
-            }
-        };
