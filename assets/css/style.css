@@ -825,7 +825,7 @@
             background: #FFFFFF;
             border-radius: 10px;
             padding: 20px;
-            max-width: 900px; /* Increased from 800px */
+            max-width: 750px; /* Reduced from 900px to avoid excessive width on small forms */
             width: 95%;
             max-height: 92vh;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
@@ -839,7 +839,7 @@
         }
 
         .sub-modal-container {
-            max-width: 1000px; /* Increased from 800px */
+            max-width: 850px; /* Reduced from 1000px per user feedback */
             width: 90%;
             z-index: 100001;
             background: #FFFFFF;
@@ -850,7 +850,7 @@
         }
 
         .modal-container.modal-wide {
-            max-width: 1120px; /* Reduced from 1200px to 1120px per user feedback */
+            max-width: 1050px; /* Further reduced from 1120px for better layout balance */
         }
 
         @keyframes modalFadeIn {
