@@ -3,20 +3,18 @@
 
     <!-- Section 1: Main Region -->
     <div
-        style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
+        style="flex: 1.5; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
         <div
             style="font-size: 13px; font-weight: 700; color: #1F4E79; margin-bottom: 8px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 4px;">
             Main Region</div>
 
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
-            <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
                 <select id="mainRegionList" size="10"
                     style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
                     onchange="onMainRegionSelect(this.value)"></select>
             </div>
 
-            <!-- Right: Fields & Buttons -->
             <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="coa-btn coa-add" onclick="resetMainRegionForm(true)">Add</button>
@@ -36,20 +34,18 @@
 
     <!-- Section 2: Sub Region -->
     <div
-        style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
+        style="flex: 1.5; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
         <div
             style="font-size: 13px; font-weight: 700; color: #1F4E79; margin-bottom: 8px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 4px;">
             Sub Region</div>
 
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
-            <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
                 <select id="subRegionList" size="10"
                     style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
                     onchange="onSubRegionSelect(this.value)"></select>
             </div>
 
-            <!-- Right: Fields & Buttons -->
             <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="coa-btn coa-add" onclick="resetSubRegionForm(true)">Add</button>
