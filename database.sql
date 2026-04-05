@@ -137,4 +137,62 @@ CREATE TABLE IF NOT EXISTS `dashboard_summary` (
 -- INSERT INTO `companies` (name) VALUES ('Softifyx Default');
 -- INSERT INTO `users` (company_id, username, password, role) VALUES (1, 'Administrator', '123', 'Admin');
 
+-- 10. Regions Table (Maintain: Regions)
+CREATE TABLE IF NOT EXISTS `regions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 11. Sub-Regions Table (Maintain: Sub-Regions)
+CREATE TABLE IF NOT EXISTS `sub_regions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `region_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`region_id`) REFERENCES `regions`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 12. Business Sectors Table (Maintain: Sectors)
+CREATE TABLE IF NOT EXISTS `business_sectors` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 13. Customers Table (Maintain: Customers)
+CREATE TABLE IF NOT EXISTS `customers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `coa_list_id` int(11) NOT NULL, -- Link to Chart of Accounts entry
+  `contact_person` varchar(255),
+  `address` text,
+  `region_id` int(11),
+  `sub_region_id` int(11),
+  `telephone` varchar(100),
+  `mobile` varchar(100),
+  `fax` varchar(100),
+  `email` varchar(255),
+  `website` varchar(255),
+  `st_reg_no` varchar(100),
+  `ntn_cnic` varchar(100),
+  `business_sector_id` int(11),
+  `acc_manager_id` int(11), -- Link to users table
+  `credit_limit` decimal(20,2) DEFAULT 0,
+  `credit_terms` varchar(255) DEFAULT 'CASH',
+  `remarks` text,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`coa_list_id`) REFERENCES `coa_list`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`region_id`) REFERENCES `regions`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`sub_region_id`) REFERENCES `sub_regions`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`business_sector_id`) REFERENCES `business_sectors`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`acc_manager_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;

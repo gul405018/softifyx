@@ -2619,7 +2619,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
+                    let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : null);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2643,7 +2645,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, isCoa ? initChartOfAccountsView : null, moduleName, isCoa);
+                    let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : null);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust));
                 });
             });
         }
@@ -2661,6 +2665,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- CHART OF ACCOUNTS (COA) LOGIC ---
         let selectedMainCode = null;
         let selectedSubCode = null;
+        let selectedCustTypeCode = null;
+        let selectedCustAccountCode = null;
+        let customerData = []; // Extended data
 
         function initChartOfAccountsView() {
             let retries = 0;
@@ -3241,6 +3248,337 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.deleteCOAList = deleteCOAList;
         window.resetListForm = resetListForm;
         window.printCOA = printCOA;
+
+        // --- CUSTOMERS MODULE LOGIC ---
+        function initCustomersView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('customerTypeList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    loadCustomerLookups();
+                    renderCustomerTypeList();
+                    resetCustomerTypeForm();
+                    resetCustomerForm();
+                } else if (++retries >= 20) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        async function loadCustomerLookups() {
+            try {
+                const regRes = await fetch('api/maintain.php?action=get_regions');
+                const regions = await regRes.json();
+                const regSelect = document.getElementById('custRegion');
+                if(regSelect) {
+                    regSelect.innerHTML = '<option value="">None</option>' + 
+                        regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                }
+
+                const secRes = await fetch('api/maintain.php?action=get_sectors');
+                const sectors = await secRes.json();
+                const secSelect = document.getElementById('custSector');
+                if(secSelect) {
+                    secSelect.innerHTML = '<option value="">None</option>' + 
+                        sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                }
+                
+                // Load Managers (Users)
+                const manRes = await fetch('api/admin.php?action=get_users');
+                const users = await manRes.json();
+                const manSelect = document.getElementById('custAccManager');
+                if(manSelect) {
+                    manSelect.innerHTML = '<option value="">None</option>' + 
+                        users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
+                }
+            } catch(e) { console.error("Lookup load failed", e); }
+        }
+
+        async function loadSubRegions(regionId) {
+            if(!regionId) {
+                document.getElementById('custSubRegion').innerHTML = '<option value="">None</option>';
+                return;
+            }
+            try {
+                const res = await fetch(`api/maintain.php?action=get_sub_regions&region_id=${regionId}`);
+                const subs = await res.json();
+                document.getElementById('custSubRegion').innerHTML = '<option value="">None</option>' + 
+                    subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            } catch(e) {}
+        }
+
+        function renderCustomerTypeList() {
+            const list = document.getElementById('customerTypeList');
+            if(!list) return;
+            // Filter COA Sub Accounts that belong to "Customers" (typically a main account)
+            // For now, let's look for a main account named "Customers" or "Sundry Debtors"
+            const custMain = coaMain.find(m => m.name.toLowerCase().includes('customer') || m.name.toLowerCase().includes('debtor'));
+            if(!custMain) {
+                list.innerHTML = '<option disabled>No Customer category found in COA</option>';
+                return;
+            }
+            const filtered = coaSub.filter(s => s.main_id == custMain.id);
+            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
+        }
+
+        function onCustomerTypeSelect(code) {
+            selectedCustTypeCode = code;
+            const sub = coaSub.find(s => s.code == code);
+            if(sub) {
+                document.getElementById('custSubTypeCode').value = sub.code;
+                document.getElementById('custTypeName').value = sub.name;
+                document.getElementById('custSubTypeCode').disabled = false;
+                document.getElementById('custTypeName').disabled = false;
+            }
+            fetchCustomersDetailed(code);
+        }
+
+        async function fetchCustomersDetailed(subCode) {
+            const sub = coaSub.find(s => s.code == subCode);
+            if(!sub) return;
+            try {
+                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}`);
+                customerData = await res.json();
+                renderCustomerList();
+                resetCustomerForm();
+            } catch(e) {}
+        }
+
+        function renderCustomerList() {
+            const list = document.getElementById('customerList');
+            if(!list) return;
+            list.innerHTML = customerData.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+        }
+
+        async function onCustomerSelect(code) {
+            selectedCustAccountCode = code;
+            const cust = customerData.find(c => c.code == code);
+            if(cust) {
+                document.getElementById('custAccountCode').value = cust.code;
+                document.getElementById('custAccountName').value = cust.name;
+                document.getElementById('custContactPerson').value = cust.contact_person || '';
+                document.getElementById('custAddress').value = cust.address || '';
+                document.getElementById('custRegion').value = cust.region_id || '';
+                await loadSubRegions(cust.region_id);
+                document.getElementById('custSubRegion').value = cust.sub_region_id || '';
+                document.getElementById('custTelephone').value = cust.telephone || '';
+                document.getElementById('custMobile').value = cust.mobile || '';
+                document.getElementById('custFax').value = cust.fax || '';
+                document.getElementById('custWebsite').value = cust.website || '';
+                document.getElementById('custEmail').value = cust.email || '';
+                document.getElementById('custStReg').value = cust.st_reg_no || '';
+                document.getElementById('custNtn').value = cust.ntn_cnic || '';
+                document.getElementById('custSector').value = cust.business_sector_id || '';
+                document.getElementById('custAccManager').value = cust.acc_manager_id || '';
+                document.getElementById('custCreditLimit').value = cust.credit_limit || 0;
+                document.getElementById('custCreditTerms').value = cust.credit_terms || 'CASH';
+                document.getElementById('custRemarks').value = cust.remarks || '';
+                
+                // Enable fields
+                enableCustomerFields(true);
+            }
+        }
+
+        function enableCustomerFields(enabled) {
+            const fields = [
+                'custAccountCode', 'custAccountName', 'custContactPerson', 'custAddress',
+                'custRegion', 'custSubRegion', 'custTelephone', 'custMobile', 'custFax',
+                'custWebsite', 'custEmail', 'custStReg', 'custNtn', 'custSector',
+                'custAccManager', 'custCreditLimit', 'custCreditTerms', 'custRemarks'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) el.disabled = !enabled;
+            });
+        }
+
+        async function saveCustomerType() {
+            // Mirrors saveCOASub but uses CUSTOMERS logic
+            const custMain = coaMain.find(m => m.name.toLowerCase().includes('customer') || m.name.toLowerCase().includes('debtor'));
+            if(!custMain) return alert("Main Customer category not found!");
+
+            const name = document.getElementById('custTypeName').value.trim();
+            const code = document.getElementById('custSubTypeCode').value.trim();
+            if(!name || !code) return alert("Code and Name are required!");
+
+            const payload = { main_id: custMain.id, code, name };
+            const existing = coaSub.find(s => s.code == (selectedCustTypeCode || code));
+            if(existing) payload.id = existing.id;
+
+            try {
+                const res = await fetch(`api/maintain.php?action=save_coa_sub`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    alert("Customer Type saved!");
+                    // Refresh local coaSub (usually handled by global sync, but let's update simple)
+                    if(existing) existing.name = name;
+                    else coaSub.push({ id: data.id, main_id: custMain.id, code, name });
+                    renderCustomerTypeList();
+                    resetCustomerTypeForm();
+                }
+            } catch(e) { alert("Save failed"); }
+        }
+
+        async function saveCustomer() {
+            if(!selectedCustTypeCode) return alert("Select a Customer Type first!");
+            const name = document.getElementById('custAccountName').value.trim();
+            const code = document.getElementById('custAccountCode').value.trim();
+            if(!name || !code) return alert("Account Code and Name are required!");
+
+            const sub = coaSub.find(s => s.code == selectedCustTypeCode);
+            const payload = {
+                sub_id: sub.id,
+                code: code,
+                name: name,
+                contact_person: document.getElementById('custContactPerson').value,
+                address: document.getElementById('custAddress').value,
+                region_id: document.getElementById('custRegion').value || null,
+                sub_region_id: document.getElementById('custSubRegion').value || null,
+                telephone: document.getElementById('custTelephone').value,
+                mobile: document.getElementById('custMobile').value,
+                fax: document.getElementById('custFax').value,
+                website: document.getElementById('custWebsite').value,
+                email: document.getElementById('custEmail').value,
+                st_reg_no: document.getElementById('custStReg').value,
+                ntn_cnic: document.getElementById('custNtn').value,
+                business_sector_id: document.getElementById('custSector').value || null,
+                acc_manager_id: document.getElementById('custAccManager').value || null,
+                credit_limit: document.getElementById('custCreditLimit').value,
+                credit_terms: document.getElementById('custCreditTerms').value,
+                remarks: document.getElementById('custRemarks').value
+            };
+
+            const existing = customerData.find(c => c.code == (selectedCustAccountCode || code));
+            if(existing) payload.id = existing.id; // coa_list_id handled by backend action
+
+            try {
+                const res = await fetch(`api/maintain.php?action=save_customer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Customer profile saved!");
+                    fetchCustomersDetailed(selectedCustTypeCode);
+                }
+            } catch(e) { alert("Save failed"); }
+        }
+
+        function resetCustomerTypeForm(generate = false) {
+            document.getElementById('custSubTypeCode').value = '';
+            document.getElementById('custTypeName').value = '';
+            document.getElementById('customerTypeList').value = '';
+            selectedCustTypeCode = null;
+            
+            if(generate) {
+                const custMain = coaMain.find(m => m.name.toLowerCase().includes('customer') || m.name.toLowerCase().includes('debtor'));
+                if(custMain) {
+                    const siblings = coaSub.filter(s => s.main_id == custMain.id);
+                    let nextNum = 1;
+                    if(siblings.length > 0) {
+                        const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(custMain.code.toString().length)) || 0);
+                        nextNum = Math.max(...lastCodes) + 1;
+                    }
+                    document.getElementById('custSubTypeCode').value = custMain.code.toString() + nextNum.toString().padStart(2, '0');
+                }
+                document.getElementById('custSubTypeCode').disabled = false;
+                document.getElementById('custTypeName').disabled = false;
+            } else {
+                document.getElementById('custSubTypeCode').disabled = true;
+                document.getElementById('custTypeName').disabled = true;
+            }
+            renderCustomerList();
+            resetCustomerForm();
+        }
+
+        function resetCustomerForm(generate = false) {
+            enableCustomerFields(false);
+            const fields = [
+                'custAccountCode', 'custAccountName', 'custContactPerson', 'custAddress',
+                'custRegion', 'custSubRegion', 'custTelephone', 'custMobile', 'custFax',
+                'custWebsite', 'custEmail', 'custStReg', 'custNtn', 'custSector',
+                'custAccManager', 'custCreditLimit', 'custCreditTerms', 'custRemarks'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) {
+                    if(f === 'custCreditLimit') el.value = 0;
+                    else if(f === 'custCreditTerms') el.value = 'CASH';
+                    else el.value = '';
+                }
+            });
+            document.getElementById('customerList').value = '';
+            selectedCustAccountCode = null;
+
+            if(generate && selectedCustTypeCode) {
+                const sub = coaSub.find(s => s.code == selectedCustTypeCode);
+                const siblings = customerData;
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(l => parseInt(l.code.toString().substring(selectedCustTypeCode.toString().length)) || 0);
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                document.getElementById('custAccountCode').value = selectedCustTypeCode.toString() + nextNum.toString().padStart(3, '0');
+                enableCustomerFields(true);
+            }
+        }
+
+        function findCustomer() {
+            if (!selectedCustTypeCode) return alert("Please select a Customer Type first.");
+            const query = prompt("Enter Customer Name or Code to search:");
+            if (!query) return;
+
+            const list = document.getElementById('customerList');
+            const filtered = customerData.filter(c => 
+                c.name.toLowerCase().includes(query.toLowerCase()) || 
+                c.code.toString().includes(query)
+            );
+
+            if (filtered.length > 0) {
+                list.innerHTML = filtered.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+                if (filtered.length === 1) onCustomerSelect(filtered[0].code);
+            } else {
+                alert("No customers found matching '" + query + "'");
+                renderCustomerList();
+            }
+        }
+
+        function printCustomers(level) {
+            // Reuse printCOA logic with custom title
+            // Simplified for brevity
+            alert("Printing " + level + " report...");
+        }
+
+        // Lookup Management Stubs (Can be expanded into mini-popups)
+        function manageRegions() {
+            const name = prompt("Enter new Region name:");
+            if(name) {
+                fetch('api/maintain.php?action=save_region', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                }).then(() => loadCustomerLookups());
+            }
+        }
+        function manageSectors() { alert("Business Sector management coming soon."); }
+        function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
+
+        window.initCustomersView = initCustomersView;
+        window.onCustomerTypeSelect = onCustomerTypeSelect;
+        window.onCustomerSelect = onCustomerSelect;
+        window.saveCustomerType = saveCustomerType;
+        window.saveCustomer = saveCustomer;
+        window.resetCustomerTypeForm = resetCustomerTypeForm;
+        window.resetCustomerForm = resetCustomerForm;
+        window.loadSubRegions = loadSubRegions;
+        window.findCustomer = findCustomer;
+        window.printCustomers = printCustomers;
+        window.manageRegions = manageRegions;
+        window.manageSectors = manageSectors;
+        window.manageManagers = manageManagers;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
