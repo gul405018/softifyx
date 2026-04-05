@@ -2275,6 +2275,7 @@
         }
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+            if (url && url.includes('customer_regions.html')) isWide = true;
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
