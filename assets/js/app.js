@@ -433,11 +433,10 @@
             });
         }
 
-        function openModal(title, content, isWide = false, moduleKey = null) {
-            const overlay = document.getElementById('modalOverlay');
-            const container = document.getElementById('modalContainer');
+            const modalTitleStr = typeof title === 'string' ? title : (title && title.text ? title.text : "");
+            const isRegions = (content.includes('data-module="Customer Regions"') || modalTitleStr.includes('Regions') || modalTitleStr.includes('Manage Regions'));
             
-            if (isWide) container.classList.add('modal-wide');
+            if (isWide || isRegions) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
@@ -3575,7 +3574,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let retries = 0;
             const checkAndRender = setInterval(() => {
-                const list = document.getElementById('mainAccountList'); // This is a typo from previous edit
                 const regionList = document.getElementById('mainRegionList');
                 if (regionList) {
                     clearInterval(checkAndRender);
