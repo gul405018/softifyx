@@ -3569,10 +3569,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Lookup Management Stubs (Can be expanded into mini-popups)
         // Regions Module Logic
         function initRegionsView() {
+            // FORCE: Ensure the modal is wide (1000px) to match COA
+            const modalContainer = document.getElementById('modalContainer');
+            if (modalContainer) modalContainer.classList.add('modal-wide');
+
             let retries = 0;
             const checkAndRender = setInterval(() => {
-                const list = document.getElementById('mainRegionList');
-                if (list) {
+                const list = document.getElementById('mainAccountList'); // This is a typo from previous edit
+                const regionList = document.getElementById('mainRegionList');
+                if (regionList) {
                     clearInterval(checkAndRender);
                     fetchMainRegions();
                     resetMainRegionForm();
