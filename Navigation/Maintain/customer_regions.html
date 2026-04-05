@@ -1,4 +1,4 @@
-<div id="regionsContainer" data-module="Customer Regions" style="height: 600px; display: flex; flex-direction: column; gap: 12px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
+<div id="regionsContainer" data-module="Customer Regions" style="height: 650px; display: flex; flex-direction: column; gap: 12px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
 
     <!-- Section 1: Main Region -->
     <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
@@ -7,11 +7,11 @@
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
-                <select id="mainRegionList" size="8" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onMainRegionSelect(this.value)"></select>
+                <select id="mainRegionList" size="12" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onMainRegionSelect(this.value)"></select>
             </div>
             
             <!-- Right: Fields & Buttons -->
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; justify-content: center;">
                 <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="coa-btn coa-add" onclick="resetMainRegionForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveMainRegion()">Save</button>
@@ -19,7 +19,7 @@
                     <button class="coa-btn coa-delete" onclick="deleteMainRegion()">Delete</button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-content: start; margin-top: 5px;">
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-content: center; margin-top: 5px;">
                     <label class="coa-label">Main Region</label>
                     <input type="text" id="mainRegionName" class="coa-input" placeholder="Enter Region Name" disabled>
                 </div>
@@ -34,11 +34,11 @@
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
-                <select id="subRegionList" size="8" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onSubRegionSelect(this.value)"></select>
+                <select id="subRegionList" size="12" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onSubRegionSelect(this.value)"></select>
             </div>
             
             <!-- Right: Fields & Buttons -->
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; justify-content: center;">
                 <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="coa-btn coa-add" onclick="resetSubRegionForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveSubRegion()">Save</button>
@@ -46,7 +46,7 @@
                     <button class="coa-btn coa-delete" onclick="deleteSubRegion()">Delete</button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-content: start; margin-top: 5px;">
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-content: center; margin-top: 5px;">
                     <label class="coa-label">Sub Region</label>
                     <input type="text" id="subRegionName" class="coa-input" placeholder="Enter Sub Region Name" disabled>
                 </div>
