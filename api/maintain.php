@@ -173,12 +173,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- Lookup Saves ---
     if ($action === 'save_region') {
-        if (isset($data['id'])) {
-            $pdo->prepare("UPDATE regions SET name = ? WHERE id = ?")->execute([$data['name'], $data['id']]);
+        $newId = $data['id'] ?? null;
+        if ($newId) {
+            $pdo->prepare("UPDATE regions SET name = ? WHERE id = ?")->execute([$data['name'], $newId]);
         } else {
-            $pdo->prepare("INSERT INTO regions (company_id, name) VALUES (?, ?)")->execute([$company_id, $data['name']]);
+            $stmt = $pdo->prepare("INSERT INTO regions (company_id, name) VALUES (?, ?)");
+            $stmt->execute([$company_id, $data['name']]);
+            $newId = $pdo->lastInsertId();
         }
-        sendResponse(['status' => 'success']);
+        sendResponse(['status' => 'success', 'id' => $newId]);
+    }
+
+    if ($action === 'save_sub_region') {
+        $newId = $data['id'] ?? null;
+        if ($newId) {
+            $pdo->prepare("UPDATE sub_regions SET name = ? WHERE id = ?")->execute([$data['name'], $newId]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO sub_regions (region_id, name) VALUES (?, ?)");
+            $stmt->execute([$data['region_id'], $data['name']]);
+            $newId = $pdo->lastInsertId();
+        }
+        sendResponse(['status' => 'success', 'id' => $newId]);
+    }
+
+    if ($action === 'save_sector') {
+        $newId = $data['id'] ?? null;
+        if ($newId) {
+            $pdo->prepare("UPDATE business_sectors SET name = ? WHERE id = ?")->execute([$data['name'], $newId]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO business_sectors (company_id, name) VALUES (?, ?)");
+            $stmt->execute([$company_id, $data['name']]);
+            $newId = $pdo->lastInsertId();
+        }
+        sendResponse(['status' => 'success', 'id' => $newId]);
     }
     // (Additional lookups omitted for brevity, but can be added as needed)
 }
@@ -194,6 +221,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'P
     }
     if ($action === 'delete_coa_list' && isset($_GET['id'])) {
         $pdo->prepare("DELETE FROM coa_list WHERE id = ?")->execute([$_GET['id']]);
+        sendResponse(['status' => 'success']);
+    }
+    if ($action === 'delete_region' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM regions WHERE id = ?")->execute([$_GET['id']]);
+        sendResponse(['status' => 'success']);
+    }
+    if ($action === 'delete_sub_region' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM sub_regions WHERE id = ?")->execute([$_GET['id']]);
+        sendResponse(['status' => 'success']);
+    }
+    if ($action === 'delete_sector' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM business_sectors WHERE id = ?")->execute([$_GET['id']]);
         sendResponse(['status' => 'success']);
     }
 }

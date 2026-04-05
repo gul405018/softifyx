@@ -2620,8 +2620,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : null);
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust));
+                    let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2646,8 +2647,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : null);
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust));
+                    let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
                 });
             });
         }
@@ -2667,7 +2669,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedSubCode = null;
         let selectedCustTypeCode = null;
         let selectedCustAccountCode = null;
-        let customerData = []; // Extended data
+        let customerData = []; 
+        let selectedMainRegionId = null;
+        let selectedSubRegionId = null;
+        let mainRegionData = [];
+        let subRegionData = [];
 
         function initChartOfAccountsView() {
             let retries = 0;
@@ -3560,15 +3566,147 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Lookup Management Stubs (Can be expanded into mini-popups)
-        function manageRegions() {
-            const name = prompt("Enter new Region name:");
-            if(name) {
-                fetch('api/maintain.php?action=save_region', {
+        // Regions Module Logic
+        function initRegionsView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('mainRegionList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    fetchMainRegions();
+                    resetMainRegionForm();
+                    resetSubRegionForm();
+                } else if (++retries >= 20) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        async function fetchMainRegions() {
+            try {
+                const res = await fetch('api/maintain.php?action=get_regions');
+                mainRegionData = await res.json();
+                const list = document.getElementById('mainRegionList');
+                if(list) list.innerHTML = mainRegionData.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            } catch(e) {}
+        }
+
+        async function onMainRegionSelect(id) {
+            selectedMainRegionId = id;
+            const reg = mainRegionData.find(r => r.id == id);
+            if(reg) {
+                document.getElementById('mainRegionName').value = reg.name;
+                document.getElementById('mainRegionName').disabled = false;
+            }
+            fetchSubRegions(id);
+        }
+
+        async function fetchSubRegions(regionId) {
+            try {
+                const res = await fetch(`api/maintain.php?action=get_sub_regions&region_id=${regionId}`);
+                subRegionData = await res.json();
+                const list = document.getElementById('subRegionList');
+                if(list) list.innerHTML = subRegionData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                resetSubRegionForm();
+            } catch(e) {}
+        }
+
+        function onSubRegionSelect(id) {
+            selectedSubRegionId = id;
+            const sub = subRegionData.find(s => s.id == id);
+            if(sub) {
+                document.getElementById('subRegionName').value = sub.name;
+                document.getElementById('subRegionName').disabled = false;
+            }
+        }
+
+        async function saveMainRegion() {
+            const name = document.getElementById('mainRegionName').value.trim();
+            if(!name) return alert("Region Name is required!");
+            const payload = { name };
+            if (selectedMainRegionId) payload.id = selectedMainRegionId;
+            try {
+                const res = await fetch('api/maintain.php?action=save_region', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                }).then(() => loadCustomerLookups());
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Main Region saved!");
+                    await fetchMainRegions();
+                    resetMainRegionForm();
+                    // Refresh parent if open
+                    loadCustomerLookups();
+                }
+            } catch(e) {}
+        }
+
+        async function deleteMainRegion() {
+            if(!selectedMainRegionId) return alert("Select a Region to delete first.");
+            if(confirm("Deleting this region will also delete all its sub-regions. Continue?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_region&id=${selectedMainRegionId}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Region deleted.");
+                        await fetchMainRegions();
+                        resetMainRegionForm();
+                        loadCustomerLookups();
+                    }
+                } catch(e) {}
             }
+        }
+
+        async function saveSubRegion() {
+            if(!selectedMainRegionId) return alert("Select a Main Region first!");
+            const name = document.getElementById('subRegionName').value.trim();
+            if(!name) return alert("Sub-Region Name is required!");
+            const payload = { region_id: selectedMainRegionId, name };
+            if (selectedSubRegionId) payload.id = selectedSubRegionId;
+            try {
+                const res = await fetch('api/maintain.php?action=save_sub_region', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Sub Region saved!");
+                    await fetchSubRegions(selectedMainRegionId);
+                    resetSubRegionForm();
+                }
+            } catch(e) {}
+        }
+
+        async function deleteSubRegion() {
+            if(!selectedSubRegionId) return alert("Select a Sub Region to delete first.");
+            if(confirm("Are you sure you want to delete this sub-region?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_sub_region&id=${selectedSubRegionId}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Sub Region deleted.");
+                        await fetchSubRegions(selectedMainRegionId);
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function resetMainRegionForm(generate = false) {
+            document.getElementById('mainRegionName').value = '';
+            document.getElementById('mainRegionName').disabled = !generate;
+            document.getElementById('mainRegionList').value = '';
+            selectedMainRegionId = null;
+            if(!generate) {
+                const list = document.getElementById('subRegionList');
+                if(list) list.innerHTML = '';
+            }
+        }
+
+        function resetSubRegionForm(generate = false) {
+            document.getElementById('subRegionName').value = '';
+            document.getElementById('subRegionName').disabled = !generate;
+            document.getElementById('subRegionList').value = '';
+            selectedSubRegionId = null;
+        }
+
+        function manageRegions() {
+            window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
         }
         function manageSectors() { alert("Business Sector management coming soon."); }
         function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
@@ -3586,6 +3724,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;
+        window.initRegionsView = initRegionsView;
+        window.onMainRegionSelect = onMainRegionSelect;
+        window.onSubRegionSelect = onSubRegionSelect;
+        window.saveMainRegion = saveMainRegion;
+        window.deleteMainRegion = deleteMainRegion;
+        window.resetMainRegionForm = resetMainRegionForm;
+        window.saveSubRegion = saveSubRegion;
+        window.deleteSubRegion = deleteSubRegion;
+        window.resetSubRegionForm = resetSubRegionForm;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
