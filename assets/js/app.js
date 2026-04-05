@@ -3258,8 +3258,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     clearInterval(checkAndRender);
                     loadCustomerLookups();
                     renderCustomerTypeList();
-                    resetCustomerTypeForm();
-                    resetCustomerForm();
+                    
+                    // Auto-select first type if available and fetch data
+                    if (list.options.length > 0) {
+                        list.selectedIndex = 0;
+                        onCustomerTypeSelect(list.value);
+                    } else {
+                        resetCustomerTypeForm();
+                        resetCustomerForm();
+                    }
                 } else if (++retries >= 20) clearInterval(checkAndRender);
             }, 100);
         }

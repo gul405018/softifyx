@@ -1,9 +1,5 @@
 <div id="customersContainer" data-module="Customers" style="height: 650px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
     
-    <!-- HEADER -->
-    <div style="background: #e2e8f0; padding: 8px; margin-bottom: 10px; border-radius: 4px;">
-        <h2 style="margin: 0; color: #1F4E79; font-size: 16px; font-style: italic; text-transform: uppercase;">CUSTOMERS</h2>
-    </div>
 
     <!-- Section 1: Customer Type -->
     <div style="flex: 0.4; display: flex; flex-direction: column; min-height: 140px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
@@ -40,7 +36,7 @@
         <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
             <div style="flex: 0.8; display: flex; flex-direction: column;">
-                <select id="customerList" size="10" style="width: 100%; height: 350px; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onCustomerSelect(this.value)"></select>
+                <select id="customerList" size="10" style="width: 100%; height: 425px; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onCustomerSelect(this.value)"></select>
             </div>
             
             <!-- Right: Detailed Fields -->
@@ -124,10 +120,6 @@
         </div>
     </div>
 
-    <!-- HINT TEXT -->
-    <div style="margin-top: 5px; text-align: center; color: #dc3545; font-size: 12px; font-weight: 600;">
-        Press: Ctrl+N to add new customer, Ctrl+S to save changes and ESC to cancel
-    </div>
 
     <style>
         .coa-btn {
