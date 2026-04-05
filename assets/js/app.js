@@ -3641,7 +3641,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteMainRegion() {
             if(!selectedMainRegionId) return alert("Select a Region to delete first.");
-            if(confirm("Deleting this region will also delete all its sub-regions. Continue?")) {
+            
+            // PROTECT: Don't delete if sub-regions exist
+            if (subRegionData && subRegionData.length > 0) {
+                return alert("Cannot delete this Region because it contains Sub-Regions. Please delete all Sub-Regions first.");
+            }
+
+            if(confirm("Are you sure you want to delete this region?")) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_region&id=${selectedMainRegionId}`, { method: 'POST' });
                     if(res.ok) {
