@@ -828,6 +828,10 @@
             max-width: 1000px;
         }
 
+        .modal-container.modal-rect {
+            max-width: 1100px;
+        }
+
         @keyframes modalFadeIn {
             from {
                 opacity: 0;

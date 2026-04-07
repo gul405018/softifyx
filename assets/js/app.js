@@ -439,6 +439,9 @@
             
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
+
+            if (moduleKey === 'Business Sectors') container.classList.add('modal-rect');
+            else container.classList.remove('modal-rect');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
