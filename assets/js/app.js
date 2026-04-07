@@ -3795,7 +3795,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(input) {
                 input.value = '';
                 input.disabled = !generate;
-                if(generate) setTimeout(() => input.focus(), 50);
+                if(generate) {
+                    setTimeout(() => {
+                        input.focus();
+                        input.setAttribute('placeholder', 'Enter Sector Name...');
+                    }, 50);
+                }
+            } else {
+                console.warn("sectorName input not found!");
             }
             const list = document.getElementById('sectorList');
             if(list) list.value = '';

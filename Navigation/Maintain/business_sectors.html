@@ -7,17 +7,17 @@
         <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
-                <select id="sectorList" size="6" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onSectorSelect(this.value)"></select>
+                <select id="sectorList" size="6" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="window.onSectorSelect(this.value)"></select>
             </div>
             
             <!-- Right: Buttons & Input -->
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; justify-content: flex-start; padding-top: 10px;">
                 <!-- Buttons Row -->
                 <div style="display: flex; justify-content: flex-end; gap: 6px;">
-                    <button class="coa-btn coa-add" onclick="resetSectorForm(true)">Add</button>
-                    <button class="coa-btn coa-save" onclick="saveSector()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetSectorForm()">Cancel</button>
-                    <button class="coa-btn coa-delete" onclick="deleteSector()">Delete</button>
+                    <button class="coa-btn coa-add" onclick="window.resetSectorForm(true)">Add</button>
+                    <button class="coa-btn coa-save" onclick="window.saveSector()">Save</button>
+                    <button class="coa-btn coa-cancel" onclick="window.resetSectorForm()">Cancel</button>
+                    <button class="coa-btn coa-delete" onclick="window.deleteSector()">Delete</button>
                 </div>
                 
                 <!-- Input Field -->
