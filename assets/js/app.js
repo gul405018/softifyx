@@ -3714,7 +3714,90 @@ document.addEventListener('DOMContentLoaded', async () => {
         function manageRegions() {
             window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
         }
-        function manageSectors() { alert("Business Sector management coming soon."); }
+        let sectorData = [];
+        let selectedSectorId = null;
+
+        function initSectorsView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('sectorList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    fetchSectors();
+                    resetSectorForm();
+                } else if (++retries >= 20) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        async function fetchSectors() {
+            try {
+                const res = await fetch('api/maintain.php?action=get_sectors');
+                sectorData = await res.json();
+                renderSectorList();
+            } catch(e) {}
+        }
+
+        function renderSectorList() {
+            const list = document.getElementById('sectorList');
+            if(list) list.innerHTML = sectorData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+
+        function onSectorSelect(id) {
+            selectedSectorId = id;
+            const sec = sectorData.find(s => s.id == id);
+            if(sec) {
+                document.getElementById('sectorName').value = sec.name;
+                document.getElementById('sectorName').disabled = false;
+            }
+        }
+
+        async function saveSector() {
+            const name = document.getElementById('sectorName').value.trim();
+            if(!name) return alert("Sector Name is required!");
+            const payload = { name };
+            if (selectedSectorId) payload.id = selectedSectorId;
+            try {
+                const res = await fetch('api/maintain.php?action=save_sector', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Business Sector saved!");
+                    await fetchSectors();
+                    resetSectorForm();
+                    // Refresh parent if open
+                    loadCustomerLookups();
+                }
+            } catch(e) {}
+        }
+
+        async function deleteSector() {
+            if(!selectedSectorId) return alert("Select a Sector to delete first.");
+            if(confirm("Are you sure you want to delete this business sector?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_sector&id=${selectedSectorId}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Sector deleted.");
+                        await fetchSectors();
+                        resetSectorForm();
+                        loadCustomerLookups();
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function resetSectorForm(generate = false) {
+            document.getElementById('sectorName').value = '';
+            document.getElementById('sectorName').disabled = !generate;
+            const list = document.getElementById('sectorList');
+            if(list) list.value = '';
+            selectedSectorId = null;
+        }
+
+        function manageSectors() {
+            window.openModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Business Sectors', initSectorsView, 'Business Sectors', true);
+        }
         function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
 
         window.initCustomersView = initCustomersView;
@@ -3730,6 +3813,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;
+        window.initSectorsView = initSectorsView;
+        window.onSectorSelect = onSectorSelect;
+        window.saveSector = saveSector;
+        window.deleteSector = deleteSector;
+        window.resetSectorForm = resetSectorForm;
         window.initRegionsView = initRegionsView;
         window.onMainRegionSelect = onMainRegionSelect;
         window.onSubRegionSelect = onSubRegionSelect;
