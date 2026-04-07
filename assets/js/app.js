@@ -437,11 +437,11 @@
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
-            const modalTitleStr = typeof title === 'string' ? title : (title && title.text ? title.text : "");
-            const isRegions = (content.includes('data-module="Customer Regions"') || modalTitleStr.includes('Regions') || modalTitleStr.includes('Manage Regions'));
-            
-            if (isWide || isRegions) container.classList.add('modal-wide');
+            if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
+            
+            // Use the provided moduleKey if available, otherwise fallback to title text for tagging
+            const dataModuleTag = moduleKey || title.text;
             
             container.innerHTML = `
                 <div class="modal-header">
@@ -2275,7 +2275,6 @@
         }
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
-            if (url && url.includes('customer_regions.html')) isWide = true;
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
@@ -2621,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let isReg = (moduleName && moduleName.includes("Regions")) || (targetUrl && targetUrl.includes('regions.html')) || (titleText && titleText.includes('Regions'));
+                    let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
                     
@@ -2648,7 +2647,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let isReg = (moduleName && moduleName.includes("Regions")) || (targetUrl && targetUrl.includes('regions.html')) || (titleText && titleText.includes('Regions'));
+                    let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
                 });
@@ -3569,14 +3568,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Lookup Management Stubs (Can be expanded into mini-popups)
         // Regions Module Logic
         function initRegionsView() {
-            // FORCE: Ensure the modal is wide (1000px) to match COA
-            const modalContainer = document.getElementById('modalContainer');
-            if (modalContainer) modalContainer.classList.add('modal-wide');
-
             let retries = 0;
             const checkAndRender = setInterval(() => {
-                const regionList = document.getElementById('mainRegionList');
-                if (regionList) {
+                const list = document.getElementById('mainRegionList');
+                if (list) {
                     clearInterval(checkAndRender);
                     fetchMainRegions();
                     resetMainRegionForm();
@@ -3646,13 +3641,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteMainRegion() {
             if(!selectedMainRegionId) return alert("Select a Region to delete first.");
-            
-            // PROTECT: Don't delete if sub-regions exist
-            if (subRegionData && subRegionData.length > 0) {
-                return alert("Cannot delete this Region because it contains Sub-Regions. Please delete all Sub-Regions first.");
-            }
-
-            if(confirm("Are you sure you want to delete this region?")) {
+            if(confirm("Deleting this region will also delete all its sub-regions. Continue?")) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_region&id=${selectedMainRegionId}`, { method: 'POST' });
                     if(res.ok) {
