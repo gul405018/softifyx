@@ -3791,8 +3791,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetSectorForm(generate = false) {
-            document.getElementById('sectorName').value = '';
-            document.getElementById('sectorName').disabled = !generate;
+            const input = document.getElementById('sectorName');
+            if(input) {
+                input.value = '';
+                input.disabled = !generate;
+                if(generate) setTimeout(() => input.focus(), 50);
+            }
             const list = document.getElementById('sectorList');
             if(list) list.value = '';
             selectedSectorId = null;
