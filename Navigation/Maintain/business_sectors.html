@@ -14,7 +14,7 @@
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; justify-content: flex-start; padding-top: 10px;">
                 <!-- Buttons Row -->
                 <div style="display: flex; justify-content: flex-end; gap: 6px;">
-                    <button class="coa-btn coa-add" onclick="window.resetSectorForm(true)">Add</button>
+                    <button class="coa-btn coa-add" onclick="const input = document.getElementById('sectorName'); if(input){ input.disabled = false; input.value=''; input.focus(); } window.resetSectorForm(true);">Add</button>
                     <button class="coa-btn coa-save" onclick="window.saveSector()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="window.resetSectorForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="window.deleteSector()">Delete</button>
