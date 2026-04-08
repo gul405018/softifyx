@@ -439,13 +439,6 @@
             
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
-
-            const rectModules = ['Customer Regions', 'Customers', 'Chart of Accounts'];
-            if (rectModules.includes(moduleKey)) container.classList.add('modal-rect');
-            else container.classList.remove('modal-rect');
-
-            if (moduleKey === 'Business Sectors') container.classList.add('modal-square');
-            else container.classList.remove('modal-square');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
@@ -2718,8 +2711,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
             // Lock fields on select
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = false;
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = false;
             if(compSelect) compSelect.disabled = true;
 
             renderCOASubList();
@@ -2861,8 +2854,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountType').value = sub.name;
             }
             // Lock fields on select
-            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = true;
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = false;
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = false;
 
             renderCOAListList();
             
@@ -3019,8 +3012,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('accountName').value = acc.name;
             }
             // Lock fields on select
-            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = true;
-            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = true;
+            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = false;
+            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = false;
         }
 
         async function saveCOAList() {
@@ -3346,9 +3339,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(sub) {
                 document.getElementById('custSubTypeCode').value = sub.code;
                 document.getElementById('custTypeName').value = sub.name;
-                // Revert to editable on selection for Customer modules
-                if(document.getElementById('custSubTypeCode')) document.getElementById('custSubTypeCode').disabled = false;
-                if(document.getElementById('custTypeName')) document.getElementById('custTypeName').disabled = false;
+                document.getElementById('custSubTypeCode').disabled = false;
+                document.getElementById('custTypeName').disabled = false;
             }
             fetchCustomersDetailed(code);
         }
@@ -3388,9 +3380,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('custEmail').value = cust.email || '';
                 document.getElementById('custStReg').value = cust.st_reg_no || '';
                 document.getElementById('custNtn').value = cust.ntn_cnic || '';
+                document.getElementById('custSector').value = cust.business_sector_id || '';
+                document.getElementById('custAccManager').value = cust.acc_manager_id || '';
+                document.getElementById('custCreditLimit').value = cust.credit_limit || 0;
+                document.getElementById('custCreditTerms').value = cust.credit_terms || 'CASH';
                 document.getElementById('custRemarks').value = cust.remarks || '';
                 
-                // Revert to editable on selection for Customers
+                // Enable fields
                 enableCustomerFields(true);
             }
         }
@@ -3558,47 +3554,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 list.innerHTML = filtered.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
                 if (filtered.length === 1) onCustomerSelect(filtered[0].code);
             } else {
-                alert("No matching customers found.");
-            }
-        }
-
-        async function deleteCustomerType() {
-            if(!selectedCustTypeCode) return alert("Select a Customer Type to delete first.");
-            
-            const sub = coaSub.find(s => s.code == selectedCustTypeCode);
-            if(!sub) return;
-
-            // Safety Check: Check if any customers exist for this type
-            const hasCustomers = customerData.some(c => String(c.sub_id) === String(sub.id));
-            if (hasCustomers) {
-                return alert("Cannot delete Customer Type! There are still customers assigned to this category.");
-            }
-
-            if(confirm("Are you sure you want to delete this customer type?")) {
-                try {
-                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
-                    if(res.ok) {
-                        alert("Customer Type deleted.");
-                        await loadSavedData();
-                        renderCustomerTypeList();
-                        resetCustomerTypeForm();
-                    }
-                } catch(e) {}
-            }
-        }
-
-        async function deleteCustomer() {
-            const accCode = selectedCustAccountCode || document.getElementById('custAccountCode').value;
-            if(!accCode) return alert("Select a Customer to delete first.");
-            if(confirm("Are you sure you want to delete this customer? This action cannot be undone.")) {
-                try {
-                    const res = await fetch(`api/maintain.php?action=delete_customer&code=${accCode}`, { method: 'POST' });
-                    if(res.ok) {
-                        alert("Customer deleted.");
-                        if(selectedCustTypeCode) await fetchCustomersDetailed(selectedCustTypeCode);
-                        resetCustomerForm();
-                    }
-                } catch(e) {}
+                alert("No customers found matching '" + query + "'");
+                renderCustomerList();
             }
         }
 
@@ -3657,7 +3614,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = subRegionData.find(s => s.id == id);
             if(sub) {
                 document.getElementById('subRegionName').value = sub.name;
-                // Revert to editable on selection for Regions
                 document.getElementById('subRegionName').disabled = false;
             }
         }
@@ -3726,20 +3682,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteSubRegion() {
             if(!selectedSubRegionId) return alert("Select a Sub Region to delete first.");
-            
-            // Safety: Check if any customers use this sub-region
-            const inUse = customerData.some(c => String(c.sub_region_id) === String(selectedSubRegionId));
-            if (inUse) {
-                return alert("Cannot delete Sub-Region! It is currently assigned to one or more Customers.");
-            }
-
             if(confirm("Are you sure you want to delete this sub-region?")) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_sub_region&id=${selectedSubRegionId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Sub Region deleted.");
                         await fetchSubRegions(selectedMainRegionId);
-                        resetSubRegionForm();
                     }
                 } catch(e) {}
             }
@@ -3766,118 +3714,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         function manageRegions() {
             window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
         }
-        let sectorData = [];
-        let selectedSectorId = null;
-
-        function initSectorsView() {
-            let retries = 0;
-            const checkAndRender = setInterval(() => {
-                const list = document.getElementById('sectorList');
-                if (list) {
-                    clearInterval(checkAndRender);
-                    fetchSectors();
-                    resetSectorForm();
-                } else if (++retries >= 20) clearInterval(checkAndRender);
-            }, 100);
-        }
-
-        async function fetchSectors() {
-            try {
-                const res = await fetch('api/maintain.php?action=get_sectors');
-                sectorData = await res.json();
-                renderSectorList();
-            } catch(e) {}
-        }
-
-        function renderSectorList() {
-            const list = document.getElementById('sectorList');
-            if(list) list.innerHTML = sectorData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        }
-
-        function onSectorSelect(id) {
-            selectedSectorId = id;
-            const sec = sectorData.find(s => s.id == id);
-            if(sec) {
-                document.getElementById('sectorName').value = sec.name;
-                // Keep field disabled after selection
-                document.getElementById('sectorName').disabled = true;
-            }
-        }
-
-        async function saveSector() {
-            const name = document.getElementById('sectorName').value.trim();
-            if(!name) return alert("Sector Name is required!");
-            const payload = { name };
-            if (selectedSectorId) payload.id = selectedSectorId;
-            try {
-                const res = await fetch('api/maintain.php?action=save_sector', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if(res.ok) {
-                    alert("Business Sector saved!");
-                    await fetchSectors();
-                    resetSectorForm();
-                    // Refresh parent if open
-                    loadCustomerLookups();
-                }
-            } catch(e) {}
-        }
-
-        async function deleteSector() {
-            if(!selectedSectorId) return alert("Select a Sector to delete first.");
-            
-            // Safety: Check if any customers use this sector
-            const inUse = customerData.some(c => String(c.sector_id) === String(selectedSectorId));
-            if (inUse) {
-                return alert("Cannot delete Business Sector! It is currently assigned to one or more Customers.");
-            }
-
-            if(confirm("Are you sure you want to delete this business sector?")) {
-                try {
-                    const res = await fetch(`api/maintain.php?action=delete_sector&id=${selectedSectorId}`, { method: 'POST' });
-                    if(res.ok) {
-                        alert("Sector deleted.");
-                        await fetchSectors();
-                        resetSectorForm();
-                        loadCustomerLookups();
-                    }
-                } catch(e) {}
-            }
-        }
-
-        function resetSectorForm(generate = false) {
-            const input = document.getElementById('sectorName');
-            if(input) {
-                input.value = '';
-                input.disabled = !generate;
-                if(generate) {
-                    setTimeout(() => {
-                        input.focus();
-                        input.setAttribute('placeholder', 'Enter Sector Name...');
-                    }, 50);
-                }
-            } else {
-                console.warn("sectorName input not found!");
-            }
-            const list = document.getElementById('sectorList');
-            if(list) list.value = '';
-            selectedSectorId = null;
-        }
-
-        function manageSectors() {
-            window.openModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Business Sectors', initSectorsView, 'Business Sectors', true);
-        }
+        function manageSectors() { alert("Business Sector management coming soon."); }
         function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
 
         window.initCustomersView = initCustomersView;
         window.onCustomerTypeSelect = onCustomerTypeSelect;
         window.onCustomerSelect = onCustomerSelect;
         window.saveCustomerType = saveCustomerType;
-        window.deleteCustomerType = deleteCustomerType;
         window.saveCustomer = saveCustomer;
-        window.deleteCustomer = deleteCustomer;
         window.resetCustomerTypeForm = resetCustomerTypeForm;
         window.resetCustomerForm = resetCustomerForm;
         window.loadSubRegions = loadSubRegions;
@@ -3886,11 +3730,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;
-        window.initSectorsView = initSectorsView;
-        window.onSectorSelect = onSectorSelect;
-        window.saveSector = saveSector;
-        window.deleteSector = deleteSector;
-        window.resetSectorForm = resetSectorForm;
         window.initRegionsView = initRegionsView;
         window.onMainRegionSelect = onMainRegionSelect;
         window.onSubRegionSelect = onSubRegionSelect;
