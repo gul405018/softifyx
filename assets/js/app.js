@@ -433,28 +433,20 @@
             });
         }
 
-        function openModal(title, content, isWide = false, moduleKey = null) {
+        function openModal(title, content, sizeClass = '', moduleKey = null) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
             // Clear previous size classes
             container.classList.remove('modal-wide', 'modal-rect', 'modal-square');
             
-            if (isWide) container.classList.add('modal-wide');
+            // Support backward compatibility for boolean isWide
+            if (sizeClass === true) container.classList.add('modal-wide');
+            else if (sizeClass) container.classList.add(sizeClass);
             
-            // Standardize maintenance modules to modal-rect
-            const rectModules = ['Chart of Accounts', 'Customers', 'Customer Regions'];
-            if (rectModules.includes(moduleKey) || rectModules.includes(title.text)) {
-                container.classList.add('modal-rect');
-            }
-            
-            // Business Sectors get the square shape
-            if (moduleKey === 'Business Sectors' || title.text === 'Business Sectors') {
-                container.classList.add('modal-square');
-            }
-            
-            // Use the provided moduleKey if available, otherwise fallback to title text for tagging
+            // Auto-tag for storage if not provided
             const dataModuleTag = moduleKey || title.text;
+
 
             
             container.innerHTML = `
@@ -2288,7 +2280,7 @@
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, sizeClass = '') {
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
@@ -2298,6 +2290,7 @@
                     showAccessDenied(activeModuleKey);
                     return;
                 }
+
 
                 const cb = `_cb=${Date.now()}`;
                 const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
@@ -2319,7 +2312,8 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
+                    openModal({ icon: titleIcon, text: titleText }, html, sizeClass, activeModuleKey);
+
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -2340,8 +2334,9 @@
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
                         '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
-                        isWide
+                        sizeClass
                     );
+
                 }
             } catch (err) {
                 console.error(err);
@@ -2636,7 +2631,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    let sizeClass = (isCoa || isCust || isReg) ? 'modal-rect' : '';
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, sizeClass);
+
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2663,7 +2660,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    let sizeClass = (isCoa || isCust || isReg) ? 'modal-rect' : '';
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, sizeClass);
+
                 });
             });
         }
@@ -3722,9 +3721,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function manageRegions() {
-            window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
+            window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', 'modal-rect');
         }
         // Business Sectors Module Logic
+
         let sectorData = [];
         let selectedSectorId = null;
 
@@ -3807,8 +3807,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function manageSectors() {
-            window.openModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Business Sectors', initSectorsView, 'Business Sectors');
+            window.openModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Business Sectors', initSectorsView, 'Business Sectors', 'modal-square');
         }
+
 
         function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
 
