@@ -2714,8 +2714,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
             // Lock fields on select
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = false;
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = false;
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
             if(compSelect) compSelect.disabled = true;
 
             renderCOASubList();
@@ -2857,8 +2857,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountType').value = sub.name;
             }
             // Lock fields on select
-            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = false;
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = false;
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = true;
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
 
             renderCOAListList();
             
@@ -3015,8 +3015,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('accountName').value = acc.name;
             }
             // Lock fields on select
-            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = false;
-            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = false;
+            if(document.getElementById('accountCode')) document.getElementById('accountCode').disabled = true;
+            if(document.getElementById('accountName')) document.getElementById('accountName').disabled = true;
         }
 
         async function saveCOAList() {
@@ -3342,9 +3342,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(sub) {
                 document.getElementById('custSubTypeCode').value = sub.code;
                 document.getElementById('custTypeName').value = sub.name;
-                document.getElementById('custSubTypeCode').disabled = false;
-                document.getElementById('custTypeName').disabled = false;
             }
+            // Keep fields disabled after selection
+            if(document.getElementById('custSubTypeCode')) document.getElementById('custSubTypeCode').disabled = true;
+            if(document.getElementById('custTypeName')) document.getElementById('custTypeName').disabled = true;
             fetchCustomersDetailed(code);
         }
 
@@ -3389,8 +3390,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('custCreditTerms').value = cust.credit_terms || 'CASH';
                 document.getElementById('custRemarks').value = cust.remarks || '';
                 
-                // Enable fields
-                enableCustomerFields(true);
+                // Keep fields disabled (Read-Only)
+                enableCustomerFields(false);
             }
         }
 
@@ -3557,8 +3558,47 @@ document.addEventListener('DOMContentLoaded', async () => {
                 list.innerHTML = filtered.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
                 if (filtered.length === 1) onCustomerSelect(filtered[0].code);
             } else {
-                alert("No customers found matching '" + query + "'");
-                renderCustomerList();
+                alert("No matching customers found.");
+            }
+        }
+
+        async function deleteCustomerType() {
+            if(!selectedCustTypeCode) return alert("Select a Customer Type to delete first.");
+            
+            const sub = coaSub.find(s => s.code == selectedCustTypeCode);
+            if(!sub) return;
+
+            // Safety Check: Check if any customers exist for this type
+            const hasCustomers = customerData.some(c => String(c.sub_id) === String(sub.id));
+            if (hasCustomers) {
+                return alert("Cannot delete Customer Type! There are still customers assigned to this category.");
+            }
+
+            if(confirm("Are you sure you want to delete this customer type?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Customer Type deleted.");
+                        await loadSavedData();
+                        renderCustomerTypeList();
+                        resetCustomerTypeForm();
+                    }
+                } catch(e) {}
+            }
+        }
+
+        async function deleteCustomer() {
+            const accCode = selectedCustAccountCode || document.getElementById('custAccountCode').value;
+            if(!accCode) return alert("Select a Customer to delete first.");
+            if(confirm("Are you sure you want to delete this customer? This action cannot be undone.")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_customer&code=${accCode}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Customer deleted.");
+                        if(selectedCustTypeCode) await fetchCustomersDetailed(selectedCustTypeCode);
+                        resetCustomerForm();
+                    }
+                } catch(e) {}
             }
         }
 
@@ -3617,7 +3657,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = subRegionData.find(s => s.id == id);
             if(sub) {
                 document.getElementById('subRegionName').value = sub.name;
-                document.getElementById('subRegionName').disabled = false;
+                // Keep fields disabled after selection
+                document.getElementById('subRegionName').disabled = true;
             }
         }
 
@@ -3685,12 +3726,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteSubRegion() {
             if(!selectedSubRegionId) return alert("Select a Sub Region to delete first.");
+            
+            // Safety: Check if any customers use this sub-region
+            const inUse = customerData.some(c => String(c.sub_region_id) === String(selectedSubRegionId));
+            if (inUse) {
+                return alert("Cannot delete Sub-Region! It is currently assigned to one or more Customers.");
+            }
+
             if(confirm("Are you sure you want to delete this sub-region?")) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_sub_region&id=${selectedSubRegionId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Sub Region deleted.");
                         await fetchSubRegions(selectedMainRegionId);
+                        resetSubRegionForm();
                     }
                 } catch(e) {}
             }
@@ -3750,7 +3799,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sec = sectorData.find(s => s.id == id);
             if(sec) {
                 document.getElementById('sectorName').value = sec.name;
-                document.getElementById('sectorName').disabled = false;
+                // Keep field disabled after selection
+                document.getElementById('sectorName').disabled = true;
             }
         }
 
@@ -3777,6 +3827,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteSector() {
             if(!selectedSectorId) return alert("Select a Sector to delete first.");
+            
+            // Safety: Check if any customers use this sector
+            const inUse = customerData.some(c => String(c.sector_id) === String(selectedSectorId));
+            if (inUse) {
+                return alert("Cannot delete Business Sector! It is currently assigned to one or more Customers.");
+            }
+
             if(confirm("Are you sure you want to delete this business sector?")) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_sector&id=${selectedSectorId}`, { method: 'POST' });
@@ -3818,7 +3875,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.onCustomerTypeSelect = onCustomerTypeSelect;
         window.onCustomerSelect = onCustomerSelect;
         window.saveCustomerType = saveCustomerType;
+        window.deleteCustomerType = deleteCustomerType;
         window.saveCustomer = saveCustomer;
+        window.deleteCustomer = deleteCustomer;
         window.resetCustomerTypeForm = resetCustomerTypeForm;
         window.resetCustomerForm = resetCustomerForm;
         window.loadSubRegions = loadSubRegions;
