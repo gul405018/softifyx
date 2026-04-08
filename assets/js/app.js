@@ -440,8 +440,12 @@
             if (isWide) container.classList.add('modal-wide');
             else container.classList.remove('modal-wide');
 
-            if (moduleKey === 'Business Sectors') container.classList.add('modal-rect');
+            const rectModules = ['Customer Regions', 'Customers', 'Chart of Accounts'];
+            if (rectModules.includes(moduleKey)) container.classList.add('modal-rect');
             else container.classList.remove('modal-rect');
+
+            if (moduleKey === 'Business Sectors') container.classList.add('modal-square');
+            else container.classList.remove('modal-square');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
@@ -3342,10 +3346,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(sub) {
                 document.getElementById('custSubTypeCode').value = sub.code;
                 document.getElementById('custTypeName').value = sub.name;
+                // Revert to editable on selection for Customer modules
+                if(document.getElementById('custSubTypeCode')) document.getElementById('custSubTypeCode').disabled = false;
+                if(document.getElementById('custTypeName')) document.getElementById('custTypeName').disabled = false;
             }
-            // Keep fields disabled after selection
-            if(document.getElementById('custSubTypeCode')) document.getElementById('custSubTypeCode').disabled = true;
-            if(document.getElementById('custTypeName')) document.getElementById('custTypeName').disabled = true;
             fetchCustomersDetailed(code);
         }
 
@@ -3384,14 +3388,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('custEmail').value = cust.email || '';
                 document.getElementById('custStReg').value = cust.st_reg_no || '';
                 document.getElementById('custNtn').value = cust.ntn_cnic || '';
-                document.getElementById('custSector').value = cust.business_sector_id || '';
-                document.getElementById('custAccManager').value = cust.acc_manager_id || '';
-                document.getElementById('custCreditLimit').value = cust.credit_limit || 0;
-                document.getElementById('custCreditTerms').value = cust.credit_terms || 'CASH';
                 document.getElementById('custRemarks').value = cust.remarks || '';
                 
-                // Keep fields disabled (Read-Only)
-                enableCustomerFields(false);
+                // Revert to editable on selection for Customers
+                enableCustomerFields(true);
             }
         }
 
@@ -3657,8 +3657,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = subRegionData.find(s => s.id == id);
             if(sub) {
                 document.getElementById('subRegionName').value = sub.name;
-                // Keep fields disabled after selection
-                document.getElementById('subRegionName').disabled = true;
+                // Revert to editable on selection for Regions
+                document.getElementById('subRegionName').disabled = false;
             }
         }
 
