@@ -1,23 +1,26 @@
-<div id="regionsContainer" data-module="Customer Regions" style="height: 600px; width: 100%; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; overflow: hidden; border-radius: 4px;">
+<div id="regionsContainer" data-module="Customer Regions" style="height: 650px; display: flex; flex-direction: column; gap: 12px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
 
     <!-- Section 1: Main Region -->
-    <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 10px; border-radius: 4px; overflow: hidden;">
-        <div class="form-section-header">Main Region</div>
-        <div style="display: flex; gap: 15px; flex: 1; overflow: hidden;">
+    <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
+        <div style="font-size: 13px; font-weight: 700; color: #1F4E79; margin-bottom: 8px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 4px;">Main Region</div>
+        
+        <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
-            <div style="flex: 0.8; display: flex; flex-direction: column;">
-                <select id="mainRegionList" size="10" class="coa-input" style="flex: 1;" onchange="onMainRegionSelect(this.value)"></select>
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <select id="mainRegionList" size="12" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onMainRegionSelect(this.value)"></select>
             </div>
-            <!-- Right: Actions & Fields -->
-            <div style="flex: 1.2; display: flex; flex-direction: column; gap: 12px; justify-content: center;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px;">
+            
+            <!-- Right: Fields & Buttons -->
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; justify-content: center;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="coa-btn coa-add" onclick="resetMainRegionForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveMainRegion()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="resetMainRegionForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteMainRegion()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
-                    <label class="coa-label">Main Region Name</label>
+                
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-content: center; margin-top: 5px;">
+                    <label class="coa-label">Main Region</label>
                     <input type="text" id="mainRegionName" class="coa-input" placeholder="Enter Region Name" disabled>
                 </div>
             </div>
@@ -25,26 +28,66 @@
     </div>
 
     <!-- Section 2: Sub Region -->
-    <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 10px; border-radius: 4px; overflow: hidden;">
-        <div class="form-section-header">Sub Region</div>
-        <div style="display: flex; gap: 15px; flex: 1; overflow: hidden;">
+    <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; background: #fafafa;">
+        <div style="font-size: 13px; font-weight: 700; color: #1F4E79; margin-bottom: 8px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 4px;">Sub Region</div>
+        
+        <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
-            <div style="flex: 0.8; display: flex; flex-direction: column;">
-                <select id="subRegionList" size="10" class="coa-input" style="flex: 1;" onchange="onSubRegionSelect(this.value)"></select>
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <select id="subRegionList" size="12" style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onSubRegionSelect(this.value)"></select>
             </div>
-            <!-- Right: Actions & Fields -->
-            <div style="flex: 1.2; display: flex; flex-direction: column; gap: 12px; justify-content: center;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px;">
+            
+            <!-- Right: Fields & Buttons -->
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; justify-content: center;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px;">
                     <button class="coa-btn coa-add" onclick="resetSubRegionForm(true)">Add</button>
                     <button class="coa-btn coa-save" onclick="saveSubRegion()">Save</button>
                     <button class="coa-btn coa-cancel" onclick="resetSubRegionForm()">Cancel</button>
                     <button class="coa-btn coa-delete" onclick="deleteSubRegion()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
-                    <label class="coa-label">Sub Region Name</label>
+                
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-content: center; margin-top: 5px;">
+                    <label class="coa-label">Sub Region</label>
                     <input type="text" id="subRegionName" class="coa-input" placeholder="Enter Sub Region Name" disabled>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .coa-btn {
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 28px;
+            min-width: 70px;
+        }
+        .coa-btn:hover { background: #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .coa-btn:active { transform: translateY(1px); }
+        
+        .coa-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
+        .coa-add:hover { background: #218838 !important; }
+
+        .coa-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
+        .coa-save:hover { background: #153550 !important; }
+
+        .coa-cancel { background: #6c757d !important; color: white !important; border-color: #6c757d !important; }
+        .coa-cancel:hover { background: #5a6268 !important; }
+
+        .coa-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
+        .coa-delete:hover { background: #c82333 !important; }
+        
+        .coa-label { font-size: 12px; font-weight: 600; color: #334155; align-self: center; }
+        .coa-input { height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; font-size: 13px; outline: none; width: 100%; transition: border 0.2s; }
+        .coa-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 1px rgba(31,78,121,0.1); }
+        
+        select:disabled, input:disabled { background-color: #f8fafc; color: #64748b; cursor: not-allowed; }
+        
+        option:checked { background: #1F4E79 !important; color: white !important; }
+        option { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    </style>
 </div>
