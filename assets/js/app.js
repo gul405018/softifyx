@@ -433,21 +433,15 @@
             });
         }
 
-        function openModal(title, content, sizeClass = '', moduleKey = null) {
+        function openModal(title, content, isWide = false, moduleKey = null) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
-            // Clear previous size classes
-            container.classList.remove('modal-wide', 'modal-rect', 'modal-square');
+            if (isWide) container.classList.add('modal-wide');
+            else container.classList.remove('modal-wide');
             
-            // Support backward compatibility for boolean isWide
-            if (sizeClass === true) container.classList.add('modal-wide');
-            else if (sizeClass) container.classList.add(sizeClass);
-            
-            // Auto-tag for storage if not provided
+            // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
-
-
             
             container.innerHTML = `
                 <div class="modal-header">
@@ -2280,7 +2274,7 @@
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, sizeClass = '') {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
@@ -2290,7 +2284,6 @@
                     showAccessDenied(activeModuleKey);
                     return;
                 }
-
 
                 const cb = `_cb=${Date.now()}`;
                 const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
@@ -2312,8 +2305,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, sizeClass, activeModuleKey);
-
+                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -2334,9 +2326,8 @@
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
                         '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
-                        sizeClass
+                        isWide
                     );
-
                 }
             } catch (err) {
                 console.error(err);
@@ -2631,9 +2622,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    let sizeClass = (isCoa || isCust || isReg) ? 'modal-rect' : '';
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, sizeClass);
-
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2660,9 +2649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    let sizeClass = (isCoa || isCust || isReg) ? 'modal-rect' : '';
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, sizeClass);
-
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
                 });
             });
         }
@@ -2723,11 +2710,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     compSelect.value = main.component;
                 }
             }
-            // Lock fields on select (Shadowed mode)
-            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = true;
-            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = true;
+            // Lock fields on select
+            if(document.getElementById('mainTypeCode')) document.getElementById('mainTypeCode').disabled = false;
+            if(document.getElementById('mainAccountType')) document.getElementById('mainAccountType').disabled = false;
             if(compSelect) compSelect.disabled = true;
-
 
             renderCOASubList();
             
@@ -2867,10 +2853,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('subAccountCode').value = sub.code;
                 document.getElementById('subAccountType').value = sub.name;
             }
-            // Lock fields on select (Shadowed mode)
-            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = true;
-            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = true;
-
+            // Lock fields on select
+            if(document.getElementById('subAccountCode')) document.getElementById('subAccountCode').disabled = false;
+            if(document.getElementById('subAccountType')) document.getElementById('subAccountType').disabled = false;
 
             renderCOAListList();
             
@@ -3656,7 +3641,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteMainRegion() {
             if(!selectedMainRegionId) return alert("Select a Region to delete first.");
-            if(confirm("Deleting this region will also delete all its sub-regions. Continue?")) {
+            
+            // Logic: Prevent deletion if sub-regions exist
+            if (subRegionData && subRegionData.length > 0) {
+                return alert("Please delete all sub-regions first before deleting the main region.");
+            }
+
+            if(confirm("Are you sure you want to delete this region? This action cannot be undone.")) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_region&id=${selectedMainRegionId}`, { method: 'POST' });
                     if(res.ok) {
@@ -3721,98 +3712,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function manageRegions() {
-            window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', 'modal-rect');
+            window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
         }
-        // Business Sectors Module Logic
-
-        let sectorData = [];
-        let selectedSectorId = null;
-
-        function initSectorsView() {
-            let retries = 0;
-            const checkAndRender = setInterval(() => {
-                const list = document.getElementById('sectorList');
-                if (list) {
-                    clearInterval(checkAndRender);
-                    fetchSectors();
-                    resetSectorForm();
-                } else if (++retries >= 20) clearInterval(checkAndRender);
-            }, 100);
-        }
-
-        async function fetchSectors() {
-            try {
-                const res = await fetch('api/maintain.php?action=get_sectors');
-                sectorData = await res.json();
-                const list = document.getElementById('sectorList');
-                if(list) list.innerHTML = sectorData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            } catch(e) {}
-        }
-
-        function onSectorSelect(id) {
-            selectedSectorId = id;
-            const sector = sectorData.find(s => s.id == id);
-            if(sector) {
-                const nameInp = document.getElementById('sectorName');
-                if(nameInp) {
-                    nameInp.value = sector.name;
-                    nameInp.disabled = true; // Locked on selection
-                }
-            }
-        }
-
-        async function saveSector() {
-            const name = document.getElementById('sectorName').value.trim();
-            if(!name) return alert("Sector Name is required!");
-            const payload = { name };
-            if (selectedSectorId) payload.id = selectedSectorId;
-            try {
-                const res = await fetch('api/maintain.php?action=save_sector', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if(res.ok) {
-                    alert("Business Sector saved!");
-                    await fetchSectors();
-                    resetSectorForm();
-                }
-            } catch(e) {}
-        }
-
-        async function deleteSector() {
-            if(!selectedSectorId) return alert("Select a Sector to delete first.");
-            if(confirm("Are you sure you want to delete this business sector?")) {
-                try {
-                    const res = await fetch(`api/maintain.php?action=delete_sector&id=${selectedSectorId}`, { method: 'POST' });
-                    if(res.ok) {
-                        alert("Sector deleted.");
-                        await fetchSectors();
-                        resetSectorForm();
-                    }
-                } catch(e) {}
-            }
-        }
-
-        function resetSectorForm(generate = false) {
-            const nameInp = document.getElementById('sectorName');
-            if(nameInp) {
-                nameInp.value = '';
-                nameInp.disabled = !generate;
-                if(generate) nameInp.focus();
-            }
-            const list = document.getElementById('sectorList');
-            if(list) list.value = '';
-            selectedSectorId = null;
-        }
-
-        function manageSectors() {
-            window.openModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Business Sectors', initSectorsView, 'Business Sectors', 'modal-square');
-        }
-
-
+        function manageSectors() { alert("Business Sector management coming soon."); }
         function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
-
 
         window.initCustomersView = initCustomersView;
         window.onCustomerTypeSelect = onCustomerTypeSelect;
@@ -3827,12 +3730,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;
-        window.initSectorsView = initSectorsView;
-        window.onSectorSelect = onSectorSelect;
-        window.saveSector = saveSector;
-        window.deleteSector = deleteSector;
-        window.resetSectorForm = resetSectorForm;
-
         window.initRegionsView = initRegionsView;
         window.onMainRegionSelect = onMainRegionSelect;
         window.onSubRegionSelect = onSubRegionSelect;

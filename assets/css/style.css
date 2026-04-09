@@ -828,18 +828,6 @@
             max-width: 1000px;
         }
 
-        .modal-container.modal-rect {
-            max-width: 1250px;
-            width: 95%;
-        }
-
-
-        .modal-container.modal-square {
-            max-width: 550px;
-            height: 240px;
-        }
-
-
         @keyframes modalFadeIn {
             from {
                 opacity: 0;
@@ -1173,6 +1161,3 @@
         .logo-preview-container.show {
             display: block;
         }
-
-
-

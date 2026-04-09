@@ -1,6 +1,4 @@
-<div id="coaContainer" data-module="Chart of Accounts" style="height: 600px; width: 100%; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px;">
-
-
+<div id="coaContainer" data-module="Chart of Accounts" style="height: 600px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px;">
     
     <!-- Section 1: Main Account Types -->
     <div style="flex: 1; display: flex; flex-direction: column; min-height: 185px;">
@@ -9,8 +7,6 @@
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
                 <select id="mainAccountList" size="8" style="width: 100%; height: 160px; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onMainAccountSelect(this.value)"></select>
-
-
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
@@ -58,8 +54,6 @@
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
                 <select id="subAccountList" size="7" style="width: 100%; height: 120px; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onSubAccountSelect(this.value)"></select>
-
-
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
@@ -91,8 +85,6 @@
             <!-- Left: List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
                 <select id="listAccountList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;" onchange="onListAccountSelect(this.value)"></select>
-
-
             </div>
             
             <!-- Right: Fields & All Buttons in One Line -->
@@ -106,17 +98,19 @@
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 160px 1fr; gap: 16px 8px; align-content: end; margin-bottom: 0px;">
-                    <label style="font-size: 12px; font-weight: 600; color: #334155;">Account Code</label>
-                    <input type="text" id="accountCode" readonly style="height: 30px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; font-size: 13px; outline: none; width: 130px; background: #f8fafc;" disabled>
+                    <label class="coa-label">Account Code</label>
+                    <input type="text" id="accountCode" readonly class="coa-input" style="width: 130px; background: #f8fafc;" disabled>
                     
-                    <label style="font-size: 12px; font-weight: 600; color: #334155;">Account Name</label>
-                    <input type="text" id="accountName" style="height: 30px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; font-size: 13px; outline: none; width: 100%; transition: border 0.2s;" disabled>
+                    <label class="coa-label">Account Name</label>
+                    <input type="text" id="accountName" class="coa-input" disabled>
                 </div>
             </div>
         </div>
     </div>
 
     <hr style="border: 0; border-top: 1px solid #cbd5e0; margin: 6px 0;">
+
+
 
     <style>
         .coa-btn {
@@ -158,5 +152,3 @@
         option { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
     </style>
 </div>
-
-
