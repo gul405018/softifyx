@@ -31,24 +31,24 @@
                     
                     <div class="summary-card">
                         <h4><i class="fas fa-coins"></i> Cash Position</h4>
-                        <div class="summary-row"><span>Opening:</span> <span class="value money" id="summaryCashOpening">â‚¹0</span></div>
-                        <div class="summary-row"><span>Receipts:</span> <span class="value money" id="summaryCashReceipts">â‚¹0</span></div>
-                        <div class="summary-row"><span>Payments:</span> <span class="value money" id="summaryCashPayments">â‚¹0</span></div>
-                        <div class="summary-row"><span>Net:</span> <span class="value highlight-value money" id="summaryCashNet">â‚¹0</span></div>
+                        <div class="summary-row"><span>Opening:</span> <span class="value money" id="summaryCashOpening">₹0</span></div>
+                        <div class="summary-row"><span>Receipts:</span> <span class="value money" id="summaryCashReceipts">₹0</span></div>
+                        <div class="summary-row"><span>Payments:</span> <span class="value money" id="summaryCashPayments">₹0</span></div>
+                        <div class="summary-row"><span>Net:</span> <span class="value highlight-value money" id="summaryCashNet">₹0</span></div>
                     </div>
 
                     <div class="summary-card">
                         <h4><i class="fas fa-users"></i> Customer Activity</h4>
                         <div class="summary-row"><span>New Invoices:</span> <span class="value" id="summaryNewInvoices">0</span></div>
-                        <div class="summary-row"><span>Receipts:</span> <span class="value money" id="summaryCustomerReceipts">â‚¹0</span></div>
-                        <div class="summary-row"><span>Overdue:</span> <span class="value money" id="summaryOverdue">â‚¹0</span></div>
+                        <div class="summary-row"><span>Receipts:</span> <span class="value money" id="summaryCustomerReceipts">₹0</span></div>
+                        <div class="summary-row"><span>Overdue:</span> <span class="value money" id="summaryOverdue">₹0</span></div>
                     </div>
 
                     <div class="summary-card">
                         <h4><i class="fas fa-truck"></i> Vendor Activity</h4>
                         <div class="summary-row"><span>New Purchases:</span> <span class="value" id="summaryNewPurchases">0</span></div>
-                        <div class="summary-row"><span>Payments:</span> <span class="value money" id="summaryVendorPayments">â‚¹0</span></div>
-                        <div class="summary-row"><span>Outstanding:</span> <span class="value money" id="summaryOutstanding">â‚¹0</span></div>
+                        <div class="summary-row"><span>Payments:</span> <span class="value money" id="summaryVendorPayments">₹0</span></div>
+                        <div class="summary-row"><span>Outstanding:</span> <span class="value money" id="summaryOutstanding">₹0</span></div>
                     </div>
 
                     <div class="summary-card" id="inventoryAlertsCard" style="cursor: pointer;">
@@ -73,6 +73,11 @@
 
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-container" id="modalContainer"></div>
+    </div>
+    
+    <!-- Secondary Modal for Lookups (Stacked) -->
+    <div class="modal-overlay" id="modalOverlay2" style="z-index: 11000;">
+        <div class="modal-container" id="modalContainer2" style="z-index: 11001;"></div>
     </div>
 
     <script src="assets/js/app.js?v=V10_COA_FIXES"></script>

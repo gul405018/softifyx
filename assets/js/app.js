@@ -465,6 +465,36 @@
             document.getElementById('modalOverlay').classList.remove('active');
         }
 
+        function openSecondaryModal(title, content, isWide = false, moduleKey = null) {
+            const overlay = document.getElementById('modalOverlay2');
+            const container = document.getElementById('modalContainer2');
+            
+            if (isWide) container.classList.add('modal-wide');
+            else container.classList.remove('modal-wide');
+            
+            const dataModuleTag = moduleKey || title.text;
+            
+            container.innerHTML = `
+                <div class="modal-header">
+                    <h2><i class="fas ${title.icon}"></i> ${title.text}</h2>
+                    <button class="modal-close" onclick="closeSecondaryModal()">&times;</button>
+                </div>
+                <div class="modal-body" data-module="${dataModuleTag}">
+                    ${content}
+                </div>
+            `;
+            
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                applyViewerRestrictions(container);
+            }, 50);
+        }
+
+        function closeSecondaryModal() {
+            document.getElementById('modalOverlay2').classList.remove('active');
+        }
+
         function showInventoryDetails() {
             let lowStockItems = inventoryItems.filter(item => item.stock < item.reorderLevel);
             let tableRows = '';
@@ -2291,8 +2321,6 @@
                     let html = await res.text();
                     
                     // --- AUTOMATED RIGHTS CHECK FOR POPUPS ---
-                    // Create a temporary element to parse the HTML and check for [data-module]
-                    // This is a fallback if moduleName wasn't passed to the function
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     const moduleTag = tempDiv.querySelector('[data-module]');
@@ -2310,28 +2338,40 @@
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
                     } else {
-                        // Global Init Fallbacks based on modular URL mapping
-                        if (url.includes('passwords.html')) {
-                            setTimeout(() => initPasswordsView(), 10);
-                        } else if (url.includes('user_rights.html')) {
-                            setTimeout(() => initUserRightsView(), 10);
-                        } else if (url.includes('financial_year.html')) {
-                            setTimeout(() => initFinancialYearView(), 10);
-                        } else if (url.includes('currency.html')) {
-                            setTimeout(() => initCurrencyView(), 10);
-                        } else if (url.includes('chart_of_accounts.html')) {
-                            setTimeout(() => initChartOfAccountsView(), 10);
-                        }
+                        // Global Init Fallbacks
+                        if (url.includes('passwords.html')) setTimeout(() => initPasswordsView(), 10);
+                        else if (url.includes('user_rights.html')) setTimeout(() => initUserRightsView(), 10);
+                        else if (url.includes('financial_year.html')) setTimeout(() => initFinancialYearView(), 10);
+                        else if (url.includes('currency.html')) setTimeout(() => initCurrencyView(), 10);
+                        else if (url.includes('chart_of_accounts.html')) setTimeout(() => initChartOfAccountsView(), 10);
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
-                        '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found / In Development</h3><p>' + url + ' does not exist yet.</p></div>',
+                        '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found</h3><p>' + url + ' does not exist.</p></div>',
                         isWide
                     );
                 }
-            } catch (err) {
-                console.error(err);
-            }
+            } catch (err) { console.error(err); }
+        }
+
+        async function openSecondaryModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+            try {
+                const activeModuleKey = moduleName || titleText;
+                if (activeModuleKey && !checkUserRights(activeModuleKey)) {
+                    showAccessDenied(activeModuleKey);
+                    return;
+                }
+
+                const cb = `_cb=${Date.now()}`;
+                const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
+                if (res.ok) {
+                    let html = await res.text();
+                    openSecondaryModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
+                    if (typeof initCallback === 'function') {
+                        setTimeout(() => initCallback(), 10);
+                    }
+                }
+            } catch (err) { console.error(err); }
         }
 
         async function init() {
@@ -3480,6 +3520,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch(e) { alert("Save failed"); }
         }
 
+        async function deleteCustomerType() {
+            if (!selectedCustTypeCode) return alert("Select a Customer Type to delete first.");
+            
+            // CONSTRAINT: Cannot delete if list of customers is not empty
+            if (customerData && customerData.length > 0) {
+                return alert("Cannot delete Customer Type! There are still customers in the List of Customers for this category. Please delete all customers first.");
+            }
+
+            const sub = coaSub.find(s => s.code == selectedCustTypeCode);
+            if(!sub) return;
+
+            if(confirm(`Are you sure you want to delete the Customer Type "${sub.name}"? This will also remove it from Chart of Accounts.`)) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Customer Type deleted.");
+                        // Refresh coaSub locally or re-sync
+                        coaSub = coaSub.filter(s => s.id != sub.id);
+                        renderCustomerTypeList();
+                        resetCustomerTypeForm();
+                    }
+                } catch(e) { alert("Delete failed"); }
+            }
+        }
+
+        async function deleteCustomer() {
+            if (!selectedCustAccountCode) return alert("Select a Customer Profile to delete first.");
+            
+            const cust = customerData.find(c => c.code == selectedCustAccountCode);
+            if(!cust) return;
+
+            if(confirm(`Are you sure you want to delete the profile for "${cust.name}"?`)) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_coa_list&id=${cust.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Customer Profile deleted.");
+                        fetchCustomersDetailed(selectedCustTypeCode);
+                    }
+                } catch(e) { alert("Delete failed"); }
+            }
+        }
+
         function resetCustomerTypeForm(generate = false) {
             document.getElementById('custSubTypeCode').value = '';
             document.getElementById('custTypeName').value = '';
@@ -3712,16 +3794,96 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function manageRegions() {
-            window.openModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
+            window.openSecondaryModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
         }
-        function manageSectors() { alert("Business Sector management coming soon."); }
-        function manageManagers() { alert("Use Administrator -> User Logins to manage Managers."); }
+        function manageSectors() {
+            window.openSecondaryModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Sectors', initSectorsView, 'Business Sectors', true);
+        }
+        function manageManagers() {
+            window.openSecondaryModularPopup('Navigation/Maintain/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', true);
+        }
+
+        // Sector Module Logic
+        function initSectorsView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('sectorList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    fetchSectors();
+                    resetSectorForm();
+                } else if (++retries >= 20) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        async function fetchSectors() {
+            try {
+                const res = await fetch('api/maintain.php?action=get_sectors');
+                const sectors = await res.json();
+                const list = document.getElementById('sectorList');
+                if(list) list.innerHTML = sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                window.currentSectors = sectors;
+            } catch(e) {}
+        }
+
+        function onSectorSelect(id) {
+            const sector = (window.currentSectors || []).find(s => s.id == id);
+            if(sector) {
+                document.getElementById('sectorName').value = sector.name;
+                document.getElementById('sectorName').disabled = false;
+                window.selectedSectorId = id;
+            }
+        }
+
+        async function saveSector() {
+            const name = document.getElementById('sectorName').value.trim();
+            if(!name) return alert("Sector Name is required!");
+            const payload = { name };
+            if (window.selectedSectorId) payload.id = window.selectedSectorId;
+            try {
+                const res = await fetch('api/maintain.php?action=save_sector', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Business Sector saved!");
+                    await fetchSectors();
+                    resetSectorForm();
+                    loadCustomerLookups();
+                }
+            } catch(e) {}
+        }
+
+        async function deleteSector() {
+            if(!window.selectedSectorId) return alert("Select a Sector to delete first.");
+            if(confirm("Are you sure you want to delete this sector?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_sector&id=${window.selectedSectorId}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Sector deleted.");
+                        await fetchSectors();
+                        resetSectorForm();
+                        loadCustomerLookups();
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function resetSectorForm(generate = false) {
+            document.getElementById('sectorName').value = '';
+            document.getElementById('sectorName').disabled = !generate;
+            document.getElementById('sectorList').value = '';
+            window.selectedSectorId = null;
+        }
 
         window.initCustomersView = initCustomersView;
         window.onCustomerTypeSelect = onCustomerTypeSelect;
         window.onCustomerSelect = onCustomerSelect;
         window.saveCustomerType = saveCustomerType;
+        window.deleteCustomerType = deleteCustomerType;
         window.saveCustomer = saveCustomer;
+        window.deleteCustomer = deleteCustomer;
         window.resetCustomerTypeForm = resetCustomerTypeForm;
         window.resetCustomerForm = resetCustomerForm;
         window.loadSubRegions = loadSubRegions;
@@ -3730,6 +3892,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;
+        window.openSecondaryModularPopup = openSecondaryModularPopup;
+        window.closeSecondaryModal = closeSecondaryModal;
+        window.initSectorsView = initSectorsView;
+        window.onSectorSelect = onSectorSelect;
+        window.saveSector = saveSector;
+        window.deleteSector = deleteSector;
+        window.resetSectorForm = resetSectorForm;
         window.initRegionsView = initRegionsView;
         window.onMainRegionSelect = onMainRegionSelect;
         window.onSubRegionSelect = onSubRegionSelect;
