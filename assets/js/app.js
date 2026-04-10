@@ -2714,6 +2714,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedSubRegionId = null;
         let mainRegionData = [];
         let subRegionData = [];
+        let employeeData = [];
+        let selectedEmployeeId = null;
 
         function initChartOfAccountsView() {
             let retries = 0;
@@ -3335,13 +3337,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 }
                 
-                // Load Managers (Users)
-                const manRes = await fetch('api/admin.php?action=get_users');
-                const users = await manRes.json();
+                // Load Managers (Employees)
+                const manRes = await fetch('api/maintain.php?action=get_employees');
+                const employees = await manRes.json();
                 const manSelect = document.getElementById('custAccManager');
                 if(manSelect) {
                     manSelect.innerHTML = '<option value="">None</option>' + 
-                        users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
+                        employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
                 }
             } catch(e) { console.error("Lookup load failed", e); }
         }
@@ -3806,7 +3808,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.openSecondaryModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Sectors', initSectorsView, 'Business Sectors', true);
         }
         function manageManagers() {
-            window.openSecondaryModularPopup('Navigation/Administrator/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', true);
+            window.openSecondaryModularPopup('Navigation/Maintain/employees.html', 'fa-users', 'Manage Employees', initEmployeesView, 'Employees', true);
         }
 
         // Sector Module Logic
@@ -3883,12 +3885,148 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.selectedSectorId = null;
         }
 
-        // Expose Sector Functions
+        // Sector Functions Exposures
         window.initSectorsView = initSectorsView;
         window.onSectorSelect = onSectorSelect;
         window.saveSector = saveSector;
         window.deleteSector = deleteSector;
         window.resetSectorForm = resetSectorForm;
+
+        // Employee Module Logic
+        function initEmployeesView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('employeeList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    fetchEmployees();
+                    resetEmployeeForm();
+                } else if (++retries >= 20) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        async function fetchEmployees() {
+            try {
+                const res = await fetch('api/maintain.php?action=get_employees');
+                const data = await res.json();
+                employeeData = data;
+                const list = document.getElementById('employeeList');
+                if(list) list.innerHTML = data.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            } catch(e) { console.error("Fetch employees failed", e); }
+        }
+
+        function onEmployeeSelect(id) {
+            selectedEmployeeId = id;
+            const emp = employeeData.find(e => e.id == id);
+            if(!emp) return;
+
+            document.getElementById('empName').value = emp.name || '';
+            document.getElementById('empFatherName').value = emp.father_name || '';
+            document.getElementById('empAddress').value = emp.address || '';
+            document.getElementById('empPhone').value = emp.telephone || '';
+            document.getElementById('empEmail').value = emp.email || '';
+            document.getElementById('empNic').value = emp.nic_no || '';
+            document.getElementById('empDob').value = emp.dob || '';
+            document.getElementById('empJoiningDate').value = emp.joining_date || '';
+            document.getElementById('empSalary').value = emp.salary || 0;
+            document.getElementById('empDesignation').value = emp.designation || '';
+            document.getElementById('empDepartment').value = emp.department || '';
+            document.getElementById('empRemarks').value = emp.remarks || '';
+            document.getElementById('empReference').value = emp.reference || '';
+            document.getElementById('empJobLeft').checked = emp.is_job_left == 1;
+            document.getElementById('empLeavingDate').value = emp.leaving_date || '';
+
+            enableEmployeeFields(true);
+            document.getElementById('empLeavingDate').disabled = (emp.is_job_left != 1);
+        }
+
+        async function saveEmployee() {
+            const name = document.getElementById('empName').value.trim();
+            if(!name) return alert("Employee Name is required!");
+
+            const payload = {
+                id: selectedEmployeeId,
+                name: name,
+                father_name: document.getElementById('empFatherName').value,
+                address: document.getElementById('empAddress').value,
+                telephone: document.getElementById('empPhone').value,
+                email: document.getElementById('empEmail').value,
+                nic_no: document.getElementById('empNic').value,
+                dob: document.getElementById('empDob').value,
+                joining_date: document.getElementById('empJoiningDate').value,
+                salary: document.getElementById('empSalary').value,
+                designation: document.getElementById('empDesignation').value,
+                department: document.getElementById('empDepartment').value,
+                remarks: document.getElementById('empRemarks').value,
+                reference: document.getElementById('empReference').value,
+                is_job_left: document.getElementById('empJobLeft').checked ? 1 : 0,
+                leaving_date: document.getElementById('empLeavingDate').value
+            };
+
+            try {
+                const res = await fetch('api/maintain.php?action=save_employee', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Employee data saved successfully!");
+                    await fetchEmployees();
+                    resetEmployeeForm();
+                    loadCustomerLookups(); // Refresh managers in customers view
+                }
+            } catch(e) { alert("Save failed"); }
+        }
+
+        async function deleteEmployee() {
+            if(!selectedEmployeeId) return alert("Select an employee to delete first.");
+            if(confirm("Are you sure you want to delete this employee record?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_employee&id=${selectedEmployeeId}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Employee deleted.");
+                        await fetchEmployees();
+                        resetEmployeeForm();
+                        loadCustomerLookups();
+                    }
+                } catch(e) { alert("Delete failed"); }
+            }
+        }
+
+        function resetEmployeeForm(generate = false) {
+            selectedEmployeeId = null;
+            const fields = [
+                'empName', 'empFatherName', 'empAddress', 'empPhone', 'empEmail', 
+                'empNic', 'empDob', 'empJoiningDate', 'empSalary', 'empDesignation', 
+                'empDepartment', 'empRemarks', 'empReference', 'empLeavingDate'
+            ];
+            fields.forEach(fid => {
+                const el = document.getElementById(fid);
+                if(el) { el.value = ''; el.disabled = !generate; }
+            });
+            const chk = document.getElementById('empJobLeft');
+            if(chk) { chk.checked = false; chk.disabled = !generate; }
+            if(document.getElementById('employeeList')) document.getElementById('employeeList').value = '';
+        }
+
+        function enableEmployeeFields(enabled) {
+            const fields = [
+                'empName', 'empFatherName', 'empAddress', 'empPhone', 'empEmail', 
+                'empNic', 'empDob', 'empJoiningDate', 'empSalary', 'empDesignation', 
+                'empDepartment', 'empRemarks', 'empReference', 'empJobLeft'
+            ];
+            fields.forEach(fid => {
+                const el = document.getElementById(fid);
+                if(el) el.disabled = !enabled;
+            });
+        }
+
+        // Expose Employee Functions
+        window.initEmployeesView = initEmployeesView;
+        window.onEmployeeSelect = onEmployeeSelect;
+        window.saveEmployee = saveEmployee;
+        window.deleteEmployee = deleteEmployee;
+        window.resetEmployeeForm = resetEmployeeForm;
 
         window.initCustomersView = initCustomersView;
         window.onCustomerTypeSelect = onCustomerTypeSelect;
