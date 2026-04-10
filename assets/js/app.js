@@ -3523,11 +3523,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         async function deleteCustomerType() {
             if (!selectedCustTypeCode) return alert("Select a Customer Type to delete first.");
             
-            // CONSTRAINT: Cannot delete if list of customers is not empty
-            if (customerData && customerData.length > 0) {
-                return alert("Cannot delete Customer Type! There are still customers in the List of Customers for this category. Please delete all customers first.");
-            }
-
             const sub = coaSub.find(s => s.code == selectedCustTypeCode);
             if(!sub) return;
 
@@ -3793,6 +3788,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectedSubRegionId = null;
         }
 
+        // Expose Region Functions
+        window.initRegionsView = initRegionsView;
+        window.onMainRegionSelect = onMainRegionSelect;
+        window.onSubRegionSelect = onSubRegionSelect;
+        window.saveMainRegion = saveMainRegion;
+        window.deleteMainRegion = deleteMainRegion;
+        window.resetMainRegionForm = resetMainRegionForm;
+        window.saveSubRegion = saveSubRegion;
+        window.deleteSubRegion = deleteSubRegion;
+        window.resetSubRegionForm = resetSubRegionForm;
+
         function manageRegions() {
             window.openSecondaryModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
         }
@@ -3800,7 +3806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.openSecondaryModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Sectors', initSectorsView, 'Business Sectors', true);
         }
         function manageManagers() {
-            window.openSecondaryModularPopup('Navigation/Maintain/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', true);
+            window.openSecondaryModularPopup('Navigation/Administrator/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', true);
         }
 
         // Sector Module Logic
@@ -3877,6 +3883,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.selectedSectorId = null;
         }
 
+        // Expose Sector Functions
+        window.initSectorsView = initSectorsView;
+        window.onSectorSelect = onSectorSelect;
+        window.saveSector = saveSector;
+        window.deleteSector = deleteSector;
+        window.resetSectorForm = resetSectorForm;
+
         window.initCustomersView = initCustomersView;
         window.onCustomerTypeSelect = onCustomerTypeSelect;
         window.onCustomerSelect = onCustomerSelect;
@@ -3894,20 +3907,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageManagers = manageManagers;
         window.openSecondaryModularPopup = openSecondaryModularPopup;
         window.closeSecondaryModal = closeSecondaryModal;
-        window.initSectorsView = initSectorsView;
-        window.onSectorSelect = onSectorSelect;
-        window.saveSector = saveSector;
-        window.deleteSector = deleteSector;
-        window.resetSectorForm = resetSectorForm;
-        window.initRegionsView = initRegionsView;
-        window.onMainRegionSelect = onMainRegionSelect;
-        window.onSubRegionSelect = onSubRegionSelect;
-        window.saveMainRegion = saveMainRegion;
-        window.deleteMainRegion = deleteMainRegion;
-        window.resetMainRegionForm = resetMainRegionForm;
-        window.saveSubRegion = saveSubRegion;
-        window.deleteSubRegion = deleteSubRegion;
-        window.resetSubRegionForm = resetSubRegionForm;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
