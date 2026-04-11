@@ -469,8 +469,15 @@
             const overlay = document.getElementById('modalOverlay2');
             const container = document.getElementById('modalContainer2');
             
-            if (isWide) container.classList.add('modal-wide');
-            else container.classList.remove('modal-wide');
+            if (isWide) {
+                container.classList.add('modal-wide');
+                container.style.width = '1250px';
+                container.style.maxWidth = '1250px';
+            } else {
+                container.classList.remove('modal-wide');
+                container.style.width = '';
+                container.style.maxWidth = '';
+            }
             
             const dataModuleTag = moduleKey || title.text;
             
