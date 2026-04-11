@@ -825,8 +825,7 @@
         }
 
         .modal-container.modal-wide {
-            max-width: 1150px;
-            width: 1150px;
+            max-width: 1000px;
         }
 
         @keyframes modalFadeIn {

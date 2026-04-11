@@ -195,28 +195,4 @@ CREATE TABLE IF NOT EXISTS `customers` (
   FOREIGN KEY (`acc_manager_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 14. Employees Table (Maintain: Employees)
-CREATE TABLE IF NOT EXISTS `employees` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `company_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `father_name` varchar(255),
-  `address` text,
-  `telephone` varchar(100),
-  `email` varchar(255),
-  `nic_no` varchar(100),
-  `dob` date,
-  `joining_date` date,
-  `salary` decimal(20,2) DEFAULT 0,
-  `designation` varchar(255),
-  `department` varchar(255),
-  `remarks` text,
-  `reference` varchar(255),
-  `is_job_left` tinyint(1) DEFAULT 0,
-  `leaving_date` date,
-  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 COMMIT;
