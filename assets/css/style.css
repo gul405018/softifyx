@@ -824,7 +824,9 @@
             transition: max-width 0.3s ease;
         }
 
-        .modal-container.modal-wide {
+        .modal-container.modal-wide,
+        #modalContainer.modal-wide,
+        #modalContainer2.modal-wide {
             max-width: 98% !important;
             width: 98% !important;
         }
