@@ -1,93 +1,141 @@
 <div id="employeesContainer" data-module="Employees"
-    style="width: 100%; min-width: 1300px; min-height: 580px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px; overflow: hidden;">
+    style="height: 600px; display: flex; flex-direction: column; background: white; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border: 1px solid #ccc;">
 
-    <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
-        
-        <!-- Left: Employee List -->
-        <div style="width: 380px; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
-            <div style="font-size: 11px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">
-                List of Employees</div>
-            <select id="employeeList" size="10" 
-                style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
+    <!-- Legacy Gray Header -->
+    <div style="background: #EBEBEB; padding: 5px 15px; border-bottom: 1px solid #999; display: flex; align-items: center;">
+        <span style="font-size: 18px; font-weight: bold; font-style: italic; color: #666; letter-spacing: 1px; text-transform: uppercase;">Employees</span>
+    </div>
+
+    <div style="display: flex; flex: 1; padding: 15px; gap: 15px; overflow: hidden;">
+        <!-- Left: Employee List Sidebar -->
+        <div style="width: 320px; display: flex; flex-direction: column; border: 1px solid #999; background: white;">
+            <select id="employeeList" size="20" 
+                style="width: 100%; flex: 1; border: none; outline: none; font-size: 13px; padding: 2px;"
                 onchange="onEmployeeSelect(this.value)">
                 <!-- Dynamically populated -->
             </select>
         </div>
 
-        <!-- Right: Detail Form -->
-        <div style="flex: 1; min-width: 750px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1F4E79; padding-bottom: 2px; margin-bottom: 5px;">
-                <div style="font-size: 11px; font-weight: 700; color: #1F4E79; text-transform: uppercase;">Employee Profile</div>
-                <div style="display: flex; gap: 4px;">
-                    <button class="coa-btn coa-add" onclick="resetEmployeeForm(true)">Add</button>
-                    <button class="coa-btn coa-save" onclick="saveEmployee()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetEmployeeForm()">Cancel</button>
-                    <button class="coa-btn coa-delete" onclick="deleteEmployee()">Delete</button>
-                </div>
+        <!-- Right: Detail Form Area -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+            
+            <!-- Legacy Icon Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 0; border: 1px solid #999; width: fit-content; align-self: flex-end; background: #f0f0f0;">
+                <button class="legacy-btn" id="employeeAddBtn" onclick="resetEmployeeForm(true)">
+                    <i class="fas fa-file" style="color: #666;"></i>
+                    <span>Add</span>
+                </button>
+                <button class="legacy-btn" id="employeeSaveBtn" onclick="saveEmployee()">
+                    <i class="fas fa-check" style="color: #28a745;"></i>
+                    <span>Save</span>
+                </button>
+                <button class="legacy-btn" id="employeeCancelBtn" onclick="resetEmployeeForm()">
+                    <i class="fas fa-times-circle" style="color: #dc3545;"></i>
+                    <span>Cancel</span>
+                </button>
+                <button class="legacy-btn" id="employeeDeleteBtn" onclick="deleteEmployee()">
+                    <i class="fas fa-trash-alt" style="color: #555;"></i>
+                    <span>Delete</span>
+                </button>
             </div>
 
-            <div class="employee-grid">
-                <label class="coa-label">Name</label>
-                <input type="text" id="empName" class="coa-input" placeholder="*" disabled>
-
-                <label class="coa-label">Father Name</label>
-                <input type="text" id="empFatherName" class="coa-input" disabled>
-
-                <label class="coa-label">Address</label>
-                <textarea id="empAddress" class="coa-input" style="height: 48px; padding: 4px 6px; resize: none;" disabled></textarea>
-
-                <label class="coa-label">Telephone</label>
-                <input type="text" id="empPhone" class="coa-input" disabled>
-
-                <label class="coa-label">E-Mail</label>
-                <input type="email" id="empEmail" class="coa-input" disabled>
-
-                <div style="display: contents;">
-                    <label class="coa-label">N.I.C. No.</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="text" id="empNic" class="coa-input" style="flex: 1;" disabled>
-                        <label class="coa-label" style="width: auto; white-space: nowrap;">Date of Birth</label>
-                        <input type="date" id="empDob" class="coa-input" style="width: 130px;" disabled>
+            <!-- Table-Grid Form -->
+            <div class="legacy-form-grid">
+                <div class="legacy-row">
+                    <div class="legacy-label">Name</div>
+                    <div class="legacy-input-cell">
+                        <input type="text" id="employeeName" class="legacy-input" placeholder="*" disabled>
+                    </div>
+                </div>
+                <div class="legacy-row">
+                    <div class="legacy-label">Father Name</div>
+                    <div class="legacy-input-cell">
+                        <input type="text" id="employeeFatherName" class="legacy-input" disabled>
+                    </div>
+                </div>
+                <div class="legacy-row">
+                    <div class="legacy-label">Address</div>
+                    <div class="legacy-input-cell">
+                        <textarea id="employeeAddress" class="legacy-input" style="height: 50px; padding: 4px;" disabled></textarea>
+                    </div>
+                </div>
+                <div class="legacy-row">
+                    <div class="legacy-label">Telephone</div>
+                    <div class="legacy-input-cell">
+                        <input type="text" id="employeeTelephone" class="legacy-input" disabled>
+                    </div>
+                </div>
+                <div class="legacy-row">
+                    <div class="legacy-label">E-Mail</div>
+                    <div class="legacy-input-cell">
+                        <input type="email" id="employeeEmail" class="legacy-input" disabled>
+                    </div>
+                </div>
+                
+                <!-- Split Row for NIC and DOB -->
+                <div class="legacy-row">
+                    <div class="legacy-label">N.I.C. No.</div>
+                    <div class="legacy-input-cell" style="display: flex; align-items: center; border-right: none;">
+                        <input type="text" id="employeeNIC" class="legacy-input" style="flex: 1;" disabled>
+                        <div class="legacy-label" style="border-left: 1px solid #999; border-bottom: none; width: 120px;">Date of Birth</div>
+                        <input type="date" id="employeeDOB" class="legacy-input" style="flex: 1; border-left: 1px solid #999;" disabled>
                     </div>
                 </div>
 
-                <div style="display: contents;">
-                    <label class="coa-label">Joining Date</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="date" id="empJoiningDate" class="coa-input" style="width: 130px;" disabled>
-                        <label class="coa-label" style="width: auto; margin-left: auto;">Salary</label>
-                        <input type="number" id="empSalary" class="coa-input" style="width: 110px;" disabled>
+                <!-- Split Row for Joining Date and Salary -->
+                <div class="legacy-row">
+                    <div class="legacy-label">Joining Date</div>
+                    <div class="legacy-input-cell" style="display: flex; align-items: center; border-right: none;">
+                        <input type="date" id="employeeJoiningDate" class="legacy-input" style="flex: 1;" disabled>
+                        <div class="legacy-label" style="border-left: 1px solid #999; border-bottom: none; width: 80px;">Salary</div>
+                        <input type="number" id="employeeSalary" class="legacy-input" style="flex: 1; border-left: 1px solid #999;" disabled>
                     </div>
                 </div>
 
-                <label class="coa-label">Designation</label>
-                <input type="text" id="empDesignation" class="coa-input" disabled>
-
-                <label class="coa-label">Department</label>
-                <select id="empDepartment" class="coa-input" style="height: 26px; padding: 0 4px;" disabled>
-                    <option value="">Select Department</option>
-                    <option value="Administration">Administration</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Accounts">Accounts</option>
-                    <option value="IT">IT</option>
-                    <option value="Operations">Operations</option>
-                </select>
-
-                <label class="coa-label">Remarks</label>
-                <textarea id="empRemarks" class="coa-input" style="height: 38px; padding: 4px 6px; resize: none;" disabled></textarea>
-
-                <label class="coa-label">Reference</label>
-                <input type="text" id="empReference" class="coa-input" disabled>
-
-                <div style="display: contents;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <label class="coa-label" style="width: auto;">Job Left</label>
-                        <input type="checkbox" id="empJobLeft" onchange="document.getElementById('empLeavingDate').disabled = !this.checked" 
-                            style="width: 14px; height: 14px; cursor: pointer;" disabled>
+                <div class="legacy-row">
+                    <div class="legacy-label">Designation</div>
+                    <div class="legacy-input-cell">
+                        <input type="text" id="employeeDesignation" class="legacy-input" disabled>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
-                        <label class="coa-label" style="width: auto;">Leaving Date</label>
-                        <input type="date" id="empLeavingDate" class="coa-input" style="width: 130px;" disabled>
+                </div>
+
+                <div class="legacy-row">
+                    <div class="legacy-label">Department</div>
+                    <div class="legacy-input-cell">
+                        <select id="employeeDepartment" class="legacy-input" style="background: white;" disabled>
+                            <option value="">Select Department</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Accounts">Accounts</option>
+                            <option value="Purchase">Purchase</option>
+                            <option value="Store">Store</option>
+                            <option value="HR">HR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="legacy-row">
+                    <div class="legacy-label">Remarks</div>
+                    <div class="legacy-input-cell">
+                        <input type="text" id="employeeRemarks" class="legacy-input" disabled>
+                    </div>
+                </div>
+
+                <div class="legacy-row">
+                    <div class="legacy-label">Reference</div>
+                    <div class="legacy-input-cell">
+                        <input type="text" id="employeeReference" class="legacy-input" disabled>
+                    </div>
+                </div>
+
+                <!-- Last Row for Job Left and Leaving Date -->
+                <div class="legacy-row" style="border-bottom: 1px solid #999;">
+                    <div class="legacy-label" style="display: flex; align-items: center; gap: 5px;">
+                        Job Left <input type="checkbox" id="employeeJobLeft" onchange="document.getElementById('employeeLeavingDate').disabled = !this.checked">
+                    </div>
+                    <div class="legacy-input-cell" style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; border-right: none; padding-right: 10px;">
+                        <span class="legacy-label" style="border: none; width: auto;">Leaving Date</span>
+                        <input type="date" id="employeeLeavingDate" class="legacy-input" style="width: 150px; border: 1px solid #999;" disabled>
                     </div>
                 </div>
             </div>
@@ -95,79 +143,68 @@
     </div>
 
     <style>
-        .employee-grid {
-            display: grid;
-            grid-template-columns: 110px 1fr;
-            gap: 6px 8px;
-            align-content: start;
-            flex: 1;
-        }
-
-        .coa-btn {
-            padding: 0 10px;
-            font-size: 12px;
-            font-weight: 600;
+        .legacy-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 50px;
+            background: #f0f0f0;
+            border: none;
+            border-right: 1px solid #999;
             cursor: pointer;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            color: #1F4E79;
-            transition: all 0.2s;
-            height: 24px;
-            min-width: 65px;
+            transition: background 0.2s;
         }
+        .legacy-btn:last-child { border-right: none; }
+        .legacy-btn:hover { background: #e0e0e0; }
+        .legacy-btn i { font-size: 18px; margin-bottom: 2px; }
+        .legacy-btn span { font-size: 11px; font-weight: 600; color: #333; }
 
-        .coa-btn:hover { background: #f1f5f9; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-        .coa-btn:active { transform: translateY(1px); }
-
-        .coa-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
-        .coa-add:hover { background: #218838 !important; }
-
-        .coa-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
-        .coa-save:hover { background: #153550 !important; }
-
-        .coa-cancel { background: #6c757d !important; color: white !important; border-color: #6c757d !important; }
-        .coa-cancel:hover { background: #5a6268 !important; }
-
-        .coa-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
-        .coa-delete:hover { background: #c82333 !important; }
-
-        .coa-label { font-size: 11px; font-weight: 600; color: #334155; align-self: center; }
-        .form-control {
-            width: 100%;
-            max-width: 400px;
-            height: 36px;
-            border: 1px solid #D1D5DB;
-            border-radius: 6px;
-            padding: 0 12px;
-            font-size: 13px;
-            transition: all 0.2s;
+        .legacy-form-grid {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #999;
+            border-bottom: none;
         }
-
-        .employee-grid select {
-            width: 100%;
-            max-width: 400px;
-            height: 36px;
-            border: 1px solid #D1D5DB;
-            border-radius: 6px;
-            padding: 0 12px;
-            font-size: 13px;
+        .legacy-row {
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #999;
+            background: white;
         }
-        .coa-input { 
-            height: 26px; 
-            border: 1px solid #cbd5e0; 
-            border-radius: 4px; 
-            padding: 0 8px; 
-            font-size: 12px; 
-            outline: none; 
-            width: 100%;
-            max-width: 400px;
-            transition: border 0.2s;
-            font-family: inherit;
-        }
-        .coa-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 1px rgba(31, 78, 121, 0.1); }
-        .coa-input:disabled { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+        .legacy-row:last-child { border-bottom: none; }
         
-        #employeeList option { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
-        #employeeList option:checked { background: #1F4E79 !important; color: white !important; }
+        .legacy-label {
+            width: 130px;
+            background: #fdfdfd;
+            border-right: 1px solid #999;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: bold;
+            font-style: italic;
+            color: #555;
+            display: flex;
+            align-items: center;
+        }
+        .legacy-input-cell {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+        .legacy-input {
+            width: 100%;
+            border: none;
+            padding: 4px 8px;
+            font-size: 13px;
+            outline: none;
+            background: transparent;
+        }
+        .legacy-input:disabled { background: #f9f9f9; color: #333; }
+        .legacy-input:focus { background: #fffde7; }
+        
+        input[type="date"].legacy-input {
+            padding: 2px 8px;
+        }
     </style>
 </div>
