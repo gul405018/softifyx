@@ -1,10 +1,10 @@
 <div id="employeesContainer" data-module="Employees"
-    style="width: 100%; min-width: 1250px; min-height: 580px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px; overflow: hidden;">
+    style="width: 100%; min-width: 1300px; min-height: 580px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px; overflow: hidden;">
 
     <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
         
         <!-- Left: Employee List -->
-        <div style="flex: 2; min-width: 450px; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
+        <div style="width: 380px; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
             <div style="font-size: 11px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">
                 List of Employees</div>
             <select id="employeeList" size="10" 
@@ -15,7 +15,7 @@
         </div>
 
         <!-- Right: Detail Form -->
-        <div style="flex: 3; min-width: 750px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
+        <div style="flex: 1; min-width: 750px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1F4E79; padding-bottom: 2px; margin-bottom: 5px;">
                 <div style="font-size: 11px; font-weight: 700; color: #1F4E79; text-transform: uppercase;">Employee Profile</div>
                 <div style="display: flex; gap: 4px;">
@@ -132,6 +132,26 @@
         .coa-delete:hover { background: #c82333 !important; }
 
         .coa-label { font-size: 11px; font-weight: 600; color: #334155; align-self: center; }
+        .form-control {
+            width: 100%;
+            max-width: 400px;
+            height: 36px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .employee-grid select {
+            width: 100%;
+            max-width: 400px;
+            height: 36px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 13px;
+        }
         .coa-input { 
             height: 26px; 
             border: 1px solid #cbd5e0; 
@@ -140,6 +160,7 @@
             font-size: 12px; 
             outline: none; 
             width: 100%;
+            max-width: 400px;
             transition: border 0.2s;
             font-family: inherit;
         }
