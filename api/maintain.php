@@ -36,6 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     // --- Customers & Lookups ---
+        sendResponse($stmt->fetchAll());
+    }
+
     if ($action === 'get_customers' && isset($_GET['sub_id'])) {
         $subId = $_GET['sub_id'];
         $stmt = $pdo->prepare("
@@ -49,6 +52,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ORDER BY cl.code ASC
         ");
         $stmt->execute([$subId, $company_id]);
+        sendResponse($stmt->fetchAll());
+    }
+
+    if ($action === 'get_employees' && isset($_GET['sub_id'])) {
+        $subId = $_GET['sub_id'];
+        $stmt = $pdo->prepare("
+            SELECT cl.*, e.contact_person, e.address, e.region_id, e.sub_region_id, 
+                   e.telephone, e.mobile, e.fax, e.email, e.website, 
+                   e.st_reg_no, e.ntn_cnic, e.business_sector_id, e.acc_manager_id, 
+                   e.credit_limit, e.credit_terms, e.remarks
+            FROM coa_list cl
+            LEFT JOIN employees e ON cl.id = e.coa_list_id
+            WHERE cl.sub_id = ? AND cl.company_id = ?
+            ORDER BY cl.code ASC
+        ");
+        $stmt->execute([$subId, $company_id]);
+        sendResponse($stmt->fetchAll());
+    }
+
+    if ($action === 'get_employees_lookup') {
+        $stmt = $pdo->prepare("SELECT e.id, cl.name FROM employees e JOIN coa_list cl ON e.coa_list_id = cl.id WHERE cl.company_id = ? ORDER BY cl.name ASC");
+        $stmt->execute([$company_id]);
         sendResponse($stmt->fetchAll());
     }
 
@@ -116,6 +141,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         sendResponse(['status' => $status, 'id' => $newId]);
     }
 
+            sendResponse(['status' => 'success', 'id' => $coaId]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
     if ($action === 'save_customer') {
         $pdo->beginTransaction();
         try {
@@ -169,6 +201,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->rollBack();
             sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
+    }
+
+    if ($action === 'save_employee') {
+        $pdo->beginTransaction();
+        try {
+            $coaId = $data['id'] ?? null;
+            if ($coaId) {
+                $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
+                $stmt->execute([$data['code'], $data['name'], $coaId]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
+                $coaId = $pdo->lastInsertId();
+            }
+
+            $stmt = $pdo->prepare("SELECT id FROM employees WHERE coa_list_id = ?");
+            $stmt->execute([$coaId]);
+            $exists = $stmt->fetch();
+
+            if ($exists) {
+                $sql = "UPDATE employees SET 
+                        contact_person = ?, address = ?, region_id = ?, sub_region_id = ?, 
+                        telephone = ?, mobile = ?, fax = ?, email = ?, website = ?, 
+                        st_reg_no = ?, ntn_cnic = ?, business_sector_id = ?, acc_manager_id = ?, 
+                        credit_limit = ?, credit_terms = ?, remarks = ?
+                        WHERE coa_list_id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $data['contact_person'], $data['address'], $data['region_id'], $data['sub_region_id'],
+                    $data['telephone'], $data['mobile'], $data['fax'], $data['email'], $data['website'],
+                    $data['st_reg_no'], $data['ntn_cnic'], $data['business_sector_id'], $data['acc_manager_id'],
+                    $data['credit_limit'], $data['credit_terms'], $data['remarks'], $coaId
+                ]);
+            } else {
+                $sql = "INSERT INTO employees (
+                        company_id, coa_list_id, contact_person, address, region_id, sub_region_id, 
+                        telephone, mobile, fax, email, website, 
+                        st_reg_no, ntn_cnic, business_sector_id, acc_manager_id, 
+                        credit_limit, credit_terms, remarks
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $company_id, $coaId, $data['contact_person'], $data['address'], $data['region_id'], $data['sub_region_id'],
+                    $data['telephone'], $data['mobile'], $data['fax'], $data['email'], $data['website'],
+                    $data['st_reg_no'], $data['ntn_cnic'], $data['business_sector_id'], $data['acc_manager_id'],
+                    $data['credit_limit'], $data['credit_terms'], $data['remarks']
+                ]);
+            }
+            $pdo->commit();
+            sendResponse(['status' => 'success', 'id' => $coaId]);
+        } catch (Exception $e) { $pdo->rollBack(); sendResponse(['status' => 'error'], 500); }
     }
 
     // --- Lookup Saves ---

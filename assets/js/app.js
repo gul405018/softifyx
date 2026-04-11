@@ -2661,8 +2661,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2688,8 +2689,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                 });
             });
         }
@@ -3335,13 +3337,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 }
                 
-                // Load Managers (Users)
-                const manRes = await fetch('api/admin.php?action=get_users');
-                const users = await manRes.json();
+                // Load Managers (Employees instead of Users)
+                const manRes = await fetch('api/maintain.php?action=get_employees_lookup');
+                const empLookup = await manRes.json();
                 const manSelect = document.getElementById('custAccManager');
                 if(manSelect) {
                     manSelect.innerHTML = '<option value="">None</option>' + 
-                        users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
+                        empLookup.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
                 }
             } catch(e) { console.error("Lookup load failed", e); }
         }
@@ -3806,7 +3808,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.openSecondaryModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Sectors', initSectorsView, 'Business Sectors', true);
         }
         function manageManagers() {
-            window.openSecondaryModularPopup('Navigation/Administrator/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', true);
+            window.openSecondaryModularPopup('Navigation/Maintain/employees.html', 'fa-user-tie', 'Manage Employees', initEmployeesView, 'Employees', true);
         }
 
         // Sector Module Logic
@@ -3902,6 +3904,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.loadSubRegions = loadSubRegions;
         window.findCustomer = findCustomer;
         window.printCustomers = printCustomers;
+
+        // Employees Exposures
+        window.initEmployeesView = initEmployeesView;
+        window.onEmployeeCategorySelect = onEmployeeCategorySelect;
+        window.saveEmployeeCategory = saveEmployeeCategory;
+        window.deleteEmployeeCategory = deleteEmployeeCategory;
+        window.resetEmployeeCategoryForm = resetEmployeeCategoryForm;
+        window.onEmployeeSelect = onEmployeeSelect;
+        window.saveEmployee = saveEmployee;
+        window.deleteEmployee = deleteEmployee;
+        window.resetEmployeeForm = resetEmployeeForm;
+        window.findEmployee = findEmployee;
+        window.printEmployees = printEmployees;
+        window.loadSubRegionsEmp = loadSubRegionsEmp;
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;

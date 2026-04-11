@@ -195,4 +195,35 @@ CREATE TABLE IF NOT EXISTS `customers` (
   FOREIGN KEY (`acc_manager_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 14. Employees Table (Maintain: Employees)
+CREATE TABLE IF NOT EXISTS `employees` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `coa_list_id` int(11) NOT NULL, -- Link to Chart of Accounts entry
+  `contact_person` varchar(255),
+  `address` text,
+  `region_id` int(11),
+  `sub_region_id` int(11),
+  `telephone` varchar(100),
+  `mobile` varchar(100),
+  `fax` varchar(100),
+  `email` varchar(255),
+  `website` varchar(255),
+  `st_reg_no` varchar(100), -- Used as CNIC for Employees
+  `ntn_cnic` varchar(100),  -- Used as NTN for Employees
+  `business_sector_id` int(11), -- Dept/Sector
+  `acc_manager_id` int(11), -- Supervisor (Refers back to users/employees)
+  `credit_limit` decimal(20,2) DEFAULT 0, -- Basic Salary / Credit
+  `credit_terms` varchar(255) DEFAULT 'CASH',
+  `remarks` text,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`coa_list_id`) REFERENCES `coa_list`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`region_id`) REFERENCES `regions`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`sub_region_id`) REFERENCES `sub_regions`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`business_sector_id`) REFERENCES `business_sectors`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 COMMIT;
