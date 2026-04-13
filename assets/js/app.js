@@ -2789,40 +2789,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetEmployeeForm(isAdd = false) {
-            if (isAdd) alert("Add Mode Activated: Form is now editable.");
-            
             currentEmployeeId = isAdd ? null : currentEmployeeId;
             if (!isAdd) {
                 if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
                 enableEmployeeFields(false);
-                const saveBtn = document.getElementById('empSaveBtn');
-                if (saveBtn) saveBtn.disabled = true;
+                if (document.getElementById('empSaveBtn')) document.getElementById('empSaveBtn').disabled = true;
                 return;
             }
 
-            // Clear fields for Add
-            const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
-            inputs.forEach(i => {
-                if (i.type === 'checkbox') i.checked = false;
-                else if (i.type === 'number') i.value = 0;
-                else i.value = '';
-            });
+            // Clear all fields for Add
+            const container = document.getElementById('employeesContainer');
+            if (container) {
+                const inputs = container.querySelectorAll('input, select, textarea');
+                inputs.forEach(i => {
+                    if (i.type === 'checkbox') i.checked = false;
+                    else if (i.type === 'number') i.value = 0;
+                    else i.value = '';
+                });
+            }
             
             enableEmployeeFields(true);
-            const saveBtn = document.getElementById('empSaveBtn');
-            if (saveBtn) saveBtn.disabled = false;
-            const nameField = document.getElementById('empName');
-            if (nameField) nameField.focus();
+            if (document.getElementById('empSaveBtn')) document.getElementById('empSaveBtn').disabled = false;
+            if (document.getElementById('empName')) document.getElementById('empName').focus();
         }
 
         function enableEmployeeFields(enabled) {
-            const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
-            inputs.forEach(i => { i.disabled = !enabled; });
-            if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
+            const container = document.getElementById('employeesContainer');
+            if (container) {
+                const inputs = container.querySelectorAll('input, select, textarea');
+                inputs.forEach(i => { i.disabled = !enabled; });
+                // Re-handle specific logic for Leaving Date
+                if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
+            }
         }
 
         async function saveEmployee() {
-            alert("Saving data...");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
@@ -2851,8 +2852,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             try {
-                const url = `api/maintain.php?action=save_employee&company_id=${coId}`;
-                const res = await fetch(url, {
+                const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
