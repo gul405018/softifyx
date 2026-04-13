@@ -4016,43 +4016,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveEmployee() {
+            console.log("SoftifyX: Save Employee Triggered");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
             const payload = {
                 id: currentEmployeeId,
-                name: document.getElementById('empName')?.value,
-                father_name: document.getElementById('empFatherName')?.value,
-                address: document.getElementById('empAddress')?.value,
-                telephone: document.getElementById('empTelephone')?.value,
-                email: document.getElementById('empEmail')?.value,
-                nic_no: document.getElementById('empNicNo')?.value,
+                name: document.getElementById('empName')?.value?.trim(),
+                father_name: document.getElementById('empFatherName')?.value?.trim(),
+                address: document.getElementById('empAddress')?.value?.trim(),
+                telephone: document.getElementById('empTelephone')?.value?.trim(),
+                email: document.getElementById('empEmail')?.value?.trim(),
+                nic_no: document.getElementById('empNicNo')?.value?.trim(),
                 dob: document.getElementById('empDob')?.value,
                 joining_date: document.getElementById('empJoiningDate')?.value,
-                salary: document.getElementById('empSalary')?.value,
-                designation: document.getElementById('empDesignation')?.value,
+                salary: parseFloat(document.getElementById('empSalary')?.value) || 0,
+                designation: document.getElementById('empDesignation')?.value?.trim(),
                 department_id: document.getElementById('empDepartment')?.value,
-                remarks: document.getElementById('empRemarks')?.value,
-                reference: document.getElementById('empReference')?.value,
+                remarks: document.getElementById('empRemarks')?.value?.trim(),
+                reference: document.getElementById('empReference')?.value?.trim(),
                 job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
                 leaving_date: document.getElementById('empLeavingDate')?.value
             };
 
-            if (!payload.name) return alert("Employee Name is required!");
+            console.log("SoftifyX: Payload assembled:", payload);
+
+            if (!payload.name) {
+                alert("Employee Name is required!");
+                return;
+            }
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, {
+                const url = `api/maintain.php?action=save_employee&company_id=${coId}`;
+                console.log("SoftifyX: Posting to:", url);
+                
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
+                console.log("SoftifyX: Response Status:", res.status);
+                
                 if (res.ok) {
                     const result = await res.json();
-                    alert("Employee profile saved!");
+                    console.log("SoftifyX: Save Result:", result);
+                    alert("Employee profile saved successfully!");
                     await fetchEmployeesList(coId);
                     onEmployeeSelect(result.id);
+                } else {
+                    const errText = await res.text();
+                    console.error("SoftifyX: Save Error Body:", errText);
+                    alert("Save failed: " + res.statusText);
                 }
-            } catch (e) { alert("Save failed."); }
+            } catch (e) { 
+                console.error("SoftifyX: Exception during save:", e);
+                alert("Save failed due to a system error. Check console for details."); 
+            }
         }
 
         async function deleteEmployee() {

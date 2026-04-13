@@ -825,8 +825,13 @@
         }
 
         .modal-container.modal-wide {
-            max-width: 1400px;
-            width: 95%;
+            max-width: 1400px !important;
+            width: 95% !important;
+        }
+
+        .employees-sidebar {
+            min-width: 250px !important;
+            max-width: 350px !important;
         }
 
         @keyframes modalFadeIn {
