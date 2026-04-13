@@ -2818,6 +2818,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         function enableEmployeeFields(enabled) {
             const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
             inputs.forEach(i => { i.disabled = !enabled; });
+            
+            // Explicitly handle fields that might be skipped by querySelector
+            const telephone = document.getElementById('empTelephone');
+            const nicNo = document.getElementById('empNicNo');
+            if (telephone) telephone.disabled = !enabled;
+            if (nicNo) nicNo.disabled = !enabled;
+            
             if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
         }
 
