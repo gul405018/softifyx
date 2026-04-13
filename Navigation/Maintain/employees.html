@@ -1,14 +1,11 @@
 <div id="employeesContainer" data-module="Employees"
-    style="min-height: 600px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px;">
+    style="min-height: 600px; min-width: 950px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px;">
 
-    <!-- Main Header -->
-    <div style="font-size: 14px; font-weight: 700; color: #1F4E79; margin-bottom: 10px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-        <span>Employees Management</span>
-    </div>
+    <!-- Sub-header Removed as requested -->
 
     <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
-        <!-- Left: Employee List -->
-        <div style="flex: 0.8; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
+        <!-- Left: Employee List (Wider flex for visibility) -->
+        <div style="flex: 1.2; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
             <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase;">Employee List</div>
             <select id="employeeList" size="20"
                 style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
@@ -81,7 +78,7 @@
             background: #ffffff;
             border: 1px solid #1F4E79;
             padding: 2px 12px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             min-width: 70px;
@@ -123,13 +120,13 @@
         .coa-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
         .coa-delete:hover:not(:disabled) { background: #c82333 !important; }
 
-        .coa-label { font-size: 12px; font-weight: 600; color: #334155; align-self: center; }
+        .coa-label { font-size: 11px; font-weight: 600; color: #334155; align-self: center; }
         .coa-input {
             height: 28px;
             border: 1px solid #cbd5e0;
             border-radius: 4px;
             padding: 0 8px;
-            font-size: 13px;
+            font-size: 12px;
             outline: none;
             width: 100%;
             transition: all 0.2s;
@@ -147,45 +144,11 @@
 
     <script>
         (function() {
-            let allEmployees = [];
-            let currentEmployeeId = null;
-            const companyId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
-
-            async function init() {
-                await loadDepartments();
-                await loadEmployees();
-            }
-
-            async function loadDepartments() {
-                try {
-                    const res = await fetch(`api/maintain.php?action=get_departments&company_id=${companyId}`);
-                    const departments = await res.json();
-                    const select = document.getElementById('empDepartment');
-                    select.innerHTML = '<option value="">-- Select Department --</option>';
-                    departments.forEach(dept => {
-                        select.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
-                    });
-                } catch (e) { console.error("Error loading departments", e); }
-            }
-
-            async function loadEmployees() {
-                try {
-                    const res = await fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`);
-                    allEmployees = await res.json();
-                    renderEmployeeList();
-                } catch (e) { console.error("Error loading employees", e); }
-            }
-
-            function renderEmployeeList() {
-                const list = document.getElementById('employeeList');
-                list.innerHTML = '';
-                allEmployees.forEach(emp => {
-                    const opt = document.createElement('option');
-                    opt.value = emp.id;
-                    opt.textContent = emp.name;
-                    list.appendChild(opt);
-                });
-            }
+            // Function assignments to window MUST be at the top level of the IIFE
+            window.toggleLeavingDate = function(checked) {
+                const el = document.getElementById('empLeavingDate');
+                if (el) el.disabled = !checked || document.getElementById('empSaveBtn').disabled;
+            };
 
             window.onEmployeeSelect = function(id) {
                 const emp = allEmployees.find(e => e.id == id);
@@ -208,7 +171,7 @@
                 document.getElementById('empJobLeft').checked = emp.job_left == 1;
                 document.getElementById('empLeavingDate').value = emp.leaving_date || '';
                 
-                toggleLeavingDate(emp.job_left == 1);
+                window.toggleLeavingDate(emp.job_left == 1);
                 setFormDisabled(true);
                 document.getElementById('empSaveBtn').disabled = true;
             };
@@ -227,28 +190,13 @@
                     document.getElementById('empSaveBtn').disabled = false;
                     document.getElementById('empName').focus();
                 } else {
-                    if (currentEmployeeId) onEmployeeSelect(currentEmployeeId);
+                    if (currentEmployeeId) window.onEmployeeSelect(currentEmployeeId);
                     else {
                         setFormDisabled(true);
                         document.getElementById('empSaveBtn').disabled = true;
                     }
                 }
             };
-
-            window.toggleLeavingDate = function(checked) {
-                document.getElementById('empLeavingDate').disabled = !checked || document.getElementById('empSaveBtn').disabled;
-            };
-
-            function setFormDisabled(disabled) {
-                const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
-                inputs.forEach(i => {
-                    i.disabled = disabled;
-                });
-                // Leaving date special case
-                if (!disabled) {
-                    toggleLeavingDate(document.getElementById('empJobLeft').checked);
-                }
-            }
 
             window.saveEmployee = async function() {
                 const data = {
@@ -285,11 +233,11 @@
                     if (result.status === 'success') {
                         alert("Employee saved successfully.");
                         await loadEmployees();
-                        onEmployeeSelect(result.id);
+                        window.onEmployeeSelect(result.id);
                     } else {
                         alert("Error saving employee.");
                     }
-                } catch (e) { console.error("Save Error", e); }
+                } catch (e) { alert("Network Error: Could not save employee."); }
             };
 
             window.deleteEmployee = async function() {
@@ -308,10 +256,68 @@
                         alert("Employee deleted.");
                         currentEmployeeId = null;
                         await loadEmployees();
-                        resetEmployeeForm(false);
+                        window.resetEmployeeForm(false);
                     }
-                } catch (e) { console.error("Delete Error", e); }
+                } catch (e) { alert("Network Error: Could not delete employee."); }
             };
+
+            let allEmployees = [];
+            let currentEmployeeId = null;
+            const companyId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+
+            async function init() {
+                try {
+                    await loadDepartments();
+                    await loadEmployees();
+                } catch (e) {
+                    console.error("SoftifyX - Employees Module Load Error:", e);
+                }
+            }
+
+            async function loadDepartments() {
+                try {
+                    const res = await fetch(`api/maintain.php?action=get_departments&company_id=${companyId}`);
+                    if (!res.ok) throw new Error("API Failure");
+                    const departments = await res.json();
+                    const select = document.getElementById('empDepartment');
+                    if (!select) return;
+                    select.innerHTML = '<option value="">-- Select Department --</option>';
+                    departments.forEach(dept => {
+                        select.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
+                    });
+                } catch (e) { console.warn("Could not load departments list."); }
+            }
+
+            async function loadEmployees() {
+                try {
+                    const res = await fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`);
+                    if (!res.ok) throw new Error("API Failure");
+                    allEmployees = await res.json();
+                    renderEmployeeList();
+                } catch (e) { console.warn("Could not load employees list."); }
+            }
+
+            function renderEmployeeList() {
+                const list = document.getElementById('employeeList');
+                if (!list) return;
+                list.innerHTML = '';
+                allEmployees.forEach(emp => {
+                    const opt = document.createElement('option');
+                    opt.value = emp.id;
+                    opt.textContent = emp.name;
+                    list.appendChild(opt);
+                });
+            }
+
+            function setFormDisabled(disabled) {
+                const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
+                inputs.forEach(i => {
+                    i.disabled = disabled;
+                });
+                if (!disabled) {
+                    window.toggleLeavingDate(document.getElementById('empJobLeft').checked);
+                }
+            }
 
             init();
         })();
