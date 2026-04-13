@@ -2308,19 +2308,15 @@
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
-                console.log(`SoftifyX: Opening Modular Popup [${activeModuleKey}] from [${url}]`);
                 
                 // If moduleName is explicitly provided, check rights BEFORE any fetch to prevent loading
                 if (activeModuleKey && !checkUserRights(activeModuleKey)) {
-                    console.warn(`SoftifyX: Access Denied for [${activeModuleKey}]`);
                     showAccessDenied(activeModuleKey);
                     return;
                 }
 
                 const cb = `_cb=${Date.now()}`;
                 const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
-                console.log(`SoftifyX: Fetch Status for [${activeModuleKey}]:`, res.status);
-                
                 if (res.ok) {
                     let html = await res.text();
                     
@@ -2667,8 +2663,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
-                    let modIcon = isEmp ? 'fa-users' : 'fa-file-alt';
-                    window.openModularPopup(targetUrl, modIcon, titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2696,8 +2691,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
-                    let modIcon = isEmp ? 'fa-users' : 'fa-file-alt';
-                    window.openModularPopup(targetUrl, modIcon, titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                 });
             });
         }
@@ -3920,14 +3914,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let allEmployeesData = [];
         let currentEmployeeId = null;
 
-        // Expose Employee functions GLOBALLY as soon as possible
-        window.initEmployeesView = initEmployeesView;
-        window.onEmployeeSelect = onEmployeeSelect;
-        window.resetEmployeeForm = resetEmployeeForm;
-        window.saveEmployee = saveEmployee;
-        window.deleteEmployee = deleteEmployee;
-        window.toggleLeavingDate = toggleLeavingDate;
-
         async function initEmployeesView() {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
@@ -4018,12 +4004,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             enableEmployeeFields(true);
             const saveBtn = document.getElementById('empSaveBtn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.style.cursor = 'pointer';
-                saveBtn.style.pointerEvents = 'auto';
-                saveBtn.style.opacity = '1';
-            }
+            if (saveBtn) saveBtn.disabled = false;
             const nameField = document.getElementById('empName');
             if (nameField) nameField.focus();
         }
@@ -4031,17 +4012,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         function enableEmployeeFields(enabled) {
             const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
             inputs.forEach(i => { i.disabled = !enabled; });
-            
-            // Also ensure buttons are appropriately styled when enabling fields
-            const btns = document.querySelectorAll('#employeesContainer button');
-            btns.forEach(btn => {
-                if (enabled && !btn.id.includes('DeleteBtn')) { // Don't auto-enable delete unless logic requires
-                    btn.style.cursor = 'pointer';
-                    btn.style.pointerEvents = 'auto';
-                    btn.style.opacity = '1';
-                }
-            });
-
             if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
         }
 
