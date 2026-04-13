@@ -69,6 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         sendResponse($stmt->fetchAll());
     }
+
+    if ($action === 'get_employees') {
+        $stmt = $pdo->prepare("SELECT * FROM employees WHERE company_id = ? ORDER BY name ASC");
+        $stmt->execute([$company_id]);
+        sendResponse($stmt->fetchAll());
+    }
+
+    if ($action === 'get_departments') {
+        $stmt = $pdo->prepare("SELECT * FROM departments WHERE company_id = ? ORDER BY name ASC");
+        $stmt->execute([$company_id]);
+        sendResponse($stmt->fetchAll());
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -207,6 +219,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         sendResponse(['status' => 'success', 'id' => $newId]);
     }
+
+    if ($action === 'save_employee') {
+        $status = 'success';
+        $newId = null;
+        if (isset($data['id'])) {
+            $sql = "UPDATE employees SET 
+                    name = ?, father_name = ?, address = ?, telephone = ?, email = ?, nic_no = ?,
+                    dob = ?, joining_date = ?, salary = ?, designation = ?, department_id = ?,
+                    remarks = ?, reference = ?, job_left = ?, leaving_date = ?
+                    WHERE id = ? AND company_id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $data['name'], $data['father_name'], $data['address'], $data['telephone'], $data['email'], $data['nic_no'],
+                $data['dob'], $data['joining_date'], $data['salary'], $data['designation'], $data['department_id'],
+                $data['remarks'], $data['reference'], $data['job_left'], $data['leaving_date'],
+                $data['id'], $company_id
+            ]);
+            $newId = $data['id'];
+        } else {
+            $sql = "INSERT INTO employees (
+                    company_id, name, father_name, address, telephone, email, nic_no, 
+                    dob, joining_date, salary, designation, department_id, 
+                    remarks, reference, job_left, leaving_date
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $company_id, $data['name'], $data['father_name'], $data['address'], $data['telephone'], $data['email'], $data['nic_no'],
+                $data['dob'], $data['joining_date'], $data['salary'], $data['designation'], $data['department_id'],
+                $data['remarks'], $data['reference'], $data['job_left'], $data['leaving_date']
+            ]);
+            $newId = $pdo->lastInsertId();
+        }
+        sendResponse(['status' => $status, 'id' => $newId]);
+    }
     // (Additional lookups omitted for brevity, but can be added as needed)
 }
 
@@ -233,6 +279,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'P
     }
     if ($action === 'delete_sector' && isset($_GET['id'])) {
         $pdo->prepare("DELETE FROM business_sectors WHERE id = ?")->execute([$_GET['id']]);
+        sendResponse(['status' => 'success']);
+    }
+
+    if ($action === 'delete_employee' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM employees WHERE id = ? AND company_id = ?")->execute([$_GET['id'], $company_id]);
         sendResponse(['status' => 'success']);
     }
 }
