@@ -3931,11 +3931,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 2. Load Employees
                 await fetchEmployeesList(coId);
                 
-                // 3. Reset UI (Delayed by 250ms to ensure it runs AFTER global restrictions)
-                setTimeout(() => {
-                    console.log("SoftifyX: Running final UI unlock for Employees...");
-                    resetEmployeeForm(false);
-                }, 250);
+                // 3. Reset UI
+                resetEmployeeForm(false);
             } catch (e) {
                 console.error("Employees Load Error:", e);
             }
@@ -4009,9 +4006,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const saveBtn = document.getElementById('empSaveBtn');
             if (saveBtn) {
                 saveBtn.disabled = false;
-                saveBtn.style.setProperty('cursor', 'pointer', 'important');
-                saveBtn.style.setProperty('pointer-events', 'auto', 'important');
-                saveBtn.style.setProperty('opacity', '1', 'important');
+                saveBtn.style.cursor = 'pointer';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.style.opacity = '1';
             }
             const nameField = document.getElementById('empName');
             if (nameField) nameField.focus();
@@ -4024,10 +4021,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Also ensure buttons are appropriately styled when enabling fields
             const btns = document.querySelectorAll('#employeesContainer button');
             btns.forEach(btn => {
-                if (enabled && !btn.id.includes('DeleteBtn')) {
-                    btn.style.setProperty('cursor', 'pointer', 'important');
-                    btn.style.setProperty('pointer-events', 'auto', 'important');
-                    btn.style.setProperty('opacity', '1', 'important');
+                if (enabled && !btn.id.includes('DeleteBtn')) { // Don't auto-enable delete unless logic requires
+                    btn.style.cursor = 'pointer';
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
                 }
             });
 
