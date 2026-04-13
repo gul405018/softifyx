@@ -2661,8 +2661,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2688,8 +2689,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                 });
             });
         }
@@ -3907,6 +3909,177 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.manageManagers = manageManagers;
         window.openSecondaryModularPopup = openSecondaryModularPopup;
         window.closeSecondaryModal = closeSecondaryModal;
+
+        // === EMPLOYEES MODULE LOGIC ===
+        let allEmployeesData = [];
+        let currentEmployeeId = null;
+
+        async function initEmployeesView() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const coId = session.company_id || 1;
+            
+            try {
+                // 1. Load Departments
+                const dRes = await fetch(`api/maintain.php?action=get_departments&company_id=${coId}`);
+                const depts = await dRes.json();
+                const dSelect = document.getElementById('empDepartment');
+                if (dSelect) {
+                    dSelect.innerHTML = '<option value="">-- Select Department --</option>';
+                    depts.forEach(d => { dSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
+                }
+
+                // 2. Load Employees
+                await fetchEmployeesList(coId);
+                
+                // 3. Reset UI
+                resetEmployeeForm(false);
+            } catch (e) {
+                console.error("Employees Load Error:", e);
+            }
+        }
+
+        async function fetchEmployeesList(coId) {
+            try {
+                const res = await fetch(`api/maintain.php?action=get_employees&company_id=${coId}`);
+                allEmployeesData = await res.json();
+                renderEmployeesList();
+            } catch (e) {}
+        }
+
+        function renderEmployeesList() {
+            const list = document.getElementById('employeeList');
+            if (list) {
+                list.innerHTML = allEmployeesData.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            }
+        }
+
+        function onEmployeeSelect(id) {
+            const emp = allEmployeesData.find(e => e.id == id);
+            if (!emp) return;
+            currentEmployeeId = id;
+
+            const fields = {
+                'empName': emp.name, 'empFatherName': emp.father_name, 'empAddress': emp.address,
+                'empTelephone': emp.telephone, 'empEmail': emp.email, 'empNicNo': emp.nic_no,
+                'empDob': emp.dob, 'empJoiningDate': emp.joining_date, 'empSalary': emp.salary,
+                'empDesignation': emp.designation, 'empDepartment': emp.department_id,
+                'empRemarks': emp.remarks, 'empReference': emp.reference, 'empLeavingDate': emp.leaving_date
+            };
+            Object.keys(fields).forEach(fid => {
+                const el = document.getElementById(fid);
+                if (el) el.value = fields[fid] || (fid === 'empSalary' ? 0 : '');
+            });
+
+            const jobLeft = document.getElementById('empJobLeft');
+            if (jobLeft) jobLeft.checked = emp.job_left == 1;
+            
+            toggleLeavingDate(emp.job_left == 1);
+            enableEmployeeFields(false);
+            const saveBtn = document.getElementById('empSaveBtn');
+            if (saveBtn) saveBtn.disabled = true;
+        }
+
+        function toggleLeavingDate(checked) {
+            const el = document.getElementById('empLeavingDate');
+            if (el) el.disabled = !checked || (document.getElementById('empSaveBtn') && document.getElementById('empSaveBtn').disabled);
+        }
+
+        function resetEmployeeForm(isAdd = false) {
+            currentEmployeeId = isAdd ? null : currentEmployeeId;
+            if (!isAdd) {
+                if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
+                enableEmployeeFields(false);
+                const saveBtn = document.getElementById('empSaveBtn');
+                if (saveBtn) saveBtn.disabled = true;
+                return;
+            }
+
+            // Clear fields for Add
+            const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
+            inputs.forEach(i => {
+                if (i.type === 'checkbox') i.checked = false;
+                else if (i.type === 'number') i.value = 0;
+                else i.value = '';
+            });
+            
+            enableEmployeeFields(true);
+            const saveBtn = document.getElementById('empSaveBtn');
+            if (saveBtn) saveBtn.disabled = false;
+            const nameField = document.getElementById('empName');
+            if (nameField) nameField.focus();
+        }
+
+        function enableEmployeeFields(enabled) {
+            const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
+            inputs.forEach(i => { i.disabled = !enabled; });
+            if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
+        }
+
+        async function saveEmployee() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const coId = session.company_id || 1;
+            
+            const payload = {
+                id: currentEmployeeId,
+                name: document.getElementById('empName')?.value,
+                father_name: document.getElementById('empFatherName')?.value,
+                address: document.getElementById('empAddress')?.value,
+                telephone: document.getElementById('empTelephone')?.value,
+                email: document.getElementById('empEmail')?.value,
+                nic_no: document.getElementById('empNicNo')?.value,
+                dob: document.getElementById('empDob')?.value,
+                joining_date: document.getElementById('empJoiningDate')?.value,
+                salary: document.getElementById('empSalary')?.value,
+                designation: document.getElementById('empDesignation')?.value,
+                department_id: document.getElementById('empDepartment')?.value,
+                remarks: document.getElementById('empRemarks')?.value,
+                reference: document.getElementById('empReference')?.value,
+                job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
+                leaving_date: document.getElementById('empLeavingDate')?.value
+            };
+
+            if (!payload.name) return alert("Employee Name is required!");
+
+            try {
+                const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    alert("Employee profile saved!");
+                    await fetchEmployeesList(coId);
+                    onEmployeeSelect(result.id);
+                }
+            } catch (e) { alert("Save failed."); }
+        }
+
+        async function deleteEmployee() {
+            if (!currentEmployeeId) return alert("Select an employee first.");
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const coId = session.company_id || 1;
+
+            if (confirm("Are you sure you want to delete this employee?")) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`, { method: 'POST' });
+                    if (res.ok) {
+                        alert("Employee deleted.");
+                        currentEmployeeId = null;
+                        await fetchEmployeesList(coId);
+                        resetEmployeeForm(false);
+                    }
+                } catch (e) { alert("Delete failed."); }
+            }
+        }
+
+        // Expose Employee Functions
+        window.initEmployeesView = initEmployeesView;
+        window.onEmployeeSelect = onEmployeeSelect;
+        window.resetEmployeeForm = resetEmployeeForm;
+        window.saveEmployee = saveEmployee;
+        window.deleteEmployee = deleteEmployee;
+        window.toggleLeavingDate = toggleLeavingDate;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
