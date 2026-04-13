@@ -2789,35 +2789,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetEmployeeForm(isAdd = false) {
-            if (isAdd) alert("Add Mode Activated: Form is now editable.");
+            if (isAdd) {
+                alert("Add Mode Activated: Form is now editable.");
+                const saveBtn = document.getElementById('empSaveBtn');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.style.cursor = 'pointer';
+                }
+            }
             
             currentEmployeeId = isAdd ? null : currentEmployeeId;
             if (!isAdd) {
                 if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
                 enableEmployeeFields(false);
                 const saveBtn = document.getElementById('empSaveBtn');
-                if (saveBtn) saveBtn.disabled = true;
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.style.cursor = 'not-allowed';
+                }
                 return;
             }
 
             // Clear fields for Add
-            const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
+            enableEmployeeFields(true);
+            const inputs = document.querySelectorAll('#employeesContainer input, #employeesContainer select, #employeesContainer textarea');
             inputs.forEach(i => {
-                if (i.type === 'checkbox') i.checked = false;
-                else if (i.type === 'number') i.value = 0;
-                else i.value = '';
+                try {
+                    if (i.type === 'checkbox') i.checked = false;
+                    else if (i.type === 'number') i.value = 0;
+                    else if (i.id !== 'empSaveBtn' && i.tagName !== 'BUTTON') i.value = '';
+                } catch(e) {}
             });
             
-            enableEmployeeFields(true);
-            const saveBtn = document.getElementById('empSaveBtn');
-            if (saveBtn) saveBtn.disabled = false;
             const nameField = document.getElementById('empName');
             if (nameField) nameField.focus();
         }
 
         function enableEmployeeFields(enabled) {
-            const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
-            inputs.forEach(i => { i.disabled = !enabled; });
+            // Broad selection to ensure Telephone, NIC etc. are included
+            const inputs = document.querySelectorAll('#employeesContainer input, #employeesContainer select, #employeesContainer textarea');
+            inputs.forEach(i => { 
+                // Don't disable the action buttons themselves if we are enabling the form
+                if (!i.classList.contains('coa-btn')) {
+                    i.disabled = !enabled; 
+                }
+            });
             if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
         }
 

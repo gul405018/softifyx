@@ -80,7 +80,7 @@
             padding: 2px 12px;
             font-size: 11px;
             font-weight: 600;
-            cursor: pointer;
+            cursor: pointer !important;
             min-width: 70px;
             border-radius: 4px;
             color: #1F4E79;
@@ -102,10 +102,11 @@
 
         .coa-btn:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
+            cursor: not-allowed !important;
             background: #f8fafc !important;
             border-color: #cbd5e0 !important;
             color: #94a3b8 !important;
+            pointer-events: none;
         }
 
         .coa-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
