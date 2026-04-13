@@ -2714,30 +2714,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         let currentEmployeeId = null;
 
         async function initEmployeesView() {
-            console.log("SoftifyX: Init Employees View");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
-            
-            try {
-                // 1. Load Departments
-                const dRes = await fetch(`api/maintain.php?action=get_departments&company_id=${coId}`);
-                if (dRes.ok) {
-                    const depts = await dRes.json();
-                    const dSelect = document.getElementById('empDepartment');
-                    if (dSelect) {
-                        dSelect.innerHTML = '<option value="">-- Select Department --</option>';
-                        depts.forEach(d => { dSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
-                    }
-                }
-
-                // 2. Load Employees
-                await fetchEmployeesList(coId);
-                
-                // 3. Reset UI
-                resetEmployeeForm(false);
-            } catch (e) {
-                console.error("Employees Load Error:", e);
-            }
+            await fetchDepartments(coId);
+            await fetchEmployeesList(coId);
+            resetEmployeeForm(false); // Force initial locked state
         }
 
         async function fetchEmployeesList(coId) {
@@ -2760,7 +2741,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         function onEmployeeSelect(id) {
             const emp = allEmployeesData.find(e => e.id == id);
             if (!emp) return;
-            currentEmployeeId = id;
+            currentEmployeeId = emp.id;
 
             const fields = {
                 'empName': emp.name, 'empFatherName': emp.father_name, 'empAddress': emp.address,
@@ -2778,7 +2759,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (jobLeft) jobLeft.checked = emp.job_left == 1;
             
             toggleLeavingDate(emp.job_left == 1);
-            enableEmployeeFields(false);
+            enableEmployeeFields(false); // Lock fields on selection
             const saveBtn = document.getElementById('empSaveBtn');
             if (saveBtn) saveBtn.disabled = true;
         }
@@ -2789,58 +2770,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetEmployeeForm(isAdd = false) {
-            if (isAdd) {
-                alert("Add Mode Activated: Form is now editable.");
-                const saveBtn = document.getElementById('empSaveBtn');
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.style.cursor = 'pointer';
-                }
-            }
-            
             currentEmployeeId = isAdd ? null : currentEmployeeId;
-            if (!isAdd) {
-                if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
-                enableEmployeeFields(false);
-                const saveBtn = document.getElementById('empSaveBtn');
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.style.cursor = 'not-allowed';
-                }
-                return;
+            
+            // Toggle form accessibility
+            enableEmployeeFields(isAdd);
+            
+            // Toggle Save button
+            const saveBtn = document.getElementById('empSaveBtn');
+            if (saveBtn) {
+                saveBtn.disabled = !isAdd;
+                saveBtn.style.cursor = isAdd ? 'pointer' : 'not-allowed';
             }
 
-            // Clear fields for Add
-            enableEmployeeFields(true);
-            const inputs = document.querySelectorAll('#employeesContainer input, #employeesContainer select, #employeesContainer textarea');
-            inputs.forEach(i => {
-                try {
-                    if (i.type === 'checkbox') i.checked = false;
-                    else if (i.type === 'number') i.value = 0;
-                    else if (i.id !== 'empSaveBtn' && i.tagName !== 'BUTTON') i.value = '';
-                } catch(e) {}
-            });
-            
-            const nameField = document.getElementById('empName');
-            if (nameField) nameField.focus();
+            if (isAdd) {
+                // Clear fields for new entry
+                const container = document.getElementById('employeesContainer');
+                if (container) {
+                    const inputs = container.querySelectorAll('input, select, textarea');
+                    inputs.forEach(i => {
+                        if (i.classList.contains('coa-btn')) return;
+                        if (i.type === 'checkbox') i.checked = false;
+                        else if (i.type === 'number') i.value = 0;
+                        else i.value = '';
+                    });
+                }
+                document.getElementById('empName')?.focus();
+            } else if (currentEmployeeId) {
+                onEmployeeSelect(currentEmployeeId);
+            }
         }
 
         function enableEmployeeFields(enabled) {
-            // Broad selection to ensure Telephone, NIC etc. are included
-            const inputs = document.querySelectorAll('#employeesContainer input, #employeesContainer select, #employeesContainer textarea');
-            inputs.forEach(i => { 
-                // Don't disable the action buttons themselves if we are enabling the form
-                if (!i.classList.contains('coa-btn')) {
-                    i.disabled = !enabled; 
+            const container = document.getElementById('employeesContainer');
+            if (!container) return;
+            const elements = container.querySelectorAll('input, select, textarea');
+            elements.forEach(el => {
+                if (!el.classList.contains('coa-btn')) {
+                    el.disabled = !enabled;
                 }
             });
-            if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
+            if (enabled) {
+                const jobLeft = document.getElementById('empJobLeft');
+                toggleLeavingDate(jobLeft ? jobLeft.checked : false);
+            }
         }
 
-        async function onSaveEmployeeRecord() {
-            console.log("SoftifyX: Save button clicked - Starting process");
-            alert("Saving data...");
-            
+        async function saveEmployee() {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
@@ -2864,64 +2839,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                     leaving_date: document.getElementById('empLeavingDate')?.value
                 };
 
-                console.log("SoftifyX: Payload prepared:", payload);
+                if (!payload.name) return alert("Employee Name is required!");
 
-                if (!payload.name) {
-                    alert("Employee Name is required!");
-                    return;
-                }
-
-                const url = `api/maintain.php?action=save_employee&company_id=${coId}`;
-                console.log("SoftifyX: Fetching URL:", url);
-
-                const res = await fetch(url, {
+                const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                console.log("SoftifyX: Server Response Status:", res.status);
-
                 if (res.ok) {
                     const result = await res.json();
-                    console.log("SoftifyX: Save Result:", result);
-                    alert("Employee profile saved successfully!");
+                    alert("Employee saved successfully!");
                     await fetchEmployeesList(coId);
-                    onEmployeeSelect(result.id);
+                    onEmployeeSelect(result.id || currentEmployeeId);
                 } else {
-                    const errText = await res.text();
-                    console.error("SoftifyX: Save Error Message:", errText);
                     alert("Save failed: " + res.statusText);
                 }
-            } catch (e) { 
-                console.error("SoftifyX: Fatal Error during save:", e);
-                alert("Save failed due to a system error. Please check the console."); 
-            }
+            } catch (e) { alert("Save Error: Systems are unresponsive."); }
         }
 
         async function deleteEmployee() {
-            if (!currentEmployeeId) return alert("Select an employee first.");
+            if (!currentEmployeeId) return alert("Please select an employee to delete.");
+            if (!confirm("Are you sure you want to delete this employee?")) return;
+
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
 
-            if (confirm("Are you sure you want to delete this employee?")) {
-                try {
-                    const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`, { method: 'POST' });
-                    if (res.ok) {
-                        alert("Employee deleted.");
-                        currentEmployeeId = null;
-                        await fetchEmployeesList(coId);
-                        resetEmployeeForm(false);
-                    }
-                } catch (e) { alert("Delete failed."); }
-            }
+            try {
+                const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`);
+                if (res.ok) {
+                    alert("Employee deleted successfully.");
+                    currentEmployeeId = null;
+                    await fetchEmployeesList(coId);
+                    resetEmployeeForm(false);
+                }
+            } catch (e) { alert("Delete Error: Systems are unresponsive."); }
         }
 
         // Expose Employee Functions
         window.initEmployeesView = initEmployeesView;
         window.onEmployeeSelect = onEmployeeSelect;
         window.resetEmployeeForm = resetEmployeeForm;
-        window.onSaveEmployeeRecord = onSaveEmployeeRecord;
+        window.saveEmployee = saveEmployee;
         window.deleteEmployee = deleteEmployee;
         window.toggleLeavingDate = toggleLeavingDate;
 
