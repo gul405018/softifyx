@@ -4004,7 +4004,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             enableEmployeeFields(true);
             const saveBtn = document.getElementById('empSaveBtn');
-            if (saveBtn) saveBtn.disabled = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.cursor = 'pointer';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.style.opacity = '1';
+            }
             const nameField = document.getElementById('empName');
             if (nameField) nameField.focus();
         }
@@ -4012,6 +4017,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         function enableEmployeeFields(enabled) {
             const inputs = document.querySelectorAll('#employeesContainer .coa-input, #employeesContainer input[type="checkbox"]');
             inputs.forEach(i => { i.disabled = !enabled; });
+            
+            // Also ensure buttons are appropriately styled when enabling fields
+            const btns = document.querySelectorAll('#employeesContainer button');
+            btns.forEach(btn => {
+                if (enabled && !btn.id.includes('DeleteBtn')) { // Don't auto-enable delete unless logic requires
+                    btn.style.cursor = 'pointer';
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                }
+            });
+
             if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
         }
 
