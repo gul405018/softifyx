@@ -2821,65 +2821,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
         }
 
-        async function onSaveEmployeeRecord() {
-            console.log("SoftifyX: Save button clicked - Starting process");
+        async function saveEmployee() {
             alert("Saving data...");
-            
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
+            const payload = {
+                id: currentEmployeeId,
+                name: document.getElementById('empName')?.value?.trim(),
+                father_name: document.getElementById('empFatherName')?.value?.trim(),
+                address: document.getElementById('empAddress')?.value?.trim(),
+                telephone: document.getElementById('empTelephone')?.value?.trim(),
+                email: document.getElementById('empEmail')?.value?.trim(),
+                nic_no: document.getElementById('empNicNo')?.value?.trim(),
+                dob: document.getElementById('empDob')?.value,
+                joining_date: document.getElementById('empJoiningDate')?.value,
+                salary: parseFloat(document.getElementById('empSalary')?.value) || 0,
+                designation: document.getElementById('empDesignation')?.value?.trim(),
+                department_id: document.getElementById('empDepartment')?.value,
+                remarks: document.getElementById('empRemarks')?.value?.trim(),
+                reference: document.getElementById('empReference')?.value?.trim(),
+                job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
+                leaving_date: document.getElementById('empLeavingDate')?.value
+            };
+
+            if (!payload.name) {
+                alert("Employee Name is required!");
+                return;
+            }
+
             try {
-                const payload = {
-                    id: currentEmployeeId,
-                    name: document.getElementById('empName')?.value?.trim(),
-                    father_name: document.getElementById('empFatherName')?.value?.trim(),
-                    address: document.getElementById('empAddress')?.value?.trim(),
-                    telephone: document.getElementById('empTelephone')?.value?.trim(),
-                    email: document.getElementById('empEmail')?.value?.trim(),
-                    nic_no: document.getElementById('empNicNo')?.value?.trim(),
-                    dob: document.getElementById('empDob')?.value,
-                    joining_date: document.getElementById('empJoiningDate')?.value,
-                    salary: parseFloat(document.getElementById('empSalary')?.value) || 0,
-                    designation: document.getElementById('empDesignation')?.value?.trim(),
-                    department_id: document.getElementById('empDepartment')?.value,
-                    remarks: document.getElementById('empRemarks')?.value?.trim(),
-                    reference: document.getElementById('empReference')?.value?.trim(),
-                    job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
-                    leaving_date: document.getElementById('empLeavingDate')?.value
-                };
-
-                console.log("SoftifyX: Payload prepared:", payload);
-
-                if (!payload.name) {
-                    alert("Employee Name is required!");
-                    return;
-                }
-
                 const url = `api/maintain.php?action=save_employee&company_id=${coId}`;
-                console.log("SoftifyX: Fetching URL:", url);
-
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                console.log("SoftifyX: Server Response Status:", res.status);
-
                 if (res.ok) {
                     const result = await res.json();
-                    console.log("SoftifyX: Save Result:", result);
                     alert("Employee profile saved successfully!");
                     await fetchEmployeesList(coId);
                     onEmployeeSelect(result.id);
                 } else {
                     const errText = await res.text();
-                    console.error("SoftifyX: Save Error Message:", errText);
                     alert("Save failed: " + res.statusText);
                 }
             } catch (e) { 
-                console.error("SoftifyX: Fatal Error during save:", e);
-                alert("Save failed due to a system error. Please check the console."); 
+                alert("Save failed due to a system error."); 
             }
         }
 
@@ -2905,7 +2894,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.initEmployeesView = initEmployeesView;
         window.onEmployeeSelect = onEmployeeSelect;
         window.resetEmployeeForm = resetEmployeeForm;
-        window.onSaveEmployeeRecord = onSaveEmployeeRecord;
+        window.saveEmployee = saveEmployee;
         window.deleteEmployee = deleteEmployee;
         window.toggleLeavingDate = toggleLeavingDate;
 
