@@ -1,4 +1,3 @@
-document.addEventListener('DOMContentLoaded', function() {
 // === EMPLOYEES MODULE: PROFESSIONAL DELEGATION SYSTEM (LINE 1) ===
 window.EmployeesModule = {
     allData: [],
@@ -4197,5 +4196,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.removeProfilePhoto = removeProfilePhoto;
-
-});
