@@ -3,7 +3,7 @@ let allEmployeesData = [];
 let currentEmployeeId = null;
 
 function initEmployeesView() {
-    alert("Employees Logic Ready!");
+    console.log("Employees Module Initializing...");
     const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
     const coId = session.company_id || 1;
     
@@ -21,22 +21,7 @@ function initEmployeesView() {
     // 2. Load Employees
     fetchEmployeesList(coId);
     
-    // 3. Bind Buttons (Programmatic)
-    const bindInterval = setInterval(() => {
-        const addBtn = document.getElementById('empAddBtn');
-        if (addBtn) {
-            clearInterval(bindInterval);
-            addBtn.onclick = () => resetEmployeeForm(true);
-            const saveBtn = document.getElementById('empSaveBtn');
-            if (saveBtn) saveBtn.onclick = () => saveEmployee();
-            const cancelBtn = document.getElementById('empCancelBtn');
-            if (cancelBtn) cancelBtn.onclick = () => resetEmployeeForm(false);
-            const deleteBtn = document.getElementById('empDeleteBtn');
-            if (deleteBtn) deleteBtn.onclick = () => deleteEmployee();
-        }
-    }, 100);
-
-    // 4. Initial Lock
+    // 3. Initial State
     resetEmployeeForm(false);
 }
 
@@ -78,13 +63,13 @@ function onEmployeeSelect(id) {
     
     toggleLeavingDate(emp.job_left == 1);
     enableEmployeeFields(false);
-    const saveBtn = document.getElementById('empSaveBtn');
+    const saveBtn = document.getElementById('btnEmpSave');
     if (saveBtn) saveBtn.disabled = true;
 }
 
 function toggleLeavingDate(checked) {
     const el = document.getElementById('empLeavingDate');
-    if (el) el.disabled = !checked || (document.getElementById('empSaveBtn') && document.getElementById('empSaveBtn').disabled);
+    if (el) el.disabled = !checked || (document.getElementById('btnEmpSave') && document.getElementById('btnEmpSave').disabled);
 }
 
 function resetEmployeeForm(isAdd = false) {
@@ -92,7 +77,7 @@ function resetEmployeeForm(isAdd = false) {
     if (!isAdd) {
         if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
         enableEmployeeFields(false);
-        const saveBtn = document.getElementById('empSaveBtn');
+        const saveBtn = document.getElementById('btnEmpSave');
         if (saveBtn) saveBtn.disabled = true;
         return;
     }
@@ -108,7 +93,7 @@ function resetEmployeeForm(isAdd = false) {
     }
     
     enableEmployeeFields(true);
-    const saveBtn = document.getElementById('empSaveBtn');
+    const saveBtn = document.getElementById('btnEmpSave');
     if (saveBtn) saveBtn.disabled = false;
     const nameField = document.getElementById('empName');
     if (nameField) nameField.focus();
