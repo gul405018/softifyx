@@ -16,10 +16,10 @@
         <div style="flex: 2; display: flex; flex-direction: column; gap: 10px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px;">
             <!-- Buttons Header -->
             <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 5px;" id="employeeActionButtons">
-                <button class="coa-btn coa-add" id="btnEmpAdd" onclick="resetEmployeeForm(true)">Add</button>
-                <button class="coa-btn coa-save" id="btnEmpSave" onclick="saveEmployee()" disabled>Save</button>
-                <button class="coa-btn coa-cancel" id="btnEmpCancel" onclick="resetEmployeeForm(false)">Cancel</button>
-                <button class="coa-btn coa-delete" id="btnEmpDelete" onclick="deleteEmployee()">Delete</button>
+                <button class="coa-btn coa-add" id="btnEmpAdd" onclick="window.resetEmployeeForm(true)">Add</button>
+                <button class="coa-btn coa-save" id="btnEmpSave" onclick="window.saveEmployee()" disabled>Save</button>
+                <button class="coa-btn coa-cancel" id="btnEmpCancel" onclick="window.resetEmployeeForm(false)">Cancel</button>
+                <button class="coa-btn coa-delete" id="btnEmpDelete" onclick="window.deleteEmployee()">Delete</button>
             </div>
 
             <!-- Fields Grid -->

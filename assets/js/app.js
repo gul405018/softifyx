@@ -1,5 +1,205 @@
-document.addEventListener('DOMContentLoaded', async () => {
+// === EMPLOYEES MODULE LOGIC (GLOBAL RESET - LINE 1) ===
+let allEmployeesData = [];
+let currentEmployeeId = null;
+
+function initEmployeesView() {
+    console.log("Employees Module: Hardware-Linked Ready.");
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const coId = session.company_id || 1;
+    
+    // 1. Load Departments
+    fetch(`api/maintain.php?action=get_departments&company_id=${coId}`)
+        .then(res => res.json())
+        .then(depts => {
+            const dSelect = document.getElementById('empDepartment');
+            if (dSelect) {
+                dSelect.innerHTML = '<option value="">-- Select Department --</option>';
+                depts.forEach(d => { dSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
+            }
+        }).catch(e => console.error(e));
+
+    // 2. Load Employees
+    fetchEmployeesList(coId);
+    
+    // 3. Auto-Edit Mode: Unlock when clicking any field
+    const container = document.getElementById('employeesContainer');
+    if (container) {
+        container.onclick = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                if (e.target.disabled) {
+                    console.log("Auto-Edit Mode: Unlocking fields...");
+                    enableEmployeeFields(true);
+                    const saveBtn = document.getElementById('btnEmpSave');
+                    if (saveBtn) saveBtn.disabled = false;
+                    e.target.focus();
+                }
+            }
+        };
+    }
+
+    // 4. Initial State
+    resetEmployeeForm(false);
+}
+
+function fetchEmployeesList(coId) {
+    fetch(`api/maintain.php?action=get_employees&company_id=${coId}`)
+        .then(res => res.json())
+        .then(data => {
+            allEmployeesData = data;
+            renderEmployeesList();
+        }).catch(e => console.error(e));
+}
+
+function renderEmployeesList() {
+    const list = document.getElementById('employeeList');
+    if (list) {
+        list.innerHTML = allEmployeesData.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+    }
+}
+
+function onEmployeeSelect(id) {
+    const emp = allEmployeesData.find(e => e.id == id);
+    if (!emp) return;
+    currentEmployeeId = id;
+
+    const fields = {
+        'empName': emp.name, 'empFatherName': emp.father_name, 'empAddress': emp.address,
+        'empTelephone': emp.telephone, 'empEmail': emp.email, 'empNicNo': emp.nic_no,
+        'empDob': emp.dob, 'empJoiningDate': emp.joining_date, 'empSalary': emp.salary,
+        'empDesignation': emp.designation, 'empDepartment': emp.department_id,
+        'empRemarks': emp.remarks, 'empReference': emp.reference, 'empLeavingDate': emp.leaving_date
+    };
+    Object.keys(fields).forEach(fid => {
+        const el = document.getElementById(fid);
+        if (el) el.value = fields[fid] || (fid === 'empSalary' ? 0 : '');
+    });
+
+    const jobLeft = document.getElementById('empJobLeft');
+    if (jobLeft) jobLeft.checked = emp.job_left == 1;
+    
+    toggleLeavingDate(emp.job_left == 1);
+    enableEmployeeFields(false);
+    const saveBtn = document.getElementById('btnEmpSave');
+    if (saveBtn) saveBtn.disabled = true;
+}
+
+function toggleLeavingDate(checked) {
+    const el = document.getElementById('empLeavingDate');
+    if (el) el.disabled = !checked || (document.getElementById('btnEmpSave') && document.getElementById('btnEmpSave').disabled);
+}
+
+function resetEmployeeForm(isAdd = false) {
+    currentEmployeeId = isAdd ? null : currentEmployeeId;
+    if (!isAdd) {
+        if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
+        enableEmployeeFields(false);
+        const saveBtn = document.getElementById('btnEmpSave');
+        if (saveBtn) saveBtn.disabled = true;
+        return;
+    }
+
+    // Clear and Force Unlock
+    enableEmployeeFields(true);
+    const container = document.getElementById('employeesContainer');
+    if (container) {
+        const inputs = container.querySelectorAll('input, select, textarea');
+        inputs.forEach(i => {
+            if (i.type === 'checkbox') i.checked = false;
+            else if (i.type === 'number') i.value = 0;
+            else i.value = '';
+            i.disabled = false; // Forced unlock
+        });
+    }
+    
+    const saveBtn = document.getElementById('btnEmpSave');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        console.log("Save Button Enabled (Add Mode)");
+    }
+    const nameField = document.getElementById('empName');
+    if (nameField) nameField.focus();
+}
+
+function enableEmployeeFields(enabled) {
+    const container = document.getElementById('employeesContainer');
+    if (container) {
+        const inputs = container.querySelectorAll('input, select, textarea');
+        inputs.forEach(i => { 
+            i.disabled = !enabled;
+            // Explicitly ensure Telephone and NIC are handled
+            if (i.id === 'empTelephone' || i.id === 'empNicNo') {
+                i.disabled = !enabled;
+            }
+        });
+        if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
+    }
+}
+
+async function saveEmployee() {
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const coId = session.company_id || 1;
+    const payload = {
+        id: currentEmployeeId,
+        name: document.getElementById('empName')?.value?.trim(),
+        father_name: document.getElementById('empFatherName')?.value?.trim(),
+        address: document.getElementById('empAddress')?.value?.trim(),
+        telephone: document.getElementById('empTelephone')?.value?.trim(),
+        email: document.getElementById('empEmail')?.value?.trim(),
+        nic_no: document.getElementById('empNicNo')?.value?.trim(),
+        dob: document.getElementById('empDob')?.value,
+        joining_date: document.getElementById('empJoiningDate')?.value,
+        salary: parseFloat(document.getElementById('empSalary')?.value) || 0,
+        designation: document.getElementById('empDesignation')?.value?.trim(),
+        department_id: document.getElementById('empDepartment')?.value,
+        remarks: document.getElementById('empRemarks')?.value?.trim(),
+        reference: document.getElementById('empReference')?.value?.trim(),
+        job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
+        leaving_date: document.getElementById('empLeavingDate')?.value
+    };
+
+    if (!payload.name) return alert("Employee Name is required!");
+
     try {
+        const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            const result = await res.json();
+            alert("Employee profile saved successfully!");
+            fetchEmployeesList(coId);
+            onEmployeeSelect(result.id);
+        }
+    } catch (e) { alert("Save failed."); }
+}
+
+async function deleteEmployee() {
+    if (!currentEmployeeId) return alert("Select an employee first.");
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const coId = session.company_id || 1;
+    if (confirm("Are you sure you want to delete this employee?")) {
+        try {
+            const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`, { method: 'POST' });
+            if (res.ok) {
+                alert("Employee deleted.");
+                currentEmployeeId = null;
+                fetchEmployeesList(coId);
+                resetEmployeeForm(false);
+            }
+        } catch (e) { alert("Delete failed."); }
+    }
+}
+
+// Expose to window immediately
+window.initEmployeesView = initEmployeesView;
+window.resetEmployeeForm = resetEmployeeForm;
+window.saveEmployee = saveEmployee;
+window.deleteEmployee = deleteEmployee;
+window.onEmployeeSelect = onEmployeeSelect;
+window.toggleLeavingDate = toggleLeavingDate;
+
+// --- END OF EMPLOYEES MODULE ---
 
         // SOFTIFYX APP VERSION 2026-v2-SYNC-FIX (NO_RELOAD_ON_DRP)
         console.log("SoftifyX: Logic Loaded (v2)");
@@ -3995,148 +4195,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.removeProfilePhoto = removeProfilePhoto;
-
-    // --- EMPLOYEES MODULE LOGIC (GLOBAL SECTION) ---
-    let allEmployeesData = [];
-    let currentEmployeeId = null;
-
-    function initEmployeesView() {
-        let retries = 0;
-        const checkDOM = setInterval(() => {
-            const list = document.getElementById('employeeList');
-            if (list) {
-                clearInterval(checkDOM);
-                console.log("Employees Module: Ready (Global).");
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const coId = session.company_id || 1;
-                fetchEmployeesList(coId);
-                fetchEmployeeLookups(coId);
-                resetEmployeeForm(false);
-            } else if (++retries >= 30) clearInterval(checkDOM);
-        }, 100);
-    }
-
-    function fetchEmployeeLookups(coId) {
-        fetch(`api/maintain.php?action=get_departments&company_id=${coId}`)
-            .then(res => res.json())
-            .then(depts => {
-                const dSelect = document.getElementById('empDepartment');
-                if (dSelect) {
-                    dSelect.innerHTML = '<option value="">-- Select Department --</option>';
-                    depts.forEach(d => { dSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
-                }
-            }).catch(e => {});
-    }
-
-    function fetchEmployeesList(coId) {
-        fetch(`api/maintain.php?action=get_employees&company_id=${coId}`)
-            .then(res => res.json())
-            .then(data => { allEmployeesData = data; renderEmployeesList(); });
-    }
-
-    function renderEmployeesList() {
-        const list = document.getElementById('employeeList');
-        if (list) list.innerHTML = allEmployeesData.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-    }
-
-    async function onEmployeeSelect(id) {
-        const emp = allEmployeesData.find(e => e.id == id);
-        if (!emp) return;
-        currentEmployeeId = id;
-        const fields = {
-            'empName': emp.name, 'empFatherName': emp.father_name, 'empAddress': emp.address,
-            'empTelephone': emp.telephone, 'empEmail': emp.email, 'empNicNo': emp.nic_no,
-            'empDob': emp.dob, 'empJoiningDate': emp.joining_date, 'empSalary': emp.salary,
-            'empDesignation': emp.designation, 'empDepartment': emp.department_id,
-            'empRemarks': emp.remarks, 'empReference': emp.reference, 'empLeavingDate': emp.leaving_date
-        };
-        Object.keys(fields).forEach(fid => {
-            const el = document.getElementById(fid);
-            if (el) el.value = fields[fid] || (fid === 'empSalary' ? 0 : '');
-        });
-        if (document.getElementById('empJobLeft')) document.getElementById('empJobLeft').checked = (emp.job_left == 1);
-        toggleLeavingDate(emp.job_left == 1);
-        enableEmployeeFields(false);
-        if (document.getElementById('btnEmpSave')) document.getElementById('btnEmpSave').disabled = true;
-    }
-
-    function resetEmployeeForm(isAdd = false) {
-        currentEmployeeId = isAdd ? null : currentEmployeeId;
-        if (!isAdd) {
-            if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
-            enableEmployeeFields(false);
-            if (document.getElementById('btnEmpSave')) document.getElementById('btnEmpSave').disabled = true;
-            if (document.getElementById('employeeList')) document.getElementById('employeeList').value = '';
-            return;
-        }
-        enableEmployeeFields(true);
-        const container = document.getElementById('employeesContainer');
-        if (container) {
-            container.querySelectorAll('input, select, textarea').forEach(i => {
-                if (i.type === 'checkbox') i.checked = false;
-                else if (i.type === 'number') i.value = 0;
-                else i.value = '';
-            });
-        }
-        if (document.getElementById('btnEmpSave')) document.getElementById('btnEmpSave').disabled = false;
-        if (document.getElementById('empName')) document.getElementById('empName').focus();
-    }
-
-    function enableEmployeeFields(enabled) {
-        const fields = ['empName', 'empFatherName', 'empAddress', 'empTelephone', 'empEmail', 'empNicNo', 'empDob', 'empJoiningDate', 'empSalary', 'empDesignation', 'empDepartment', 'empRemarks', 'empReference', 'empJobLeft', 'empLeavingDate'];
-        fields.forEach(fid => { const el = document.getElementById(fid); if (el) el.disabled = !enabled; });
-        if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
-    }
-
-    async function saveEmployee() {
-        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-        const coId = session.company_id || 1;
-        const payload = {
-            id: currentEmployeeId,
-            name: document.getElementById('empName')?.value?.trim(),
-            father_name: document.getElementById('empFatherName')?.value?.trim(),
-            address: document.getElementById('empAddress')?.value?.trim(),
-            telephone: document.getElementById('empTelephone')?.value?.trim(),
-            email: document.getElementById('empEmail')?.value?.trim(),
-            nic_no: document.getElementById('empNicNo')?.value?.trim(),
-            dob: document.getElementById('empDob')?.value,
-            joining_date: document.getElementById('empJoiningDate')?.value,
-            salary: parseFloat(document.getElementById('empSalary')?.value) || 0,
-            designation: document.getElementById('empDesignation')?.value?.trim(),
-            department_id: document.getElementById('empDepartment')?.value,
-            remarks: document.getElementById('empRemarks')?.value?.trim(),
-            reference: document.getElementById('empReference')?.value?.trim(),
-            job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
-            leaving_date: document.getElementById('empLeavingDate')?.value
-        };
-        if (!payload.name) return alert("Employee Name is required!");
-        try {
-            const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.ok) { const result = await res.json(); alert("Employee Profile Saved!"); fetchEmployeesList(coId); onEmployeeSelect(result.id); }
-        } catch (e) { alert("Save failed."); }
-    }
-
-    async function deleteEmployee() {
-        if (!currentEmployeeId) return alert("Select an employee first.");
-        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-        const coId = session.company_id || 1;
-        if (confirm("Delete this employee?")) {
-            try {
-                const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`, { method: 'POST' });
-                if (res.ok) { alert("Employee Deleted."); currentEmployeeId = null; fetchEmployeesList(coId); resetEmployeeForm(false); }
-            } catch (e) { alert("Delete failed."); }
-        }
-    }
-
-    function toggleLeavingDate(checked) {
-        const el = document.getElementById('empLeavingDate');
-        if (el) el.disabled = !checked || (document.getElementById('btnEmpSave') && document.getElementById('btnEmpSave').disabled);
-    }
-
-    // Expose Employee Functions
-    window.initEmployeesView = initEmployeesView;
-    window.onEmployeeSelect = onEmployeeSelect;
-    window.resetEmployeeForm = resetEmployeeForm;
-    window.saveEmployee = saveEmployee;
-    window.deleteEmployee = deleteEmployee;
-    window.toggleLeavingDate = toggleLeavingDate;
