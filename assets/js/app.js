@@ -2737,6 +2737,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 resetEmployeeForm(false);
             } catch (e) {
                 console.error("Employees Load Error:", e);
+                alert("System Error: Could not load employee data.");
             }
         }
 
@@ -2753,7 +2754,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderEmployeesList() {
             const list = document.getElementById('employeeList');
             if (list) {
-                list.innerHTML = allEmployeesData.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+                list.innerHTML = (allEmployeesData || []).map(e => `<option value="${e.id}">${e.name}</option>`).join('');
             }
         }
 
@@ -2873,7 +2874,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function deleteEmployee() {
-            if (!currentEmployeeId) return alert("Select an employee first.");
+            if (!currentEmployeeId) {
+                alert("Select an employee first.");
+                return;
+            }
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
 
@@ -2881,12 +2885,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`, { method: 'POST' });
                     if (res.ok) {
-                        alert("Employee deleted.");
+                        alert("Employee deleted successfully.");
                         currentEmployeeId = null;
                         await fetchEmployeesList(coId);
                         resetEmployeeForm(false);
+                    } else {
+                        alert("Delete failed on server.");
                     }
-                } catch (e) { alert("Delete failed."); }
+                } catch (e) { alert("Delete failed due to connection error."); }
             }
         }
 
