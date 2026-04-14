@@ -2344,7 +2344,9 @@
                         else if (url.includes('financial_year.html')) setTimeout(() => initFinancialYearView(), 10);
                         else if (url.includes('currency.html')) setTimeout(() => initCurrencyView(), 10);
                         else if (url.includes('chart_of_accounts.html')) setTimeout(() => initChartOfAccountsView(), 10);
-                        else if (url.includes('employees.html')) setTimeout(() => initEmployeesView(), 10);
+                        else if (url.includes('employees.html')) {
+                            if (window.initEmployeesView) setTimeout(() => window.initEmployeesView(), 10);
+                        }
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
@@ -2663,7 +2665,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? (window.initEmployeesView || null) : null)));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -2691,7 +2693,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? (window.initEmployeesView || null) : null)));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
                 });
             });

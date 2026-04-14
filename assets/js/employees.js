@@ -8,7 +8,8 @@
     let currentEmployeeId = null;
 
     async function initEmployeesView() {
-        console.log("SoftifyX: [Employees] Init View Starting...");
+        console.log("SoftifyX: [Employees] initEmployeesView called.");
+        alert("Employees Module Ready!");
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const coId = session.company_id || 1;
         
