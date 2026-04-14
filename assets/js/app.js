@@ -3,7 +3,7 @@ let allEmployeesData = [];
 let currentEmployeeId = null;
 
 function initEmployeesView() {
-    console.log("Employees Module Initializing...");
+    console.log("Employees Module: Hardware-Linked Ready.");
     const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
     const coId = session.company_id || 1;
     
@@ -21,7 +21,23 @@ function initEmployeesView() {
     // 2. Load Employees
     fetchEmployeesList(coId);
     
-    // 3. Initial State
+    // 3. Auto-Edit Mode: Unlock when clicking any field
+    const container = document.getElementById('employeesContainer');
+    if (container) {
+        container.onclick = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                if (e.target.disabled) {
+                    console.log("Auto-Edit Mode: Unlocking fields...");
+                    enableEmployeeFields(true);
+                    const saveBtn = document.getElementById('btnEmpSave');
+                    if (saveBtn) saveBtn.disabled = false;
+                    e.target.focus();
+                }
+            }
+        };
+    }
+
+    // 4. Initial State
     resetEmployeeForm(false);
 }
 
@@ -82,6 +98,8 @@ function resetEmployeeForm(isAdd = false) {
         return;
     }
 
+    // Clear and Force Unlock
+    enableEmployeeFields(true);
     const container = document.getElementById('employeesContainer');
     if (container) {
         const inputs = container.querySelectorAll('input, select, textarea');
@@ -89,12 +107,15 @@ function resetEmployeeForm(isAdd = false) {
             if (i.type === 'checkbox') i.checked = false;
             else if (i.type === 'number') i.value = 0;
             else i.value = '';
+            i.disabled = false; // Forced unlock
         });
     }
     
-    enableEmployeeFields(true);
     const saveBtn = document.getElementById('btnEmpSave');
-    if (saveBtn) saveBtn.disabled = false;
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        console.log("Save Button Enabled (Add Mode)");
+    }
     const nameField = document.getElementById('empName');
     if (nameField) nameField.focus();
 }
@@ -103,7 +124,13 @@ function enableEmployeeFields(enabled) {
     const container = document.getElementById('employeesContainer');
     if (container) {
         const inputs = container.querySelectorAll('input, select, textarea');
-        inputs.forEach(i => { i.disabled = !enabled; });
+        inputs.forEach(i => { 
+            i.disabled = !enabled;
+            // Explicitly ensure Telephone and NIC are handled
+            if (i.id === 'empTelephone' || i.id === 'empNicNo') {
+                i.disabled = !enabled;
+            }
+        });
         if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
     }
 }
