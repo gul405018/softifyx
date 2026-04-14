@@ -2714,7 +2714,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let currentEmployeeId = null;
 
         async function initEmployeesView() {
-            console.log("SoftifyX: Init Employees View");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
@@ -2733,7 +2732,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 2. Load Employees
                 await fetchEmployeesList(coId);
                 
-                // 3. Reset UI
+                // 3. Bind Buttons Programmatically (Fix for unresponsive buttons)
+                const bindInterval = setInterval(() => {
+                    const addBtn = document.getElementById('empAddBtn');
+                    if (addBtn) {
+                        clearInterval(bindInterval);
+                        console.log("SoftifyX: Binding Employee Buttons...");
+                        
+                        addBtn.onclick = () => resetEmployeeForm(true);
+                        const saveBtn = document.getElementById('empSaveBtn');
+                        if (saveBtn) saveBtn.onclick = () => saveEmployee();
+                        const cancelBtn = document.getElementById('empCancelBtn');
+                        if (cancelBtn) cancelBtn.onclick = () => resetEmployeeForm(false);
+                        const deleteBtn = document.getElementById('empDeleteBtn');
+                        if (deleteBtn) deleteBtn.onclick = () => deleteEmployee();
+                        
+                        console.log("SoftifyX: Employee Buttons Bound Successfully.");
+                    }
+                }, 100);
+
+                // 4. Reset UI
                 resetEmployeeForm(false);
             } catch (e) {
                 console.error("Employees Load Error:", e);
