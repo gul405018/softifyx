@@ -2790,8 +2790,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetEmployeeForm(isAdd = false) {
-            currentEmployeeId = isAdd ? null : currentEmployeeId;
+            if (isAdd) alert("Add Mode Activated: Form is now editable.");
             
+            currentEmployeeId = isAdd ? null : currentEmployeeId;
             if (!isAdd) {
                 if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
                 enableEmployeeFields(false);
@@ -2822,6 +2823,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveEmployee() {
+            alert("Saving data...");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
@@ -2863,11 +2865,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await fetchEmployeesList(coId);
                     onEmployeeSelect(result.id);
                 } else {
-                    const result = await res.json().catch(() => ({ message: "Server Error" }));
-                    alert("Save failed: " + (result.message || res.statusText));
+                    const errText = await res.text();
+                    alert("Save failed: " + res.statusText);
                 }
             } catch (e) { 
-                alert("Save failed due to a system error: " + e.message); 
+                alert("Save failed due to a system error."); 
             }
         }
 
