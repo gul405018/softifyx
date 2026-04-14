@@ -2661,10 +2661,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
+                    let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors_suppliers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2689,10 +2690,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
+                    let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors_suppliers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg || isEmp));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
                 });
             });
         }
@@ -2911,7 +2913,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedSubCode = null;
         let selectedCustTypeCode = null;
         let selectedCustAccountCode = null;
+        let selectedVendTypeCode = null;
+        let selectedVendAccountCode = null;
         let customerData = []; 
+        let vendorData = [];
         let selectedMainRegionId = null;
         let selectedSubRegionId = null;
         let mainRegionData = [];
@@ -3839,9 +3844,237 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function printCustomers(level) {
-            // Reuse printCOA logic with custom title
-            // Simplified for brevity
-            alert("Printing " + level + " report...");
+            // level should be 'sub' for categories or 'list' for individual profiles
+            window.printCOA(level === 'type' ? 'sub' : 'list');
+        }
+
+        // --- VENDORS MODULE LOGIC ---
+        function initVendorsView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('vendorTypeList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    renderVendorTypeList();
+                    
+                    if (list.options.length > 0) {
+                        list.selectedIndex = 0;
+                        onVendorTypeSelect(list.value);
+                    } else {
+                        resetVendorTypeForm();
+                        resetVendorForm();
+                    }
+                } else if (++retries >= 20) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        function renderVendorTypeList() {
+            const list = document.getElementById('vendorTypeList');
+            if(!list) return;
+            const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+            if(!vendMain) {
+                list.innerHTML = '<option disabled>No Vendor category found in COA</option>';
+                return;
+            }
+            const filtered = coaSub.filter(s => s.main_id == vendMain.id);
+            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
+        }
+
+        function onVendorTypeSelect(code) {
+            selectedVendTypeCode = code;
+            fetchVendorsDetailed(code);
+        }
+
+        async function fetchVendorsDetailed(subCode) {
+            const sub = coaSub.find(s => s.code == subCode);
+            if(!sub) return;
+            try {
+                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}`);
+                vendorData = await res.json();
+                renderVendorList();
+                resetVendorForm();
+            } catch(e) {}
+        }
+
+        function renderVendorList() {
+            const list = document.getElementById('vendorList');
+            if(!list) return;
+            list.innerHTML = vendorData.map(v => `<option value="${v.code}">${v.name}</option>`).join('');
+        }
+
+        async function onVendorSelect(code) {
+            selectedVendAccountCode = code;
+            const vend = vendorData.find(v => v.code == code);
+            if(vend) {
+                document.getElementById('vendAccountCode').value = vend.code;
+                document.getElementById('vendAccountName').value = vend.name;
+                document.getElementById('vendContactPerson').value = vend.contact_person || '';
+                document.getElementById('vendAddress').value = vend.address || '';
+                document.getElementById('vendTelephone').value = vend.telephone || '';
+                document.getElementById('vendMobile').value = vend.mobile || '';
+                document.getElementById('vendFax').value = vend.fax || '';
+                document.getElementById('vendWebsite').value = vend.website || '';
+                document.getElementById('vendEmail').value = vend.email || '';
+                document.getElementById('vendStReg').value = vend.st_reg_no || '';
+                document.getElementById('vendNtn').value = vend.ntn_cnic || '';
+                document.getElementById('vendCreditTerms').value = vend.credit_terms || 'CASH';
+                document.getElementById('vendRemarks').value = vend.remarks || '';
+                enableVendorFields(true);
+            }
+        }
+
+        function enableVendorFields(enabled) {
+            const fields = [
+                'vendAccountCode', 'vendAccountName', 'vendContactPerson', 'vendAddress',
+                'vendTelephone', 'vendMobile', 'vendFax', 'vendWebsite', 'vendEmail', 
+                'vendStReg', 'vendNtn', 'vendCreditTerms', 'vendRemarks'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) el.disabled = !enabled;
+            });
+        }
+
+        async function saveVendorType() {
+            const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+            if(!vendMain) return alert("Main Vendor category not found!");
+
+            const name = prompt("Enter Vendor Type Name:");
+            if(!name) return;
+
+            // Simple auto-code generation
+            const siblings = coaSub.filter(s => s.main_id == vendMain.id);
+            let nextNum = 1;
+            if(siblings.length > 0) {
+                const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(vendMain.code.toString().length)) || 0);
+                nextNum = Math.max(...lastCodes) + 1;
+            }
+            const code = vendMain.code.toString() + nextNum.toString().padStart(2, '0');
+
+            const payload = { main_id: vendMain.id, code, name };
+
+            try {
+                const res = await fetch(`api/maintain.php?action=save_coa_sub`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    alert("Vendor Type saved!");
+                    coaSub.push({ id: data.id, main_id: vendMain.id, code, name });
+                    renderVendorTypeList();
+                }
+            } catch(e) { alert("Save failed"); }
+        }
+
+        async function saveVendor() {
+            if(!selectedVendTypeCode) return alert("Select a Vendor Type first!");
+            const name = document.getElementById('vendAccountName').value.trim();
+            const code = document.getElementById('vendAccountCode').value.trim();
+            if(!name || !code) return alert("Account Code and Name are required!");
+
+            const sub = coaSub.find(s => s.code == selectedVendTypeCode);
+            const payload = {
+                sub_id: sub.id,
+                code: code,
+                name: name,
+                contact_person: document.getElementById('vendContactPerson').value,
+                address: document.getElementById('vendAddress').value,
+                telephone: document.getElementById('vendTelephone').value,
+                mobile: document.getElementById('vendMobile').value,
+                fax: document.getElementById('vendFax').value,
+                website: document.getElementById('vendWebsite').value,
+                email: document.getElementById('vendEmail').value,
+                st_reg_no: document.getElementById('vendStReg').value,
+                ntn_cnic: document.getElementById('vendNtn').value,
+                credit_terms: document.getElementById('vendCreditTerms').value,
+                remarks: document.getElementById('vendRemarks').value
+            };
+
+            const existing = vendorData.find(v => v.code == (selectedVendAccountCode || code));
+            if(existing) payload.id = existing.id;
+
+            try {
+                const res = await fetch(`api/maintain.php?action=save_vendor`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("Vendor profile saved!");
+                    fetchVendorsDetailed(selectedVendTypeCode);
+                }
+            } catch(e) { alert("Save failed"); }
+        }
+
+        async function deleteVendorType() {
+            if (!selectedVendTypeCode) return alert("Select a Vendor Type to delete first.");
+            const sub = coaSub.find(s => s.code == selectedVendTypeCode);
+            if(!sub) return;
+            if(confirm(`Are you sure you want to delete the Vendor Type "${sub.name}"?`)) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Vendor Type deleted.");
+                        coaSub = coaSub.filter(s => s.id != sub.id);
+                        renderVendorTypeList();
+                        resetVendorTypeForm();
+                    }
+                } catch(e) { alert("Delete failed"); }
+            }
+        }
+
+        async function deleteVendor() {
+            if (!selectedVendAccountCode) return alert("Select a Vendor Profile to delete first.");
+            const vend = vendorData.find(v => v.code == selectedVendAccountCode);
+            if(!vend) return;
+            if(confirm(`Are you sure you want to delete the profile for "${vend.name}"?`)) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_vendor&id=${vend.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Vendor Profile deleted.");
+                        fetchVendorsDetailed(selectedVendTypeCode);
+                    }
+                } catch(e) { alert("Delete failed"); }
+            }
+        }
+
+        function resetVendorTypeForm() {
+            document.getElementById('vendorTypeList').value = '';
+            selectedVendTypeCode = null;
+            renderVendorList();
+            resetVendorForm();
+        }
+
+        function resetVendorForm(generate = false) {
+            enableVendorFields(false);
+            const fields = [
+                'vendAccountCode', 'vendAccountName', 'vendContactPerson', 'vendAddress',
+                'vendTelephone', 'vendMobile', 'vendFax', 'vendWebsite', 'vendEmail', 
+                'vendStReg', 'vendNtn', 'vendCreditTerms', 'vendRemarks'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) {
+                    if(f === 'vendCreditTerms') el.value = 'CASH';
+                    else el.value = '';
+                }
+            });
+            document.getElementById('vendorList').value = '';
+            selectedVendAccountCode = null;
+
+            if(generate && selectedVendTypeCode) {
+                const sub = coaSub.find(s => s.code == selectedVendTypeCode);
+                const siblings = vendorData;
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(l => parseInt(l.code.toString().substring(selectedVendTypeCode.toString().length)) || 0);
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                document.getElementById('vendAccountCode').value = selectedVendTypeCode.toString() + nextNum.toString().padStart(3, '0');
+                enableVendorFields(true);
+            }
         }
 
         // Lookup Management Stubs (Can be expanded into mini-popups)
@@ -4104,6 +4337,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.loadSubRegions = loadSubRegions;
         window.findCustomer = findCustomer;
         window.printCustomers = printCustomers;
+
+        window.initVendorsView = initVendorsView;
+        window.onVendorTypeSelect = onVendorTypeSelect;
+        window.onVendorSelect = onVendorSelect;
+        window.saveVendorType = saveVendorType;
+        window.deleteVendorType = deleteVendorType;
+        window.saveVendor = saveVendor;
+        window.deleteVendor = deleteVendor;
+        window.resetVendorTypeForm = resetVendorTypeForm;
+        window.resetVendorForm = resetVendorForm;
         window.manageRegions = manageRegions;
         window.manageSectors = manageSectors;
         window.manageManagers = manageManagers;

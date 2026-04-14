@@ -81,6 +81,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         sendResponse($stmt->fetchAll());
     }
+
+    if ($action === 'get_vendors' && isset($_GET['sub_id'])) {
+        $subId = $_GET['sub_id'];
+        $stmt = $pdo->prepare("
+            SELECT cl.*, v.contact_person, v.address, v.telephone, v.mobile, v.fax, v.email, v.website, 
+                   v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
+            FROM coa_list cl
+            LEFT JOIN vendors v ON cl.id = v.coa_list_id
+            WHERE cl.sub_id = ? AND cl.company_id = ?
+            ORDER BY cl.code ASC
+        ");
+        $stmt->execute([$subId, $company_id]);
+        sendResponse($stmt->fetchAll());
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -253,7 +267,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         sendResponse(['status' => $status, 'id' => $newId]);
     }
-    // (Additional lookups omitted for brevity, but can be added as needed)
+    if ($action === 'save_vendor') {
+        $pdo->beginTransaction();
+        try {
+            $coaId = $data['id'] ?? null;
+            if ($coaId) {
+                $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
+                $stmt->execute([$data['code'], $data['name'], $coaId]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
+                $coaId = $pdo->lastInsertId();
+            }
+
+            // Check if vendor entry exists
+            $stmt = $pdo->prepare("SELECT id FROM vendors WHERE coa_list_id = ?");
+            $stmt->execute([$coaId]);
+            $vendExists = $stmt->fetch();
+
+            if ($vendExists) {
+                $sql = "UPDATE vendors SET 
+                        contact_person = ?, address = ?, telephone = ?, mobile = ?, fax = ?, 
+                        email = ?, website = ?, st_reg_no = ?, ntn_cnic = ?, 
+                        credit_terms = ?, remarks = ?
+                        WHERE coa_list_id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $data['contact_person'], $data['address'], $data['telephone'], $data['mobile'], $data['fax'],
+                    $data['email'], $data['website'], $data['st_reg_no'], $data['ntn_cnic'],
+                    $data['credit_terms'], $data['remarks'], $coaId
+                ]);
+            } else {
+                $sql = "INSERT INTO vendors (
+                        company_id, coa_list_id, contact_person, address, telephone, mobile, 
+                        fax, email, website, st_reg_no, ntn_cnic, credit_terms, remarks
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $company_id, $coaId, $data['contact_person'], $data['address'], $data['telephone'], $data['mobile'],
+                    $data['fax'], $data['email'], $data['website'], $data['st_reg_no'], $data['ntn_cnic'],
+                    $data['credit_terms'], $data['remarks']
+                ]);
+            }
+            $pdo->commit();
+            sendResponse(['status' => 'success', 'id' => $coaId]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -284,6 +346,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'P
 
     if ($action === 'delete_employee' && isset($_GET['id'])) {
         $pdo->prepare("DELETE FROM employees WHERE id = ? AND company_id = ?")->execute([$_GET['id'], $company_id]);
+        sendResponse(['status' => 'success']);
+    }
+
+    if ($action === 'delete_vendor' && isset($_GET['id'])) {
+        $pdo->prepare("DELETE FROM coa_list WHERE id = ? AND company_id = ?")->execute([$_GET['id'], $company_id]);
         sendResponse(['status' => 'success']);
     }
 }
