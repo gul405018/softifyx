@@ -4186,3 +4186,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.removeProfilePhoto = removeProfilePhoto;
+
+        /**
+         * GLOBAL INITIALIZATION
+         * This block starts the entire application, loads navbar/sidebar, 
+         * and initializes all UI components.
+         */
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("SoftifyX: Initializing Application...");
+            
+            try {
+                // 1. Load Navbar
+                const navRes = await fetch('components/navbar.html');
+                if (navRes.ok) {
+                    document.getElementById('navbar-container').innerHTML = await navRes.text();
+                } else {
+                    console.error("Failed to load navbar component.");
+                }
+
+                // 2. Load Sidebar
+                const sideRes = await fetch('components/sidebar.html');
+                if (sideRes.ok) {
+                    document.getElementById('sidebar-container').innerHTML = await sideRes.text();
+                } else {
+                    console.error("Failed to load sidebar component.");
+                }
+
+                // 3. Load Global Logic & Data
+                await loadSavedData();
+                setupDropdowns();
+
+                // 4. Default Content: Load Dashboard if main-content is empty
+                const mainContent = document.getElementById('main-content');
+                if (mainContent && (mainContent.innerHTML.trim() === '' || mainContent.innerHTML.includes('Dynamic Content'))) {
+                    const dashRes = await fetch('components/dashboard.html');
+                    if (dashRes.ok) {
+                        mainContent.innerHTML = await dashRes.text();
+                        updateDashboardSummary(); // Refresh values from loaded data
+                    }
+                }
+
+                console.log("SoftifyX: Initialization Complete.");
+
+            } catch (err) {
+                console.error('Critical initialization error:', err);
+            }
+        });
+

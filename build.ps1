@@ -1,5 +1,10 @@
 $ErrorActionPreference = "Stop"
 
+Write-Output "WARNING: build.ps1 has been deactivated to prevent codebase corruption."
+Write-Output "The script was using hardcoded line numbers that no longer match index.html."
+Write-Output "To re-enable, please update the slicing logic to use markers or regex."
+
+<#
 $html = Get-Content -Path index.html -Raw
 $lines = $html -split "`r`n"
 if ($lines.Count -lt 2) {
@@ -9,6 +14,7 @@ if ($lines.Count -lt 2) {
 
 Write-Output "File loaded, total lines: $($lines.Count)"
 
+# DANGER: These indices are hardcoded and will break if index.html changes!
 $css = $lines[7..1007]
 $navbar = $lines[1013..1204]
 $sidebar = $lines[1207..1244]
@@ -53,29 +59,7 @@ $apiMock =  "`n`n// === API INTEGRATION READINESS ===`n" +
             "        console.error('API Error:', error);`n" +
             "        throw error;`n" +
             "    }`n" +
-            "}`n" +
-            "`n" +
-            "/**`n" +
-            " * Global App Initialization`n" +
-            " * Fetches and injects modular HTML components`n" +
-            " */`n" +
-            "document.addEventListener('DOMContentLoaded', async () => {`n" +
-            "    try {`n" +
-            "        // Load Navbar`n" +
-            "        const navRes = await fetch('components/navbar.html');`n" +
-            "        if(navRes.ok) {`n" +
-            "            document.getElementById('navbar-container').innerHTML = await navRes.text();`n" +
-            "        }`n" +
-            "        `n" +
-            "        // Load Sidebar`n" +
-            "        const sideRes = await fetch('components/sidebar.html');`n" +
-            "        if(sideRes.ok) {`n" +
-            "            document.getElementById('sidebar-container').innerHTML = await sideRes.text();`n" +
-            "        }`n" +
-            "    } catch(err) {`n" +
-            "        console.error('Failed to load components:', err);`n" +
-            "    }`n" +
-            "});`n"
+            "}`n"
 
 $finalJs = @()
 $finalJs += $js
@@ -97,6 +81,7 @@ $newHtml += '    <script src="assets/js/app.js"></script>'
 $newHtml += $lines[2259..2260]
 
 $newHtml | Set-Content -Path index.html
+#>
 
 # Modules
 New-Item -ItemType Directory -Force -Path modules\admin | Out-Null
@@ -104,4 +89,5 @@ New-Item -ItemType Directory -Force -Path modules\inventory | Out-Null
 New-Item -ItemType Directory -Force -Path modules\sales | Out-Null
 New-Item -ItemType Directory -Force -Path modules\purchases | Out-Null
 
-Write-Output "Done restructuring index.html"
+Write-Output "Build process bypassed. Current modular structure is preserved."
+
