@@ -142,18 +142,3 @@
         option:checked { background: #1F4E79 !important; color: white !important; }
     </style>
 </div>
-
-<script>
-    // Layer 2: Self-Triggering Logic
-    (function() {
-        console.log("SoftifyX: [Employees] Self-Trigger Script Active.");
-        var tryInit = setInterval(function() {
-            if (window.initEmployeesView) {
-                clearInterval(tryInit);
-                console.log("SoftifyX: [Employees] Calling initEmployeesView from HTML...");
-                window.initEmployeesView();
-            }
-        }, 50);
-        setTimeout(function() { clearInterval(tryInit); }, 5000);
-    })();
-</script>

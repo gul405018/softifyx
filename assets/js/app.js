@@ -1,13 +1,197 @@
+// === EMPLOYEES MODULE LOGIC (GLOBAL RESET - LINE 1) ===
+let allEmployeesData = [];
+let currentEmployeeId = null;
+
+function initEmployeesView() {
+    alert("Employees Logic Ready!");
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const coId = session.company_id || 1;
+    
+    // 1. Load Departments
+    fetch(`api/maintain.php?action=get_departments&company_id=${coId}`)
+        .then(res => res.json())
+        .then(depts => {
+            const dSelect = document.getElementById('empDepartment');
+            if (dSelect) {
+                dSelect.innerHTML = '<option value="">-- Select Department --</option>';
+                depts.forEach(d => { dSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
+            }
+        }).catch(e => console.error(e));
+
+    // 2. Load Employees
+    fetchEmployeesList(coId);
+    
+    // 3. Bind Buttons (Programmatic)
+    const bindInterval = setInterval(() => {
+        const addBtn = document.getElementById('empAddBtn');
+        if (addBtn) {
+            clearInterval(bindInterval);
+            addBtn.onclick = () => resetEmployeeForm(true);
+            const saveBtn = document.getElementById('empSaveBtn');
+            if (saveBtn) saveBtn.onclick = () => saveEmployee();
+            const cancelBtn = document.getElementById('empCancelBtn');
+            if (cancelBtn) cancelBtn.onclick = () => resetEmployeeForm(false);
+            const deleteBtn = document.getElementById('empDeleteBtn');
+            if (deleteBtn) deleteBtn.onclick = () => deleteEmployee();
+        }
+    }, 100);
+
+    // 4. Initial Lock
+    resetEmployeeForm(false);
+}
+
+function fetchEmployeesList(coId) {
+    fetch(`api/maintain.php?action=get_employees&company_id=${coId}`)
+        .then(res => res.json())
+        .then(data => {
+            allEmployeesData = data;
+            renderEmployeesList();
+        }).catch(e => console.error(e));
+}
+
+function renderEmployeesList() {
+    const list = document.getElementById('employeeList');
+    if (list) {
+        list.innerHTML = allEmployeesData.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+    }
+}
+
+function onEmployeeSelect(id) {
+    const emp = allEmployeesData.find(e => e.id == id);
+    if (!emp) return;
+    currentEmployeeId = id;
+
+    const fields = {
+        'empName': emp.name, 'empFatherName': emp.father_name, 'empAddress': emp.address,
+        'empTelephone': emp.telephone, 'empEmail': emp.email, 'empNicNo': emp.nic_no,
+        'empDob': emp.dob, 'empJoiningDate': emp.joining_date, 'empSalary': emp.salary,
+        'empDesignation': emp.designation, 'empDepartment': emp.department_id,
+        'empRemarks': emp.remarks, 'empReference': emp.reference, 'empLeavingDate': emp.leaving_date
+    };
+    Object.keys(fields).forEach(fid => {
+        const el = document.getElementById(fid);
+        if (el) el.value = fields[fid] || (fid === 'empSalary' ? 0 : '');
+    });
+
+    const jobLeft = document.getElementById('empJobLeft');
+    if (jobLeft) jobLeft.checked = emp.job_left == 1;
+    
+    toggleLeavingDate(emp.job_left == 1);
+    enableEmployeeFields(false);
+    const saveBtn = document.getElementById('empSaveBtn');
+    if (saveBtn) saveBtn.disabled = true;
+}
+
+function toggleLeavingDate(checked) {
+    const el = document.getElementById('empLeavingDate');
+    if (el) el.disabled = !checked || (document.getElementById('empSaveBtn') && document.getElementById('empSaveBtn').disabled);
+}
+
+function resetEmployeeForm(isAdd = false) {
+    currentEmployeeId = isAdd ? null : currentEmployeeId;
+    if (!isAdd) {
+        if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
+        enableEmployeeFields(false);
+        const saveBtn = document.getElementById('empSaveBtn');
+        if (saveBtn) saveBtn.disabled = true;
+        return;
+    }
+
+    const container = document.getElementById('employeesContainer');
+    if (container) {
+        const inputs = container.querySelectorAll('input, select, textarea');
+        inputs.forEach(i => {
+            if (i.type === 'checkbox') i.checked = false;
+            else if (i.type === 'number') i.value = 0;
+            else i.value = '';
+        });
+    }
+    
+    enableEmployeeFields(true);
+    const saveBtn = document.getElementById('empSaveBtn');
+    if (saveBtn) saveBtn.disabled = false;
+    const nameField = document.getElementById('empName');
+    if (nameField) nameField.focus();
+}
+
+function enableEmployeeFields(enabled) {
+    const container = document.getElementById('employeesContainer');
+    if (container) {
+        const inputs = container.querySelectorAll('input, select, textarea');
+        inputs.forEach(i => { i.disabled = !enabled; });
+        if (enabled) toggleLeavingDate(document.getElementById('empJobLeft')?.checked);
+    }
+}
+
+async function saveEmployee() {
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const coId = session.company_id || 1;
+    const payload = {
+        id: currentEmployeeId,
+        name: document.getElementById('empName')?.value?.trim(),
+        father_name: document.getElementById('empFatherName')?.value?.trim(),
+        address: document.getElementById('empAddress')?.value?.trim(),
+        telephone: document.getElementById('empTelephone')?.value?.trim(),
+        email: document.getElementById('empEmail')?.value?.trim(),
+        nic_no: document.getElementById('empNicNo')?.value?.trim(),
+        dob: document.getElementById('empDob')?.value,
+        joining_date: document.getElementById('empJoiningDate')?.value,
+        salary: parseFloat(document.getElementById('empSalary')?.value) || 0,
+        designation: document.getElementById('empDesignation')?.value?.trim(),
+        department_id: document.getElementById('empDepartment')?.value,
+        remarks: document.getElementById('empRemarks')?.value?.trim(),
+        reference: document.getElementById('empReference')?.value?.trim(),
+        job_left: document.getElementById('empJobLeft')?.checked ? 1 : 0,
+        leaving_date: document.getElementById('empLeavingDate')?.value
+    };
+
+    if (!payload.name) return alert("Employee Name is required!");
+
+    try {
+        const res = await fetch(`api/maintain.php?action=save_employee&company_id=${coId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            const result = await res.json();
+            alert("Employee profile saved successfully!");
+            fetchEmployeesList(coId);
+            onEmployeeSelect(result.id);
+        }
+    } catch (e) { alert("Save failed."); }
+}
+
+async function deleteEmployee() {
+    if (!currentEmployeeId) return alert("Select an employee first.");
+    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+    const coId = session.company_id || 1;
+    if (confirm("Are you sure you want to delete this employee?")) {
+        try {
+            const res = await fetch(`api/maintain.php?action=delete_employee&id=${currentEmployeeId}&company_id=${coId}`, { method: 'POST' });
+            if (res.ok) {
+                alert("Employee deleted.");
+                currentEmployeeId = null;
+                fetchEmployeesList(coId);
+                resetEmployeeForm(false);
+            }
+        } catch (e) { alert("Delete failed."); }
+    }
+}
+
+// Expose to window immediately
+window.initEmployeesView = initEmployeesView;
+window.resetEmployeeForm = resetEmployeeForm;
+window.saveEmployee = saveEmployee;
+window.deleteEmployee = deleteEmployee;
+window.onEmployeeSelect = onEmployeeSelect;
+window.toggleLeavingDate = toggleLeavingDate;
+
+// --- END OF EMPLOYEES MODULE ---
+
         // SOFTIFYX APP VERSION 2026-v2-SYNC-FIX (NO_RELOAD_ON_DRP)
         console.log("SoftifyX: Logic Loaded (v2)");
         const sessionDataHeader = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-        let currentUser = sessionDataHeader.username || "Administrator";
-        let companyData = {
-            name: "", address: "", phone: "", fax: "", email: "", website: "", gst: "", ntn: "", dealsIn: ""
-        };
-        
-        let companies = [];
-        let currentNote = "";
         window.isReadOnly = false; // Financial Year Control Flag
         
         let users = [
