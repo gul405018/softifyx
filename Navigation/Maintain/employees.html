@@ -3,27 +3,27 @@
 
     <!-- Sub-header Removed as requested -->
 
-    <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
-        <!-- Left: Employee List -->
-        <div class="employees-sidebar" style="flex: 1.5; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; background: #f8fafc;">
+    <div style="display: flex; gap: 12px; flex: 1; align-items: stretch;">
+        <!-- Left: Employee List (No border/background) -->
+        <div class="employees-sidebar" style="flex: 1.5; display: flex; flex-direction: column; padding: 0 4px;">
             <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase;">Employee List</div>
-            <select id="employeeList" size="20"
+            <select id="employeeList" size="17"
                 style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
                 onchange="onEmployeeSelect(this.value)"></select>
         </div>
-
-        <!-- Right: Employee Details -->
-        <div style="flex: 2; display: flex; flex-direction: column; gap: 10px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px;">
+ 
+        <!-- Right: Employee Details (No border) -->
+        <div style="flex: 2; display: flex; flex-direction: column; gap: 8px; padding: 0 4px;">
             <!-- Buttons Header -->
-            <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 5px;" id="employeeActionButtons">
+            <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 2px;" id="employeeActionButtons">
                 <button class="coa-btn coa-add" id="btnEmpAdd">Add</button>
                 <button class="coa-btn coa-save" id="btnEmpSave" disabled>Save</button>
                 <button class="coa-btn coa-cancel" id="btnEmpCancel">Cancel</button>
                 <button class="coa-btn coa-delete" id="btnEmpDelete">Delete</button>
             </div>
-
-            <!-- Fields Grid -->
-            <div style="display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 8px 12px; align-content: start;">
+ 
+            <!-- Fields Grid (Compact gaps) -->
+            <div style="display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 4px 12px; align-content: start;">
                 
                 <label class="coa-label">Name</label>
                 <input type="text" id="empName" class="coa-input" style="grid-column: span 3;" disabled>
