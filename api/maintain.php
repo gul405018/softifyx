@@ -221,37 +221,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'save_employee') {
-        $status = 'success';
-        $newId = null;
-        if (isset($data['id'])) {
-            $sql = "UPDATE employees SET 
-                    name = ?, father_name = ?, address = ?, telephone = ?, email = ?, nic_no = ?,
-                    dob = ?, joining_date = ?, salary = ?, designation = ?, department_id = ?,
-                    remarks = ?, reference = ?, job_left = ?, leaving_date = ?
-                    WHERE id = ? AND company_id = ?";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                $data['name'], $data['father_name'], $data['address'], $data['telephone'], $data['email'], $data['nic_no'],
-                $data['dob'], $data['joining_date'], $data['salary'], $data['designation'], $data['department_id'],
-                $data['remarks'], $data['reference'], $data['job_left'], $data['leaving_date'],
-                $data['id'], $company_id
-            ]);
-            $newId = $data['id'];
-        } else {
-            $sql = "INSERT INTO employees (
-                    company_id, name, father_name, address, telephone, email, nic_no, 
-                    dob, joining_date, salary, designation, department_id, 
-                    remarks, reference, job_left, leaving_date
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                $company_id, $data['name'], $data['father_name'], $data['address'], $data['telephone'], $data['email'], $data['nic_no'],
-                $data['dob'], $data['joining_date'], $data['salary'], $data['designation'], $data['department_id'],
-                $data['remarks'], $data['reference'], $data['job_left'], $data['leaving_date']
-            ]);
-            $newId = $pdo->lastInsertId();
+        try {
+            $status = 'success';
+            $newId = null;
+
+            // Normalize empty strings to NULL for database compatibility
+            $fields = ['department_id', 'salary', 'dob', 'joining_date', 'leaving_date', 'father_name', 'address', 'telephone', 'email', 'nic_no', 'remarks', 'reference'];
+            foreach ($fields as $f) {
+                if (isset($data[$f]) && trim((string)$data[$f]) === '') {
+                    $data[$f] = null;
+                }
+            }
+
+            if (isset($data['id']) && $data['id']) {
+                $sql = "UPDATE employees SET 
+                        name = ?, father_name = ?, address = ?, telephone = ?, email = ?, nic_no = ?,
+                        dob = ?, joining_date = ?, salary = ?, designation = ?, department_id = ?,
+                        remarks = ?, reference = ?, job_left = ?, leaving_date = ?
+                        WHERE id = ? AND company_id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $data['name'], $data['father_name'], $data['address'], $data['telephone'], $data['email'], $data['nic_no'],
+                    $data['dob'], $data['joining_date'], $data['salary'], $data['designation'], $data['department_id'],
+                    $data['remarks'], $data['reference'], $data['job_left'], $data['leaving_date'],
+                    $data['id'], $company_id
+                ]);
+                $newId = $data['id'];
+            } else {
+                $sql = "INSERT INTO employees (
+                        company_id, name, father_name, address, telephone, email, nic_no, 
+                        dob, joining_date, salary, designation, department_id, 
+                        remarks, reference, job_left, leaving_date
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $company_id, $data['name'], $data['father_name'], $data['address'], $data['telephone'], $data['email'], $data['nic_no'],
+                    $data['dob'], $data['joining_date'], $data['salary'], $data['designation'], $data['department_id'],
+                    $data['remarks'], $data['reference'], $data['job_left'], $data['leaving_date']
+                ]);
+                $newId = $pdo->lastInsertId();
+            }
+            sendResponse(['status' => $status, 'id' => $newId]);
+        } catch (Exception $e) {
+            sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-        sendResponse(['status' => $status, 'id' => $newId]);
     }
     // (Additional lookups omitted for brevity, but can be added as needed)
 }
