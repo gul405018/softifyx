@@ -2790,8 +2790,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetEmployeeForm(isAdd = false) {
-            if (isAdd) alert("Add Mode Activated: Form is now editable.");
-            
             currentEmployeeId = isAdd ? null : currentEmployeeId;
             if (!isAdd) {
                 if (currentEmployeeId) return onEmployeeSelect(currentEmployeeId);
@@ -2823,7 +2821,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveEmployee() {
-            alert("Saving data...");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const coId = session.company_id || 1;
             
@@ -2863,13 +2860,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const result = await res.json();
                     alert("Employee profile saved successfully!");
                     await fetchEmployeesList(coId);
-                    onEmployeeSelect(result.id);
+                    
+                    // Force a small delay to ensure the list is rendered before selecting
+                    setTimeout(() => {
+                        onEmployeeSelect(result.id);
+                    }, 100);
                 } else {
                     const errText = await res.text();
-                    alert("Save failed: " + res.statusText);
+                    console.error("Save failed response:", errText);
+                    alert(`Save failed: ${res.status} ${res.statusText}\nDetails: ${errText.substring(0, 100)}`);
                 }
             } catch (e) { 
-                alert("Save failed due to a system error."); 
+                console.error("Save system error:", e);
+                alert("Save failed due to a system error. Please check your connection."); 
             }
         }
 
