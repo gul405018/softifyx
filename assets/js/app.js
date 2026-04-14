@@ -1,8 +1,11 @@
 // === EMPLOYEES MODULE LOGIC (GLOBAL RESET - LINE 1) ===
+alert("SYSTEM SYNC V15 ATTACHED");
+console.log("SoftifyX: Forced Sync V15 Active");
 let allEmployeesData = [];
 let currentEmployeeId = null;
 
 function initEmployeesView() {
+    console.log("Employees Module Initializing...");
     console.log("Employees Module Initializing...");
     const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
     const coId = session.company_id || 1;
