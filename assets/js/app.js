@@ -2635,7 +2635,8 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Load Navbar
-        const navRes = await fetch('components/navbar.html');
+        const vTag = `v=${Date.now()}`;
+        const navRes = await fetch(`components/navbar.html?${vTag}`);
         if(navRes.ok) {
             document.getElementById('navbar-container').innerHTML = await navRes.text();
             
@@ -2677,7 +2678,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         // Load Sidebar
-        const sideRes = await fetch('components/sidebar.html');
+        const vTag = `v=${Date.now()}`;
+        const sideRes = await fetch(`components/sidebar.html?${vTag}`);
         if(sideRes.ok) {
             document.getElementById('sidebar-container').innerHTML = await sideRes.text();
             
