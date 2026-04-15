@@ -276,7 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$data['code'], $data['name'], $coaId]);
             } else {
                 $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, main_id, sub_id, code, name) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$company_id, $data['main_id'], $data['sub_id'], $data['code'], $data['name']]);
+                $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
                 $coaId = $pdo->lastInsertId();
             }
 
