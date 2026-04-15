@@ -2634,7 +2634,7 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        // Load Navbar with cache busting
+        // Load Navbar
         const vTag = `v=${Date.now()}&force=true`;
         const navRes = await fetch(`components/navbar.html?${vTag}`);
         if(navRes.ok) {
@@ -2646,12 +2646,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 mobileMenuToggle.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    e.stopImmediatePropagation();
+                    e.stopImmediatePropagation(); // Ensure click-outside doesn't catch this instantly
                     navMenuEl.classList.toggle('active');
                 });
             }
 
-            // Attach SPA event listeners to dropdowns
+
+
+            // Attach SPA event listeners to all generic dropdown menus using Popup System
             document.querySelectorAll('.dropdown-item[data-target], .nested-item[data-target]').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -2663,11 +2665,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isVend = (moduleName === "Vendors" || (targetUrl && (targetUrl.includes('vendors.html') || targetUrl.includes('vendors_suppliers.html'))));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
+                    // Close ALL mobile layers
                     const navMenu = document.getElementById('navMenu');
                     if(navMenu) navMenu.classList.remove('active');
                     document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show'));
@@ -2675,12 +2677,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
         
-        // Load Sidebar with SAME vTag variable (no 'const' here to avoid redeclaration error)
-        const sideVTag = `vs=${Date.now()}`;
-        const sideRes = await fetch(`components/sidebar.html?${sideVTag}`);
+        // Load Sidebar
+        const vTag = `v=${Date.now()}&force=true`;
+        const sideRes = await fetch(`components/sidebar.html?${vTag}`);
         if(sideRes.ok) {
             document.getElementById('sidebar-container').innerHTML = await sideRes.text();
             
+            // Attach SPA event listeners to all sidebar menus using Popup System
             document.querySelectorAll('.sidebar-item[data-target]').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -2692,7 +2695,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isVend = (moduleName === "Vendors" || (targetUrl && (targetUrl.includes('vendors.html') || targetUrl.includes('vendors_suppliers.html'))));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
                 });
@@ -2702,7 +2704,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Load Default View FIRST
         await window.loadView('components/dashboard.html');
 
-        // Initialize general app behaviors
+        // Initialize general app variables and behaviors
         init();
 
     } catch(err) {
