@@ -2913,10 +2913,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedSubCode = null;
         let selectedCustTypeCode = null;
         let selectedCustAccountCode = null;
-        let selectedVendTypeId = null;
-        let selectedVendAccountId = null;
-        let selectedVendTypeCode = null; // Still needed for code generation
-        let selectedVendAccountCode = null; // Still needed for code generation
+        let selectedVendTypeCode = null;
+        let selectedVendAccountCode = null;
         let customerData = []; 
         let vendorData = [];
         let selectedMainRegionId = null;
@@ -4007,9 +4005,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             const existing = vendorData.find(v => v.id == (selectedVendAccountId || null));
-            if(existing) {
-                payload.id = existing.coa_list_id || existing.id;
-            }
+            if(existing) payload.id = existing.coa_list_id || existing.id;
 
             try {
                 const res = await fetch(`api/maintain.php?action=save_vendor`, {
