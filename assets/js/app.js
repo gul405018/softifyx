@@ -28,9 +28,6 @@
         let coaSub = [];
         let coaList = [];
         let financialYears = []; // Start empty to ensure fresh cloud data
-        let vendorData = [];
-        let selectedVendTypeID = null;
-        let selectedVendAccountCode = null;
 
         const DEFAULT_COA_MAIN = [];
 
@@ -3881,18 +3878,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             const filtered = coaSub.filter(s => s.main_id == vendMain.id);
-            list.innerHTML = filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
 
-        function onVendorTypeSelect(id) {
-            selectedVendTypeID = id;
-            const sub = coaSub.find(s => s.id == id);
+        function onVendorTypeSelect(code) {
+            selectedVendTypeCode = code;
+            const sub = coaSub.find(s => s.code == code);
             if(sub) {
                 document.getElementById('vendSubTypeCode').value = sub.code;
                 document.getElementById('vendSubName').value = sub.name;
                 enableVendorTypeFields(false);
             }
-            fetchVendorsDetailed(id);
+            fetchVendorsDetailed(code);
         }
 
         function enableVendorTypeFields(enabled) {
@@ -3902,19 +3899,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        async function fetchVendorsDetailed(id) {
-            const sub = coaSub.find(s => s.id == id);
+        async function fetchVendorsDetailed(subCode) {
+            const sub = coaSub.find(s => s.code == subCode);
             if(!sub) return;
             try {
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}`);
                 vendorData = await res.json();
-                if (!Array.isArray(vendorData)) vendorData = [];
                 renderVendorList();
                 resetVendorForm();
-            } catch(e) { 
-                vendorData = [];
-                renderVendorList();
-            }
+            } catch(e) {}
         }
 
         function renderVendorList() {
@@ -3965,7 +3958,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!name || !code) return;
 
             const payload = { main_id: vendMain.id, code, name };
-            const existing = coaSub.find(s => s.id == selectedVendTypeID);
+            const existing = coaSub.find(s => s.code == (selectedVendTypeCode || code));
             if(existing) payload.id = existing.id;
 
             try {
@@ -3988,12 +3981,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveVendor() {
-            if(!selectedVendTypeID) return alert("Select a Vendor Type first!");
+            if(!selectedVendTypeCode) return alert("Select a Vendor Type first!");
             const name = document.getElementById('vendAccountName').value.trim();
             const code = document.getElementById('vendAccountCode').value.trim();
             if(!name || !code) return alert("Account Code and Name are required!");
 
-            const sub = coaSub.find(s => s.id == selectedVendTypeID);
+            const sub = coaSub.find(s => s.code == selectedVendTypeCode);
             const payload = {
                 sub_id: sub.id,
                 code: code,
@@ -4022,20 +4015,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 if(res.ok) {
                     alert("Vendor profile saved!");
-                    fetchVendorsDetailed(selectedVendTypeID);
+                    fetchVendorsDetailed(selectedVendTypeCode);
                 }
             } catch(e) { alert("Save failed"); }
         }
 
         async function deleteVendorType() {
-            if (!selectedVendTypeID) return alert("Select a Vendor Type to delete first.");
+            if (!selectedVendTypeCode) return alert("Select a Vendor Type to delete first.");
             
             // CONSTRAINT: Check if category has vendors before deleting
             if (vendorData && vendorData.length > 0) {
                 return alert("Cannot delete this Category because it still contains Vendor records. Delete all vendors first!");
             }
 
-            const sub = coaSub.find(s => s.id == selectedVendTypeID);
+            const sub = coaSub.find(s => s.code == selectedVendTypeCode);
             if(!sub) return;
             if(confirm(`Are you sure you want to delete the Vendor Type "${sub.name}"?`)) {
                 try {
@@ -4059,14 +4052,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const res = await fetch(`api/maintain.php?action=delete_vendor&id=${vend.id}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Vendor Profile deleted.");
-                        fetchVendorsDetailed(selectedVendTypeID);
+                        fetchVendorsDetailed(selectedVendTypeCode);
                     }
                 } catch(e) { alert("Delete failed"); }
             }
         }
 
         function resetVendorTypeForm(generate = false) {
-            selectedVendTypeID = null;
+            selectedVendTypeCode = null;
             enableVendorTypeFields(generate);
             if(generate) {
                 const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
@@ -4108,18 +4101,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectedVendAccountCode = null;
 
             if(generate) {
-                if(!selectedVendTypeID) {
+                if(!selectedVendTypeCode) {
                     alert("Select a Vendor Type first!");
                     return;
                 }
-                const sub = coaSub.find(s => s.id == selectedVendTypeID);
+                const sub = coaSub.find(s => s.code == selectedVendTypeCode);
                 const siblings = vendorData;
                 let nextNum = 1;
                 if(siblings.length > 0) {
-                    const lastCodes = siblings.map(l => parseInt(l.code.toString().substring(sub.code.toString().length)) || 0);
+                    const lastCodes = siblings.map(l => parseInt(l.code.toString().substring(selectedVendTypeCode.toString().length)) || 0);
                     nextNum = Math.max(...lastCodes) + 1;
                 }
-                document.getElementById('vendAccountCode').value = sub.code.toString() + nextNum.toString().padStart(3, '0');
+                document.getElementById('vendAccountCode').value = selectedVendTypeCode.toString() + nextNum.toString().padStart(3, '0');
                 document.getElementById('vendAccountName').focus();
             }
         }
