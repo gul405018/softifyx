@@ -3857,6 +3857,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     clearInterval(checkAndRender);
                     renderVendorTypeList();
                     
+                    // AUTO-SELECT FIRST ITEM IF AVAILABLE
                     if (list.options.length > 0) {
                         list.selectedIndex = 0;
                         onVendorTypeSelect(list.value);
@@ -3864,7 +3865,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         resetVendorTypeForm();
                         resetVendorForm();
                     }
-                } else if (++retries >= 20) clearInterval(checkAndRender);
+                } else if (++retries >= 30) clearInterval(checkAndRender); // Increased safety margin
             }, 100);
         }
 
@@ -4021,6 +4022,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function deleteVendorType() {
             if (!selectedVendTypeCode) return alert("Select a Vendor Type to delete first.");
+            
+            // CONSTRAINT: Check if category has vendors before deleting
+            if (vendorData && vendorData.length > 0) {
+                return alert("Cannot delete this Category because it still contains Vendor records. Delete all vendors first!");
+            }
+
             const sub = coaSub.find(s => s.code == selectedVendTypeCode);
             if(!sub) return;
             if(confirm(`Are you sure you want to delete the Vendor Type "${sub.name}"?`)) {
@@ -4143,6 +4150,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 resetVendorForm();
             }
         });
+
+        // EXPOSE VENDORS TO GLOBAL WINDOW SCOPE (Fixed Scope Issues)
+        window.initVendorsView = initVendorsView;
+        window.onVendorTypeSelect = onVendorTypeSelect;
+        window.onVendorSelect = onVendorSelect;
+        window.saveVendorType = saveVendorType;
+        window.saveVendor = saveVendor;
+        window.deleteVendorType = deleteVendorType;
+        window.deleteVendor = deleteVendor;
+        window.resetVendorTypeForm = resetVendorTypeForm;
+        window.resetVendorForm = resetVendorForm;
+        window.findVendor = findVendor;
+        window.printVendors = printVendors;
 
         // Lookup Management Stubs (Can be expanded into mini-popups)
         // Regions Module Logic
