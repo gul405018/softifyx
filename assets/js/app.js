@@ -3882,7 +3882,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function onVendorTypeSelect(code) {
             selectedVendTypeCode = code;
+            const sub = coaSub.find(s => s.code == code);
+            if(sub) {
+                document.getElementById('vendSubTypeCode').value = sub.code;
+                document.getElementById('vendSubName').value = sub.name;
+                enableVendorTypeFields(false);
+            }
             fetchVendorsDetailed(code);
+        }
+
+        function enableVendorTypeFields(enabled) {
+            ['vendSubTypeCode', 'vendSubName'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.disabled = !enabled;
+            });
         }
 
         async function fetchVendorsDetailed(subCode) {
@@ -3937,21 +3950,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function saveVendorType() {
             const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
-            if(!vendMain) return alert("Main Vendor category not found!");
+            if(!vendMain) return;
 
-            const name = prompt("Enter Vendor Type Name:");
-            if(!name) return;
-
-            // Simple auto-code generation
-            const siblings = coaSub.filter(s => s.main_id == vendMain.id);
-            let nextNum = 1;
-            if(siblings.length > 0) {
-                const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(vendMain.code.toString().length)) || 0);
-                nextNum = Math.max(...lastCodes) + 1;
-            }
-            const code = vendMain.code.toString() + nextNum.toString().padStart(2, '0');
+            const name = document.getElementById('vendSubName').value.trim();
+            const code = document.getElementById('vendSubTypeCode').value.trim();
+            if(!name || !code) return;
 
             const payload = { main_id: vendMain.id, code, name };
+            const existing = coaSub.find(s => s.code == (selectedVendTypeCode || code));
+            if(existing) payload.id = existing.id;
 
             try {
                 const res = await fetch(`api/maintain.php?action=save_coa_sub`, {
@@ -3961,11 +3968,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 if(res.ok) {
                     const data = await res.json();
-                    alert("Vendor Type saved!");
-                    coaSub.push({ id: data.id, main_id: vendMain.id, code, name });
+                    if(!existing) coaSub.push({ id: data.id, main_id: vendMain.id, code, name });
+                    else {
+                        existing.code = code;
+                        existing.name = name;
+                    }
                     renderVendorTypeList();
+                    resetVendorTypeForm();
                 }
-            } catch(e) { alert("Save failed"); }
+            } catch(e) {}
         }
 
         async function saveVendor() {
@@ -4040,15 +4051,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function resetVendorTypeForm() {
-            document.getElementById('vendorTypeList').value = '';
+        function resetVendorTypeForm(generate = false) {
             selectedVendTypeCode = null;
+            enableVendorTypeFields(generate);
+            if(generate) {
+                const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+                if(vendMain) {
+                    const siblings = coaSub.filter(s => s.main_id == vendMain.id);
+                    let nextNum = 1;
+                    if(siblings.length > 0) {
+                        const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(vendMain.code.toString().length)) || 0);
+                        nextNum = Math.max(...lastCodes) + 1;
+                    }
+                    document.getElementById('vendSubTypeCode').value = vendMain.code.toString() + nextNum.toString().padStart(2, '0');
+                }
+                document.getElementById('vendSubName').value = '';
+                document.getElementById('vendSubName').focus();
+            } else {
+                document.getElementById('vendSubTypeCode').value = '';
+                document.getElementById('vendSubName').value = '';
+            }
+            document.getElementById('vendorTypeList').value = '';
             renderVendorList();
             resetVendorForm();
         }
 
         function resetVendorForm(generate = false) {
-            enableVendorFields(false);
+            enableVendorFields(generate);
             const fields = [
                 'vendAccountCode', 'vendAccountName', 'vendContactPerson', 'vendAddress',
                 'vendTelephone', 'vendMobile', 'vendFax', 'vendWebsite', 'vendEmail', 
@@ -4064,7 +4093,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('vendorList').value = '';
             selectedVendAccountCode = null;
 
-            if(generate && selectedVendTypeCode) {
+            if(generate) {
+                if(!selectedVendTypeCode) {
+                    alert("Select a Vendor Type first!");
+                    return;
+                }
                 const sub = coaSub.find(s => s.code == selectedVendTypeCode);
                 const siblings = vendorData;
                 let nextNum = 1;
@@ -4073,9 +4106,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                     nextNum = Math.max(...lastCodes) + 1;
                 }
                 document.getElementById('vendAccountCode').value = selectedVendTypeCode.toString() + nextNum.toString().padStart(3, '0');
-                enableVendorFields(true);
+                document.getElementById('vendAccountName').focus();
             }
         }
+
+        function findVendor() {
+            const term = prompt("Enter Account Name or Code to find:");
+            if (!term) return;
+            const res = vendorData.find(v => v.name.toLowerCase().includes(term.toLowerCase()) || v.code.includes(term));
+            if (res) {
+                document.getElementById('vendorList').value = res.code;
+                onVendorSelect(res.code);
+            } else {
+                alert("Vendor not found in current category.");
+            }
+        }
+
+        function printVendors(type) {
+            window.printCOA(type === 'type' ? 'sub' : 'list');
+        }
+
+        // Global Key Listeners for Vendors
+        document.addEventListener('keydown', (e) => {
+            const container = document.getElementById('vendorsContainer');
+            if (!container) return; // Only active when module is open
+            
+            if (e.ctrlKey && e.key.toLowerCase() === 'n') {
+                e.preventDefault();
+                resetVendorForm(true);
+            }
+            if (e.ctrlKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                saveVendor();
+            }
+            if (e.key === 'Escape') {
+                resetVendorForm();
+            }
+        });
 
         // Lookup Management Stubs (Can be expanded into mini-popups)
         // Regions Module Logic
