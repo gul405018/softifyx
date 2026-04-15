@@ -36,8 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     // --- Customers & Lookups ---
-    if ($action === 'get_customers' && isset($_GET['sub_id'])) {
-        $subId = $_GET['sub_id'];
         $stmt = $pdo->prepare("
             SELECT cl.*, c.contact_person, c.address, c.region_id, c.sub_region_id, 
                    c.telephone, c.mobile, c.fax, c.email, c.website, 
@@ -45,12 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                    c.credit_limit, c.credit_terms, c.remarks
             FROM coa_list cl
             LEFT JOIN customers c ON cl.id = c.coa_list_id
-            WHERE cl.sub_id = ? AND cl.company_id = ?
+            WHERE cl.sub_id = ? AND (cl.company_id = ? OR cl.company_id = 0)
             ORDER BY cl.code ASC
         ");
         $stmt->execute([$subId, $company_id]);
         sendResponse($stmt->fetchAll());
-    }
 
     if ($action === 'get_regions') {
         $stmt = $pdo->prepare("SELECT * FROM regions WHERE company_id = ? ORDER BY name ASC");
@@ -89,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                    v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
             FROM coa_list cl
             LEFT JOIN vendors v ON cl.id = v.coa_list_id
-            WHERE cl.sub_id = ? AND cl.company_id = ?
+            WHERE cl.sub_id = ? AND (cl.company_id = ? OR cl.company_id = 0)
             ORDER BY cl.code ASC
         ");
         $stmt->execute([$subId, $company_id]);
