@@ -2635,8 +2635,7 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Load Navbar
-        const vTag = `v=${Date.now()}&force=true`;
-        const navRes = await fetch(`components/navbar.html?${vTag}`);
+        const navRes = await fetch('components/navbar.html');
         if(navRes.ok) {
             document.getElementById('navbar-container').innerHTML = await navRes.text();
             
@@ -2662,7 +2661,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let isVend = (moduleName === "Vendors" || (targetUrl && (targetUrl.includes('vendors.html') || targetUrl.includes('vendors_suppliers.html'))));
+                    let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
@@ -2678,8 +2677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         // Load Sidebar
-        const vTag = `v=${Date.now()}&force=true`;
-        const sideRes = await fetch(`components/sidebar.html?${vTag}`);
+        const sideRes = await fetch('components/sidebar.html');
         if(sideRes.ok) {
             document.getElementById('sidebar-container').innerHTML = await sideRes.text();
             
@@ -2692,7 +2690,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
-                    let isVend = (moduleName === "Vendors" || (targetUrl && (targetUrl.includes('vendors.html') || targetUrl.includes('vendors_suppliers.html'))));
+                    let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
