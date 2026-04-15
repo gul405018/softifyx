@@ -3853,11 +3853,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             let retries = 0;
             const checkAndRender = setInterval(() => {
                 const list = document.getElementById('vendorTypeList');
-                // Ensure coaSub and coaList are also available before proceeding
-                if (list && coaSub.length > 0) {
+                if (list) {
                     clearInterval(checkAndRender);
                     renderVendorTypeList();
                     
+                    // AUTO-SELECT FIRST ITEM IF AVAILABLE
                     if (list.options.length > 0) {
                         list.selectedIndex = 0;
                         onVendorTypeSelect(list.value);
@@ -3865,7 +3865,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         resetVendorTypeForm();
                         resetVendorForm();
                     }
-                } else if (++retries >= 50) clearInterval(checkAndRender);
+                } else if (++retries >= 30) clearInterval(checkAndRender); // Increased safety margin
             }, 100);
         }
 
@@ -3901,29 +3901,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function fetchVendorsDetailed(subCode) {
             const sub = coaSub.find(s => s.code == subCode);
-            if(!sub) {
-                vendorData = [];
-                renderVendorList();
-                return;
-            }
+            if(!sub) return;
             try {
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}`);
                 vendorData = await res.json();
-                
-                // FALLBACK: If API returns empty, check global coaList (though API should handle cl.company_id=0 now)
-                if ((!vendorData || vendorData.length === 0) && coaList) {
-                    const localItems = coaList.filter(l => l.sub_id == sub.id);
-                    if (localItems.length > 0) {
-                        vendorData = localItems;
-                    }
-                }
-
                 renderVendorList();
                 resetVendorForm();
-            } catch(e) {
-                vendorData = [];
-                renderVendorList();
-            }
+            } catch(e) {}
         }
 
         function renderVendorList() {
