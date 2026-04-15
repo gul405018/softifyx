@@ -2664,13 +2664,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
+                    
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
+                    let isMaintain = (targetUrl && targetUrl.includes('Navigation/Maintain/'));
+                    
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp) ? 'medium' : false);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isMaintain ? 'medium' : false);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2693,13 +2696,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
+                    
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
+                    let isMaintain = (targetUrl && targetUrl.includes('Navigation/Maintain/'));
+                    
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp) ? 'medium' : false);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isMaintain ? 'medium' : false);
                 });
             });
         }
