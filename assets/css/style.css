@@ -829,6 +829,11 @@
             width: 95% !important;
         }
 
+        .modal-container.modal-medium {
+            max-width: 1000px !important;
+            width: 92% !important;
+        }
+
         .employees-sidebar {
             min-width: 250px !important;
             max-width: 350px !important;

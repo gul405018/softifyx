@@ -433,12 +433,15 @@
             });
         }
 
-        function openModal(title, content, isWide = false, moduleKey = null) {
+        function openModal(title, content, size = false, moduleKey = null) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
-            if (isWide) container.classList.add('modal-wide');
-            else container.classList.remove('modal-wide');
+            // Cleanup classes
+            container.classList.remove('modal-wide', 'modal-medium');
+            
+            if (size === 'wide' || size === true) container.classList.add('modal-wide');
+            else if (size === 'medium') container.classList.add('modal-medium');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
@@ -465,12 +468,14 @@
             document.getElementById('modalOverlay').classList.remove('active');
         }
 
-        function openSecondaryModal(title, content, isWide = false, moduleKey = null) {
+        function openSecondaryModal(title, content, size = false, moduleKey = null) {
             const overlay = document.getElementById('modalOverlay2');
             const container = document.getElementById('modalContainer2');
             
-            if (isWide) container.classList.add('modal-wide');
-            else container.classList.remove('modal-wide');
+            container.classList.remove('modal-wide', 'modal-medium');
+            
+            if (size === 'wide' || size === true) container.classList.add('modal-wide');
+            else if (size === 'medium') container.classList.add('modal-medium');
             
             const dataModuleTag = moduleKey || title.text;
             
@@ -2304,7 +2309,7 @@
             card.querySelector('button').onclick = close;
         }
 
-        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+        async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, size = false) {
             try {
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
@@ -2333,7 +2338,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
+                    openModal({ icon: titleIcon, text: titleText }, html, size, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -2349,13 +2354,13 @@
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
                         '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found</h3><p>' + url + ' does not exist.</p></div>',
-                        isWide
+                        size
                     );
                 }
             } catch (err) { console.error(err); }
         }
 
-        async function openSecondaryModularPopup(url, titleIcon, titleText, initCallback, moduleName, isWide = false) {
+        async function openSecondaryModularPopup(url, titleIcon, titleText, initCallback, moduleName, size = false) {
             try {
                 const activeModuleKey = moduleName || titleText;
                 if (activeModuleKey && !checkUserRights(activeModuleKey)) {
@@ -2367,7 +2372,7 @@
                 const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}${cb}`);
                 if (res.ok) {
                     let html = await res.text();
-                    openSecondaryModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
+                    openSecondaryModal({ icon: titleIcon, text: titleText }, html, size, activeModuleKey);
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
                     }
@@ -2665,7 +2670,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, 'medium');
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2694,7 +2699,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, 'medium');
                 });
             });
         }
@@ -4322,13 +4327,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetSubRegionForm = resetSubRegionForm;
 
         function manageRegions() {
-            window.openSecondaryModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', true);
+            window.openSecondaryModularPopup('Navigation/Maintain/customer_regions.html', 'fa-map-marker-alt', 'Manage Regions', initRegionsView, 'Customer Regions', 'medium');
         }
         function manageSectors() {
-            window.openSecondaryModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Sectors', initSectorsView, 'Business Sectors', true);
+            window.openSecondaryModularPopup('Navigation/Maintain/business_sectors.html', 'fa-briefcase', 'Manage Sectors', initSectorsView, 'Business Sectors', 'medium');
         }
         function manageManagers() {
-            window.openSecondaryModularPopup('Navigation/Administrator/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', true);
+            window.openSecondaryModularPopup('Navigation/Administrator/user_rights.html', 'fa-users-cog', 'User Management', initUserRightsView, 'Account Managers', 'medium');
         }
 
         // Sector Module Logic
