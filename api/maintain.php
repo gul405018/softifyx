@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
             $stmt->execute([$data['code'], $data['name'], $data['id']]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, main_id, sub_id, code, name) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
             $newId = $pdo->lastInsertId();
         }
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
                 $stmt->execute([$data['code'], $data['name'], $coaId]);
             } else {
-                $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, main_id, sub_id, code, name) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
                 $coaId = $pdo->lastInsertId();
             }
@@ -275,8 +275,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
                 $stmt->execute([$data['code'], $data['name'], $coaId]);
             } else {
-                $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
+                $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, main_id, sub_id, code, name) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$company_id, $data['main_id'], $data['sub_id'], $data['code'], $data['name']]);
                 $coaId = $pdo->lastInsertId();
             }
 

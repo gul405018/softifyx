@@ -3916,10 +3916,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             list.innerHTML = vendorData.map(v => `<option value="${v.code}">${v.name}</option>`).join('');
         }
 
-        async function onVendorSelect(code) {
-            selectedVendAccountCode = code;
-            const vend = vendorData.find(v => v.code == code);
+        async function onVendorSelect(codeOrId) {
+            selectedVendAccountCode = codeOrId;
+            // Support both code-based and ID-based lookup for maximum reliability
+            const vend = vendorData.find(v => v.code == codeOrId || v.id == codeOrId);
             if(vend) {
+                // Ensure the global code is updated to the found record's actual code
+                selectedVendAccountCode = vend.code;
                 document.getElementById('vendAccountCode').value = vend.code;
                 document.getElementById('vendAccountName').value = vend.name;
                 document.getElementById('vendContactPerson').value = vend.contact_person || '';
@@ -3988,6 +3991,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const sub = coaSub.find(s => s.code == selectedVendTypeCode);
             const payload = {
+                main_id: sub.main_id,
                 sub_id: sub.id,
                 code: code,
                 name: name,
