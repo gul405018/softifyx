@@ -2678,9 +2678,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let isMaintain = (targetUrl && targetUrl.includes('Navigation/Maintain/'));
-                    
+                    let pathLower = (targetUrl || "").toLowerCase().replace(/\\/g, '/');
+                    let isMaintain = pathLower.includes('navigation/maintain/');
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
+                    
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isMaintain ? 'medium' : false);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -2710,9 +2711,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let isMaintain = (targetUrl && targetUrl.includes('Navigation/Maintain/'));
-                    
+                    let pathLower = (targetUrl || "").toLowerCase().replace(/\\/g, '/');
+                    let isMaintain = pathLower.includes('navigation/maintain/');
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
+                    
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isMaintain ? 'medium' : false);
                 });
             });
@@ -3943,7 +3945,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const coId = session.company_id || 1;
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&company_id=${coId}`);
                 vendorData = await res.json();
-                console.info(`Vendors loaded: ${vendorData.length} records for SubID ${sub.id}`);
+                
+                // FALLBACK: If specific sub-category is empty, try a broader search in the main category
+                if (vendorData.length === 0) {
+                    const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+                    if (vendMain) {
+                        const fallRes = await fetch(`api/maintain.php?action=get_vendors&main_id=${vendMain.id}&company_id=${coId}`);
+                        const fallData = await fallRes.json();
+                        if (fallData.length > 0) {
+                            console.info(`No specific records for SubID ${sub.id}, but found ${fallData.length} in MainID ${vendMain.id}. Showing all.`);
+                            vendorData = fallData;
+                        }
+                    }
+                }
+
+                console.info(`Vendors loaded: ${vendorData.length} records. Context: SubID ${sub.id}`);
                 renderVendorList();
                 resetVendorForm();
             } catch(e) {}

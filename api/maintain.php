@@ -85,17 +85,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         sendResponse($stmt->fetchAll());
     }
 
-    if ($action === 'get_vendors' && isset($_GET['sub_id'])) {
-        $subId = (int)$_GET['sub_id'];
-        $stmt = $pdo->prepare("
-            SELECT cl.*, v.contact_person, v.address, v.telephone, v.mobile, v.fax, v.email, v.website, 
-                   v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
-            FROM coa_list cl
-            LEFT JOIN vendors v ON cl.id = v.coa_list_id
-            WHERE cl.sub_id = ? AND cl.company_id = ?
-            ORDER BY cl.code ASC
-        ");
-        $stmt->execute([$subId, $company_id]);
+    if ($action === 'get_vendors' && (isset($_GET['sub_id']) || isset($_GET['main_id']))) {
+        $subId = isset($_GET['sub_id']) ? (int)$_GET['sub_id'] : null;
+        $mainId = isset($_GET['main_id']) ? (int)$_GET['main_id'] : null;
+        
+        $sql = "SELECT cl.*, v.contact_person, v.address, v.telephone, v.mobile, v.fax, v.email, v.website, 
+                       v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
+                FROM coa_list cl
+                LEFT JOIN vendors v ON cl.id = v.coa_list_id ";
+        
+        if ($subId) {
+            $stmt = $pdo->prepare($sql . "WHERE cl.sub_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
+            $stmt->execute([$subId, $company_id]);
+        } else if ($mainId) {
+            // Broader search: all sub-accounts under this main_id
+            $stmt = $pdo->prepare($sql . "JOIN coa_sub cs ON cl.sub_id = cs.id 
+                                          WHERE cs.main_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
+            $stmt->execute([$mainId, $company_id]);
+        }
         sendResponse($stmt->fetchAll());
     }
 }
