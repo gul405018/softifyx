@@ -1,3 +1,17 @@
+        // --- POPUP SIZE STANDARDIZATION ---
+        // Force all maintenance modules to use a consistent 1000px landscape layout
+        const originalOpenModularPopup = window.openModularPopup;
+        window.openModularPopup = function(title, content, options = {}) {
+            const forcedOptions = {
+                ...options,
+                width: '1000px',
+                maxWidth: '1000px',
+                maxHeight: '85vh',
+                className: (options.className || '') + ' erp-standard-modal'
+            };
+            return originalOpenModularPopup(title, content, forcedOptions);
+        };
+
         // SOFTIFYX APP VERSION 2026-v2-SYNC-FIX (NO_RELOAD_ON_DRP)
         console.log("SoftifyX: Logic Loaded (v2)");
         const sessionDataHeader = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
@@ -3630,24 +3644,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&sub_code=${subCode}&company_id=${coId}`);
                 customerData = await res.json();
                 
-                // FALLBACK: Broader search if empty
-                if (customerData.length === 0) {
-                    const custMain = coaMain.find(m => {
-                        const n = m.name.toLowerCase();
-                        return n.includes('customer') || n.includes('debtor') || 
-                               n.includes('receivable') || n.includes('recevable') ||
-                               n.includes('denay walay') || n.includes('clients');
-                    });
-                    if (custMain) {
-                        const fallRes = await fetch(`api/maintain.php?action=get_customers&main_id=${custMain.id}&company_id=${coId}`);
-                        const fallData = await fallRes.json();
-                        if (fallData.length > 0) {
-                            console.info(`Deep discovery found ${fallData.length} customers in Main Category.`);
-                            customerData = fallData;
-                        }
-                    }
-                }
-
                 console.info(`Customers loaded: ${customerData.length} records.`);
                 renderCustomerList();
                 resetCustomerForm();
