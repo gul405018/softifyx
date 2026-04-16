@@ -3958,7 +3958,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(sub) {
                 document.getElementById('vendSubTypeCode').value = sub.code;
                 document.getElementById('vendSubName').value = sub.name;
-                enableVendorTypeFields(false);
+                document.getElementById('vendSubTypeCode').disabled = false;
+                document.getElementById('vendSubName').disabled = false;
             }
             fetchVendorsDetailed(code);
         }
@@ -3979,22 +3980,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&sub_code=${subCode}&company_id=${coId}`);
                 vendorData = await res.json();
                 
-                // FALLBACK: Broader search if specific sub-category is empty
+                // UNIFIED LOGIC: Match Customer module pattern (Only use prefix matching fallback, no hidden keywords)
                 if (vendorData.length === 0) {
-                    const vendMain = coaMain.find(m => {
-                        const n = m.name.toLowerCase();
-                        return n.includes('vendor') || n.includes('supplier') || 
-                               n.includes('creditor') || n.includes('payable') || 
-                               n.includes('lenay walay') || n.includes('suplyer');
-                    });
-                    if (vendMain) {
-                        const fallRes = await fetch(`api/maintain.php?action=get_vendors&main_id=${vendMain.id}&company_id=${coId}`);
-                        const fallData = await fallRes.json();
-                        if (fallData.length > 0) {
-                            console.info(`Deep discovery found ${fallData.length} vendors in Main Category.`);
-                            vendorData = fallData;
-                        }
-                    }
+                   console.info("No specific vendors found for this sub-account.");
                 }
 
                 console.info(`Vendors loaded: ${vendorData.length} records.`);
