@@ -2347,11 +2347,7 @@
                         'Chart of Accounts', 'Customers', 'Vendors/Suppliers', 
                         'Bank Accounts', 'Inventory Opening Balances', 
                         'Accounts Opening Balances', 'Chart Of Inventory',
-                        'Inventory Brands', 'Inventory Locations', 'Item Price Settings',
-                        'Item Sales Tax Rates', 'Item Pre-Order Levels', 
-                        'Item Cost Valuation Method', 'Chart Of Services',
-                        'Voucher Posting Preferences', 'Inventory Movement Settings',
-                        'Customer Regions', 'Employees', 'Jobs'
+                        'Item Price Settings', 'Chart Of Services', 'Employees', 'Jobs'
                     ];
                     
                     let size = false;
