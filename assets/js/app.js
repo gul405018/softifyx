@@ -435,12 +435,13 @@
             });
         }
 
-        function openModal(title, content, isWide = false, moduleKey = null) {
+        function openModal(title, content, size = false, moduleKey = null) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
-            if (isWide) container.classList.add('modal-wide');
-            else container.classList.remove('modal-wide');
+            container.classList.remove('modal-wide', 'modal-medium');
+            if (size === 'wide' || size === true) container.classList.add('modal-wide');
+            else if (size === 'medium') container.classList.add('modal-medium');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
@@ -2335,7 +2336,29 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
+                    // Categorize Modules by Size
+                    const wideModules = [
+                        'Purchase Orders', 'Sales Tax Invoices', 'Sale Orders', 
+                        'Delivery Challans', 'General Journal Voucher',
+                        'Cash Payments', 'Bank Payments', 'Cash Receipts', 'Bank Receipts'
+                    ];
+
+                    const mediumModules = [
+                        'Chart of Accounts', 'Customers', 'Vendors/Suppliers', 
+                        'Bank Accounts', 'Inventory Opening Balances', 
+                        'Accounts Opening Balances', 'Chart Of Inventory',
+                        'Inventory Brands', 'Inventory Locations', 'Item Price Settings',
+                        'Item Sales Tax Rates', 'Item Pre-Order Levels', 
+                        'Item Cost Valuation Method', 'Chart Of Services',
+                        'Voucher Posting Preferences', 'Inventory Movement Settings',
+                        'Customer Regions', 'Employees', 'Jobs'
+                    ];
+                    
+                    let size = false;
+                    if (wideModules.includes(moduleName)) size = 'wide';
+                    else if (mediumModules.includes(moduleName)) size = 'medium';
+
+                    openModal({ icon: titleIcon, text: titleText }, html, size || isWide, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);

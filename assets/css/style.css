@@ -829,6 +829,12 @@
             width: 95% !important;
         }
 
+        .modal-container.modal-medium {
+            max-width: 1000px !important;
+            width: 95% !important;
+            height: 650px !important; /* Standardized height for Maintain forms */
+        }
+
         .employees-sidebar {
             min-width: 250px !important;
             max-width: 350px !important;
