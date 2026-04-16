@@ -3590,9 +3590,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderCustomerTypeList() {
             const list = document.getElementById('customerTypeList');
             if(!list) return;
-            // Filter COA Sub Accounts that belong to "Customers" (typically a main account)
-            // For now, let's look for a main account named "Customers" or "Sundry Debtors"
-            const custMain = coaMain.find(m => m.name.toLowerCase().includes('customer') || m.name.toLowerCase().includes('debtor'));
+            // Keywords for Customers / Receivables hierarchy
+            const custMain = coaMain.find(m => {
+                const name = m.name.toLowerCase();
+                return name.includes('customer') || name.includes('debtor') || 
+                       name.includes('receivable') || name.includes('recevable') ||
+                       name.includes('denay walay') || name.includes('clients');
+            });
             if(!custMain) {
                 list.innerHTML = '<option disabled>No Customer category found in COA</option>';
                 return;
@@ -3621,7 +3625,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const coId = session.company_id || 1;
                 const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&company_id=${coId}`);
                 customerData = await res.json();
-                console.info(`Customers loaded: ${customerData.length} records for SubID ${sub.id}`);
+                
+                // FALLBACK: Broader search if specific sub-category is empty
+                if (customerData.length === 0) {
+                    const custMain = coaMain.find(m => {
+                        const n = m.name.toLowerCase();
+                        return n.includes('customer') || n.includes('debtor') || 
+                               n.includes('receivable') || n.includes('recevable') ||
+                               n.includes('denay walay') || n.includes('clients');
+                    });
+                    if (custMain) {
+                        const fallRes = await fetch(`api/maintain.php?action=get_customers&main_id=${custMain.id}&company_id=${coId}`);
+                        const fallData = await fallRes.json();
+                        if (fallData.length > 0) {
+                            console.info(`No specific records for SubID ${sub.id}, but found ${fallData.length} in MainID ${custMain.id}. Showing all.`);
+                            customerData = fallData;
+                        }
+                    }
+                }
+
+                console.info(`Customers loaded: ${customerData.length} records. Context: SubID ${sub.id}`);
                 renderCustomerList();
                 resetCustomerForm();
             } catch(e) {}
@@ -3910,7 +3933,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderVendorTypeList() {
             const list = document.getElementById('vendorTypeList');
             if(!list) return;
-            const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+            // Keywords for Vendors / Payables hierarchy
+            const vendMain = coaMain.find(m => {
+                const name = m.name.toLowerCase();
+                return name.includes('vendor') || name.includes('supplier') || 
+                       name.includes('creditor') || name.includes('payable') || 
+                       name.includes('lenay walay') || name.includes('suplyer');
+            });
             if(!vendMain) {
                 list.innerHTML = '<option disabled>No Vendor category found in COA</option>';
                 return;
@@ -3948,7 +3977,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // FALLBACK: If specific sub-category is empty, try a broader search in the main category
                 if (vendorData.length === 0) {
-                    const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+                    const vendMain = coaMain.find(m => {
+                        const n = m.name.toLowerCase();
+                        return n.includes('vendor') || n.includes('supplier') || 
+                               n.includes('creditor') || n.includes('payable') || 
+                               n.includes('lenay walay') || n.includes('suplyer');
+                    });
                     if (vendMain) {
                         const fallRes = await fetch(`api/maintain.php?action=get_vendors&main_id=${vendMain.id}&company_id=${coId}`);
                         const fallData = await fallRes.json();
