@@ -2719,8 +2719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    // Use internal categorization (false for for isWide)
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, false);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
                 });
             });
         }

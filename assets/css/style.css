@@ -837,19 +837,10 @@
         }
 
         .modal-container.modal-medium {
-            display: table !important; /* Classic shrink-to-fit behavior */
-            width: auto !important;
-            min-width: unset !important;
-            max-width: 98vw !important;
-            height: auto !important;
-            padding: 0 !important;
-            margin: auto;
-        }
-
-        .modal-container.modal-medium .modal-header,
-        .modal-container.modal-medium .modal-body {
-            display: block !important;
-            width: 100% !important;
+            max-width: 600px !important;
+            width: 95% !important;
+            height: 650px !important;
+            /* Standardized height for Maintain forms */
         }
 
         .employees-sidebar {
