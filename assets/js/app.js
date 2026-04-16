@@ -8,6 +8,7 @@
         
         let companies = [];
         let currentNote = "";
+        let currentCompanyId = sessionDataHeader.company_id || null;
         window.isReadOnly = false; // Financial Year Control Flag
         
         let users = [
@@ -70,6 +71,7 @@
             currentUser = sessionData.username || "Administrator";
             if (!sessionData.company_id) return;
             const companyId = sessionData.company_id;
+            currentCompanyId = companyId; // Sync global
 
             try {
                 const cb = `_cb=${Date.now()}`;
@@ -3526,7 +3528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function loadCustomerLookups() {
             try {
-                const regRes = await fetch('api/maintain.php?action=get_regions');
+                const regRes = await fetch(`api/maintain.php?action=get_regions&company_id=${currentCompanyId}`);
                 const regions = await regRes.json();
                 const regSelect = document.getElementById('custRegion');
                 if(regSelect) {
@@ -3534,7 +3536,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
                 }
 
-                const secRes = await fetch('api/maintain.php?action=get_sectors');
+                const secRes = await fetch(`api/maintain.php?action=get_sectors&company_id=${currentCompanyId}`);
                 const sectors = await secRes.json();
                 const secSelect = document.getElementById('custSector');
                 if(secSelect) {
@@ -3559,7 +3561,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             try {
-                const res = await fetch(`api/maintain.php?action=get_sub_regions&region_id=${regionId}`);
+                const res = await fetch(`api/maintain.php?action=get_sub_regions&region_id=${regionId}&company_id=${currentCompanyId}`);
                 const subs = await res.json();
                 document.getElementById('custSubRegion').innerHTML = '<option value="">None</option>' + 
                     subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -3596,7 +3598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = coaSub.find(s => s.code == subCode);
             if(!sub) return;
             try {
-                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}`);
+                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&company_id=${currentCompanyId}`);
                 customerData = await res.json();
                 renderCustomerList();
                 resetCustomerForm();
@@ -3665,7 +3667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(existing) payload.id = existing.id;
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_coa_sub`, {
+                const res = await fetch(`api/maintain.php?action=save_coa_sub&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -3715,7 +3717,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(existing) payload.id = existing.id; // coa_list_id handled by backend action
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_customer`, {
+                const res = await fetch(`api/maintain.php?action=save_customer&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -3735,7 +3737,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(confirm(`Are you sure you want to delete the Customer Type "${sub.name}"? This will also remove it from Chart of Accounts.`)) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Customer Type deleted.");
                         // Refresh coaSub locally or re-sync
@@ -3755,7 +3757,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(confirm(`Are you sure you want to delete the profile for "${cust.name}"?`)) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_coa_list&id=${cust.id}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_coa_list&id=${cust.id}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Customer Profile deleted.");
                         fetchCustomersDetailed(selectedCustTypeCode);
@@ -3903,7 +3905,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = coaSub.find(s => s.code == subCode);
             if(!sub) return;
             try {
-                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}`);
+                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&company_id=${currentCompanyId}`);
                 vendorData = await res.json();
                 renderVendorList();
                 resetVendorForm();
@@ -3962,7 +3964,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(existing) payload.id = existing.id;
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_coa_sub`, {
+                const res = await fetch(`api/maintain.php?action=save_coa_sub&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -4008,7 +4010,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(existing) payload.id = existing.id;
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_vendor`, {
+                const res = await fetch(`api/maintain.php?action=save_vendor&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -4032,7 +4034,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!sub) return;
             if(confirm(`Are you sure you want to delete the Vendor Type "${sub.name}"?`)) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Vendor Type deleted.");
                         coaSub = coaSub.filter(s => s.id != sub.id);
@@ -4049,7 +4051,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!vend) return;
             if(confirm(`Are you sure you want to delete the profile for "${vend.name}"?`)) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_vendor&id=${vend.id}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_vendor&id=${vend.id}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Vendor Profile deleted.");
                         fetchVendorsDetailed(selectedVendTypeCode);
@@ -4181,7 +4183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function fetchMainRegions() {
             try {
-                const res = await fetch('api/maintain.php?action=get_regions');
+                const res = await fetch(`api/maintain.php?action=get_regions&company_id=${currentCompanyId}`);
                 mainRegionData = await res.json();
                 const list = document.getElementById('mainRegionList');
                 if(list) list.innerHTML = mainRegionData.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
@@ -4200,7 +4202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function fetchSubRegions(regionId) {
             try {
-                const res = await fetch(`api/maintain.php?action=get_sub_regions&region_id=${regionId}`);
+                const res = await fetch(`api/maintain.php?action=get_sub_regions&region_id=${regionId}&company_id=${currentCompanyId}`);
                 subRegionData = await res.json();
                 const list = document.getElementById('subRegionList');
                 if(list) list.innerHTML = subRegionData.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -4223,7 +4225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const payload = { name };
             if (selectedMainRegionId) payload.id = selectedMainRegionId;
             try {
-                const res = await fetch('api/maintain.php?action=save_region', {
+                const res = await fetch(`api/maintain.php?action=save_region&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -4248,7 +4250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if(confirm("Are you sure you want to delete this region? This action cannot be undone.")) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_region&id=${selectedMainRegionId}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_region&id=${selectedMainRegionId}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Region deleted.");
                         await fetchMainRegions();
@@ -4266,7 +4268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const payload = { region_id: selectedMainRegionId, name };
             if (selectedSubRegionId) payload.id = selectedSubRegionId;
             try {
-                const res = await fetch('api/maintain.php?action=save_sub_region', {
+                const res = await fetch(`api/maintain.php?action=save_sub_region&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -4283,7 +4285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!selectedSubRegionId) return alert("Select a Sub Region to delete first.");
             if(confirm("Are you sure you want to delete this sub-region?")) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_sub_region&id=${selectedSubRegionId}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_sub_region&id=${selectedSubRegionId}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Sub Region deleted.");
                         await fetchSubRegions(selectedMainRegionId);
@@ -4346,7 +4348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function fetchSectors() {
             try {
-                const res = await fetch('api/maintain.php?action=get_sectors');
+                const res = await fetch(`api/maintain.php?action=get_sectors&company_id=${currentCompanyId}`);
                 const sectors = await res.json();
                 const list = document.getElementById('sectorList');
                 if(list) list.innerHTML = sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -4369,7 +4371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const payload = { name };
             if (window.selectedSectorId) payload.id = window.selectedSectorId;
             try {
-                const res = await fetch('api/maintain.php?action=save_sector', {
+                const res = await fetch(`api/maintain.php?action=save_sector&company_id=${currentCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -4387,7 +4389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!window.selectedSectorId) return alert("Select a Sector to delete first.");
             if(confirm("Are you sure you want to delete this sector?")) {
                 try {
-                    const res = await fetch(`api/maintain.php?action=delete_sector&id=${window.selectedSectorId}`, { method: 'POST' });
+                    const res = await fetch(`api/maintain.php?action=delete_sector&id=${window.selectedSectorId}&company_id=${currentCompanyId}`, { method: 'POST' });
                     if(res.ok) {
                         alert("Sector deleted.");
                         await fetchSectors();
