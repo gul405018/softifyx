@@ -824,14 +824,15 @@
             transition: max-width 0.3s ease;
         }
 
-        .modal-container.modal-wide {
+        /* ABSOLUTE SIZING LOCK: Ensuring these widths override everything else */
+        .modal-overlay .modal-container.modal-wide {
             max-width: 1400px !important;
             width: 95% !important;
         }
 
-        .modal-container.modal-medium {
+        .modal-overlay .modal-container.modal-medium {
             max-width: 1000px !important;
-            width: 92% !important;
+            width: 94% !important;
         }
 
         .employees-sidebar {

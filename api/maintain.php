@@ -59,11 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $stmt->execute([$subId, $prefix, $company_id]);
                 $rows = $stmt->fetchAll();
                 
-                // FINAL FALLBACK: If still empty, search for ANY record with that prefix (just in case company_id is wrong)
+                // ABSOLUTE FALLBACK: If still empty, search for ANY record with that prefix across the entire table
                 if (empty($rows)) {
                     $stmt = $pdo->prepare($sql . "WHERE cl.code LIKE ? ORDER BY cl.code ASC LIMIT 100");
                     $stmt->execute([$prefix]);
                     $rows = $stmt->fetchAll();
+                    if (!empty($rows)) {
+                        error_log("SoftifyX: Absolute Fallback triggered for prefix $prefix");
+                    }
                 }
             } else {
                 $stmt = $pdo->prepare($sql . "WHERE cl.sub_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
@@ -127,11 +130,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $stmt->execute([$subId, $prefix, $company_id]);
                 $rows = $stmt->fetchAll();
                 
-                // FINAL FALLBACK: If still empty, search for ANY record with that prefix (just in case company_id mismatch)
+                // ABSOLUTE FALLBACK: If still empty, search by prefix across ALL companies
                 if (empty($rows)) {
                     $stmt = $pdo->prepare($sql . "WHERE cl.code LIKE ? ORDER BY cl.code ASC LIMIT 100");
                     $stmt->execute([$prefix]);
                     $rows = $stmt->fetchAll();
+                    if (!empty($rows)) {
+                        error_log("SoftifyX: Absolute Fallback triggered for prefix $prefix (Vendors)");
+                    }
                 }
             } else {
                 $stmt = $pdo->prepare($sql . "WHERE cl.sub_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
