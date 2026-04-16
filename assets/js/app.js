@@ -2319,6 +2319,10 @@
 
         async function openModularPopup(url, titleIcon, titleText, initCallback, moduleName, size = false) {
             try {
+                // ARCHITECTURAL FIX: Automatically detect maintenance modules for sizing
+                const pathLower = (url || "").toLowerCase().replace(/\\/g, '/');
+                const isMaintain = pathLower.includes('navigation/maintain/');
+                const finalSize = size || (isMaintain ? 'medium' : 'large');
                 // IMPORTANT: Normalize module tracking for rights enforcement
                 const activeModuleKey = moduleName || titleText;
                 
@@ -2346,7 +2350,7 @@
                         }
                     }
                     
-                    openModal({ icon: titleIcon, text: titleText }, html, size, activeModuleKey);
+                    openModal({ icon: titleIcon, text: titleText }, html, finalSize, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
@@ -2362,7 +2366,7 @@
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
                         '<div style="color:red;padding:30px;text-align:center;"><h3>Module Not Found</h3><p>' + url + ' does not exist.</p></div>',
-                        size
+                        finalSize
                     );
                 }
             } catch (err) { console.error(err); }
@@ -3626,7 +3630,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&company_id=${coId}`);
                 customerData = await res.json();
                 
-                // FALLBACK: Broader search if specific sub-category is empty
+                // FALLBACK: Broader search if empty
                 if (customerData.length === 0) {
                     const custMain = coaMain.find(m => {
                         const n = m.name.toLowerCase();
@@ -3638,13 +3642,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const fallRes = await fetch(`api/maintain.php?action=get_customers&main_id=${custMain.id}&company_id=${coId}`);
                         const fallData = await fallRes.json();
                         if (fallData.length > 0) {
-                            console.info(`No specific records for SubID ${sub.id}, but found ${fallData.length} in MainID ${custMain.id}. Showing all.`);
+                            console.info(`Deep discovery found ${fallData.length} customers in Main Category.`);
                             customerData = fallData;
                         }
                     }
                 }
 
-                console.info(`Customers loaded: ${customerData.length} records. Context: SubID ${sub.id}`);
+                console.info(`Customers loaded: ${customerData.length} records.`);
                 renderCustomerList();
                 resetCustomerForm();
             } catch(e) {}
@@ -3975,7 +3979,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&company_id=${coId}`);
                 vendorData = await res.json();
                 
-                // FALLBACK: If specific sub-category is empty, try a broader search in the main category
+                // FALLBACK: Broader search if specific sub-category is empty
                 if (vendorData.length === 0) {
                     const vendMain = coaMain.find(m => {
                         const n = m.name.toLowerCase();
@@ -3987,13 +3991,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const fallRes = await fetch(`api/maintain.php?action=get_vendors&main_id=${vendMain.id}&company_id=${coId}`);
                         const fallData = await fallRes.json();
                         if (fallData.length > 0) {
-                            console.info(`No specific records for SubID ${sub.id}, but found ${fallData.length} in MainID ${vendMain.id}. Showing all.`);
+                            console.info(`Deep discovery found ${fallData.length} vendors in Main Category.`);
                             vendorData = fallData;
                         }
                     }
                 }
 
-                console.info(`Vendors loaded: ${vendorData.length} records. Context: SubID ${sub.id}`);
+                console.info(`Vendors loaded: ${vendorData.length} records.`);
                 renderVendorList();
                 resetVendorForm();
             } catch(e) {}
