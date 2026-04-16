@@ -4553,19 +4553,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderBankTypeList() {
             const list = document.getElementById('bankTypeList');
             if(!list) return;
-            const bankMain = coaMain.find(m => {
-                const name = m.name.toLowerCase();
-                return name.includes('bank') || name.includes('cash') || 
-                       name.includes('university') || name.includes('paisa') || 
-                       name.includes('asset') || name.includes('bankon');
+            
+            // GREEDY DISCOVERY: Find Level 2 items that look like Banks
+            // Look for "bank" or "cash" in Level 2 name OR its Level 1 parent name
+            const filtered = coaSub.filter(s => {
+                const subName = (s.name || "").toLowerCase();
+                const parent = coaMain.find(m => m.id == s.main_id);
+                const parentName = parent ? (parent.name || "").toLowerCase() : "";
+                
+                return subName.includes('bank') || subName.includes('cash') || 
+                       subName.includes('university') || subName.includes('paisa') || 
+                       subName.includes('bankon') ||
+                       parentName.includes('bank') || parentName.includes('cash') || 
+                       parentName.includes('university') || parentName.includes('bankon');
             });
-            if(!bankMain) {
+
+            if(filtered.length === 0) {
                 list.innerHTML = '<option disabled>No Bank category found in COA</option>';
                 return;
             }
-            const filtered = coaSub.filter(s => s.main_id == bankMain.id);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
+        window.renderBankTypeList = renderBankTypeList;
 
         function onBankTypeSelect(code) {
             selectedBankTypeCode = code;
