@@ -95,6 +95,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         sendResponse($stmt->fetchAll());
     }
 
+    if ($action === 'get_banks' && (isset($_GET['sub_id']) || isset($_GET['main_id']))) {
+        $subId = isset($_GET['sub_id']) ? (int)$_GET['sub_id'] : null;
+        $mainId = isset($_GET['main_id']) ? (int)$_GET['main_id'] : null;
+        $subCode = $_GET['sub_code'] ?? null;
+        
+        $sql = "SELECT cl.*, b.bank_name, b.branch, b.account_title, b.account_no, b.contact_person, 
+                       b.address, b.telephone, b.mobile, b.fax, b.email, b.website, b.remarks
+                FROM coa_list cl
+                LEFT JOIN bank_accounts b ON cl.id = b.coa_list_id ";
+        
+        if ($subId || $subCode) {
+            $prefix = $subCode ? $subCode . '%' : null;
+            if ($prefix) {
+                $stmt = $pdo->prepare($sql . "WHERE (cl.sub_id = ? OR cl.code LIKE ?) AND cl.company_id = ? ORDER BY cl.code ASC");
+                $stmt->execute([$subId, $prefix, $company_id]);
+            } else {
+                $stmt = $pdo->prepare($sql . "WHERE cl.sub_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
+                $stmt->execute([$subId, $company_id]);
+            }
+        } else if ($mainId) {
+            $stmt = $pdo->prepare($sql . "JOIN coa_sub cs ON cl.sub_id = cs.id 
+                                          WHERE cs.main_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
+            $stmt->execute([$mainId, $company_id]);
+        }
+        sendResponse($stmt->fetchAll());
+    }
+
     if ($action === 'get_regions') {
         $stmt = $pdo->prepare("SELECT * FROM regions WHERE company_id = ? ORDER BY name ASC");
         $stmt->execute([$company_id]);
@@ -321,43 +348,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$data['code'], $data['name'], $coaId]);
             } else {
                 $stmt = $pdo->prepare("INSERT INTO coa_list (company_id, sub_id, code, name) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$company_id, $data['sub_id'], $data['code'], $data['name']]);
-                $coaId = $pdo->lastInsertId();
-            }
-
-            // Check if vendor entry exists
-            $stmt = $pdo->prepare("SELECT id FROM vendors WHERE coa_list_id = ?");
-            $stmt->execute([$coaId]);
-            $vendExists = $stmt->fetch();
-
-            if ($vendExists) {
-                $sql = "UPDATE vendors SET 
-                        contact_person = ?, address = ?, telephone = ?, mobile = ?, fax = ?, 
-                        email = ?, website = ?, st_reg_no = ?, ntn_cnic = ?, 
-                        credit_terms = ?, remarks = ?
-                        WHERE coa_list_id = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    $data['contact_person'], $data['address'], $data['telephone'], $data['mobile'], $data['fax'],
-                    $data['email'], $data['website'], $data['st_reg_no'], $data['ntn_cnic'],
-                    $data['credit_terms'], $data['remarks'], $coaId
-                ]);
-            } else {
-                $sql = "INSERT INTO vendors (
-                        company_id, coa_list_id, contact_person, address, telephone, mobile, 
-                        fax, email, website, st_reg_no, ntn_cnic, credit_terms, remarks
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    $company_id, $coaId, $data['contact_person'], $data['address'], $data['telephone'], $data['mobile'],
-                    $data['fax'], $data['email'], $data['website'], $data['st_reg_no'], $data['ntn_cnic'],
-                    $data['credit_terms'], $data['remarks']
-                ]);
-            }
-            $pdo->commit();
-            sendResponse(['status' => 'success', 'id' => $coaId]);
-        } catch (Exception $e) {
-            $pdo->rollBack();
             sendResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
