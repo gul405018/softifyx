@@ -2717,11 +2717,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
+                    let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let pathLower = (targetUrl || "").toLowerCase().replace(/\\/g, '/');
                     let isMaintain = pathLower.includes('navigation/maintain/');
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isBank ? initBanksView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null)))));
                     
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isMaintain ? 'medium' : false);
                 });
@@ -4554,7 +4555,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!list) return;
             const bankMain = coaMain.find(m => {
                 const name = m.name.toLowerCase();
-                return name.includes('bank') || name.includes('cash');
+                return name.includes('bank') || name.includes('cash') || 
+                       name.includes('university') || name.includes('paisa') || 
+                       name.includes('asset') || name.includes('bankon');
             });
             if(!bankMain) {
                 list.innerHTML = '<option disabled>No Bank category found in COA</option>';
