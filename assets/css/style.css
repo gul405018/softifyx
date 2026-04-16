@@ -838,12 +838,11 @@
 
         .modal-container.modal-medium {
             max-width: 98vw !important;
-            width: max-content !important; /* Force it to shrink to the content's 800px/1000px */
-            display: flex !important;
-            flex-direction: column !important;
+            width: fit-content !important;
+            min-width: unset !important; /* Remove the 90% width inherited from base class */
+            display: block !important;    /* Block with fit-content is best for shrink-to-fit */
             height: auto !important;
             padding: 0 !important;
-            min-width: 0 !important;
         }
 
         .employees-sidebar {
