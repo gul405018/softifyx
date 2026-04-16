@@ -3849,35 +3849,65 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // --- VENDORS MODULE LOGIC ---
+        let selectedVendMainCode = null;
+
         function initVendorsView() {
             let retries = 0;
             const checkAndRender = setInterval(() => {
-                const list = document.getElementById('vendorTypeList');
+                const list = document.getElementById('vendMainAccountList');
                 if (list) {
                     clearInterval(checkAndRender);
-                    renderVendorTypeList();
+                    renderVendorMainList();
                     
-                    // AUTO-SELECT FIRST ITEM IF AVAILABLE
+                    // Auto-select first main type
                     if (list.options.length > 0) {
                         list.selectedIndex = 0;
-                        onVendorTypeSelect(list.value);
+                        onVendorMainSelect(list.value);
                     } else {
                         resetVendorTypeForm();
                         resetVendorForm();
                     }
-                } else if (++retries >= 30) clearInterval(checkAndRender); // Increased safety margin
+                } else if (++retries >= 30) clearInterval(checkAndRender);
             }, 100);
+        }
+
+        function renderVendorMainList() {
+            const list = document.getElementById('vendMainAccountList');
+            if(!list) return;
+            list.innerHTML = coaMain.map(m => `<option value="${m.code}">${m.name}</option>`).join('');
+        }
+
+        function onVendorMainSelect(code) {
+            selectedVendMainCode = code;
+            renderVendorTypeList();
+            
+            // Auto-select first sub-type
+            const subList = document.getElementById('vendorTypeList');
+            if (subList && subList.options.length > 0) {
+                subList.selectedIndex = 0;
+                onVendorTypeSelect(subList.value);
+            } else {
+                resetVendorTypeFormFieldsOnly();
+                renderVendorList();
+                resetVendorForm();
+            }
+        }
+
+        function resetVendorTypeFormFieldsOnly() {
+            document.getElementById('vendSubTypeCode').value = '';
+            document.getElementById('vendSubName').value = '';
+            selectedVendTypeCode = null;
         }
 
         function renderVendorTypeList() {
             const list = document.getElementById('vendorTypeList');
             if(!list) return;
-            const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
-            if(!vendMain) {
-                list.innerHTML = '<option disabled>No Vendor category found in COA</option>';
-                return;
-            }
-            const filtered = coaSub.filter(s => s.main_id == vendMain.id);
+            if(!selectedVendMainCode) { list.innerHTML = ''; return; }
+            
+            const main = coaMain.find(m => m.code == selectedVendMainCode);
+            if(!main) { list.innerHTML = ''; return; }
+            
+            const filtered = coaSub.filter(s => s.main_id == main.id);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
 
@@ -3950,14 +3980,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveVendorType() {
-            const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
-            if(!vendMain) return;
+            if(!selectedVendMainCode) return alert("Select a Main Account Type first!");
+            const main = coaMain.find(m => m.code == selectedVendMainCode);
+            if(!main) return alert("Main Category error!");
 
             const name = document.getElementById('vendSubName').value.trim();
             const code = document.getElementById('vendSubTypeCode').value.trim();
-            if(!name || !code) return;
+            if(!name || !code) return alert("Sub Code and Name are required!");
 
-            const payload = { main_id: vendMain.id, code, name };
+            const payload = { main_id: main.id, code, name };
             const existing = coaSub.find(s => s.code == (selectedVendTypeCode || code));
             if(existing) payload.id = existing.id;
 
@@ -3969,7 +4000,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 if(res.ok) {
                     const data = await res.json();
-                    if(!existing) coaSub.push({ id: data.id, main_id: vendMain.id, code, name });
+                    alert("Vendor Category saved!");
+                    if(!existing) coaSub.push({ id: data.id, main_id: main.id, code, name });
                     else {
                         existing.code = code;
                         existing.name = name;
@@ -4059,26 +4091,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetVendorTypeForm(generate = false) {
-            selectedVendTypeCode = null;
             enableVendorTypeFields(generate);
             if(generate) {
-                const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
-                if(vendMain) {
-                    const siblings = coaSub.filter(s => s.main_id == vendMain.id);
-                    let nextNum = 1;
-                    if(siblings.length > 0) {
-                        const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(vendMain.code.toString().length)) || 0);
-                        nextNum = Math.max(...lastCodes) + 1;
-                    }
-                    document.getElementById('vendSubTypeCode').value = vendMain.code.toString() + nextNum.toString().padStart(2, '0');
+                if(!selectedVendMainCode) {
+                    alert("Select a Main Category first!");
+                    return;
                 }
+                const main = coaMain.find(m => m.code == selectedVendMainCode);
+                const siblings = coaSub.filter(s => s.main_id == main.id);
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(selectedVendMainCode.toString().length)) || 0);
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                document.getElementById('vendSubTypeCode').value = selectedVendMainCode.toString() + nextNum.toString().padStart(2, '0');
                 document.getElementById('vendSubName').value = '';
                 document.getElementById('vendSubName').focus();
+                selectedVendTypeCode = null;
             } else {
                 document.getElementById('vendSubTypeCode').value = '';
                 document.getElementById('vendSubName').value = '';
+                selectedVendTypeCode = null;
+                if(document.getElementById('vendMainAccountList')) document.getElementById('vendMainAccountList').value = selectedVendMainCode || '';
+                if(document.getElementById('vendorTypeList')) document.getElementById('vendorTypeList').value = '';
             }
-            document.getElementById('vendorTypeList').value = '';
             renderVendorList();
             resetVendorForm();
         }
@@ -4153,6 +4189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // EXPOSE VENDORS TO GLOBAL WINDOW SCOPE (Fixed Scope Issues)
         window.initVendorsView = initVendorsView;
+        window.onVendorMainSelect = onVendorMainSelect;
         window.onVendorTypeSelect = onVendorTypeSelect;
         window.onVendorSelect = onVendorSelect;
         window.saveVendorType = saveVendorType;
