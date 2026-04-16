@@ -3627,7 +3627,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const coId = session.company_id || 1;
-                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&company_id=${coId}`);
+                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&sub_code=${subCode}&company_id=${coId}`);
                 customerData = await res.json();
                 
                 // FALLBACK: Broader search if empty
@@ -3976,7 +3976,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const coId = session.company_id || 1;
-                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&company_id=${coId}`);
+                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&sub_code=${subCode}&company_id=${coId}`);
                 vendorData = await res.json();
                 
                 // FALLBACK: Broader search if specific sub-category is empty
