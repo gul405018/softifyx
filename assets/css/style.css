@@ -838,9 +838,12 @@
 
         .modal-container.modal-medium {
             max-width: 98vw !important;
-            width: fit-content !important;
+            width: auto !important; /* Allow it to shrink to 800px or whatever is in HTML */
+            display: inline-flex !important; /* Force container to wrap contents only */
+            flex-direction: column !important;
             height: auto !important;
-            padding: 0 !important; /* Let the inner HTML handle padding */
+            padding: 0 !important;
+            min-width: 0 !important;
         }
 
         .employees-sidebar {
