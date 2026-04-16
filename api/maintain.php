@@ -53,27 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         if ($subId || $subCode) {
             $prefix = $subCode ? $subCode . '%' : null;
-            $rows = [];
             if ($prefix) {
                 $stmt = $pdo->prepare($sql . "WHERE (cl.sub_id = ? OR cl.code LIKE ?) AND cl.company_id = ? ORDER BY cl.code ASC");
                 $stmt->execute([$subId, $prefix, $company_id]);
-                $rows = $stmt->fetchAll();
-                
-                // ABSOLUTE FALLBACK: If still empty, search for ANY record with that prefix across the entire table
-                if (empty($rows)) {
-                    $stmt = $pdo->prepare($sql . "WHERE cl.code LIKE ? ORDER BY cl.code ASC LIMIT 100");
-                    $stmt->execute([$prefix]);
-                    $rows = $stmt->fetchAll();
-                    if (!empty($rows)) {
-                        error_log("SoftifyX: Absolute Fallback triggered for prefix $prefix");
-                    }
-                }
             } else {
                 $stmt = $pdo->prepare($sql . "WHERE cl.sub_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
                 $stmt->execute([$subId, $company_id]);
-                $rows = $stmt->fetchAll();
             }
-            sendResponse($rows);
         } else if ($mainId) {
             $stmt = $pdo->prepare($sql . "JOIN coa_sub cs ON cl.sub_id = cs.id 
                                           WHERE cs.main_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
@@ -124,27 +110,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         if ($subId || $subCode) {
             $prefix = $subCode ? $subCode . '%' : null;
-            $rows = [];
             if ($prefix) {
                 $stmt = $pdo->prepare($sql . "WHERE (cl.sub_id = ? OR cl.code LIKE ?) AND cl.company_id = ? ORDER BY cl.code ASC");
                 $stmt->execute([$subId, $prefix, $company_id]);
-                $rows = $stmt->fetchAll();
-                
-                // ABSOLUTE FALLBACK: If still empty, search by prefix across ALL companies
-                if (empty($rows)) {
-                    $stmt = $pdo->prepare($sql . "WHERE cl.code LIKE ? ORDER BY cl.code ASC LIMIT 100");
-                    $stmt->execute([$prefix]);
-                    $rows = $stmt->fetchAll();
-                    if (!empty($rows)) {
-                        error_log("SoftifyX: Absolute Fallback triggered for prefix $prefix (Vendors)");
-                    }
-                }
             } else {
                 $stmt = $pdo->prepare($sql . "WHERE cl.sub_id = ? AND cl.company_id = ? ORDER BY cl.code ASC");
                 $stmt->execute([$subId, $company_id]);
-                $rows = $stmt->fetchAll();
             }
-            sendResponse($rows);
         } else if ($mainId) {
             // Broader search: all sub-accounts under this main_id
             $stmt = $pdo->prepare($sql . "JOIN coa_sub cs ON cl.sub_id = cs.id 
