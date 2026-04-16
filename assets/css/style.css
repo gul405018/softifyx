@@ -838,8 +838,8 @@
 
         .modal-container.modal-medium {
             max-width: 98vw !important;
-            width: auto !important; /* Allow it to shrink to 800px or whatever is in HTML */
-            display: inline-flex !important; /* Force container to wrap contents only */
+            width: max-content !important; /* Force it to shrink to the content's 800px/1000px */
+            display: flex !important;
             flex-direction: column !important;
             height: auto !important;
             padding: 0 !important;
