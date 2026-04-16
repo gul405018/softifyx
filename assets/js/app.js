@@ -3743,15 +3743,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if(res.ok) {
+                
+                const result = await res.json();
+                if (res.ok) {
                     alert("Customer profile saved!");
                     fetchCustomersDetailed(selectedCustTypeCode);
+                } else {
+                    alert("Save failed: " + (result.message || "Unknown error"));
                 }
-            } catch(e) { alert("Save failed"); }
+            } catch(e) { 
+                console.error(e);
+                alert("Save failed: System or network error."); 
+            }
         }
 
         async function deleteCustomerType() {
             if (!selectedCustTypeCode) return alert("Select a Customer Type to delete first.");
+            
+            // CONSTRAINT: Check if category has customers before deleting
+            if (customerData && customerData.length > 0) {
+                return alert("Cannot delete this Category because it still contains Customer records. Delete all customers first!");
+            }
             
             const sub = coaSub.find(s => s.code == selectedCustTypeCode);
             if(!sub) return;
@@ -3759,14 +3771,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(confirm(`Are you sure you want to delete the Customer Type "${sub.name}"? This will also remove it from Chart of Accounts.`)) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    const result = await res.json();
                     if(res.ok) {
-                        alert("Customer Type deleted.");
-                        // Refresh coaSub locally or re-sync
-                        coaSub = coaSub.filter(s => s.id != sub.id);
-                        renderCustomerTypeList();
-                        resetCustomerTypeForm();
+                        alert("Customer Type deleted successfully.");
+                        initCustomersView();
+                    } else {
+                        alert("Delete failed: " + (result.message || "Unknown error"));
                     }
-                } catch(e) { alert("Delete failed"); }
+                } catch(e) { alert("Delete failed: System or network error."); }
             }
         }
 
@@ -4040,11 +4052,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if(res.ok) {
+                
+                const result = await res.json();
+                if (res.ok) {
                     alert("Vendor profile saved!");
                     fetchVendorsDetailed(selectedVendTypeCode);
+                } else {
+                    alert("Save failed: " + (result.message || "Unknown error"));
                 }
-            } catch(e) { alert("Save failed"); }
+            } catch(e) { 
+                console.error(e);
+                alert("Save failed: System or network error."); 
+            }
         }
 
         async function deleteVendorType() {
@@ -4060,13 +4079,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(confirm(`Are you sure you want to delete the Vendor Type "${sub.name}"?`)) {
                 try {
                     const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    const result = await res.json();
                     if(res.ok) {
-                        alert("Vendor Type deleted.");
-                        coaSub = coaSub.filter(s => s.id != sub.id);
-                        renderVendorTypeList();
-                        resetVendorTypeForm();
+                        alert("Vendor Type deleted successfully.");
+                        initVendorsView();
+                    } else {
+                        alert("Delete failed: " + (result.message || "Unknown error"));
                     }
-                } catch(e) { alert("Delete failed"); }
+                } catch(e) { alert("Delete failed: System or network error."); }
             }
         }
 

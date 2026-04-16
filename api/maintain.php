@@ -146,6 +146,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
         try {
             $coaId = $data['id'] ?? null;
+            if (!$coaId && isset($data['code'])) {
+                // Smart Sync: Check if this code already exists in coa_list
+                $stmt = $pdo->prepare("SELECT id FROM coa_list WHERE company_id = ? AND code = ?");
+                $stmt->execute([$company_id, $data['code']]);
+                $existing = $stmt->fetch();
+                if ($existing) $coaId = $existing['id'];
+            }
+
             if ($coaId) {
                 $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
                 $stmt->execute([$data['code'], $data['name'], $coaId]);
@@ -271,6 +279,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
         try {
             $coaId = $data['id'] ?? null;
+            if (!$coaId && isset($data['code'])) {
+                // Smart Sync: Check if this code already exists in coa_list
+                $stmt = $pdo->prepare("SELECT id FROM coa_list WHERE company_id = ? AND code = ?");
+                $stmt->execute([$company_id, $data['code']]);
+                $existing = $stmt->fetch();
+                if ($existing) $coaId = $existing['id'];
+            }
+
             if ($coaId) {
                 $stmt = $pdo->prepare("UPDATE coa_list SET code = ?, name = ? WHERE id = ?");
                 $stmt->execute([$data['code'], $data['name'], $coaId]);
@@ -324,6 +340,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'P
         sendResponse(['status' => 'success']);
     }
     if ($action === 'delete_coa_sub' && isset($_GET['id'])) {
+        // Safety Guard: Check if empty
+        $stmt = $pdo->prepare("SELECT id FROM coa_list WHERE sub_id = ? LIMIT 1");
+        $stmt->execute([$_GET['id']]);
+        if ($stmt->fetch()) {
+            sendResponse(['status' => 'error', 'message' => 'Cannot delete: This category still contains account records.'], 400);
+        }
         $pdo->prepare("DELETE FROM coa_sub WHERE id = ?")->execute([$_GET['id']]);
         sendResponse(['status' => 'success']);
     }
