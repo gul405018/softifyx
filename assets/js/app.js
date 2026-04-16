@@ -28,6 +28,14 @@
         let coaSub = [];
         let coaList = [];
         let financialYears = []; // Start empty to ensure fresh cloud data
+        
+        // --- Selection & Data Trackers (UI Sync) ---
+        let customerData = [];
+        let vendorData = [];
+        let selectedCustTypeCode = null;
+        let selectedVendTypeCode = null;
+        let selectedCustAccountCode = null;
+        let selectedVendAccountCode = null;
 
         const DEFAULT_COA_MAIN = [];
 
@@ -3607,7 +3615,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = coaSub.find(s => s.code == subCode);
             if(!sub) return;
             try {
-                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}`);
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&company_id=${coId}`);
                 customerData = await res.json();
                 renderCustomerList();
                 resetCustomerForm();
@@ -3726,7 +3736,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(existing) payload.id = existing.id; // coa_list_id handled by backend action
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_customer`, {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/maintain.php?action=save_customer&company_id=${coId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -3914,7 +3926,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sub = coaSub.find(s => s.code == subCode);
             if(!sub) return;
             try {
-                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}`);
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&company_id=${coId}`);
                 vendorData = await res.json();
                 renderVendorList();
                 resetVendorForm();
@@ -4019,7 +4033,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(existing) payload.id = existing.id;
 
             try {
-                const res = await fetch(`api/maintain.php?action=save_vendor`, {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/maintain.php?action=save_vendor&company_id=${coId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
