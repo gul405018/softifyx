@@ -435,13 +435,12 @@
             });
         }
 
-        function openModal(title, content, size = false, moduleKey = null) {
+        function openModal(title, content, isWide = false, moduleKey = null) {
             const overlay = document.getElementById('modalOverlay');
             const container = document.getElementById('modalContainer');
             
-            container.classList.remove('modal-wide', 'modal-medium');
-            if (size === 'wide' || size === true) container.classList.add('modal-wide');
-            else if (size === 'medium') container.classList.add('modal-medium');
+            if (isWide) container.classList.add('modal-wide');
+            else container.classList.remove('modal-wide');
             
             // Use the provided moduleKey if available, otherwise fallback to title text for tagging
             const dataModuleTag = moduleKey || title.text;
@@ -2336,25 +2335,17 @@
                         }
                     }
                     
-                    // Categorize Modules by Size
                     const wideModules = [
-                        'Purchase Orders', 'Sales Tax Invoices', 'Sale Orders', 
-                        'Delivery Challans', 'General Journal Voucher',
-                        'Cash Payments', 'Bank Payments', 'Cash Receipts', 'Bank Receipts'
-                    ];
-
-                    const mediumModules = [
                         'Chart of Accounts', 'Customers', 'Vendors/Suppliers', 
                         'Bank Accounts', 'Inventory Opening Balances', 
-                        'Accounts Opening Balances', 'Chart Of Inventory',
-                        'Item Price Settings', 'Chart Of Services', 'Employees', 'Jobs'
+                        'Accounts Opening Balances', 'Purchase Orders', 
+                        'Sales Tax Invoices', 'Sale Orders', 'Delivery Challans',
+                        'Chart Of Inventory', 'General Journal Voucher',
+                        'Cash Payments', 'Bank Payments', 'Cash Receipts', 'Bank Receipts'
                     ];
                     
-                    let size = false;
-                    if (wideModules.includes(moduleName)) size = 'wide';
-                    else if (mediumModules.includes(moduleName)) size = 'medium';
-
-                    openModal({ icon: titleIcon, text: titleText }, html, size || isWide, activeModuleKey);
+                    const isWide = wideModules.includes(moduleName);
+                    openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
                     
                     if (typeof initCallback === 'function') {
                         setTimeout(() => initCallback(), 10);
