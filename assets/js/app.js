@@ -2658,11 +2658,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.childNodes[0].textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
+                    
+                    // Standardize Maintenance forms to 1000px wide, except Business Sectors
+                    let isMaintain = targetUrl && targetUrl.includes('Navigation/Maintain/');
+                    let isBusinessSector = targetUrl && targetUrl.includes('business_sectors.html');
+                    let isWide = isMaintain && !isBusinessSector;
+                    
+                    // Specific Init Callbacks
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2685,11 +2693,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let targetUrl = item.getAttribute('data-target');
                     let moduleName = item.getAttribute('data-module');
                     let titleText = item.textContent.trim() || targetUrl.split('/').pop().replace('.html', '');
+                    
+                    // Standardize Maintenance forms to 1000px wide, except Business Sectors
+                    let isMaintain = targetUrl && targetUrl.includes('Navigation/Maintain/');
+                    let isBusinessSector = targetUrl && targetUrl.includes('business_sectors.html');
+                    let isWide = isMaintain && !isBusinessSector;
+                    
                     let isCoa = (moduleName === "Chart of Accounts" || (targetUrl && targetUrl.includes('chart_of_accounts.html')));
                     let isCust = (moduleName === "Customers" || (targetUrl && targetUrl.includes('customers.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isReg ? initRegionsView : null));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isReg));
+                    
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                 });
             });
         }
