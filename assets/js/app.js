@@ -3619,6 +3619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const coId = session.company_id || 1;
                 const res = await fetch(`api/maintain.php?action=get_customers&sub_id=${sub.id}&company_id=${coId}`);
                 customerData = await res.json();
+                console.info(`Customers loaded: ${customerData.length} records for SubID ${sub.id}`);
                 renderCustomerList();
                 resetCustomerForm();
             } catch(e) {}
@@ -3942,6 +3943,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const coId = session.company_id || 1;
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&company_id=${coId}`);
                 vendorData = await res.json();
+                console.info(`Vendors loaded: ${vendorData.length} records for SubID ${sub.id}`);
                 renderVendorList();
                 resetVendorForm();
             } catch(e) {}
