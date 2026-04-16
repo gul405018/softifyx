@@ -837,12 +837,19 @@
         }
 
         .modal-container.modal-medium {
+            display: table !important; /* Classic shrink-to-fit behavior */
+            width: auto !important;
+            min-width: unset !important;
             max-width: 98vw !important;
-            width: fit-content !important;
-            min-width: unset !important; /* Remove the 90% width inherited from base class */
-            display: block !important;    /* Block with fit-content is best for shrink-to-fit */
             height: auto !important;
             padding: 0 !important;
+            margin: auto;
+        }
+
+        .modal-container.modal-medium .modal-header,
+        .modal-container.modal-medium .modal-body {
+            display: block !important;
+            width: 100% !important;
         }
 
         .employees-sidebar {
