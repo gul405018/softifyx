@@ -3978,16 +3978,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const coId = session.company_id || 1;
                 const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=${sub.id}&sub_code=${subCode}&company_id=${coId}`);
-                const rawData = await res.text();
-                try {
-                    vendorData = JSON.parse(rawData);
-                } catch(e) {
-                    console.error("JSON Parse Error:", e, "Raw Body:", rawData);
-                    return alert("System Error: The server returned invalid data. Please check console (F12).");
-                }
-                
-                // DIAGNOSTIC ALERT: Tell the user exactly what we found
-                alert(`DEBUG: Company ID: ${coId} | Sub Code: ${subCode} | Vendors Found: ${vendorData.length}`);
+                vendorData = await res.json();
                 
                 // UNIFIED LOGIC: Match Customer module pattern (Only use prefix matching fallback, no hidden keywords)
                 if (vendorData.length === 0) {
