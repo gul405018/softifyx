@@ -2664,8 +2664,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
+                    let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : null)))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2693,8 +2694,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isVend = (moduleName === "Vendors/Suppliers" || (targetUrl && targetUrl.includes('vendors.html')));
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : null))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp));
+                    let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : null)))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank));
                 });
             });
         }
@@ -4216,6 +4218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let selectedBankAccountCode = null;
 
         function initBankAccountsView() {
+            console.log("SoftifyX Diagnostic: Initializing Bank Accounts View...");
             let retries = 0;
             const checkAndRender = setInterval(() => {
                 const list = document.getElementById('bankTypeList');
@@ -4226,25 +4229,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                         list.selectedIndex = 0;
                         onBankTypeSelect(list.value);
                     } else {
+                        console.warn("SoftifyX Diagnostic: No bank types found during initialization.");
                         resetBankTypeForm();
                         resetBankForm();
                     }
-                } else if (++retries >= 30) clearInterval(checkAndRender);
+                } else if (++retries >= 30) {
+                    console.error("SoftifyX Diagnostic: Bank module container not found.");
+                    clearInterval(checkAndRender);
+                }
             }, 100);
         }
 
         function renderBankTypeList() {
             const list = document.getElementById('bankTypeList');
             if(!list) return;
+            
+            console.log("SoftifyX Diagnostic: Checking coaMain for Bank/Cash...");
+            console.log("coaMain size:", coaMain.length);
+
             const bankMain = coaMain.find(m => {
                 const n = m.name.toLowerCase();
-                return n.includes('bank') || n.includes('cash') || n.includes('liquid');
+                return n.includes('bank') || n.includes('cash') || n.includes('liquid') || n.includes('current asset');
             });
+            
+            console.log("SoftifyX Diagnostic: Found bankMain:", bankMain);
+
             if(!bankMain) {
+                console.error("SoftifyX Diagnostic: No Bank/Cash category found in coaMain.");
                 list.innerHTML = '<option disabled>No Bank category found in COA</option>';
                 return;
             }
             const filtered = coaSub.filter(s => s.main_id == bankMain.id);
+            console.log("SoftifyX Diagnostic: Found sub-accounts:", filtered.length);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
 
