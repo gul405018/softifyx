@@ -1,6 +1,66 @@
 <?php
 header('Content-Type: application/json');
-require_once 'db.php';
+require_once 'db_config.php';
+
+// MIGRATION: Ensure Inventory tables exist
+try {
+    // 1. Main Categories
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inv_main_categories (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        code VARCHAR(20) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        UNIQUE KEY `inv_main_code_company` (`code`, `company_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // 2. Sub Categories
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inv_sub_categories (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        main_id INT NOT NULL,
+        code VARCHAR(20) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        FOREIGN KEY (main_id) REFERENCES inv_main_categories(id) ON DELETE CASCADE,
+        UNIQUE KEY `inv_sub_code_company` (`code`, `company_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // 3. Brands
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inv_brands (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // 4. Inventory Items
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inv_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        sub_id INT NOT NULL,
+        code VARCHAR(20) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        brand_id INT,
+        rack_no VARCHAR(100),
+        purchase_price DECIMAL(20,2) DEFAULT 0,
+        selling_price DECIMAL(20,2) DEFAULT 0,
+        unit VARCHAR(50),
+        qty_per_piece DECIMAL(20,2) DEFAULT 0,
+        tax_rate DECIMAL(10,2) DEFAULT 0,
+        tax_type VARCHAR(20) DEFAULT 'Percent',
+        valuation_method VARCHAR(50) DEFAULT 'Weighted Average',
+        valuation_cost DECIMAL(20,2) DEFAULT 0,
+        order_qty DECIMAL(20,2) DEFAULT 0,
+        is_inactive TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sub_id) REFERENCES inv_sub_categories(id) ON DELETE CASCADE,
+        FOREIGN KEY (brand_id) REFERENCES inv_brands(id) ON DELETE SET NULL,
+        UNIQUE KEY `inv_item_code_company` (`code`, `company_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+} catch (Exception $e) {
+    // Silently continue if tables exist or other minor issues, 
+    // real errors will be caught in the action block or PDO setup.
+}
 
 $action = $_GET['action'] ?? '';
 $company_id = $_GET['company_id'] ?? 1;

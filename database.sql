@@ -253,3 +253,64 @@ CREATE TABLE IF NOT EXISTS `vendors` (
 
 COMMIT;
 
+-- 17. Inventory Main Categories (Maintain: Chart of Inventory)
+CREATE TABLE IF NOT EXISTS `inv_main_categories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `code` varchar(20) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `inv_main_code_company` (`code`, `company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 18. Inventory Sub Categories (Maintain: Chart of Inventory)
+CREATE TABLE IF NOT EXISTS `inv_sub_categories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `main_id` int(11) NOT NULL,
+  `code` varchar(20) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`main_id`) REFERENCES `inv_main_categories`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `inv_sub_code_company` (`code`, `company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 19. Inventory Brands (Maintain: Chart of Inventory)
+CREATE TABLE IF NOT EXISTS `inv_brands` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 20. Inventory Items (Maintain: Chart of Inventory)
+CREATE TABLE IF NOT EXISTS `inv_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `sub_id` int(11) NOT NULL,
+  `code` varchar(20) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `brand_id` int(11),
+  `rack_no` varchar(100),
+  `purchase_price` decimal(20,2) DEFAULT 0,
+  `selling_price` decimal(20,2) DEFAULT 0,
+  `unit` varchar(50),
+  `qty_per_piece` decimal(20,2) DEFAULT 0,
+  `tax_rate` decimal(10,2) DEFAULT 0,
+  `tax_type` varchar(20) DEFAULT 'Percent',
+  `valuation_method` varchar(50) DEFAULT 'Weighted Average',
+  `valuation_cost` decimal(20,2) DEFAULT 0,
+  `order_qty` decimal(20,2) DEFAULT 0,
+  `is_inactive` tinyint(1) DEFAULT 0,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`sub_id`) REFERENCES `inv_sub_categories`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`brand_id`) REFERENCES `inv_brands`(`id`) ON DELETE SET NULL,
+  UNIQUE KEY `inv_item_code_company` (`code`, `company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
