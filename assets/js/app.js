@@ -4890,18 +4890,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (rowIdx >= 0) {
                 const rect = input.getBoundingClientRect();
                 const containerRect = document.getElementById('obGridContainer').getBoundingClientRect();
-                
-                // Adjust for scroll offset of the container
                 const scrollY = document.getElementById('obGridContainer').scrollTop;
                 
                 resultsDiv.style.left = (rect.left - containerRect.left) + 'px';
                 resultsDiv.style.top = (rect.bottom - containerRect.top + scrollY) + 'px';
-                resultsDiv.style.width = '350px'; // Wider for single line
+                resultsDiv.style.width = '350px';
             }
 
+            // User requested that accounts ALREADY in the grid should still show up in search
             const matches = obAccountsPool.filter(a => 
-                (a.name.toLowerCase().includes(term) || a.code.toString().includes(term)) &&
-                !displayedOBAccounts.some(d => d.id === a.id)
+                (a.name.toLowerCase().includes(term) || a.code.toString().includes(term))
             ).slice(0, 15);
 
             if (event.key === 'Enter') {
@@ -4928,8 +4926,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function addAccountToOBGrid(accId) {
             const acc = obAccountsPool.find(a => a.id == accId);
-            if (acc && !displayedOBAccounts.some(d => d.id === acc.id)) {
-                displayedOBAccounts.push({...acc}); // clone
+            if (acc) {
+                // Generate a unique transient ID for this specific row instance
+                const rowInstance = {
+                    ...acc,
+                    u_id: Date.now() + Math.random().toString(36).substr(2, 9)
+                };
+                displayedOBAccounts.push(rowInstance);
                 renderOpeningBalances();
             }
         }
@@ -4941,31 +4944,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             let html = displayedOBAccounts.map((a, idx) => {
                 const isDebit = (parseFloat(a.debit) || 0) > 0;
                 const isCredit = (parseFloat(a.credit) || 0) > 0;
-                const isSelected = selectedOBRowId === a.id;
+                const isSelected = selectedOBRowId === a.u_id;
                 
                 return `
-                <div class="ob-row ${isSelected ? 'selected' : ''}" id="ob-row-${a.id}" onclick="selectOBRow(${a.id})">
+                <div class="ob-row ${isSelected ? 'selected' : ''}" id="ob-row-${a.u_id}" onclick="selectOBRow('${a.u_id}')">
                     <div class="ob-col" style="font-weight: 600; color: #64748b;">${a.code}</div>
                     <div class="ob-col" style="justify-content: flex-start; border-right-color: #f1f5f9; cursor: default;" title="${a.name}">${a.name}</div>
                     <div class="ob-col">
-                        <input type="number" step="0.01" class="ob-input ${isDebit ? 'has-value' : ''}" id="ob-debit-${a.id}"
+                        <input type="number" step="0.01" class="ob-input ${isDebit ? 'has-value' : ''}" id="ob-debit-${a.u_id}"
                                value="${parseFloat(a.debit) || ''}" placeholder="0.00"
                                ${isCredit ? 'disabled style="background: #f8f9fa; cursor: not-allowed;"' : ''}
-                               oninput="onBalanceChange(${a.id}, 'debit', this.value)"
+                               oninput="onBalanceChange('${a.u_id}', 'debit', this.value)"
                                onfocus="this.select()">
                     </div>
                     <div class="ob-col" style="border-right: none;">
-                        <input type="number" step="0.01" class="ob-input ${isCredit ? 'has-value' : ''}" id="ob-credit-${a.id}"
+                        <input type="number" step="0.01" class="ob-input ${isCredit ? 'has-value' : ''}" id="ob-credit-${a.u_id}"
                                value="${parseFloat(a.credit) || ''}" placeholder="0.00"
                                ${isDebit ? 'disabled style="background: #f8f9fa; cursor: not-allowed;"' : ''}
-                               oninput="onBalanceChange(${a.id}, 'credit', this.value)"
+                               oninput="onBalanceChange('${a.u_id}', 'credit', this.value)"
                                onfocus="this.select()">
                     </div>
                 </div>
                 `;
             }).join('');
 
-            // Add Empty Rows (Total 30) - Adjusted for data size
             const totalTargetRows = Math.max(30, displayedOBAccounts.length + 10);
             const emptyCount = totalTargetRows - displayedOBAccounts.length;
             
@@ -4996,31 +4998,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             grid.innerHTML = html;
             calculateOpeningTotals();
             
-            // Clear top search after re-render to keep view clean?
-            // Actually, better to keep it if the user was filtering.
             const filterTerm = document.getElementById('obSearchInput').value;
             if (filterTerm) filterOBGrid({target: {value: filterTerm}});
         }
 
-        function selectOBRow(id) {
-            // Non-destructive selection (Fixes focus bug)
-            selectedOBRowId = id;
+        function selectOBRow(uId) {
+            selectedOBRowId = uId;
             document.querySelectorAll('.ob-row').forEach(row => {
                 row.classList.remove('selected');
             });
-            const targeted = document.getElementById(`ob-row-${id}`);
+            const targeted = document.getElementById(`ob-row-${uId}`);
             if (targeted) targeted.classList.add('selected');
         }
 
-        function onBalanceChange(coaId, field, value) {
-            const acc = displayedOBAccounts.find(a => a.id == coaId);
+        function onBalanceChange(uId, field, value) {
+            const acc = displayedOBAccounts.find(a => a.u_id == uId);
             if (acc) {
                 const numVal = parseFloat(value) || 0;
                 acc[field] = numVal;
 
-                // DIRECT DOM UPDATE to avoid Re-rendering (Fixes Focus Bug)
-                const debitInput = document.getElementById(`ob-debit-${coaId}`);
-                const creditInput = document.getElementById(`ob-credit-${coaId}`);
+                const debitInput = document.getElementById(`ob-debit-${uId}`);
+                const creditInput = document.getElementById(`ob-credit-${uId}`);
 
                 if (field === 'debit') {
                     if (numVal > 0) {
