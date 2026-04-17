@@ -4820,10 +4820,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.printBanks = printBanks;
 
         // --- ACCOUNTS OPENING BALANCES LOGIC ---
-        let obAccounts = [];
+        let obAccountsPool = [];      // All COA accounts from server
+        let displayedOBAccounts = [];  // Currently active rows in grid
 
         async function initOpeningBalancesView() {
-            console.log("SoftifyX: Init Opening Balances View");
+            console.log("SoftifyX: Init Opening Balances View (Refactored)");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const fyId = session.fy_id || 0;
             const coId = session.company_id || 1;
@@ -4841,9 +4842,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const res = await fetch(`api/maintain.php?action=get_coa_opening_balances&company_id=${coId}&fy_id=${fyId}`);
                         if (res.ok) {
-                            obAccounts = await res.json();
+                            obAccountsPool = await res.json();
+                            // Initial State: Only show accounts that already have balances
+                            displayedOBAccounts = obAccountsPool.filter(a => 
+                                (parseFloat(a.debit) || 0) > 0 || (parseFloat(a.credit) || 0) > 0
+                            );
                             renderOpeningBalances();
-                            setupOBSearch();
                         }
                     } catch (e) {
                         console.error("OB Load Error:", e);
@@ -4852,57 +4856,106 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 100);
         }
 
-        function renderOpeningBalances() {
-            const grid = document.getElementById('obGridBody');
-            const searchInput = document.getElementById('obSearchInput');
-            if (!grid) return;
+        function handleOBSearch(event) {
+            const input = document.getElementById('obSearchInput');
+            const resultsDiv = document.getElementById('obSearchResults');
+            if (!input || !resultsDiv) return;
 
-            const searchTerm = (searchInput ? searchInput.value : "").toLowerCase();
-            const filtered = obAccounts.filter(a => 
-                a.name.toLowerCase().includes(searchTerm) || 
-                a.code.toString().includes(searchTerm)
-            );
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div style="padding: 20px; text-align: center; color: #94a3b8;">${searchTerm ? 'No accounts match your search.' : 'No accounts found in system.'}</div>`;
+            const term = input.value.toLowerCase().trim();
+            if (term.length < 1) {
+                resultsDiv.style.display = 'none';
                 return;
             }
 
-            grid.innerHTML = filtered.map(a => `
+            // Filter from full pool
+            const matches = obAccountsPool.filter(a => 
+                (a.name.toLowerCase().includes(term) || a.code.toString().includes(term)) &&
+                !displayedOBAccounts.some(d => d.id === a.id) // Exclude already added
+            ).slice(0, 10); // Limit results
+
+            if (event.key === 'Enter') {
+                if (matches.length > 0) {
+                    addAccountToOBGrid(matches[0].id);
+                    input.value = '';
+                    resultsDiv.style.display = 'none';
+                }
+                return;
+            }
+
+            if (matches.length > 0) {
+                resultsDiv.innerHTML = matches.map(m => `
+                    <div class="ob-result-item" onclick="addAccountToOBGrid(${m.id}); document.getElementById('obSearchInput').value=''; document.getElementById('obSearchResults').style.display='none';">
+                        <span style="font-weight: 700; color: #1F4E79;">${m.code}</span> - ${m.name}
+                    </div>
+                `).join('');
+                resultsDiv.style.display = 'block';
+            } else {
+                resultsDiv.style.display = 'none';
+            }
+        }
+
+        function addAccountToOBGrid(accId) {
+            const acc = obAccountsPool.find(a => a.id == accId);
+            if (acc && !displayedOBAccounts.some(d => d.id === acc.id)) {
+                displayedOBAccounts.push(acc);
+                renderOpeningBalances();
+            }
+        }
+
+        function renderOpeningBalances() {
+            const grid = document.getElementById('obGridBody');
+            if (!grid) return;
+
+            if (displayedOBAccounts.length === 0) {
+                grid.innerHTML = `<div style="padding: 40px; text-align: center; color: #94a3b8;">Grid is empty. Search for an account above to add it to the list.</div>`;
+                calculateOpeningTotals();
+                return;
+            }
+
+            grid.innerHTML = displayedOBAccounts.map(a => {
+                const isDebit = (parseFloat(a.debit) || 0) > 0;
+                const isCredit = (parseFloat(a.credit) || 0) > 0;
+                
+                return `
                 <div class="ob-row">
                     <div class="ob-col" style="font-weight: 600; color: #64748b;">${a.code}</div>
                     <div class="ob-col" style="justify-content: flex-start; border-right-color: #f1f5f9;">${a.name}</div>
                     <div class="ob-col">
-                        <input type="number" step="0.01" class="ob-input ${parseFloat(a.debit) ? 'has-value' : ''}" 
+                        <input type="number" step="0.01" class="ob-input ${isDebit ? 'has-value' : ''}" 
                                value="${parseFloat(a.debit) || ''}" placeholder="0.00"
+                               ${isCredit ? 'disabled style="background: #f1f5f9; cursor: not-allowed;"' : ''}
                                oninput="onBalanceChange(${a.id}, 'debit', this.value)"
                                onfocus="this.select()">
                     </div>
                     <div class="ob-col" style="border-right: none;">
-                        <input type="number" step="0.01" class="ob-input ${parseFloat(a.credit) ? 'has-value' : ''}" 
+                        <input type="number" step="0.01" class="ob-input ${isCredit ? 'has-value' : ''}" 
                                value="${parseFloat(a.credit) || ''}" placeholder="0.00"
+                               ${isDebit ? 'disabled style="background: #f1f5f9; cursor: not-allowed;"' : ''}
                                oninput="onBalanceChange(${a.id}, 'credit', this.value)"
                                onfocus="this.select()">
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             calculateOpeningTotals();
         }
 
         function onBalanceChange(coaId, field, value) {
-            const acc = obAccounts.find(a => a.id == coaId);
+            const acc = displayedOBAccounts.find(a => a.id == coaId);
             if (acc) {
-                acc[field] = parseFloat(value) || 0;
-                // Update specific input's class if needed (optional UX)
-                calculateOpeningTotals();
+                const numVal = parseFloat(value) || 0;
+                acc[field] = numVal;
+                
+                // Mutual Exclusion Logic: If one is set, re-render to lock the other
+                renderOpeningBalances();
             }
         }
 
         function calculateOpeningTotals() {
             let totalDebit = 0;
             let totalCredit = 0;
-            obAccounts.forEach(a => {
+            displayedOBAccounts.forEach(a => {
                 totalDebit += parseFloat(a.debit) || 0;
                 totalCredit += parseFloat(a.credit) || 0;
             });
@@ -4913,18 +4966,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (creEl) creEl.textContent = totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
 
-        function setupOBSearch() {
-            // Placeholder if we need advanced listeners
-        }
-
         async function saveOpeningBalances() {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const fyId = session.fy_id || 0;
             if (!fyId) return;
 
-            // Prepare payload: Only send accounts that have non-zero or modified balances
-            // But for simplicity in a Maintenance module, we can send everything or filter
-            const modified = obAccounts.map(a => ({
+            // Only save what's displayed or modified
+            const payload = displayedOBAccounts.map(a => ({
                 coa_id: a.id,
                 debit: a.debit || 0,
                 credit: a.credit || 0
@@ -4934,7 +4982,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch('api/maintain.php?action=save_coa_opening_balances', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fy_id: fyId, balances: modified })
+                    body: JSON.stringify({ fy_id: fyId, balances: payload })
                 });
                 if (res.ok) {
                     alert("Opening Balances saved successfully!");
@@ -4973,6 +5021,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Expose Opening Balances Functions
         window.initOpeningBalancesView = initOpeningBalancesView;
+        window.handleOBSearch = handleOBSearch;
+        window.addAccountToOBGrid = addAccountToOBGrid;
         window.renderOpeningBalances = renderOpeningBalances;
         window.onBalanceChange = onBalanceChange;
         window.saveOpeningBalances = saveOpeningBalances;
