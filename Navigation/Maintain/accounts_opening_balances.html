@@ -21,7 +21,9 @@
             <button class="ob-btn ob-cancel" onclick="closeModularPopup()">
                 <i class="fas fa-times-circle"></i> Cancel
             </button>
-            <button class="ob-btn ob-delete"><i class="fas fa-trash"></i> Delete</button>
+            <button class="ob-btn ob-delete" onclick="deleteOBAccount()">
+                <i class="fas fa-trash"></i> Delete
+            </button>
             <button class="ob-btn"><i class="fas fa-print"></i> Print</button>
         </div>
     </div>
@@ -53,10 +55,15 @@
     </div>
 
     <!-- Totals Footer -->
-    <div style="display: grid; grid-template-columns: 140px 1fr 150px 150px; background: #f8fafc; border: 1px solid #e2e8f0; border-top: 2px solid #1F4E79; font-weight: 700; font-size: 13px; color: #1F4E79;">
-        <div style="padding: 10px; grid-column: span 2; text-align: right; text-transform: uppercase;">Totals</div>
-        <div id="obTotalDebit" style="padding: 10px; text-align: center; border-left: 1px solid #e2e8f0; background: #fff;">0.00</div>
-        <div id="obTotalCredit" style="padding: 10px; text-align: center; border-left: 1px solid #e2e8f0; background: #fff;">0.00</div>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: 2px solid #1F4E79;">
+        <div style="display: grid; grid-template-columns: 140px 1fr 150px 150px; font-weight: 700; font-size: 13px; color: #1F4E79;">
+            <div style="padding: 10px; grid-column: span 2; text-align: right; text-transform: uppercase;">Totals</div>
+            <div id="obTotalDebit" style="padding: 10px; text-align: center; border-left: 1px solid #e2e8f0; background: #fff;">0.00</div>
+            <div id="obTotalCredit" style="padding: 10px; text-align: center; border-left: 1px solid #e2e8f0; background: #fff;">0.00</div>
+        </div>
+        <div id="obDifferenceMsg" style="padding: 5px 15px; font-size: 13px; font-weight: 600; color: #e74c3c; background: #fff; border-top: 1px solid #eee; min-height: 25px;">
+            <!-- Difference message injected here -->
+        </div>
     </div>
 
     <style>

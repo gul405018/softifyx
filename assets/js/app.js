@@ -4821,10 +4821,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- ACCOUNTS OPENING BALANCES LOGIC ---
         let obAccountsPool = [];      // All COA accounts from server
-        let displayedOBAccounts = [];  // Currently active rows in grid
+        let displayedOBAccounts = [];  // Currently active rows with balances
+        let selectedOBRowId = null;    // Track clicked row for deletion/focus
 
         async function initOpeningBalancesView() {
-            console.log("SoftifyX: Init Opening Balances View (Refactored)");
+            console.log("SoftifyX: Init Opening Balances View (Refined)");
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const fyId = session.fy_id || 0;
             const coId = session.company_id || 1;
@@ -4856,9 +4857,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 100);
         }
 
-        function handleOBSearch(event) {
-            const input = document.getElementById('obSearchInput');
-            const resultsDiv = document.getElementById('obSearchResults');
+        function handleOBSearch(event, rowIdx = -1) {
+            const input = event.target || document.getElementById('obSearchInput');
+            let resultsDiv = document.getElementById('obSearchResults');
+            
+            // If searching from a specific row, we may need a floating div near that row
+            // Simple approach: still use the top resultsDiv but reposition if needed
+            // For now, let's just make it work for both.
+            
             if (!input || !resultsDiv) return;
 
             const term = input.value.toLowerCase().trim();
@@ -4867,11 +4873,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Filter from full pool
+            // Position resultsDiv near the input if rowIdx >= 0
+            if (rowIdx >= 0) {
+                const rect = input.getBoundingClientRect();
+                const containerRect = document.getElementById('openingBalancesContainer').getBoundingClientRect();
+                resultsDiv.style.left = (rect.left - containerRect.left) + 'px';
+                resultsDiv.style.top = (rect.bottom - containerRect.top) + 'px';
+                resultsDiv.style.width = rect.width + 'px';
+            } else {
+                // Return to default top position
+                resultsDiv.style.left = 'auto'; 
+                resultsDiv.style.top = '100%';
+                resultsDiv.style.width = '100%';
+            }
+
             const matches = obAccountsPool.filter(a => 
                 (a.name.toLowerCase().includes(term) || a.code.toString().includes(term)) &&
-                !displayedOBAccounts.some(d => d.id === a.id) // Exclude already added
-            ).slice(0, 10); // Limit results
+                !displayedOBAccounts.some(d => d.id === a.id)
+            ).slice(0, 10);
 
             if (event.key === 'Enter') {
                 if (matches.length > 0) {
@@ -4884,7 +4903,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (matches.length > 0) {
                 resultsDiv.innerHTML = matches.map(m => `
-                    <div class="ob-result-item" onclick="addAccountToOBGrid(${m.id}); document.getElementById('obSearchInput').value=''; document.getElementById('obSearchResults').style.display='none';">
+                    <div class="ob-result-item" onclick="addAccountToOBGrid(${m.id}); document.getElementById('obSearchResults').style.display='none';">
                         <span style="font-weight: 700; color: #1F4E79;">${m.code}</span> - ${m.name}
                     </div>
                 `).join('');
@@ -4897,7 +4916,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         function addAccountToOBGrid(accId) {
             const acc = obAccountsPool.find(a => a.id == accId);
             if (acc && !displayedOBAccounts.some(d => d.id === acc.id)) {
-                displayedOBAccounts.push(acc);
+                displayedOBAccounts.push({...acc}); // clone
                 renderOpeningBalances();
             }
         }
@@ -4906,29 +4925,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('obGridBody');
             if (!grid) return;
 
-            if (displayedOBAccounts.length === 0) {
-                grid.innerHTML = `<div style="padding: 40px; text-align: center; color: #94a3b8;">Grid is empty. Search for an account above to add it to the list.</div>`;
-                calculateOpeningTotals();
-                return;
-            }
-
-            grid.innerHTML = displayedOBAccounts.map(a => {
+            let html = displayedOBAccounts.map((a, idx) => {
                 const isDebit = (parseFloat(a.debit) || 0) > 0;
                 const isCredit = (parseFloat(a.credit) || 0) > 0;
+                const isSelected = selectedOBRowId === a.id;
                 
                 return `
-                <div class="ob-row">
+                <div class="ob-row ${isSelected ? 'selected' : ''}" onclick="selectOBRow(${a.id})">
                     <div class="ob-col" style="font-weight: 600; color: #64748b;">${a.code}</div>
                     <div class="ob-col" style="justify-content: flex-start; border-right-color: #f1f5f9;">${a.name}</div>
                     <div class="ob-col">
-                        <input type="number" step="0.01" class="ob-input ${isDebit ? 'has-value' : ''}" 
+                        <input type="number" step="0.01" class="ob-input ${isDebit ? 'has-value' : ''}" id="ob-debit-${a.id}"
                                value="${parseFloat(a.debit) || ''}" placeholder="0.00"
                                ${isCredit ? 'disabled style="background: #f1f5f9; cursor: not-allowed;"' : ''}
                                oninput="onBalanceChange(${a.id}, 'debit', this.value)"
                                onfocus="this.select()">
                     </div>
                     <div class="ob-col" style="border-right: none;">
-                        <input type="number" step="0.01" class="ob-input ${isCredit ? 'has-value' : ''}" 
+                        <input type="number" step="0.01" class="ob-input ${isCredit ? 'has-value' : ''}" id="ob-credit-${a.id}"
                                value="${parseFloat(a.credit) || ''}" placeholder="0.00"
                                ${isDebit ? 'disabled style="background: #f1f5f9; cursor: not-allowed;"' : ''}
                                oninput="onBalanceChange(${a.id}, 'credit', this.value)"
@@ -4938,7 +4952,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }).join('');
 
+            // Add Empty Rows (Total 30)
+            const emptyCount = Math.max(0, 30 - displayedOBAccounts.length);
+            for (let i = 0; i < emptyCount; i++) {
+                // The FIRST empty row has the search input
+                if (i === 0) {
+                    html += `
+                    <div class="ob-row">
+                        <div class="ob-col">
+                            <input type="text" class="ob-input" placeholder="Type Code..." 
+                                   onkeyup="handleOBSearch(event, 999)" 
+                                   style="text-align: left; background: #fffde7; border-bottom: 2px solid #fbc02d;">
+                        </div>
+                        <div class="ob-col" style="text-align: left; color: #cbd5e0; font-style: italic;">(Select account from code field)</div>
+                        <div class="ob-col"></div>
+                        <div class="ob-col" style="border-right: none;"></div>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="ob-row">
+                        <div class="ob-col"></div>
+                        <div class="ob-col"></div>
+                        <div class="ob-col"></div>
+                        <div class="ob-col" style="border-right: none;"></div>
+                    </div>`;
+                }
+            }
+
+            grid.innerHTML = html;
             calculateOpeningTotals();
+        }
+
+        function selectOBRow(id) {
+            selectedOBRowId = id;
+            // Optionally re-render or just toggle class
+            document.querySelectorAll('.ob-row').forEach(r => r.classList.remove('selected'));
+            const row = [...document.querySelectorAll('.ob-row')].find(r => r.innerHTML.includes(`(${id},`)); 
+            // Better selection logic:
+            renderOpeningBalances(); 
         }
 
         function onBalanceChange(coaId, field, value) {
@@ -4946,9 +4997,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (acc) {
                 const numVal = parseFloat(value) || 0;
                 acc[field] = numVal;
+
+                // DIRECT DOM UPDATE to avoid Re-rendering (Fixes Focus Bug)
+                const debitInput = document.getElementById(`ob-debit-${coaId}`);
+                const creditInput = document.getElementById(`ob-credit-${coaId}`);
+
+                if (field === 'debit') {
+                    if (numVal > 0) {
+                        creditInput.disabled = true;
+                        creditInput.style.background = '#f1f5f9';
+                        creditInput.style.cursor = 'not-allowed';
+                        debitInput.classList.add('has-value');
+                    } else {
+                        creditInput.disabled = false;
+                        creditInput.style.background = 'transparent';
+                        creditInput.style.cursor = 'text';
+                        debitInput.classList.remove('has-value');
+                    }
+                } else {
+                    if (numVal > 0) {
+                        debitInput.disabled = true;
+                        debitInput.style.background = '#f1f5f9';
+                        debitInput.style.cursor = 'not-allowed';
+                        creditInput.classList.add('has-value');
+                    } else {
+                        debitInput.disabled = false;
+                        debitInput.style.background = 'transparent';
+                        debitInput.style.cursor = 'text';
+                        creditInput.classList.remove('has-value');
+                    }
+                }
                 
-                // Mutual Exclusion Logic: If one is set, re-render to lock the other
-                renderOpeningBalances();
+                calculateOpeningTotals();
             }
         }
 
@@ -4962,8 +5042,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const debEl = document.getElementById('obTotalDebit');
             const creEl = document.getElementById('obTotalCredit');
+            const diffEl = document.getElementById('obDifferenceMsg');
+
             if (debEl) debEl.textContent = totalDebit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             if (creEl) creEl.textContent = totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            if (diffEl) {
+                const diff = Math.abs(totalDebit - totalCredit);
+                if (diff > 0.001) {
+                    diffEl.textContent = `There is a difference of Rs. ${diff.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} in totals.`;
+                    diffEl.style.color = '#e74c3c';
+                } else {
+                    diffEl.textContent = 'Totals are balanced.';
+                    diffEl.style.color = '#27ae60';
+                }
+            }
         }
 
         async function saveOpeningBalances() {
@@ -4971,7 +5064,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const fyId = session.fy_id || 0;
             if (!fyId) return;
 
-            // Only save what's displayed or modified
             const payload = displayedOBAccounts.map(a => ({
                 coa_id: a.id,
                 debit: a.debit || 0,
@@ -4991,6 +5083,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (e) {
                 alert("Error saving balances.");
+            }
+        }
+
+        function deleteOBAccount() {
+            if (!selectedOBRowId) {
+                alert("Please click on a row first to select it for deletion.");
+                return;
+            }
+            if (confirm("Remove this account from the temporary list? (Original COA will not be deleted)")) {
+                displayedOBAccounts = displayedOBAccounts.filter(a => a.id !== selectedOBRowId);
+                selectedOBRowId = null;
+                renderOpeningBalances();
             }
         }
 
@@ -5024,8 +5128,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.handleOBSearch = handleOBSearch;
         window.addAccountToOBGrid = addAccountToOBGrid;
         window.renderOpeningBalances = renderOpeningBalances;
+        window.selectOBRow = selectOBRow;
         window.onBalanceChange = onBalanceChange;
         window.saveOpeningBalances = saveOpeningBalances;
+        window.deleteOBAccount = deleteOBAccount;
         window.importBalances = importBalances;
 
         window.handleLogout = async function() {
