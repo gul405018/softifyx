@@ -5397,11 +5397,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('invItemDesc').value = item.description || '';
                 document.getElementById('invItemBrand').value = item.brand_id || '';
                 document.getElementById('invItemRack').value = item.rack_no || '';
-                document.getElementById('invItemPurchasePrice').value = item.purchase_price || 0;
-                document.getElementById('invItemSellingPrice').value = item.selling_price || 0;
+                document.getElementById('invItemPurchasePrice').value = item.purchase_price || '';
+                document.getElementById('invItemSellingPrice').value = item.selling_price || '';
                 document.getElementById('invItemUnit').value = item.unit || 'Pcs';
-                document.getElementById('invItemQtyPerPiece').value = item.qty_per_piece || 1;
-                document.getElementById('invItemTaxRate').value = item.tax_rate || 0;
+                document.getElementById('invItemQtyPerPiece').value = item.qty_per_piece || '';
+                document.getElementById('invItemTaxRate').value = item.tax_rate || '';
                 
                 const taxRadios = document.getElementsByName('taxType');
                 taxRadios.forEach(r => r.checked = (r.value === item.tax_type));
@@ -5409,8 +5409,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const valRadios = document.getElementsByName('costValuation');
                 valRadios.forEach(r => r.checked = (r.value === item.valuation_method));
                 
-                document.getElementById('invItemValuationCost').value = item.valuation_cost || 0;
-                document.getElementById('invItemOrderQty').value = item.order_qty || 0;
+                document.getElementById('invItemValuationCost').value = item.valuation_cost || '';
+                document.getElementById('invItemOrderQty').value = item.order_qty || '';
                 document.getElementById('invItemInactive').checked = !!parseInt(item.is_inactive);
                 
                 enableInvItemFields(false);
@@ -5482,8 +5482,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (el) el.value = '';
             });
             document.getElementById('invItemUnit').value = 'Pcs';
-            document.getElementById('invItemQtyPerPiece').value = 1;
-            document.getElementById('invItemTaxRate').value = 0;
+            document.getElementById('invItemQtyPerPiece').value = '';
+            document.getElementById('invItemTaxRate').value = '';
             document.getElementById('invItemInactive').checked = false;
 
             if (generate) {

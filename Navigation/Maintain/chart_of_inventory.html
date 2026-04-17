@@ -1,15 +1,15 @@
-<div id="invCOAContainer" data-module="Chart of Inventory" style="width: 1000px; height: 750px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
+<div id="invCOAContainer" data-module="Chart of Inventory" style="width: 1000px; height: 750px; display: flex; flex-direction: column; gap: 5px; background: white; padding: 6px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
 
     <!-- Section 1: Inventory Categories -->
-    <fieldset style="border: 1px solid #cbd5e0; padding: 10px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 150px;">
+    <fieldset style="border: 1px solid #cbd5e0; padding: 6px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 140px;">
         <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">Inventory Categories</legend>
         <div style="display: flex; gap: 15px; height: 100%;">
             <!-- List -->
-            <div style="width: 350px;">
+            <div style="width: 300px;">
                 <select id="invMainList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvMainSelect(this.value)"></select>
             </div>
             <!-- Fields & Buttons -->
-            <div style="width: 550px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="width: 630px; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 5px;">
                     <button class="inv-btn" onclick="printInvChart('main')">Chart</button>
                     <button class="inv-btn" onclick="printInvPriceList('main')">Price List</button>
@@ -19,7 +19,7 @@
                     <button class="inv-btn inv-cancel" onclick="resetInvMainForm()">Cancel</button>
                     <button class="inv-btn inv-delete" onclick="deleteInvMain()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 5px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 5px; align-items: center;">
                     <label class="inv-label">Main Category Code</label>
                     <input type="text" id="invMainCode" class="inv-input" style="width: 100px; text-align: center; font-weight: 700;" disabled>
                     
@@ -31,15 +31,15 @@
     </fieldset>
 
     <!-- Section 2: Sub Inventory Categories -->
-    <fieldset style="border: 1px solid #cbd5e0; padding: 10px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 150px;">
+    <fieldset style="border: 1px solid #cbd5e0; padding: 6px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 140px;">
         <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">Sub Inventory Categories</legend>
         <div style="display: flex; gap: 15px; height: 100%;">
             <!-- List -->
-            <div style="width: 350px;">
+            <div style="width: 300px;">
                 <select id="invSubList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvSubSelect(this.value)"></select>
             </div>
             <!-- Fields & Buttons -->
-            <div style="width: 550px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="width: 630px; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-end; gap: 5px;">
                     <button class="inv-btn" onclick="printInvChart('sub')">Chart</button>
                     <button class="inv-btn" onclick="printInvPriceList('sub')">Price List</button>
@@ -49,7 +49,7 @@
                     <button class="inv-btn inv-cancel" onclick="resetInvSubForm()">Cancel</button>
                     <button class="inv-btn inv-delete" onclick="deleteInvSub()">Delete</button>
                 </div>
-                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 5px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 5px; align-items: center;">
                     <label class="inv-label">Sub Category Code</label>
                     <input type="text" id="invSubCode" class="inv-input" style="width: 120px; text-align: center; font-weight: 700;" disabled>
                     
@@ -61,15 +61,15 @@
     </fieldset>
 
     <!-- Section 3: List of Inventory Items -->
-    <fieldset style="border: 1px solid #cbd5e0; padding: 10px; border-radius: 4px; flex: 2; display: flex; flex-direction: column; min-height: 250px;">
+    <fieldset style="border: 1px solid #cbd5e0; padding: 6px; border-radius: 4px; flex: 2; display: flex; flex-direction: column; min-height: 250px;">
         <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">List of Inventory Items</legend>
         <div style="display: flex; gap: 15px; height: 100%;">
             <!-- List -->
-            <div style="width: 350px;">
+            <div style="width: 300px;">
                 <select id="invItemList" size="12" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvItemSelect(this.value)"></select>
             </div>
             <!-- Fields & Buttons -->
-            <div style="width: 550px; display: flex; flex-direction: column; gap: 5px;">
+            <div style="width: 630px; display: flex; flex-direction: column; gap: 4px;">
                 <div style="display: flex; justify-content: flex-end; gap: 3px; margin-bottom: 5px;">
                     <button class="inv-btn">Chart</button>
                     <button class="inv-btn">Price List</button>
@@ -81,9 +81,9 @@
                     <button class="inv-btn inv-delete" onclick="deleteInvItem()">Delete</button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 130px 1fr; gap: 4px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 4px; align-items: center;">
                     <label class="inv-label">Item Code</label>
-                    <input type="text" id="invItemCode" class="inv-input" style="width: 180px; text-align: center; font-weight: 700;" disabled>
+                    <input type="text" id="invItemCode" class="inv-input" style="width: 200px; text-align: center; font-weight: 700;" disabled>
                     
                     <label class="inv-label">Item Name</label>
                     <input type="text" id="invItemName" class="inv-input" style="font-weight: 700; text-align: center;" disabled>
@@ -92,7 +92,7 @@
                     <input type="text" id="invItemDesc" class="inv-input" disabled>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 130px 1fr 60px 80px; gap: 4px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr 80px 150px; gap: 4px; align-items: center;">
                     <label class="inv-label">Brand Name</label>
                     <div style="display: flex; gap: 2px;">
                         <select id="invItemBrand" class="inv-input" style="flex: 1; background: white;" disabled>
@@ -104,14 +104,14 @@
                     <input type="text" id="invItemRack" class="inv-input" disabled>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 130px 1fr 80px 1fr; gap: 4px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr 100px 1fr; gap: 4px; align-items: center;">
                     <label class="inv-label">Purchase Price</label>
-                    <input type="number" id="invItemPurchasePrice" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <input type="number" id="invItemPurchasePrice" class="inv-input" style="text-align: center;" disabled>
                     <label class="inv-label" style="text-align: right; padding-right: 5px;">Selling Price</label>
-                    <input type="number" id="invItemSellingPrice" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <input type="number" id="invItemSellingPrice" class="inv-input" style="text-align: center;" disabled>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 130px 100px 90px 1fr; gap: 4px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr 100px 1fr; gap: 4px; align-items: center;">
                     <label class="inv-label">Measurement Unit</label>
                     <select id="invItemUnit" class="inv-input" style="background: white;" disabled>
                         <option value="Pcs">Pcs</option>
@@ -122,46 +122,45 @@
                         <option value="Meter">Meter</option>
                     </select>
                     <label class="inv-label" style="text-align: right; padding-right: 5px;">Quantity/Piece</label>
-                    <input type="number" id="invItemQtyPerPiece" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <input type="number" id="invItemQtyPerPiece" class="inv-input" style="text-align: center;" disabled>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 130px 100px 20px 1fr; gap: 4px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 120px 20px 1fr; gap: 4px; align-items: center;">
                     <label class="inv-label">Sales Tax Rate</label>
-                    <input type="number" id="invItemTaxRate" class="inv-input" style="text-align: center;" value="0" disabled>
-                    <span style="font-size: 12px; font-weight: 700;">%</span>
-                    <div style="display: flex; gap: 15px; font-size: 11px; font-weight: 600;">
-                        <label><input type="radio" name="taxType" value="Percent" checked disabled> Percent</label>
-                        <label><input type="radio" name="taxType" value="Amount" disabled> Amount</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <input type="number" id="invItemTaxRate" class="inv-input" style="text-align: center;" disabled>
+                        <span style="font-size: 11px; font-weight: 700;">%</span>
+                    </div>
+                    <div></div>
+                    <div style="display: flex; gap: 15px; font-size: 10px; font-weight: 600;">
+                        <label style="display: flex; align-items: center; gap: 3px;"><input type="radio" name="taxType" value="Percent" checked disabled> Percent</label>
+                        <label style="display: flex; align-items: center; gap: 3px;"><input type="radio" name="taxType" value="Amount" disabled> Amount</label>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 130px 1fr 140px; gap: 4px; align-items: center;">
-                    <label class="inv-label">Cost Valuation Method</label>
-                    <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600;">
-                        <label><input type="radio" name="costValuation" value="Weighted Average" checked disabled> Weighted Average Price</label>
-                        <label><input type="radio" name="costValuation" value="Manual" disabled> Manual Valuation Cost</label>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 4px; align-items: center;">
+                    <label class="inv-label">Valuation Method</label>
+                    <div style="display: flex; gap: 15px; font-size: 10px; font-weight: 600;">
+                        <label style="display: flex; align-items: center; gap: 3px;"><input type="radio" name="costValuation" value="Weighted Average" checked disabled> Weighted Average Price</label>
+                        <label style="display: flex; align-items: center; gap: 3px;"><input type="radio" name="costValuation" value="Manual" disabled> Manual Valuation Cost</label>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 130px 1fr 90px 1fr; gap: 4px; align-items: center;">
+                <div style="display: grid; grid-template-columns: 120px 1fr 100px 1fr; gap: 4px; align-items: center;">
                     <label class="inv-label">Valuation Cost</label>
-                    <input type="number" id="invItemValuationCost" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <input type="number" id="invItemValuationCost" class="inv-input" style="text-align: center;" disabled>
                     <label class="inv-label" style="text-align: right; padding-right: 5px;">Order Quantity</label>
-                    <input type="number" id="invItemOrderQty" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <input type="number" id="invItemOrderQty" class="inv-input" style="text-align: center;" disabled>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 2px;">
-                    <label class="inv-label">Inactive Item</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 1px;">
+                    <label class="inv-label" style="min-width: 120px;">Inactive Item</label>
                     <input type="checkbox" id="invItemInactive" disabled>
                 </div>
             </div>
         </div>
     </fieldset>
 
-    <!-- Bottom Instructions -->
-    <div style="display: flex; justify-content: center; font-size: 12px; color: #e74c3c; font-weight: 700; margin-top: 5px;">
-        Press: Ctrl+N to add new account, Ctrl+S to save changes and ESC to cancel
-    </div>
 
     <style>
         .inv-btn {
