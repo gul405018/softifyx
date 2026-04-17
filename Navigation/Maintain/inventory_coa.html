@@ -1,0 +1,202 @@
+<div id="invCOAContainer" data-module="Chart of Inventory" style="height: 700px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px; border: 1px solid #cbd5e0;">
+    
+    <!-- Title Area matching screenshot style -->
+    <div style="background: #E8E8E8; padding: 5px 15px; border-bottom: 2px solid #555; margin-bottom: 5px;">
+        <div style="font-size: 18px; font-weight: 800; color: #008000; font-style: italic; letter-spacing: 1px;">CHART OF INVENTORY</div>
+    </div>
+
+    <!-- Section 1: Inventory Categories -->
+    <fieldset style="border: 1px solid #cbd5e0; padding: 10px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 150px;">
+        <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">Inventory Categories</legend>
+        <div style="display: flex; gap: 15px; height: 100%;">
+            <!-- List -->
+            <div style="flex: 1;">
+                <select id="invMainList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvMainSelect(this.value)"></select>
+            </div>
+            <!-- Fields & Buttons -->
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: flex-end; gap: 5px;">
+                    <button class="inv-btn" onclick="printInvChart('main')">Chart</button>
+                    <button class="inv-btn" onclick="printInvPriceList('main')">Price List</button>
+                    <div style="width: 20px;"></div>
+                    <button class="inv-btn inv-add" onclick="resetInvMainForm(true)">Add</button>
+                    <button class="inv-btn inv-save" onclick="saveInvMain()">Save</button>
+                    <button class="inv-btn inv-cancel" onclick="resetInvMainForm()">Cancel</button>
+                    <button class="inv-btn inv-delete" onclick="deleteInvMain()">Delete</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 5px; align-items: center;">
+                    <label class="inv-label">Main Category Code</label>
+                    <input type="text" id="invMainCode" class="inv-input" style="width: 100px; text-align: center; font-weight: 700;" disabled>
+                    
+                    <label class="inv-label">Main Category Name</label>
+                    <input type="text" id="invMainName" class="inv-input" style="font-weight: 700; text-align: center;" disabled>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Section 2: Sub Inventory Categories -->
+    <fieldset style="border: 1px solid #cbd5e0; padding: 10px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 150px;">
+        <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">Sub Inventory Categories</legend>
+        <div style="display: flex; gap: 15px; height: 100%;">
+            <!-- List -->
+            <div style="flex: 1;">
+                <select id="invSubList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvSubSelect(this.value)"></select>
+            </div>
+            <!-- Fields & Buttons -->
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: flex-end; gap: 5px;">
+                    <button class="inv-btn" onclick="printInvChart('sub')">Chart</button>
+                    <button class="inv-btn" onclick="printInvPriceList('sub')">Price List</button>
+                    <div style="width: 20px;"></div>
+                    <button class="inv-btn inv-add" onclick="resetInvSubForm(true)">Add</button>
+                    <button class="inv-btn inv-save" onclick="saveInvSub()">Save</button>
+                    <button class="inv-btn inv-cancel" onclick="resetInvSubForm()">Cancel</button>
+                    <button class="inv-btn inv-delete" onclick="deleteInvSub()">Delete</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 5px; align-items: center;">
+                    <label class="inv-label">Sub Category Code</label>
+                    <input type="text" id="invSubCode" class="inv-input" style="width: 120px; text-align: center; font-weight: 700;" disabled>
+                    
+                    <label class="inv-label">Sub Category Name</label>
+                    <input type="text" id="invSubName" class="inv-input" style="font-weight: 700; text-align: center;" disabled>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Section 3: List of Inventory Items -->
+    <fieldset style="border: 1px solid #cbd5e0; padding: 10px; border-radius: 4px; flex: 2; display: flex; flex-direction: column; min-height: 250px;">
+        <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">List of Inventory Items</legend>
+        <div style="display: flex; gap: 15px; height: 100%;">
+            <!-- List -->
+            <div style="flex: 1;">
+                <select id="invItemList" size="12" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvItemSelect(this.value)"></select>
+            </div>
+            <!-- Fields & Buttons -->
+            <div style="flex: 1.5; display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; justify-content: flex-end; gap: 3px; margin-bottom: 5px;">
+                    <button class="inv-btn">Chart</button>
+                    <button class="inv-btn">Price List</button>
+                    <button class="inv-btn"><i class="fas fa-search"></i> Find</button>
+                    <div style="width: 15px;"></div>
+                    <button class="inv-btn inv-add" onclick="resetInvItemForm(true)">Add</button>
+                    <button class="inv-btn inv-save" onclick="saveInvItem()">Save</button>
+                    <button class="inv-btn inv-cancel" onclick="resetInvItemForm()">Cancel</button>
+                    <button class="inv-btn inv-delete" onclick="deleteInvItem()">Delete</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 130px 1fr; gap: 4px; align-items: center;">
+                    <label class="inv-label">Item Code</label>
+                    <input type="text" id="invItemCode" class="inv-input" style="width: 180px; text-align: center; font-weight: 700;" disabled>
+                    
+                    <label class="inv-label">Item Name</label>
+                    <input type="text" id="invItemName" class="inv-input" style="font-weight: 700; text-align: center;" disabled>
+                    
+                    <label class="inv-label">Item Description</label>
+                    <input type="text" id="invItemDesc" class="inv-input" disabled>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 130px 1fr 60px 80px; gap: 4px; align-items: center;">
+                    <label class="inv-label">Brand Name</label>
+                    <div style="display: flex; gap: 2px;">
+                        <select id="invItemBrand" class="inv-input" style="flex: 1; background: white;" disabled>
+                            <option value="">None</option>
+                        </select>
+                        <button class="inv-btn" style="min-width: 25px; padding: 0 5px;" onclick="manageBrands()">..</button>
+                    </div>
+                    <label class="inv-label" style="text-align: right; padding-right: 5px;">Rack No.</label>
+                    <input type="text" id="invItemRack" class="inv-input" disabled>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 130px 1fr 80px 1fr; gap: 4px; align-items: center;">
+                    <label class="inv-label">Purchase Price</label>
+                    <input type="number" id="invItemPurchasePrice" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <label class="inv-label" style="text-align: right; padding-right: 5px;">Selling Price</label>
+                    <input type="number" id="invItemSellingPrice" class="inv-input" style="text-align: center;" value="0" disabled>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 130px 100px 90px 1fr; gap: 4px; align-items: center;">
+                    <label class="inv-label">Measurement Unit</label>
+                    <select id="invItemUnit" class="inv-input" style="background: white;" disabled>
+                        <option value="Pcs">Pcs</option>
+                        <option value="Kgs">Kgs</option>
+                        <option value="Nos">Nos</option>
+                        <option value="Boxes">Boxes</option>
+                        <option value="Feet">Feet</option>
+                        <option value="Meter">Meter</option>
+                    </select>
+                    <label class="inv-label" style="text-align: right; padding-right: 5px;">Quantity/Piece</label>
+                    <input type="number" id="invItemQtyPerPiece" class="inv-input" style="text-align: center;" value="0" disabled>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 130px 100px 20px 1fr; gap: 4px; align-items: center;">
+                    <label class="inv-label">Sales Tax Rate</label>
+                    <input type="number" id="invItemTaxRate" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <span style="font-size: 12px; font-weight: 700;">%</span>
+                    <div style="display: flex; gap: 15px; font-size: 11px; font-weight: 600;">
+                        <label><input type="radio" name="taxType" value="Percent" checked disabled> Percent</label>
+                        <label><input type="radio" name="taxType" value="Amount" disabled> Amount</label>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 130px 1fr 140px; gap: 4px; align-items: center;">
+                    <label class="inv-label">Cost Valuation Method</label>
+                    <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600;">
+                        <label><input type="radio" name="costValuation" value="Weighted Average" checked disabled> Weighted Average Price</label>
+                        <label><input type="radio" name="costValuation" value="Manual" disabled> Manual Valuation Cost</label>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 130px 1fr 90px 1fr; gap: 4px; align-items: center;">
+                    <label class="inv-label">Valuation Cost</label>
+                    <input type="number" id="invItemValuationCost" class="inv-input" style="text-align: center;" value="0" disabled>
+                    <label class="inv-label" style="text-align: right; padding-right: 5px;">Order Quantity</label>
+                    <input type="number" id="invItemOrderQty" class="inv-input" style="text-align: center;" value="0" disabled>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 2px;">
+                    <label class="inv-label">Inactive Item</label>
+                    <input type="checkbox" id="invItemInactive" disabled>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Bottom Instructions -->
+    <div style="display: flex; justify-content: center; font-size: 12px; color: #e74c3c; font-weight: 700; margin-top: 5px;">
+        Press: Ctrl+N to add new account, Ctrl+S to save changes and ESC to cancel
+    </div>
+
+    <style>
+        .inv-btn {
+            background: #f8f9fa;
+            border: 1px solid #777;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            min-width: 55px;
+            border-radius: 2px;
+            color: #333;
+            transition: all 0.1s;
+            height: 24px;
+            box-shadow: 1px 1px 0px #fff inset;
+        }
+        .inv-btn:hover { background: #e2e6ea; }
+        .inv-btn:active { transform: translateY(1px); }
+        
+        .inv-add { box-shadow: none !important; }
+        .inv-save { color: #008000 !important; }
+        .inv-cancel { color: #cc0000 !important; }
+        .inv-delete { color: #444 !important; }
+        
+        .inv-label { font-size: 11px; font-weight: 600; color: #444; }
+        .inv-input { height: 24px; border: 1px solid #777; border-radius: 1px; padding: 0 5px; font-size: 12px; outline: none; width: 100%; font-family: 'Consolas', monospace; }
+        .inv-input:focus { background: #fffde7; border-color: #000; }
+        .inv-input:disabled { background: #f0f0f0; color: #555; }
+        
+        select option { padding: 5px; border-bottom: 1px solid #eee; }
+        select option:checked { background: #007bff !important; color: white !important; }
+    </style>
+</div>
