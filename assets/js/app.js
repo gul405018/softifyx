@@ -2667,7 +2667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
-                    let isInv = (moduleName === "Chart Of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
+                    let isInv = (targetUrl && targetUrl.toLowerCase().indexOf('inventory') !== -1);
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInv ? initInventoryCOAView : null))))))));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv));
                     
@@ -2699,7 +2699,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
-                    let isInv = (moduleName === "Chart Of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
+                    let isInv = (targetUrl && targetUrl.toLowerCase().indexOf('inventory') !== -1);
                     let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInv ? initInventoryCOAView : null))))))));
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv));
                 });

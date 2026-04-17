@@ -198,13 +198,17 @@
     </style>
     <script>
         (function() {
-            // Force modal-wide class and max-width if we are in a modular container
-            const container = document.getElementById('modalContainer');
-            if (container) {
-                container.classList.add('modal-wide');
-                container.style.setProperty('max-width', '1000px', 'important');
-                container.style.setProperty('width', '95%', 'important');
+            function forceWide() {
+                const container = document.getElementById('modalContainer');
+                if (container) {
+                    container.classList.add('modal-wide');
+                    container.style.setProperty('max-width', '1000px', 'important');
+                    container.style.setProperty('width', '95%', 'important');
+                }
             }
+            forceWide();
+            setTimeout(forceWide, 100); 
+            setTimeout(forceWide, 500);
         })();
     </script>
 </div>
