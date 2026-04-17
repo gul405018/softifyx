@@ -4210,6 +4210,300 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.findVendor = findVendor;
         window.printVendors = printVendors;
 
+        // --- BANK ACCOUNTS MODULE LOGIC ---
+        let bankData = [];
+        let selectedBankTypeCode = null;
+        let selectedBankAccountCode = null;
+
+        function initBankAccountsView() {
+            let retries = 0;
+            const checkAndRender = setInterval(() => {
+                const list = document.getElementById('bankTypeList');
+                if (list) {
+                    clearInterval(checkAndRender);
+                    renderBankTypeList();
+                    if (list.options.length > 0) {
+                        list.selectedIndex = 0;
+                        onBankTypeSelect(list.value);
+                    } else {
+                        resetBankTypeForm();
+                        resetBankForm();
+                    }
+                } else if (++retries >= 30) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        function renderBankTypeList() {
+            const list = document.getElementById('bankTypeList');
+            if(!list) return;
+            const bankMain = coaMain.find(m => {
+                const n = m.name.toLowerCase();
+                return n.includes('bank') || n.includes('cash') || n.includes('liquid');
+            });
+            if(!bankMain) {
+                list.innerHTML = '<option disabled>No Bank category found in COA</option>';
+                return;
+            }
+            const filtered = coaSub.filter(s => s.main_id == bankMain.id);
+            list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
+        }
+
+        function onBankTypeSelect(code) {
+            selectedBankTypeCode = code;
+            const sub = coaSub.find(s => s.code == code);
+            if(sub) {
+                document.getElementById('bankSubTypeCode').value = sub.code;
+                document.getElementById('bankSubName').value = sub.name;
+                enableBankTypeFields(false);
+            }
+            fetchBanksDetailed(code);
+        }
+
+        function enableBankTypeFields(enabled) {
+            ['bankSubTypeCode', 'bankSubName'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.disabled = !enabled;
+            });
+        }
+
+        async function fetchBanksDetailed(subCode) {
+            const sub = coaSub.find(s => s.code == subCode);
+            if(!sub) return;
+            try {
+                const res = await fetch(`api/maintain.php?action=get_banks&sub_id=${sub.id}`);
+                bankData = await res.json();
+                renderBankList();
+                resetBankForm();
+            } catch(e) {}
+        }
+
+        function renderBankList() {
+            const list = document.getElementById('bankList');
+            if(!list) return;
+            const sub = coaSub.find(s => s.code == selectedBankTypeCode);
+            if(!sub) { list.innerHTML = ''; return; }
+            const filteredList = coaList.filter(l => l.sub_id == sub.id);
+            list.innerHTML = filteredList.map(b => `<option value="${b.code}">${b.name}</option>`).join('');
+        }
+
+        async function onBankSelect(code) {
+            selectedBankAccountCode = code;
+            const bank = bankData.find(b => b.code == code);
+            if(bank) {
+                document.getElementById('bankAccountCode').value = bank.code;
+                document.getElementById('bankAccountName').value = bank.name;
+                document.getElementById('bankName').value = bank.bank_name || '';
+                document.getElementById('bankBranch').value = bank.branch || '';
+                document.getElementById('bankAccountTitle').value = bank.account_title || '';
+                document.getElementById('bankAccountNo').value = bank.account_no || '';
+                document.getElementById('bankContactPerson').value = bank.contact_person || '';
+                document.getElementById('bankAddress').value = bank.address || '';
+                document.getElementById('bankTelephone').value = bank.telephone || '';
+                document.getElementById('bankMobile').value = bank.mobile || '';
+                document.getElementById('bankFax').value = bank.fax || '';
+                document.getElementById('bankEmail').value = bank.email || '';
+                document.getElementById('bankWebsite').value = bank.website || '';
+                document.getElementById('bankRemarks').value = bank.remarks || '';
+                enableBankFields(true);
+            } else {
+                // If only in COA but no bank profile yet
+                const coaEntry = coaList.find(c => c.code == code);
+                if(coaEntry) {
+                    document.getElementById('bankAccountCode').value = coaEntry.code;
+                    document.getElementById('bankAccountName').value = coaEntry.name;
+                    resetBankFields();
+                    enableBankFields(true);
+                }
+            }
+        }
+
+        function enableBankFields(enabled) {
+            const fields = [
+                'bankAccountCode', 'bankAccountName', 'bankName', 'bankBranch', 
+                'bankAccountTitle', 'bankAccountNo', 'bankContactPerson', 'bankAddress',
+                'bankTelephone', 'bankMobile', 'bankFax', 'bankEmail', 'bankWebsite', 'bankRemarks'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) el.disabled = !enabled;
+            });
+        }
+
+        function resetBankFields() {
+            const fields = [
+                'bankName', 'bankBranch', 'bankAccountTitle', 'bankAccountNo', 
+                'bankContactPerson', 'bankAddress', 'bankTelephone', 'bankMobile', 
+                'bankFax', 'bankEmail', 'bankWebsite', 'bankRemarks'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if(el) el.value = '';
+            });
+        }
+
+        async function saveBankType() {
+            const bankMain = coaMain.find(m => {
+                const n = m.name.toLowerCase();
+                return n.includes('bank') || n.includes('cash') || n.includes('liquid');
+            });
+            if(!bankMain) return;
+            const name = document.getElementById('bankSubName').value.trim();
+            const code = document.getElementById('bankSubTypeCode').value.trim();
+            if(!name || !code) return;
+            const payload = { main_id: bankMain.id, code, name };
+            const existing = coaSub.find(s => s.code == (selectedBankTypeCode || code));
+            if(existing) payload.id = existing.id;
+            try {
+                const res = await fetch(`api/maintain.php?action=save_coa_sub`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    if(!existing) coaSub.push({ id: data.id, main_id: bankMain.id, code, name });
+                    else { existing.code = code; existing.name = name; }
+                    renderBankTypeList();
+                    resetBankTypeForm();
+                }
+            } catch(e) {}
+        }
+
+        async function saveBank() {
+            if(!selectedBankTypeCode) return alert("Select a Bank Type first!");
+            const name = document.getElementById('bankAccountName').value.trim();
+            const code = document.getElementById('bankAccountCode').value.trim();
+            if(!name || !code) return alert("Account Code and Name are required!");
+            const sub = coaSub.find(s => s.code == selectedBankTypeCode);
+            const payload = {
+                sub_id: sub.id,
+                code: code,
+                name: name,
+                bank_name: document.getElementById('bankName').value,
+                branch: document.getElementById('bankBranch').value,
+                account_title: document.getElementById('bankAccountTitle').value,
+                account_no: document.getElementById('bankAccountNo').value,
+                contact_person: document.getElementById('bankContactPerson').value,
+                address: document.getElementById('bankAddress').value,
+                telephone: document.getElementById('bankTelephone').value,
+                mobile: document.getElementById('bankMobile').value,
+                fax: document.getElementById('bankFax').value,
+                email: document.getElementById('bankEmail').value,
+                website: document.getElementById('bankWebsite').value,
+                remarks: document.getElementById('bankRemarks').value
+            };
+            const existing = coaList.find(c => c.code == (selectedBankAccountCode || code));
+            if(existing) payload.id = existing.id;
+            try {
+                const res = await fetch(`api/maintain.php?action=save_bank`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    const resData = await res.json();
+                    alert("Bank Account saved!");
+                    const idx = coaList.findIndex(l => l.id == resData.id);
+                    if(idx > -1) coaList[idx] = { ...coaList[idx], code, name };
+                    else coaList.push({ id: resData.id, sub_id: sub.id, code, name });
+                    fetchBanksDetailed(selectedBankTypeCode);
+                }
+            } catch(e) { alert("Save failed"); }
+        }
+
+        async function deleteBankType() {
+            if (!selectedBankTypeCode) return alert("Select a Bank Type first.");
+            const sub = coaSub.find(s => s.code == selectedBankTypeCode);
+            if(!sub) return;
+            if(confirm(`Delete Bank Type "${sub.name}"?`)) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_coa_sub&id=${sub.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Deleted.");
+                        coaSub = coaSub.filter(s => s.id != sub.id);
+                        renderBankTypeList();
+                        resetBankTypeForm();
+                    }
+                } catch(e) {}
+            }
+        }
+
+        async function deleteBank() {
+            if (!selectedBankAccountCode) return alert("Select a Bank Account first.");
+            const bank = coaList.find(c => c.code == selectedBankAccountCode);
+            if(!bank) return;
+            if(confirm(`Delete Bank Account "${bank.name}"?`)) {
+                try {
+                    const res = await fetch(`api/maintain.php?action=delete_bank&id=${bank.id}`, { method: 'POST' });
+                    if(res.ok) {
+                        alert("Deleted.");
+                        coaList = coaList.filter(l => l.id != bank.id);
+                        fetchBanksDetailed(selectedBankTypeCode);
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function resetBankTypeForm(generate = false) {
+            selectedBankTypeCode = null;
+            enableBankTypeFields(generate);
+            if(generate) {
+                const bankMain = coaMain.find(m => {
+                    const n = m.name.toLowerCase();
+                    return n.includes('bank') || n.includes('cash') || n.includes('liquid');
+                });
+                if(bankMain) {
+                    const siblings = coaSub.filter(s => s.main_id == bankMain.id);
+                    let nextNum = 1;
+                    if(siblings.length > 0) {
+                        const lastCodes = siblings.map(s => parseInt(s.code.toString().substring(bankMain.code.toString().length)) || 0);
+                        nextNum = Math.max(...lastCodes) + 1;
+                    }
+                    document.getElementById('bankSubTypeCode').value = bankMain.code.toString() + nextNum.toString().padStart(2, '0');
+                }
+                document.getElementById('bankSubName').value = '';
+                document.getElementById('bankSubName').focus();
+            } else {
+                document.getElementById('bankSubTypeCode').value = '';
+                document.getElementById('bankSubName').value = '';
+            }
+            document.getElementById('bankTypeList').value = '';
+            renderBankList();
+            resetBankForm();
+        }
+
+        function resetBankForm(generate = false) {
+            enableBankFields(generate);
+            resetBankFields();
+            document.getElementById('bankAccountCode').value = '';
+            document.getElementById('bankAccountName').value = '';
+            document.getElementById('bankList').value = '';
+            selectedBankAccountCode = null;
+            if(generate) {
+                if(!selectedBankTypeCode) return alert("Select a Bank Type first!");
+                const siblings = coaList.filter(l => l.sub_id == (coaSub.find(s => s.code == selectedBankTypeCode)?.id));
+                let nextNum = 1;
+                if(siblings.length > 0) {
+                    const lastCodes = siblings.map(l => parseInt(l.code.toString().substring(selectedBankTypeCode.toString().length)) || 0);
+                    nextNum = Math.max(...lastCodes) + 1;
+                }
+                document.getElementById('bankAccountCode').value = selectedBankTypeCode.toString() + nextNum.toString().padStart(3, '0');
+                document.getElementById('bankAccountName').focus();
+            }
+        }
+
+        function findBank() {
+            const term = prompt("Enter Bank Name or Code:");
+            if (!term) return;
+            const res = coaList.filter(l => l.sub_id == (coaSub.find(s => s.code == selectedBankTypeCode)?.id)).find(c => c.name.toLowerCase().includes(term.toLowerCase()) || c.code.includes(term));
+            if (res) {
+                document.getElementById('bankList').value = res.code;
+                onBankSelect(res.code);
+            } else alert("Not found.");
+        }
+
+        function printBanks(type) { window.printCOA(type === 'type' ? 'sub' : 'list'); }
+
         // Lookup Management Stubs (Can be expanded into mini-popups)
         // Regions Module Logic
         function initRegionsView() {
@@ -4486,6 +4780,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.openSecondaryModularPopup = openSecondaryModularPopup;
         window.closeSecondaryModal = closeSecondaryModal;
 
+
+        window.initBankAccountsView = initBankAccountsView;
+        window.onBankTypeSelect = onBankTypeSelect;
+        window.onBankSelect = onBankSelect;
+        window.saveBankType = saveBankType;
+        window.saveBank = saveBank;
+        window.deleteBankType = deleteBankType;
+        window.deleteBank = deleteBank;
+        window.resetBankTypeForm = resetBankTypeForm;
+        window.resetBankForm = resetBankForm;
+        window.findBank = findBank;
+        window.printBanks = printBanks;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
