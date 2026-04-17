@@ -4931,20 +4931,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const isSelected = selectedOBRowId === a.id;
                 
                 return `
-                <div class="ob-row ${isSelected ? 'selected' : ''}" onclick="selectOBRow(${a.id})">
+                <div class="ob-row ${isSelected ? 'selected' : ''}" id="ob-row-${a.id}" onclick="selectOBRow(${a.id})">
                     <div class="ob-col" style="font-weight: 600; color: #64748b;">${a.code}</div>
-                    <div class="ob-col" style="justify-content: flex-start; border-right-color: #f1f5f9;">${a.name}</div>
+                    <div class="ob-col" style="justify-content: flex-start; border-right-color: #f1f5f9; cursor: default;" title="${a.name}">${a.name}</div>
                     <div class="ob-col">
                         <input type="number" step="0.01" class="ob-input ${isDebit ? 'has-value' : ''}" id="ob-debit-${a.id}"
                                value="${parseFloat(a.debit) || ''}" placeholder="0.00"
-                               ${isCredit ? 'disabled style="background: #f1f5f9; cursor: not-allowed;"' : ''}
+                               ${isCredit ? 'disabled style="background: #f8f9fa; cursor: not-allowed;"' : ''}
                                oninput="onBalanceChange(${a.id}, 'debit', this.value)"
                                onfocus="this.select()">
                     </div>
                     <div class="ob-col" style="border-right: none;">
                         <input type="number" step="0.01" class="ob-input ${isCredit ? 'has-value' : ''}" id="ob-credit-${a.id}"
                                value="${parseFloat(a.credit) || ''}" placeholder="0.00"
-                               ${isDebit ? 'disabled style="background: #f1f5f9; cursor: not-allowed;"' : ''}
+                               ${isDebit ? 'disabled style="background: #f8f9fa; cursor: not-allowed;"' : ''}
                                oninput="onBalanceChange(${a.id}, 'credit', this.value)"
                                onfocus="this.select()">
                     </div>
@@ -4955,7 +4955,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Add Empty Rows (Total 30)
             const emptyCount = Math.max(0, 30 - displayedOBAccounts.length);
             for (let i = 0; i < emptyCount; i++) {
-                // The FIRST empty row has the search input
                 if (i === 0) {
                     html += `
                     <div class="ob-row">
@@ -4984,12 +4983,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function selectOBRow(id) {
+            // Non-destructive selection (Fixes focus bug)
             selectedOBRowId = id;
-            // Optionally re-render or just toggle class
-            document.querySelectorAll('.ob-row').forEach(r => r.classList.remove('selected'));
-            const row = [...document.querySelectorAll('.ob-row')].find(r => r.innerHTML.includes(`(${id},`)); 
-            // Better selection logic:
-            renderOpeningBalances(); 
+            document.querySelectorAll('.ob-row').forEach(row => {
+                row.classList.remove('selected');
+            });
+            const targeted = document.getElementById(`ob-row-${id}`);
+            if (targeted) targeted.classList.add('selected');
         }
 
         function onBalanceChange(coaId, field, value) {
@@ -5005,9 +5005,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (field === 'debit') {
                     if (numVal > 0) {
                         creditInput.disabled = true;
-                        creditInput.style.background = '#f1f5f9';
+                        creditInput.style.background = '#f8f9fa';
                         creditInput.style.cursor = 'not-allowed';
                         debitInput.classList.add('has-value');
+                        acc.credit = 0;
+                        creditInput.value = '';
                     } else {
                         creditInput.disabled = false;
                         creditInput.style.background = 'transparent';
@@ -5017,9 +5019,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     if (numVal > 0) {
                         debitInput.disabled = true;
-                        debitInput.style.background = '#f1f5f9';
+                        debitInput.style.background = '#f8f9fa';
                         debitInput.style.cursor = 'not-allowed';
                         creditInput.classList.add('has-value');
+                        acc.debit = 0;
+                        debitInput.value = '';
                     } else {
                         debitInput.disabled = false;
                         debitInput.style.background = 'transparent';
@@ -5050,10 +5054,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (diffEl) {
                 const diff = Math.abs(totalDebit - totalCredit);
                 if (diff > 0.001) {
-                    diffEl.textContent = `There is a difference of Rs. ${diff.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} in totals.`;
+                    diffEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> There is a difference of Rs. ${diff.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} in totals.`;
                     diffEl.style.color = '#e74c3c';
                 } else {
-                    diffEl.textContent = 'Totals are balanced.';
+                    diffEl.innerHTML = `<i class="fas fa-check-circle"></i> Totals are balanced.`;
                     diffEl.style.color = '#27ae60';
                 }
             }
@@ -5098,22 +5102,63 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // --- IMPORT WIZARD LOGIC ---
         async function importBalances() {
+            // Open the new Wizard Modal
+            window.openSecondaryModularPopup('Navigation/Maintain/import_ob_wizard.html', 'fa-file-import', 'Import Opening Balances', 
+                                              initImportOBWizard, 'Import Opening Balances', true);
+        }
+
+        async function initImportOBWizard() {
+            console.log("SoftifyX: Init Import OB Wizard");
+            const select = document.getElementById('importFromFY');
+            if (!select) return;
+
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const currentFyId = session.fy_id || 0;
+
+                const res = await fetch(`api/maintain.php?action=get_fys&company_id=${coId}`);
+                if (res.ok) {
+                    const fys = await res.json();
+                    select.innerHTML = fys.map(fy => `
+                        <option value="${fy.id}" ${fy.id == currentFyId ? 'disabled' : ''}>
+                            ${fy.abbreviation} ${fy.id == currentFyId ? '(Current)' : ''}
+                        </option>
+                    `).join('');
+                } else {
+                    select.innerHTML = '<option value="">Error loading years</option>';
+                }
+            } catch (e) {
+                console.error("FY Load Error:", e);
+                select.innerHTML = '<option value="">Error loading years</option>';
+            }
+        }
+
+        async function confirmOBImport() {
+            const fromFyId = document.getElementById('importFromFY').value;
+            if (!fromFyId) {
+                alert("Please select a financial year to import from.");
+                return;
+            }
+
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const fyId = session.fy_id || 0;
             if (!fyId) return;
 
-            if (confirm("Are you sure you want to import balances from the previous financial year? This will overwrite your current entries for this year.")) {
+            if (confirm("Are you sure you want to import ALL balances from the selected year? This will overwrite your current unsaved changes.")) {
                 try {
                     const res = await fetch('api/maintain.php?action=import_coa_opening_balances', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fy_id: fyId })
+                        body: JSON.stringify({ fy_id: fyId, from_fy_id: fromFyId })
                     });
                     const result = await res.json();
                     if (res.ok) {
                         alert("Balances imported successfully!");
-                        initOpeningBalancesView(); // Refresh
+                        closeSecondaryModularPopup();
+                        initOpeningBalancesView(); // Refresh the main grid
                     } else {
                         alert(result.error || "Import failed.");
                     }
@@ -5123,7 +5168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Expose Opening Balances Functions
+        // Expose Functions
         window.initOpeningBalancesView = initOpeningBalancesView;
         window.handleOBSearch = handleOBSearch;
         window.addAccountToOBGrid = addAccountToOBGrid;
@@ -5133,6 +5178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.saveOpeningBalances = saveOpeningBalances;
         window.deleteOBAccount = deleteOBAccount;
         window.importBalances = importBalances;
+        window.initImportOBWizard = initImportOBWizard;
+        window.confirmOBImport = confirmOBImport;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {

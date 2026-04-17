@@ -139,6 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$fyId, $company_id]);
         sendResponse($stmt->fetchAll());
     }
+
+    if ($action === 'get_fys') {
+        $stmt = $pdo->prepare("SELECT id, abbreviation FROM financial_years WHERE company_id = ? ORDER BY start_date DESC");
+        $stmt->execute([$company_id]);
+        sendResponse($stmt->fetchAll());
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -459,20 +465,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'P
 
     if ($action === 'import_coa_opening_balances' && isset($data['fy_id'])) {
         $currentFyId = $data['fy_id'];
-        // Find previous FY for the same company
-        $stmt = $pdo->prepare("SELECT id FROM financial_years WHERE company_id = ? AND id < ? ORDER BY id DESC LIMIT 1");
-        $stmt->execute([$company_id, $currentFyId]);
-        $prevFy = $stmt->fetch();
+        $prevFyId = $data['from_fy_id'] ?? null;
         
-        if (!$prevFy) {
-            sendResponse(['error' => 'No previous financial year found to import from.'], 404);
+        if (!$prevFyId) {
+            // Fallback to auto-detecting previous FY if not provided
+            $stmt = $pdo->prepare("SELECT id FROM financial_years WHERE company_id = ? AND id < ? ORDER BY id DESC LIMIT 1");
+            $stmt->execute([$company_id, $currentFyId]);
+            $prevFy = $stmt->fetch();
+            if ($prevFy) $prevFyId = $prevFy['id'];
         }
         
-        $prevFyId = $prevFy['id'];
+        if (!$prevFyId) {
+            sendResponse(['error' => 'No financial year found to import from.'], 404);
+        }
         
-        // Import logic: Duplicate last year's opening balances as a starting point
-        // Note: Real logic would also calculate closing balances from transactions, 
-        // but since we are just starting, we'll carry over openings first.
+        // Import logic: Duplicate chosen year's opening balances
         $stmt = $pdo->prepare("
             INSERT INTO coa_opening_balances (company_id, coa_id, fy_id, debit, credit)
             SELECT company_id, coa_id, ?, debit, credit

@@ -119,11 +119,16 @@
 
         .ob-row {
             display: grid;
-            grid-template-columns: 140px 1fr 150px 150px;
+            grid-template-columns: 140px minmax(200px, 1fr) 150px 150px;
             border-bottom: 1px solid #f1f5f9;
             transition: background 0.1s;
+            align-items: center;
+        }
+        .ob-row.selected {
+            background: #fffde7 !important; /* Yellow highlight from screenshot */
         }
         .ob-row:hover { background: #f8fafc; }
+        
         .ob-col {
             padding: 8px;
             font-size: 13px;
@@ -131,6 +136,9 @@
             align-items: center;
             justify-content: center;
             border-right: 1px solid #f1f5f9;
+            overflow: hidden; /* Prevent expansion */
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
         .ob-input {
             width: 100%;
