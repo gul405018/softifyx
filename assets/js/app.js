@@ -3606,7 +3606,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderCustomerList() {
             const list = document.getElementById('customerList');
             if(!list) return;
-            list.innerHTML = customerData.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+            const sub = coaSub.find(s => s.code == selectedCustTypeCode);
+            if(!sub) { list.innerHTML = ''; return; }
+            const filtered = coaList.filter(l => l.sub_id == sub.id);
+            list.innerHTML = filtered.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
         }
 
         async function onCustomerSelect(code) {
@@ -3721,7 +3724,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify(payload)
                 });
                 if(res.ok) {
+                    const resData = await res.json();
                     alert("Customer profile saved!");
+                    const sub = coaSub.find(s => s.code == selectedCustTypeCode);
+                    const idx = coaList.findIndex(l => l.id == resData.id);
+                    if(idx > -1) {
+                        coaList[idx] = { ...coaList[idx], code, name };
+                    } else {
+                        coaList.push({ id: resData.id, sub_id: sub.id, code, name });
+                    }
                     fetchCustomersDetailed(selectedCustTypeCode);
                 }
             } catch(e) { alert("Save failed"); }
@@ -3913,7 +3924,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderVendorList() {
             const list = document.getElementById('vendorList');
             if(!list) return;
-            list.innerHTML = vendorData.map(v => `<option value="${v.code}">${v.name}</option>`).join('');
+            const sub = coaSub.find(s => s.code == selectedVendTypeCode);
+            if(!sub) { list.innerHTML = ''; return; }
+            const filtered = coaList.filter(l => l.sub_id == sub.id);
+            list.innerHTML = filtered.map(v => `<option value="${v.code}">${v.name}</option>`).join('');
         }
 
         async function onVendorSelect(code) {
@@ -4014,7 +4028,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify(payload)
                 });
                 if(res.ok) {
+                    const resData = await res.json();
                     alert("Vendor profile saved!");
+                    const sub = coaSub.find(s => s.code == selectedVendTypeCode);
+                    const idx = coaList.findIndex(l => l.id == resData.id);
+                    if(idx > -1) {
+                        coaList[idx] = { ...coaList[idx], code, name };
+                    } else {
+                        coaList.push({ id: resData.id, sub_id: sub.id, code, name });
+                    }
                     fetchVendorsDetailed(selectedVendTypeCode);
                 }
             } catch(e) { alert("Save failed"); }
