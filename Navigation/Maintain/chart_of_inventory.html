@@ -1,8 +1,9 @@
-<div id="invCOAContainer" data-module="Chart of Inventory" style="height: 700px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px; border: 1px solid #cbd5e0;">
+<div id="invCOAContainer" data-module="Chart of Inventory" style="width: 1000px; height: 650px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; border-radius: 4px; border: 1px solid #cbd5e0;">
     
-    <!-- Title Area matching screenshot style -->
-    <div style="background: #E8E8E8; padding: 5px 15px; border-bottom: 2px solid #555; margin-bottom: 5px;">
-        <div style="font-size: 18px; font-weight: 800; color: #008000; font-style: italic; letter-spacing: 1px;">CHART OF INVENTORY</div>
+    <!-- Title Area (Professional Style) -->
+    <div style="background: #E8E8E8; padding: 8px 15px; border-bottom: 2px solid #1F4E79; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 18px; font-weight: 800; color: #1F4E79; text-transform: uppercase; letter-spacing: 1px;">CHART OF INVENTORY</div>
+        <div style="font-size: 12px; color: #64748b; font-weight: 600;">Inventory Master Management</div>
     </div>
 
     <!-- Section 1: Inventory Categories -->
@@ -170,33 +171,43 @@
 
     <style>
         .inv-btn {
-            background: #f8f9fa;
-            border: 1px solid #777;
-            padding: 2px 8px;
+            background: #1F4E79;
+            color: white;
+            border: 1px solid #1F4E79;
+            padding: 2px 10px;
             font-size: 11px;
             font-weight: 700;
             cursor: pointer;
-            min-width: 55px;
-            border-radius: 2px;
-            color: #333;
-            transition: all 0.1s;
-            height: 24px;
-            box-shadow: 1px 1px 0px #fff inset;
+            min-width: 60px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        .inv-btn:hover { background: #e2e6ea; }
+        .inv-btn:hover { background: #2c6aa0; border-color: #2c6aa0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .inv-btn:active { transform: translateY(1px); }
+        .inv-btn:disabled { background: #94a3b8; border-color: #94a3b8; cursor: not-allowed; }
+
+        .inv-save { background: #004d40 !important; border-color: #004d40 !important; }
+        .inv-save:hover { background: #00695c !important; }
+
+        .inv-cancel { background: #546e7a !important; border-color: #546e7a !important; }
+        .inv-cancel:hover { background: #78909c !important; }
+
+        .inv-delete { background: #c62828 !important; border-color: #c62828 !important; }
+        .inv-delete:hover { background: #e53935 !important; }
         
-        .inv-add { box-shadow: none !important; }
-        .inv-save { color: #008000 !important; }
-        .inv-cancel { color: #cc0000 !important; }
-        .inv-delete { color: #444 !important; }
+        .inv-label { font-size: 11px; font-weight: 700; color: #1F4E79; text-transform: uppercase; }
+        .inv-input { height: 26px; border: 1px solid #cbd5e0; border-radius: 2px; padding: 0 8px; font-size: 12px; outline: none; width: 100%; transition: all 0.2s; }
+        .inv-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1); background: #fff; }
+        .inv-input:disabled { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
         
-        .inv-label { font-size: 11px; font-weight: 600; color: #444; }
-        .inv-input { height: 24px; border: 1px solid #777; border-radius: 1px; padding: 0 5px; font-size: 12px; outline: none; width: 100%; font-family: 'Consolas', monospace; }
-        .inv-input:focus { background: #fffde7; border-color: #000; }
-        .inv-input:disabled { background: #f0f0f0; color: #555; }
+        fieldset { border: 1px solid #e2e8f0 !important; background: #fff; }
+        legend { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 0 10px !important; }
         
-        select option { padding: 5px; border-bottom: 1px solid #eee; }
-        select option:checked { background: #007bff !important; color: white !important; }
+        select option { padding: 6px; border-bottom: 1px solid #f1f5f9; }
+        select option:checked { background: #1F4E79 !important; color: white !important; }
     </style>
 </div>

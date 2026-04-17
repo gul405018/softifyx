@@ -2666,8 +2666,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : null))))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB));
+                    let isInv = (moduleName === "Chart of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInv ? initChartOfInventoryView : null)))))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -5286,3 +5287,403 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.removeProfilePhoto = removeProfilePhoto;
+
+        // --- CHART OF INVENTORY MODULE LOGIC ---
+        let invMains = [];
+        let invSubs = [];
+        let invItems = [];
+        let selectedInvMainId = null;
+        let selectedInvSubId = null;
+        let selectedInvItemId = null;
+
+        async function initChartOfInventoryView() {
+            try {
+                loadInvBrands(); // Ensure brands are ready
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/inventory.php?action=get_inventory_tree&company_id=${coId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                invMains = data.mains || [];
+                invSubs = data.subs || [];
+                renderInvMainList();
+                if (invMains.length > 0) {
+                    const list = document.getElementById('invMainList');
+                    list.selectedIndex = 0;
+                    onInvMainSelect(invMains[0].id);
+                } else {
+                    resetInvMainForm();
+                }
+            } catch (e) {
+                console.error("SoftifyX: Error loading inventory tree", e);
+            }
+        }
+
+        function renderInvMainList() {
+            const list = document.getElementById('invMainList');
+            if (!list) return;
+            list.innerHTML = invMains.map(m => `<option value="${m.id}">${m.code} - ${m.name}</option>`).join('');
+            if (selectedInvMainId) list.value = selectedInvMainId;
+        }
+
+        async function onInvMainSelect(id) {
+            selectedInvMainId = id;
+            selectedInvSubId = null;
+            selectedInvItemId = null;
+            const main = invMains.find(m => m.id == id);
+            if (main) {
+                document.getElementById('invMainCode').value = main.code;
+                document.getElementById('invMainName').value = main.name;
+                enableInvMainFields(false);
+            }
+            renderInvSubList();
+            const list = document.getElementById('invSubList');
+            if (list && list.options.length > 0) {
+                list.selectedIndex = 0;
+                onInvSubSelect(list.value);
+            } else {
+                resetInvSubForm();
+            }
+        }
+
+        function renderInvSubList() {
+            const list = document.getElementById('invSubList');
+            if (!list) return;
+            const filtered = invSubs.filter(s => s.main_id == selectedInvMainId);
+            list.innerHTML = filtered.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
+        }
+
+        async function onInvSubSelect(id) {
+            selectedInvSubId = id;
+            selectedInvItemId = null;
+            const sub = invSubs.find(s => s.id == id);
+            if (sub) {
+                document.getElementById('invSubCode').value = sub.code;
+                document.getElementById('invSubName').value = sub.name;
+                enableInvSubFields(false);
+            }
+            fetchInvItems(id);
+        }
+
+        async function fetchInvItems(subId) {
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/inventory.php?action=get_items&sub_id=${subId}&company_id=${coId}`);
+                invItems = await res.json();
+                renderInvItemList();
+                if (invItems.length > 0) {
+                    const list = document.getElementById('invItemList');
+                    list.selectedIndex = 0;
+                    onInvItemSelect(invItems[0].id);
+                } else {
+                    resetInvItemForm();
+                }
+            } catch (e) {}
+        }
+
+        function renderInvItemList() {
+            const list = document.getElementById('invItemList');
+            if (!list) return;
+            list.innerHTML = invItems.map(i => `<option value="${i.id}">${i.code} - ${i.name}</option>`).join('');
+        }
+
+        function onInvItemSelect(id) {
+            selectedInvItemId = id;
+            const item = invItems.find(i => i.id == id);
+            if (item) {
+                document.getElementById('invItemCode').value = item.code;
+                document.getElementById('invItemName').value = item.name;
+                document.getElementById('invItemDesc').value = item.description || '';
+                document.getElementById('invItemBrand').value = item.brand_id || '';
+                document.getElementById('invItemRack').value = item.rack_no || '';
+                document.getElementById('invItemPurchasePrice').value = item.purchase_price || 0;
+                document.getElementById('invItemSellingPrice').value = item.selling_price || 0;
+                document.getElementById('invItemUnit').value = item.unit || 'Pcs';
+                document.getElementById('invItemQtyPerPiece').value = item.qty_per_piece || 1;
+                document.getElementById('invItemTaxRate').value = item.tax_rate || 0;
+                
+                const taxRadios = document.getElementsByName('taxType');
+                taxRadios.forEach(r => r.checked = (r.value === item.tax_type));
+                
+                const valRadios = document.getElementsByName('costValuation');
+                valRadios.forEach(r => r.checked = (r.value === item.valuation_method));
+                
+                document.getElementById('invItemValuationCost').value = item.valuation_cost || 0;
+                document.getElementById('invItemOrderQty').value = item.order_qty || 0;
+                document.getElementById('invItemInactive').checked = !!parseInt(item.is_inactive);
+                
+                enableInvItemFields(false);
+            }
+        }
+
+        function enableInvMainFields(enabled) {
+            document.getElementById('invMainCode').disabled = !enabled;
+            document.getElementById('invMainName').disabled = !enabled;
+        }
+        function enableInvSubFields(enabled) {
+            document.getElementById('invSubCode').disabled = !enabled;
+            document.getElementById('invSubName').disabled = !enabled;
+        }
+        function enableInvItemFields(enabled) {
+            const ids = [
+                'invItemCode', 'invItemName', 'invItemDesc', 'invItemBrand', 'invItemRack',
+                'invItemPurchasePrice', 'invItemSellingPrice', 'invItemUnit', 'invItemQtyPerPiece',
+                'invItemTaxRate', 'invItemValuationCost', 'invItemOrderQty', 'invItemInactive'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !enabled;
+            });
+            document.getElementsByName('taxType').forEach(r => r.disabled = !enabled);
+            document.getElementsByName('costValuation').forEach(r => r.disabled = !enabled);
+        }
+
+        function resetInvMainForm(generate = false) {
+            selectedInvMainId = null;
+            document.getElementById('invMainName').value = '';
+            enableInvMainFields(generate);
+            if (generate) {
+                let nextNum = 1;
+                if (invMains.length > 0) {
+                    const codes = invMains.map(m => parseInt(m.code) || 0);
+                    nextNum = Math.max(...codes) + 1;
+                }
+                document.getElementById('invMainCode').value = nextNum.toString().padStart(2, '0');
+                document.getElementById('invMainName').focus();
+            } else {
+                document.getElementById('invMainCode').value = '';
+            }
+        }
+
+        function resetInvSubForm(generate = false) {
+            if (generate && !selectedInvMainId) return alert("Select a Main Category first!");
+            selectedInvSubId = null;
+            document.getElementById('invSubName').value = '';
+            enableInvSubFields(generate);
+            if (generate) {
+                const main = invMains.find(m => m.id == selectedInvMainId);
+                const siblings = invSubs.filter(s => s.main_id == selectedInvMainId);
+                let nextNum = 1;
+                if (siblings.length > 0) {
+                    const lastParts = siblings.map(s => parseInt(s.code.toString().substring(2)) || 0);
+                    nextNum = Math.max(...lastParts) + 1;
+                }
+                document.getElementById('invSubCode').value = main.code.toString() + nextNum.toString().padStart(2, '0');
+                document.getElementById('invSubName').focus();
+            } else {
+                document.getElementById('invSubCode').value = '';
+            }
+        }
+
+        function resetInvItemForm(generate = false) {
+            if (generate && !selectedInvSubId) return alert("Select a Sub Category first!");
+            selectedInvItemId = null;
+            enableInvItemFields(generate);
+            const ids = [
+                'invItemName', 'invItemDesc', 'invItemBrand', 'invItemRack',
+                'invItemPurchasePrice', 'invItemSellingPrice', 'invItemValuationCost', 'invItemOrderQty'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('invItemUnit').value = 'Pcs';
+            document.getElementById('invItemQtyPerPiece').value = 1;
+            document.getElementById('invItemTaxRate').value = 0;
+            document.getElementById('invItemInactive').checked = false;
+
+            if (generate) {
+                const sub = invSubs.find(s => s.id == selectedInvSubId);
+                let nextNum = 1;
+                if (invItems.length > 0) {
+                    const lastParts = invItems.map(i => parseInt(i.code.toString().substring(4)) || 0);
+                    nextNum = Math.max(...lastParts) + 1;
+                }
+                document.getElementById('invItemCode').value = sub.code.toString() + nextNum.toString().padStart(3, '0');
+                document.getElementById('invItemName').focus();
+            } else {
+                document.getElementById('invItemCode').value = '';
+            }
+        }
+
+        async function saveInvMain() {
+            const code = document.getElementById('invMainCode').value.trim();
+            const name = document.getElementById('invMainName').value.trim();
+            if (!code || !name) return alert("Code and Name are required!");
+
+            const payload = { code, name };
+            if (selectedInvMainId) payload.id = selectedInvMainId;
+
+            try {
+                const res = await fetch('api/inventory.php?action=save_main', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert("Category saved successfully.");
+                    initChartOfInventoryView();
+                }
+            } catch (e) { alert("Save failed."); }
+        }
+
+        async function saveInvSub() {
+            if (!selectedInvMainId) return alert("Select a Main Category first!");
+            const code = document.getElementById('invSubCode').value.trim();
+            const name = document.getElementById('invSubName').value.trim();
+            if (!code || !name) return alert("Code and Name are required!");
+
+            const payload = { main_id: selectedInvMainId, code, name };
+            if (selectedInvSubId) payload.id = selectedInvSubId;
+
+            try {
+                const res = await fetch('api/inventory.php?action=save_sub', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert("Sub-Category saved successfully.");
+                    initChartOfInventoryView();
+                }
+            } catch (e) { alert("Save failed."); }
+        }
+
+        async function saveInvItem() {
+            if (!selectedInvSubId) return alert("Select a Sub Category first!");
+            const code = document.getElementById('invItemCode').value.trim();
+            const name = document.getElementById('invItemName').value.trim();
+            if (!code || !name) return alert("Item Code and Name are required!");
+
+            const payload = {
+                sub_id: selectedInvSubId,
+                code: code,
+                name: name,
+                description: document.getElementById('invItemDesc').value,
+                brand_id: document.getElementById('invItemBrand').value || null,
+                rack_no: document.getElementById('invItemRack').value,
+                purchase_price: document.getElementById('invItemPurchasePrice').value,
+                selling_price: document.getElementById('invItemSellingPrice').value,
+                unit: document.getElementById('invItemUnit').value,
+                qty_per_piece: document.getElementById('invItemQtyPerPiece').value,
+                tax_rate: document.getElementById('invItemTaxRate').value,
+                tax_type: Array.from(document.getElementsByName('taxType')).find(r => r.checked)?.value || 'Percent',
+                valuation_method: Array.from(document.getElementsByName('costValuation')).find(r => r.checked)?.value || 'Weighted Average',
+                valuation_cost: document.getElementById('invItemValuationCost').value,
+                order_qty: document.getElementById('invItemOrderQty').value,
+                is_inactive: document.getElementById('invItemInactive').checked ? 1 : 0
+            };
+            if (selectedInvItemId) payload.id = selectedInvItemId;
+
+            try {
+                const res = await fetch('api/inventory.php?action=save_item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert("Inventory item saved successfully.");
+                    fetchInvItems(selectedInvSubId);
+                }
+            } catch (e) { alert("Save failed."); }
+        }
+
+        async function deleteInvMain() {
+            if (!selectedInvMainId) return alert("Select a Category to delete.");
+            if (confirm("Are you sure you want to delete this Category? System will block this if sub-categories exist.")) {
+                try {
+                    const res = await fetch(`api/inventory.php?action=delete_main&id=${selectedInvMainId}`, { method: 'POST' });
+                    if (res.ok) {
+                        alert("Category deleted.");
+                        initChartOfInventoryView();
+                    } else {
+                        const err = await res.json();
+                        alert(err.error || "Delete failed.");
+                    }
+                } catch (e) {}
+            }
+        }
+
+        async function deleteInvSub() {
+            if (!selectedInvSubId) return alert("Select a Sub-Category to delete.");
+            if (confirm("Are you sure you want to delete this Sub-Category? System will block this if items exist.")) {
+                try {
+                    const res = await fetch(`api/inventory.php?action=delete_sub&id=${selectedInvSubId}`, { method: 'POST' });
+                    if (res.ok) {
+                        alert("Sub-Category deleted.");
+                        initChartOfInventoryView();
+                    } else {
+                        const err = await res.json();
+                        alert(err.error || "Delete failed.");
+                    }
+                } catch (e) {}
+            }
+        }
+
+        async function deleteInvItem() {
+            if (!selectedInvItemId) return alert("Select an Item to delete.");
+            if (confirm("Are you sure you want to delete this inventory item?")) {
+                try {
+                    const res = await fetch(`api/inventory.php?action=delete_item&id=${selectedInvItemId}`, { method: 'POST' });
+                    if (res.ok) {
+                        alert("Inventory item deleted.");
+                        fetchInvItems(selectedInvSubId);
+                    }
+                } catch (e) {}
+            }
+        }
+
+        async function manageBrands() {
+            const name = prompt("Enter new Brand name:");
+            if (!name) return;
+            try {
+                const res = await fetch('api/inventory.php?action=save_brand', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (res.ok) {
+                    alert("Brand added.");
+                    loadInvBrands();
+                }
+            } catch(e) {}
+        }
+
+        async function loadInvBrands() {
+            try {
+                const res = await fetch('api/inventory.php?action=get_brands');
+                if (!res.ok) return;
+                const brands = await res.json();
+                const select = document.getElementById('invItemBrand');
+                if (select) {
+                    const currentVal = select.value;
+                    select.innerHTML = '<option value="">None</option>' + brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                    select.value = currentVal;
+                }
+            } catch(e) {}
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const container = document.getElementById('invCOAContainer');
+            if (!container) return;
+            if (e.ctrlKey && e.key.toLowerCase() === 'n') { e.preventDefault(); resetInvItemForm(true); }
+            if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); saveInvItem(); }
+            if (e.key === 'Escape') { resetInvItemForm(); }
+        });
+
+        window.initChartOfInventoryView = initChartOfInventoryView;
+        window.onInvMainSelect = onInvMainSelect;
+        window.onInvSubSelect = onInvSubSelect;
+        window.onInvItemSelect = onInvItemSelect;
+        window.saveInvMain = saveInvMain;
+        window.saveInvSub = saveInvSub;
+        window.saveInvItem = saveInvItem;
+        window.deleteInvMain = deleteInvMain;
+        window.deleteInvSub = deleteInvSub;
+        window.deleteInvItem = deleteInvItem;
+        window.resetInvMainForm = resetInvMainForm;
+        window.resetInvSubForm = resetInvSubForm;
+        window.resetInvItemForm = resetInvItemForm;
+        window.manageBrands = manageBrands;
+        window.loadInvBrands = loadInvBrands;
