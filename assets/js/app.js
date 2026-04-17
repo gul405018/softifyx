@@ -5442,17 +5442,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         function resetInvMainForm(generate = false) {
             selectedInvMainId = null;
             document.getElementById('invMainName').value = '';
+            document.getElementById('invMainCode').value = '';
             enableInvMainFields(generate);
             if (generate) {
-                let nextNum = 1;
-                if (invMains.length > 0) {
-                    const codes = invMains.map(m => parseInt(m.code) || 0);
-                    nextNum = Math.max(...codes) + 1;
-                }
-                document.getElementById('invMainCode').value = nextNum.toString().padStart(2, '0');
-                document.getElementById('invMainName').focus();
-            } else {
-                document.getElementById('invMainCode').value = '';
+                document.getElementById('invMainCode').focus();
             }
         }
 
