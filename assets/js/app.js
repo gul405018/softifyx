@@ -4361,11 +4361,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveBankType() {
+            // Find main category strictly containing "bank" and NOT "cash"
             const bankMain = coaMain.find(m => {
                 const n = m.name.toLowerCase();
-                return n.includes('bank') || n.includes('cash') || n.includes('liquid');
+                return n.includes('bank') && !n.includes('cash');
             });
-            if(!bankMain) return;
+            if(!bankMain) {
+                console.error("SoftifyX Diagnostic: Banks main category not found during save.");
+                return;
+            }
             const name = document.getElementById('bankSubName').value.trim();
             const code = document.getElementById('bankSubTypeCode').value.trim();
             if(!name || !code) return;
@@ -4467,9 +4471,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectedBankTypeCode = null;
             enableBankTypeFields(generate);
             if(generate) {
+                // Find main category strictly containing "bank" and NOT "cash"
                 const bankMain = coaMain.find(m => {
                     const n = m.name.toLowerCase();
-                    return n.includes('bank') || n.includes('cash') || n.includes('liquid');
+                    return n.includes('bank') && !n.includes('cash');
                 });
                 if(bankMain) {
                     const siblings = coaSub.filter(s => s.main_id == bankMain.id);
