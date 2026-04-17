@@ -5114,7 +5114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             if (confirm("Remove this account from the temporary list? (Original COA will not be deleted)")) {
-                displayedOBAccounts = displayedOBAccounts.filter(a => a.id !== selectedOBRowId);
+                displayedOBAccounts = displayedOBAccounts.filter(a => a.u_id !== selectedOBRowId);
                 selectedOBRowId = null;
                 renderOpeningBalances();
             }
