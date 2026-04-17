@@ -4845,9 +4845,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (res.ok) {
                             obAccountsPool = await res.json();
                             // Initial State: Only show accounts that already have balances
-                            displayedOBAccounts = obAccountsPool.filter(a => 
-                                (parseFloat(a.debit) || 0) > 0 || (parseFloat(a.credit) || 0) > 0
-                            );
+                            // IMPORTANT: Every account record (server or new) needs a u_id for logic to work
+                            displayedOBAccounts = obAccountsPool
+                                .filter(a => (parseFloat(a.debit) || 0) > 0 || (parseFloat(a.credit) || 0) > 0)
+                                .map(a => ({...a, u_id: 'ser-' + a.id + '-' + Math.random().toString(36).substr(2, 5)}));
+                            
                             renderOpeningBalances();
                         }
                     } catch (e) {
