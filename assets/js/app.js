@@ -4857,14 +4857,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 100);
         }
 
+        function filterOBGrid(event) {
+            const term = (event.target ? event.target.value : '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#obGridBody .ob-row');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                // We only filter account rows, not the search row or empty rows
+                const isDataRow = row.id && row.id.startsWith('ob-row-');
+                if (isDataRow) {
+                    if (text.includes(term)) {
+                        row.style.display = 'grid';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+
         function handleOBSearch(event, rowIdx = -1) {
-            const input = event.target || document.getElementById('obSearchInput');
+            const input = event.target;
             let resultsDiv = document.getElementById('obSearchResults');
-            
-            // If searching from a specific row, we may need a floating div near that row
-            // Simple approach: still use the top resultsDiv but reposition if needed
-            // For now, let's just make it work for both.
-            
             if (!input || !resultsDiv) return;
 
             const term = input.value.toLowerCase().trim();
@@ -4873,24 +4886,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Position resultsDiv near the input if rowIdx >= 0
+            // POSITIONING: Relative to obGridContainer
             if (rowIdx >= 0) {
                 const rect = input.getBoundingClientRect();
-                const containerRect = document.getElementById('openingBalancesContainer').getBoundingClientRect();
+                const containerRect = document.getElementById('obGridContainer').getBoundingClientRect();
+                
+                // Adjust for scroll offset of the container
+                const scrollY = document.getElementById('obGridContainer').scrollTop;
+                
                 resultsDiv.style.left = (rect.left - containerRect.left) + 'px';
-                resultsDiv.style.top = (rect.bottom - containerRect.top) + 'px';
-                resultsDiv.style.width = rect.width + 'px';
-            } else {
-                // Return to default top position
-                resultsDiv.style.left = 'auto'; 
-                resultsDiv.style.top = '100%';
-                resultsDiv.style.width = '100%';
+                resultsDiv.style.top = (rect.bottom - containerRect.top + scrollY) + 'px';
+                resultsDiv.style.width = '350px'; // Wider for single line
             }
 
             const matches = obAccountsPool.filter(a => 
                 (a.name.toLowerCase().includes(term) || a.code.toString().includes(term)) &&
                 !displayedOBAccounts.some(d => d.id === a.id)
-            ).slice(0, 10);
+            ).slice(0, 15);
 
             if (event.key === 'Enter') {
                 if (matches.length > 0) {
@@ -4903,8 +4915,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (matches.length > 0) {
                 resultsDiv.innerHTML = matches.map(m => `
-                    <div class="ob-result-item" onclick="addAccountToOBGrid(${m.id}); document.getElementById('obSearchResults').style.display='none';">
-                        <span style="font-weight: 700; color: #1F4E79;">${m.code}</span> - ${m.name}
+                    <div class="ob-result-item" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" 
+                         onclick="addAccountToOBGrid(${m.id}); document.getElementById('obSearchResults').style.display='none';">
+                        <span style="font-weight: 700; color: #1F4E79; margin-right: 10px;">${m.code}</span> ${m.name}
                     </div>
                 `).join('');
                 resultsDiv.style.display = 'block';
@@ -4952,15 +4965,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }).join('');
 
-            // Add Empty Rows (Total 30)
-            const emptyCount = Math.max(0, 30 - displayedOBAccounts.length);
+            // Add Empty Rows (Total 30) - Adjusted for data size
+            const totalTargetRows = Math.max(30, displayedOBAccounts.length + 10);
+            const emptyCount = totalTargetRows - displayedOBAccounts.length;
+            
             for (let i = 0; i < emptyCount; i++) {
                 if (i === 0) {
                     html += `
                     <div class="ob-row">
                         <div class="ob-col">
                             <input type="text" class="ob-input" placeholder="Type Code..." 
-                                   onkeyup="handleOBSearch(event, 999)" 
+                                   onkeyup="handleOBSearch(event, ${displayedOBAccounts.length})" 
                                    style="text-align: left; background: #fffde7; border-bottom: 2px solid #fbc02d;">
                         </div>
                         <div class="ob-col" style="text-align: left; color: #cbd5e0; font-style: italic;">(Select account from code field)</div>
@@ -4980,6 +4995,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             grid.innerHTML = html;
             calculateOpeningTotals();
+            
+            // Clear top search after re-render to keep view clean?
+            // Actually, better to keep it if the user was filtering.
+            const filterTerm = document.getElementById('obSearchInput').value;
+            if (filterTerm) filterOBGrid({target: {value: filterTerm}});
         }
 
         function selectOBRow(id) {
@@ -5180,6 +5200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.importBalances = importBalances;
         window.initImportOBWizard = initImportOBWizard;
         window.confirmOBImport = confirmOBImport;
+        window.filterOBGrid = filterOBGrid;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
