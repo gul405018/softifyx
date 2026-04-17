@@ -4,6 +4,20 @@ require_once 'db_config.php';
 $action = $_GET['action'] ?? '';
 $company_id = $_GET['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
+// MIGRATION: Ensure coa_opening_balances table exists
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS coa_opening_balances (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        coa_id INT NOT NULL,
+        fy_id INT NOT NULL,
+        debit DECIMAL(15,2) DEFAULT 0.00,
+        credit DECIMAL(15,2) DEFAULT 0.00,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_opening (company_id, coa_id, fy_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+} catch (Exception $e) {}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'get_coa_main') {
         $stmt = $pdo->prepare("SELECT * FROM coa_main WHERE company_id = ? ORDER BY code ASC");
@@ -108,6 +122,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ORDER BY cl.code ASC
         ");
         $stmt->execute([$subId, $company_id]);
+        sendResponse($stmt->fetchAll());
+    }
+
+    if ($action === 'get_coa_opening_balances' && isset($_GET['fy_id'])) {
+        $fyId = $_GET['fy_id'];
+        $stmt = $pdo->prepare("
+            SELECT cl.id, cl.code, cl.name, 
+                   COALESCE(ob.debit, 0) as debit, 
+                   COALESCE(ob.credit, 0) as credit
+            FROM coa_list cl
+            LEFT JOIN coa_opening_balances ob ON cl.id = ob.coa_id AND ob.fy_id = ?
+            WHERE cl.company_id = ?
+            ORDER BY cl.code ASC
+        ");
+        $stmt->execute([$fyId, $company_id]);
         sendResponse($stmt->fetchAll());
     }
 }
@@ -412,6 +441,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || $_SERVER['REQUEST_METHOD'] === 'P
     if ($action === 'delete_employee' && isset($_GET['id'])) {
         $pdo->prepare("DELETE FROM employees WHERE id = ? AND company_id = ?")->execute([$_GET['id'], $company_id]);
         sendResponse(['status' => 'success']);
+    }
+
+    if ($action === 'save_coa_opening_balances') {
+        if (!isset($data['fy_id']) || !isset($data['balances'])) {
+            sendResponse(['error' => 'Missing data'], 400);
+        }
+        $fyId = $data['fy_id'];
+        $stmt = $pdo->prepare("INSERT INTO coa_opening_balances (company_id, coa_id, fy_id, debit, credit) 
+                               VALUES (?, ?, ?, ?, ?) 
+                               ON DUPLICATE KEY UPDATE debit = VALUES(debit), credit = VALUES(credit)");
+        foreach ($data['balances'] as $row) {
+            $stmt->execute([$company_id, $row['coa_id'], $fyId, $row['debit'], $row['credit']]);
+        }
+        sendResponse(['status' => 'success']);
+    }
+
+    if ($action === 'import_coa_opening_balances' && isset($data['fy_id'])) {
+        $currentFyId = $data['fy_id'];
+        // Find previous FY for the same company
+        $stmt = $pdo->prepare("SELECT id FROM financial_years WHERE company_id = ? AND id < ? ORDER BY id DESC LIMIT 1");
+        $stmt->execute([$company_id, $currentFyId]);
+        $prevFy = $stmt->fetch();
+        
+        if (!$prevFy) {
+            sendResponse(['error' => 'No previous financial year found to import from.'], 404);
+        }
+        
+        $prevFyId = $prevFy['id'];
+        
+        // Import logic: Duplicate last year's opening balances as a starting point
+        // Note: Real logic would also calculate closing balances from transactions, 
+        // but since we are just starting, we'll carry over openings first.
+        $stmt = $pdo->prepare("
+            INSERT INTO coa_opening_balances (company_id, coa_id, fy_id, debit, credit)
+            SELECT company_id, coa_id, ?, debit, credit
+            FROM coa_opening_balances
+            WHERE fy_id = ? AND company_id = ?
+            ON DUPLICATE KEY UPDATE debit = VALUES(debit), credit = VALUES(credit)
+        ");
+        $stmt->execute([$currentFyId, $prevFyId, $company_id]);
+        sendResponse(['status' => 'success', 'imported_from' => $prevFyId]);
     }
 
     if ($action === 'delete_vendor' && isset($_GET['id'])) {

@@ -1,0 +1,147 @@
+<div id="openingBalancesContainer" data-module="Accounts Opening Balances" 
+     style="min-height: 600px; display: flex; flex-direction: column; gap: 12px; background: white; padding: 15px; font-family: 'Segoe UI', Arial, sans-serif;">
+    
+    <!-- Header with Buttons matching screenshot -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1F4E79; padding-bottom: 10px;">
+        <div style="font-size: 18px; font-weight: 700; color: #1F4E79; text-transform: uppercase; letter-spacing: 1px;">
+            ACCOUNTS OPENING BALANCES
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+            <button class="ob-btn" onclick="window.openSecondaryModularPopup('Navigation/Maintain/chart_of_accounts.html', 'fa-sitemap', 'Chart of Accounts', window.initCOAView, 'Chart of Accounts', true)">
+                <i class="fas fa-plus-circle"></i> New Account
+            </button>
+            <button class="ob-btn" onclick="importBalances()">
+                <i class="fas fa-file-import"></i> Import Balances
+            </button>
+            <button class="ob-btn"><i class="fas fa-user-tag"></i> Customer Invoices</button>
+            <button class="ob-btn"><i class="fas fa-truck-loading"></i> Vendor Invoices</button>
+            <button class="ob-btn ob-save" onclick="saveOpeningBalances()">
+                <i class="fas fa-check-circle"></i> Save (Ctrl+S)
+            </button>
+            <button class="ob-btn ob-cancel" onclick="closeModularPopup()">
+                <i class="fas fa-times-circle"></i> Cancel
+            </button>
+            <button class="ob-btn ob-delete"><i class="fas fa-trash"></i> Delete</button>
+            <button class="ob-btn"><i class="fas fa-print"></i> Print</button>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; background: #f8fafc; border-radius: 4px; padding: 10px;">
+        <label style="font-size: 13px; font-weight: 700; color: #334155;">Search Account</label>
+        <input type="text" id="obSearchInput" placeholder="Type name or code to filter..." 
+               style="flex: 1; max-width: 400px; height: 32px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 10px; font-size: 13px; outline: none;"
+               onkeyup="renderOpeningBalances()">
+        <button class="ob-btn ob-find" onclick="renderOpeningBalances()">Find Next</button>
+    </div>
+
+    <!-- Grid Table -->
+    <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="display: grid; grid-template-columns: 140px 1fr 150px 150px; background: #f1f5f9; border-bottom: 2px solid #cbd5e0; font-weight: 700; font-size: 12px; color: #1F4E79; text-transform: uppercase; text-align: center;">
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0;">Account Code</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: left;">Account Name</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0;">Debit</div>
+            <div style="padding: 10px;">Credit</div>
+        </div>
+        <div id="obGridBody" style="flex: 1; overflow-y: auto; background: white;">
+            <!-- Rows injected by JS -->
+            <div style="padding: 40px; text-align: center; color: #94a3b8;">Loading accounts...</div>
+        </div>
+    </div>
+
+    <!-- Totals Footer -->
+    <div style="display: grid; grid-template-columns: 140px 1fr 150px 150px; background: #f8fafc; border: 1px solid #e2e8f0; border-top: 2px solid #1F4E79; font-weight: 700; font-size: 13px; color: #1F4E79;">
+        <div style="padding: 10px; grid-column: span 2; text-align: right; text-transform: uppercase;">Totals</div>
+        <div id="obTotalDebit" style="padding: 10px; text-align: center; border-left: 1px solid #e2e8f0; background: #fff;">0.00</div>
+        <div id="obTotalCredit" style="padding: 10px; text-align: center; border-left: 1px solid #e2e8f0; background: #fff;">0.00</div>
+    </div>
+
+    <style>
+        .ob-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e0;
+            padding: 0 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #334155;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .ob-btn:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .ob-save {
+            background: #22c55e !important;
+            color: white !important;
+            border-color: #16a34a !important;
+        }
+        .ob-save:hover { background: #16a34a !important; }
+
+        .ob-cancel {
+            background: #64748b !important;
+            color: white !important;
+            border-color: #475569 !important;
+        }
+        .ob-cancel:hover { background: #475569 !important; }
+
+        .ob-delete {
+            background: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        .ob-delete:hover { background: #dc2626 !important; }
+
+        .ob-find {
+            background: #1F4E79 !important;
+            color: white !important;
+            border-color: #153550 !important;
+            min-width: 100px;
+        }
+
+        .ob-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 150px 150px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.1s;
+        }
+        .ob-row:hover { background: #f8fafc; }
+        .ob-col {
+            padding: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #f1f5f9;
+        }
+        .ob-input {
+            width: 100%;
+            height: 28px;
+            border: 1px solid transparent;
+            text-align: center;
+            outline: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 13px;
+            border-radius: 3px;
+        }
+        .ob-input:focus {
+            background: white;
+            border-color: #1F4E79;
+            box-shadow: 0 0 0 1px rgba(31, 78, 121, 0.1);
+        }
+        /* Style for non-zero inputs to stand out */
+        .ob-input.has-value {
+            font-weight: 700;
+            color: #1F4E79;
+        }
+    </style>
+</div>

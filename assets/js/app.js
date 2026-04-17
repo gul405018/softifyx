@@ -2665,8 +2665,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : null)))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank));
+                    let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : null))))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2695,8 +2696,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isReg = (moduleName === "Customer Regions" || (targetUrl && targetUrl.includes('customer_regions.html')));
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : null)))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank));
+                    let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : null))))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB));
                 });
             });
         }
@@ -4816,6 +4818,165 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetBankForm = resetBankForm;
         window.findBank = findBank;
         window.printBanks = printBanks;
+
+        // --- ACCOUNTS OPENING BALANCES LOGIC ---
+        let obAccounts = [];
+
+        async function initOpeningBalancesView() {
+            console.log("SoftifyX: Init Opening Balances View");
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const fyId = session.fy_id || 0;
+            const coId = session.company_id || 1;
+
+            if (!fyId) {
+                alert("Please select a Financial Year during login to use this module.");
+                return;
+            }
+
+            let retries = 0;
+            const checkAndRender = setInterval(async () => {
+                const grid = document.getElementById('obGridBody');
+                if (grid) {
+                    clearInterval(checkAndRender);
+                    try {
+                        const res = await fetch(`api/maintain.php?action=get_coa_opening_balances&company_id=${coId}&fy_id=${fyId}`);
+                        if (res.ok) {
+                            obAccounts = await res.json();
+                            renderOpeningBalances();
+                            setupOBSearch();
+                        }
+                    } catch (e) {
+                        console.error("OB Load Error:", e);
+                    }
+                } else if (++retries >= 30) clearInterval(checkAndRender);
+            }, 100);
+        }
+
+        function renderOpeningBalances() {
+            const grid = document.getElementById('obGridBody');
+            const searchInput = document.getElementById('obSearchInput');
+            if (!grid) return;
+
+            const searchTerm = (searchInput ? searchInput.value : "").toLowerCase();
+            const filtered = obAccounts.filter(a => 
+                a.name.toLowerCase().includes(searchTerm) || 
+                a.code.toString().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="padding: 20px; text-align: center; color: #94a3b8;">${searchTerm ? 'No accounts match your search.' : 'No accounts found in system.'}</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(a => `
+                <div class="ob-row">
+                    <div class="ob-col" style="font-weight: 600; color: #64748b;">${a.code}</div>
+                    <div class="ob-col" style="justify-content: flex-start; border-right-color: #f1f5f9;">${a.name}</div>
+                    <div class="ob-col">
+                        <input type="number" step="0.01" class="ob-input ${parseFloat(a.debit) ? 'has-value' : ''}" 
+                               value="${parseFloat(a.debit) || ''}" placeholder="0.00"
+                               oninput="onBalanceChange(${a.id}, 'debit', this.value)"
+                               onfocus="this.select()">
+                    </div>
+                    <div class="ob-col" style="border-right: none;">
+                        <input type="number" step="0.01" class="ob-input ${parseFloat(a.credit) ? 'has-value' : ''}" 
+                               value="${parseFloat(a.credit) || ''}" placeholder="0.00"
+                               oninput="onBalanceChange(${a.id}, 'credit', this.value)"
+                               onfocus="this.select()">
+                    </div>
+                </div>
+            `).join('');
+
+            calculateOpeningTotals();
+        }
+
+        function onBalanceChange(coaId, field, value) {
+            const acc = obAccounts.find(a => a.id == coaId);
+            if (acc) {
+                acc[field] = parseFloat(value) || 0;
+                // Update specific input's class if needed (optional UX)
+                calculateOpeningTotals();
+            }
+        }
+
+        function calculateOpeningTotals() {
+            let totalDebit = 0;
+            let totalCredit = 0;
+            obAccounts.forEach(a => {
+                totalDebit += parseFloat(a.debit) || 0;
+                totalCredit += parseFloat(a.credit) || 0;
+            });
+
+            const debEl = document.getElementById('obTotalDebit');
+            const creEl = document.getElementById('obTotalCredit');
+            if (debEl) debEl.textContent = totalDebit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (creEl) creEl.textContent = totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function setupOBSearch() {
+            // Placeholder if we need advanced listeners
+        }
+
+        async function saveOpeningBalances() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const fyId = session.fy_id || 0;
+            if (!fyId) return;
+
+            // Prepare payload: Only send accounts that have non-zero or modified balances
+            // But for simplicity in a Maintenance module, we can send everything or filter
+            const modified = obAccounts.map(a => ({
+                coa_id: a.id,
+                debit: a.debit || 0,
+                credit: a.credit || 0
+            }));
+
+            try {
+                const res = await fetch('api/maintain.php?action=save_coa_opening_balances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fy_id: fyId, balances: modified })
+                });
+                if (res.ok) {
+                    alert("Opening Balances saved successfully!");
+                } else {
+                    alert("Failed to save balances.");
+                }
+            } catch (e) {
+                alert("Error saving balances.");
+            }
+        }
+
+        async function importBalances() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const fyId = session.fy_id || 0;
+            if (!fyId) return;
+
+            if (confirm("Are you sure you want to import balances from the previous financial year? This will overwrite your current entries for this year.")) {
+                try {
+                    const res = await fetch('api/maintain.php?action=import_coa_opening_balances', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fy_id: fyId })
+                    });
+                    const result = await res.json();
+                    if (res.ok) {
+                        alert("Balances imported successfully!");
+                        initOpeningBalancesView(); // Refresh
+                    } else {
+                        alert(result.error || "Import failed.");
+                    }
+                } catch (e) {
+                    alert("Error during import.");
+                }
+            }
+        }
+
+        // Expose Opening Balances Functions
+        window.initOpeningBalancesView = initOpeningBalancesView;
+        window.renderOpeningBalances = renderOpeningBalances;
+        window.onBalanceChange = onBalanceChange;
+        window.saveOpeningBalances = saveOpeningBalances;
+        window.importBalances = importBalances;
 
         window.handleLogout = async function() {
             if(confirm("Are you sure you want to log out?")) {
