@@ -3861,6 +3861,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- VENDORS MODULE LOGIC ---
         function initVendorsView() {
+            console.log("SoftifyX Diagnostic: Initializing Vendors View...");
             let retries = 0;
             const checkAndRender = setInterval(() => {
                 const list = document.getElementById('vendorTypeList');
@@ -3873,22 +3874,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                         list.selectedIndex = 0;
                         onVendorTypeSelect(list.value);
                     } else {
+                        console.warn("SoftifyX Diagnostic: No vendor types found during initialization.");
                         resetVendorTypeForm();
                         resetVendorForm();
                     }
-                } else if (++retries >= 30) clearInterval(checkAndRender); // Increased safety margin
+                } else if (++retries >= 30) {
+                    console.error("SoftifyX Diagnostic: Vendor module container not found after 3 seconds.");
+                    clearInterval(checkAndRender);
+                }
             }, 100);
         }
 
         function renderVendorTypeList() {
             const list = document.getElementById('vendorTypeList');
             if(!list) return;
-            const vendMain = coaMain.find(m => m.name.toLowerCase().includes('vendor') || m.name.toLowerCase().includes('supplier') || m.name.toLowerCase().includes('creditor'));
+            // Improved search to include 'payable'
+            const vendMain = coaMain.find(m => {
+                const n = m.name.toLowerCase();
+                return n.includes('vendor') || n.includes('supplier') || n.includes('creditor') || n.includes('payable');
+            });
+            
+            console.log("SoftifyX Diagnostic: Found vendMain:", vendMain);
+            
             if(!vendMain) {
+                console.error("SoftifyX Diagnostic: COA main category for Vendors/Payables not found.");
                 list.innerHTML = '<option disabled>No Vendor category found in COA</option>';
                 return;
             }
             const filtered = coaSub.filter(s => s.main_id == vendMain.id);
+            console.log("SoftifyX Diagnostic: Found sub-accounts:", filtered.length);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
 
@@ -3924,9 +3938,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         function renderVendorList() {
             const list = document.getElementById('vendorList');
             if(!list) return;
+            
+            console.log("SoftifyX Diagnostic: Rendering Vendor List for Type:", selectedVendTypeCode);
+            
             const sub = coaSub.find(s => s.code == selectedVendTypeCode);
-            if(!sub) { list.innerHTML = ''; return; }
+            if(!sub) { 
+                console.warn("SoftifyX Diagnostic: Selected sub-category not found in coaSub.");
+                list.innerHTML = ''; 
+                return; 
+            }
+            
             const filtered = coaList.filter(l => l.sub_id == sub.id);
+            console.log(`SoftifyX Diagnostic: Found ${filtered.length} matching accounts in coaList for sub_id ${sub.id}`);
+            
             list.innerHTML = filtered.map(v => `<option value="${v.code}">${v.name}</option>`).join('');
         }
 
