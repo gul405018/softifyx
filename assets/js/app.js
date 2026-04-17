@@ -4245,21 +4245,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(!list) return;
             
             console.log("SoftifyX Diagnostic: Checking coaMain for Bank/Cash...");
-            console.log("coaMain size:", coaMain.length);
-
-            const bankMain = coaMain.find(m => {
+            
+            // Filter ALL matching main categories (Cash, Banks, etc.)
+            const matchingMain = coaMain.filter(m => {
                 const n = m.name.toLowerCase();
                 return n.includes('bank') || n.includes('cash') || n.includes('liquid') || n.includes('current asset');
             });
             
-            console.log("SoftifyX Diagnostic: Found bankMain:", bankMain);
+            console.log("SoftifyX Diagnostic: Found matching main categories:", matchingMain.length);
 
-            if(!bankMain) {
+            if(matchingMain.length === 0) {
                 console.error("SoftifyX Diagnostic: No Bank/Cash category found in coaMain.");
                 list.innerHTML = '<option disabled>No Bank category found in COA</option>';
                 return;
             }
-            const filtered = coaSub.filter(s => s.main_id == bankMain.id);
+
+            const mainIds = matchingMain.map(m => m.id);
+            const filtered = coaSub.filter(s => mainIds.includes(s.main_id));
+            
             console.log("SoftifyX Diagnostic: Found sub-accounts:", filtered.length);
             list.innerHTML = filtered.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
         }
