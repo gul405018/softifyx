@@ -4246,10 +4246,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log("SoftifyX Diagnostic: Checking coaMain for Bank/Cash...");
             
-            // Filter ALL matching main categories (Cash, Banks, etc.)
+            // Filter ONLY bank categories, explicitly excluding Cash
             const matchingMain = coaMain.filter(m => {
                 const n = m.name.toLowerCase();
-                return n.includes('bank') || n.includes('cash') || n.includes('liquid') || n.includes('current asset');
+                return n.includes('bank') && !n.includes('cash');
             });
             
             console.log("SoftifyX Diagnostic: Found matching main categories:", matchingMain.length);
