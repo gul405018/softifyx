@@ -199,4 +199,13 @@
         select option { padding: 5px; border-bottom: 1px solid #eee; }
         select option:checked { background: #007bff !important; color: white !important; }
     </style>
+    <script>
+        (function() {
+            // Force modal-wide class if we are in a modular container
+            const container = document.getElementById('modalContainer');
+            if (container) {
+                container.classList.add('modal-wide');
+            }
+        })();
+    </script>
 </div>
