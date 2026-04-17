@@ -1,7 +1,7 @@
-<div id="invCOAContainer" data-module="Chart of Inventory" style="width: 950px; height: 750px; display: flex; flex-direction: column; gap: 5px; background: white; padding: 6px 6px 6px 0; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
+<div id="invCOAContainer" data-module="Chart of Inventory" style="width: 950px; height: 750px; display: flex; flex-direction: column; gap: 5px; background: white; padding: 6px; font-family: 'Segoe UI', Arial, sans-serif; overflow-y: auto; border-radius: 4px;">
 
     <!-- Section 1: Inventory Categories -->
-    <fieldset style="border: 1px solid #cbd5e0; padding: 6px 6px 6px 0; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 140px;">
+    <fieldset style="border: 1px solid #cbd5e0; padding: 6px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 140px;">
         <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">Inventory Categories</legend>
         <div style="display: flex; gap: 15px; height: 100%;">
             <!-- List -->
@@ -9,7 +9,7 @@
                 <select id="invMainList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvMainSelect(this.value)"></select>
             </div>
             <!-- Fields & Buttons -->
-            <div style="width: 610px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="width: 600px; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-start; gap: 5px; margin-left: 125px;">
                     <button class="inv-btn" onclick="printInvChart('main')">Chart</button>
                     <button class="inv-btn" onclick="printInvPriceList('main')">Price List</button>
@@ -31,7 +31,7 @@
     </fieldset>
 
     <!-- Section 2: Sub Inventory Categories -->
-    <fieldset style="border: 1px solid #cbd5e0; padding: 6px 6px 6px 0; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 140px;">
+    <fieldset style="border: 1px solid #cbd5e0; padding: 6px; border-radius: 4px; flex: 1; display: flex; flex-direction: column; min-height: 140px;">
         <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">Sub Inventory Categories</legend>
         <div style="display: flex; gap: 15px; height: 100%;">
             <!-- List -->
@@ -39,7 +39,7 @@
                 <select id="invSubList" size="7" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvSubSelect(this.value)"></select>
             </div>
             <!-- Fields & Buttons -->
-            <div style="width: 610px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="width: 600px; display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: flex-start; gap: 5px; margin-left: 125px;">
                     <button class="inv-btn" onclick="printInvChart('sub')">Chart</button>
                     <button class="inv-btn" onclick="printInvPriceList('sub')">Price List</button>
@@ -61,7 +61,7 @@
     </fieldset>
 
     <!-- Section 3: List of Inventory Items -->
-    <fieldset style="border: 1px solid #cbd5e0; padding: 6px 6px 6px 0; border-radius: 4px; flex: 2; display: flex; flex-direction: column; min-height: 250px;">
+    <fieldset style="border: 1px solid #cbd5e0; padding: 6px; border-radius: 4px; flex: 2; display: flex; flex-direction: column; min-height: 250px;">
         <legend style="padding: 0 5px; font-size: 12px; font-weight: 700; color: #64748b;">List of Inventory Items</legend>
         <div style="display: flex; gap: 15px; height: 100%;">
             <!-- List -->
@@ -69,7 +69,7 @@
                 <select id="invItemList" size="12" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 2px;" onchange="onInvItemSelect(this.value)"></select>
             </div>
             <!-- Fields & Buttons -->
-            <div style="width: 610px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="width: 600px; display: flex; flex-direction: column; gap: 4px;">
                 <div style="display: flex; justify-content: flex-start; gap: 3px; margin-bottom: 5px; margin-left: 125px;">
                     <button class="inv-btn">Chart</button>
                     <button class="inv-btn">Price List</button>
