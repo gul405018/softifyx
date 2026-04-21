@@ -5324,11 +5324,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const res = await fetch('Navigation/Maintain/inventory_brands.html');
                 if (!res.ok) throw new Error('Could not load brand form');
-                const html = await res.text(); // Plain text because it's HTML
+                const html = await res.text();
                 openSecondaryModal({ icon: 'fa-tags', text: 'Inventory Brands' }, html, true, 'Inventory Brands');
                 
-                // Initialize brand maintenance logic
-                setTimeout(() => loadBrandsForMaintenance(), 100);
+                // Robust Initialization: Wait for DOM and then load
+                let retryCount = 0;
+                const tryInit = () => {
+                    const list = document.getElementById('brandMaintList');
+                    if (list) {
+                        list.innerHTML = '<option disabled>Loading...</option>';
+                        loadBrandsForMaintenance();
+                    } else if (retryCount < 10) {
+                        retryCount++;
+                        setTimeout(tryInit, 100);
+                    }
+                };
+                setTimeout(tryInit, 50);
             } catch (e) {
                 console.error("Manage Brands error:", e);
                 alert("Could not load Brands form.");
