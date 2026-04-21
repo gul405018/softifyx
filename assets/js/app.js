@@ -5318,6 +5318,110 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error("SoftifyX: Error loading inventory tree", e);
             }
         }
+        window.initChartOfInventoryView = initChartOfInventoryView;
+
+        async function manageBrands() {
+            try {
+                const res = await fetch('Navigation/Maintain/inventory_brands.html');
+                if (!res.ok) throw new Error('Could not load brand form');
+                const html = await res.text(); // Plain text because it's HTML
+                openSecondaryModal({ icon: 'fa-tags', text: 'Inventory Brands' }, html, false, 'Inventory Brands');
+                
+                // Initialize brand maintenance logic
+                setTimeout(() => loadBrandsForMaintenance(), 100);
+            } catch (e) {
+                console.error("Manage Brands error:", e);
+                alert("Could not load Brands form.");
+            }
+        }
+        window.manageBrands = manageBrands;
+
+        let brandMaintList = [];
+        let selectedMaintBrandId = null;
+
+        async function loadBrandsForMaintenance() {
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/inventory.php?action=get_brands&company_id=${coId}`);
+                brandMaintList = await res.json();
+                renderBrandMaintList();
+                resetBrandForm();
+            } catch (e) {}
+        }
+        window.loadBrandsForMaintenance = loadBrandsForMaintenance;
+
+        function renderBrandMaintList() {
+            const list = document.getElementById('brandMaintList');
+            if (!list) return;
+            list.innerHTML = brandMaintList.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            if (selectedMaintBrandId) list.value = selectedMaintBrandId;
+        }
+
+        function onBrandMaintSelect(id) {
+            selectedMaintBrandId = id;
+            const brand = brandMaintList.find(b => b.id == id);
+            if (brand) {
+                document.getElementById('brandMaintName').value = brand.name;
+                document.getElementById('brandMaintName').disabled = false;
+                document.getElementById('brandMaintName').focus();
+            }
+        }
+        window.onBrandMaintSelect = onBrandMaintSelect;
+
+        function resetBrandForm(generate = false) {
+            selectedMaintBrandId = null;
+            const input = document.getElementById('brandMaintName');
+            if (!input) return;
+            input.value = '';
+            input.disabled = !generate;
+            if (generate) input.focus();
+        }
+        window.resetBrandForm = resetBrandForm;
+
+        async function saveBrand() {
+            const name = document.getElementById('brandMaintName').value.trim();
+            if (!name) return alert("Enter Brand Name!");
+
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const body = { name: name, id: selectedMaintBrandId };
+
+                const res = await fetch('api/inventory.php?action=save_brand&company_id=' + coId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert("Brand saved successfully.");
+                    loadBrandsForMaintenance();
+                    loadInvBrands(); // Refresh main inventory dropdown
+                }
+            } catch (err) { alert("Save failed."); }
+        }
+        window.saveBrand = saveBrand;
+
+        async function deleteBrand() {
+            if (!selectedMaintBrandId) return alert("Select a brand to delete!");
+            if (!confirm("Are you sure?")) return;
+
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/inventory.php?action=delete_brand&id=${selectedMaintBrandId}&company_id=${coId}`);
+                if (res.ok) {
+                    alert("Brand deleted.");
+                    loadBrandsForMaintenance();
+                    loadInvBrands(); // Refresh main inventory dropdown
+                } else {
+                    const err = await res.json();
+                    alert(err.error || "Delete failed.");
+                }
+            } catch (e) { alert("Delete error."); }
+        }
+        window.deleteBrand = deleteBrand;
 
         function renderInvMainList() {
             const list = document.getElementById('invMainList');

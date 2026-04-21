@@ -184,7 +184,6 @@ try {
 
         case 'delete_item':
             $id = $_GET['id'] ?? 0;
-            // TODO: In future, check if item is used in transactions
             $stmt = $pdo->prepare("DELETE FROM inv_items WHERE id = ? AND company_id = ?");
             $stmt->execute([$id, $company_id]);
             echo json_encode(['status' => 'success']);
@@ -198,9 +197,32 @@ try {
 
         case 'save_brand':
             $data = json_decode(file_get_contents('php://input'), true);
-            $stmt = $pdo->prepare("INSERT INTO inv_brands (company_id, name) VALUES (?, ?)");
-            $stmt->execute([$company_id, $data['name']]);
-            echo json_encode(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            if (isset($data['id']) && $data['id'] > 0) {
+                // UPDATE
+                $stmt = $pdo->prepare("UPDATE inv_brands SET name = ? WHERE id = ? AND company_id = ?");
+                $stmt->execute([$data['name'], $data['id'], $company_id]);
+                echo json_encode(['status' => 'success', 'id' => $data['id']]);
+            } else {
+                // INSERT
+                $stmt = $pdo->prepare("INSERT INTO inv_brands (company_id, name) VALUES (?, ?)");
+                $stmt->execute([$company_id, $data['name']]);
+                echo json_encode(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            }
+            break;
+
+        case 'delete_brand':
+            $id = $_GET['id'] ?? 0;
+            // Check if brand is used by any item
+            $check = $pdo->prepare("SELECT COUNT(*) FROM inv_items WHERE brand_id = ?");
+            $check->execute([$id]);
+            if ($check->fetchColumn() > 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Cannot delete Brand because it is linked to Inventory Items.']);
+                exit;
+            }
+            $stmt = $pdo->prepare("DELETE FROM inv_brands WHERE id = ? AND company_id = ?");
+            $stmt->execute([$id, $company_id]);
+            echo json_encode(['status' => 'success']);
             break;
 
         default:
