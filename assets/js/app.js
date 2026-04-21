@@ -2667,8 +2667,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInv = (moduleName === "Chart of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInv ? initChartOfInventoryView : null)))))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv));
+                    let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInv ? initChartOfInventoryView : (isInvBrands ? initInventoryBrandsView : null)))))))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands));
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2698,8 +2699,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isEmp = (moduleName === "Employees" || (targetUrl && targetUrl.includes('employees.html')));
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : null))))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB));
+                    let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
+                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInvBrands ? initInventoryBrandsView : null)))))));
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands));
                 });
             });
         }
@@ -5320,32 +5322,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         window.initChartOfInventoryView = initChartOfInventoryView;
 
-        async function manageBrands() {
-            try {
-                const res = await fetch('Navigation/Maintain/inventory_brands.html');
-                if (!res.ok) throw new Error('Could not load brand form');
-                const html = await res.text();
-                openSecondaryModal({ icon: 'fa-tags', text: 'Inventory Brands' }, html, true, 'Inventory Brands');
-                
-                // Robust Initialization: Wait for DOM and then load
-                let retryCount = 0;
-                const tryInit = () => {
-                    const list = document.getElementById('brandMaintList');
-                    if (list) {
-                        list.innerHTML = '<option disabled>Loading...</option>';
-                        loadBrandsForMaintenance();
-                    } else if (retryCount < 10) {
-                        retryCount++;
-                        setTimeout(tryInit, 100);
-                    }
-                };
-                setTimeout(tryInit, 50);
-            } catch (e) {
-                console.error("Manage Brands error:", e);
-                alert("Could not load Brands form.");
-            }
-        }
+        async function manageBrands() { ... }
         window.manageBrands = manageBrands;
+
+        function initInventoryBrandsView() {
+            setTimeout(() => {
+                const list = document.getElementById('brandMaintList');
+                if (list) {
+                    list.innerHTML = '<option disabled>Loading...</option>';
+                    loadBrandsForMaintenance();
+                }
+            }, 100);
+        }
+        window.initInventoryBrandsView = initInventoryBrandsView;
 
         let brandMaintList = [];
         let selectedMaintBrandId = null;
