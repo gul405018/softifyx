@@ -5343,6 +5343,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 onInvSubSelect(list.value);
             } else {
                 resetInvSubForm();
+                // FIX: Ensure Item list is cleared if no Sub-Category exists for this Main Category
+                invItems = [];
+                renderInvItemList();
+                resetInvItemForm();
             }
         }
 
