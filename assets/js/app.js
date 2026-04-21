@@ -5708,6 +5708,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (e) {}
             }
         }
+        window.deleteInvMain = deleteInvMain;
 
         async function deleteInvSub() {
             if (!selectedInvSubId) return alert("Select a Sub-Category to delete.");
@@ -5724,6 +5725,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (e) {}
             }
         }
+        window.deleteInvSub = deleteInvSub;
 
         async function deleteInvItem() {
             if (!selectedInvItemId) return alert("Select an Item to delete.");
@@ -5737,22 +5739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (e) {}
             }
         }
-
-        async function manageBrands() {
-            const name = prompt("Enter new Brand name:");
-            if (!name) return;
-            try {
-                const res = await fetch('api/inventory.php?action=save_brand', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-                if (res.ok) {
-                    alert("Brand added.");
-                    loadInvBrands();
-                }
-            } catch(e) {}
-        }
+        window.deleteInvItem = deleteInvItem;
 
         async function loadInvBrands() {
             try {
@@ -5767,6 +5754,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch(e) {}
         }
+        window.loadInvBrands = loadInvBrands;
 
         document.addEventListener('keydown', (e) => {
             const container = document.getElementById('invCOAContainer');
@@ -5776,18 +5764,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (e.key === 'Escape') { resetInvItemForm(); }
         });
 
-        window.initChartOfInventoryView = initChartOfInventoryView;
         window.onInvMainSelect = onInvMainSelect;
         window.onInvSubSelect = onInvSubSelect;
         window.onInvItemSelect = onInvItemSelect;
         window.saveInvMain = saveInvMain;
         window.saveInvSub = saveInvSub;
         window.saveInvItem = saveInvItem;
-        window.deleteInvMain = deleteInvMain;
-        window.deleteInvSub = deleteInvSub;
-        window.deleteInvItem = deleteInvItem;
         window.resetInvMainForm = resetInvMainForm;
         window.resetInvSubForm = resetInvSubForm;
         window.resetInvItemForm = resetInvItemForm;
-        window.manageBrands = manageBrands;
-        window.loadInvBrands = loadInvBrands;
