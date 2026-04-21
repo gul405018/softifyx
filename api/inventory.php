@@ -82,12 +82,22 @@ try {
 
         case 'get_items':
             $sub_id = $_GET['sub_id'] ?? 0;
-            $items = $pdo->prepare("SELECT i.*, b.name as brand_name 
-                                    FROM inv_items i 
-                                    LEFT JOIN inv_brands b ON i.brand_id = b.id
-                                    WHERE i.sub_id = ? AND i.company_id = ? ORDER BY i.code");
-            $items->execute([$sub_id, $company_id]);
-            echo json_encode($items->fetchAll(PDO::FETCH_ASSOC));
+            $active_only = isset($_GET['active_only']) && $_GET['active_only'] == 1;
+            
+            $query = "SELECT i.*, b.name as brand_name 
+                      FROM inv_items i 
+                      LEFT JOIN inv_brands b ON i.brand_id = b.id
+                      WHERE i.sub_id = :sub_id AND i.company_id = :company_id";
+            
+            if ($active_only) {
+                $query .= " AND i.is_inactive = 0";
+            }
+            
+            $query .= " ORDER BY i.code";
+            
+            $stmt = $pdo->prepare($query);
+            $stmt->execute(['sub_id' => $sub_id, 'company_id' => $company_id]);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
         case 'save_main':

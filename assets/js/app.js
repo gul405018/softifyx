@@ -5334,7 +5334,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (main) {
                 document.getElementById('invMainCode').value = main.code;
                 document.getElementById('invMainName').value = main.name;
-                enableInvMainFields(false);
+                enableInvMainFields(true); // Auto-edit enabled
+                document.getElementById('invMainCode').disabled = true; // Lock code
             }
             renderInvSubList();
             const list = document.getElementById('invSubList');
@@ -5364,7 +5365,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (sub) {
                 document.getElementById('invSubCode').value = sub.code;
                 document.getElementById('invSubName').value = sub.name;
-                enableInvSubFields(false);
+                enableInvSubFields(true); // Auto-edit enabled
+                document.getElementById('invSubCode').disabled = true; // Lock code
             }
             fetchInvItems(id);
         }
@@ -5417,7 +5419,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('invItemOrderQty').value = item.order_qty || '';
                 document.getElementById('invItemInactive').checked = !!parseInt(item.is_inactive);
                 
-                enableInvItemFields(false);
+                enableInvItemFields(true); // Auto-edit enabled
+                document.getElementById('invItemCode').disabled = true; // Lock code
             }
         }
 
