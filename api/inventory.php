@@ -63,7 +63,7 @@ try {
 }
 
 $action = $_GET['action'] ?? '';
-$company_id = $_GET['company_id'] ?? 1;
+$company_id = $_GET['company_id'] ?? $_POST['company_id'] ?? $_SESSION['company_id'] ?? 1;
 
 try {
     switch ($action) {

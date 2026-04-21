@@ -5743,7 +5743,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async function loadInvBrands() {
             try {
-                const res = await fetch('api/inventory.php?action=get_brands');
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const res = await fetch(`api/inventory.php?action=get_brands&company_id=${coId}`);
                 if (!res.ok) return;
                 const brands = await res.json();
                 const select = document.getElementById('invItemBrand');
