@@ -5325,7 +5325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch('Navigation/Maintain/inventory_brands.html');
                 if (!res.ok) throw new Error('Could not load brand form');
                 const html = await res.text(); // Plain text because it's HTML
-                openSecondaryModal({ icon: 'fa-tags', text: 'Inventory Brands' }, html, false, 'Inventory Brands');
+                openSecondaryModal({ icon: 'fa-tags', text: 'Inventory Brands' }, html, true, 'Inventory Brands');
                 
                 // Initialize brand maintenance logic
                 setTimeout(() => loadBrandsForMaintenance(), 100);
