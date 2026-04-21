@@ -2668,8 +2668,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInv = (moduleName === "Chart of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInv ? initChartOfInventoryView : (isInvBrands ? initInventoryBrandsView : null)))))))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands));
+                    
+                    let initCallback = null;
+                    if (isCoa) initCallback = initChartOfAccountsView;
+                    else if (isCust) initCallback = initCustomersView;
+                    else if (isVend) initCallback = initVendorsView;
+                    else if (isReg) initCallback = initRegionsView;
+                    else if (isEmp) initCallback = initEmployeesView;
+                    else if (isBank) initCallback = initBankAccountsView;
+                    else if (isOB) initCallback = initOpeningBalancesView;
+                    else if (isInv) initCallback = initChartOfInventoryView;
+                    else if (isInvBrands) initCallback = initInventoryBrandsView;
+
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
                     // Close ALL mobile layers
@@ -2700,8 +2712,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
-                    let initCallback = isCoa ? initChartOfAccountsView : (isCust ? initCustomersView : (isVend ? initVendorsView : (isReg ? initRegionsView : (isEmp ? initEmployeesView : (isBank ? initBankAccountsView : (isOB ? initOpeningBalancesView : (isInvBrands ? initInventoryBrandsView : null)))))));
-                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands));
+                    
+                    let initCallback = null;
+                    if (isCoa) initCallback = initChartOfAccountsView;
+                    else if (isCust) initCallback = initCustomersView;
+                    else if (isVend) initCallback = initVendorsView;
+                    else if (isReg) initCallback = initRegionsView;
+                    else if (isEmp) initCallback = initEmployeesView;
+                    else if (isBank) initCallback = initBankAccountsView;
+                    else if (isOB) initCallback = initOpeningBalancesView;
+                    else if (isInvBrands) initCallback = initInventoryBrandsView;
+
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands);
+                    window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                 });
             });
         }
