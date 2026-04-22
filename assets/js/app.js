@@ -2345,6 +2345,7 @@
                         else if (url.includes('currency.html')) setTimeout(() => initCurrencyView(), 10);
                         else if (url.includes('chart_of_accounts.html')) setTimeout(() => initChartOfAccountsView(), 10);
                         else if (url.includes('employees.html')) setTimeout(() => initEmployeesView(), 10);
+                        else if (url.includes('inventory_locations.html')) setTimeout(() => initInventoryLocationsView(), 10);
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
