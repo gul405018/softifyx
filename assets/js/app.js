@@ -2892,13 +2892,13 @@ function renderPricingGrid() {
 
     grid.innerHTML = pricingItemsPool.map(item => `
         <div class="pricing-row" data-id="${item.id}">
-            <div style="padding:8px; text-align:center; border-right:1px solid #333;">
+            <div style="padding:8px; text-align:center; border-right:1px solid #cbd5e0;">
                 <input type="checkbox" class="pricing-row-checkbox" value="${item.id}">
             </div>
-            <div style="padding:8px; border-right:1px solid #333; font-weight:600;">${item.code}</div>
-            <div style="padding:8px; border-right:1px solid #333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
-            <div style="padding:8px; border-right:1px solid #333; text-align:center;">${item.unit}</div>
-            <div style="padding:8px; border-right:1px solid #333; text-align:right;">${parseFloat(item.purchase_price).toFixed(2)}</div>
+            <div style="padding:8px; border-right:1px solid #cbd5e0; font-weight:600;">${item.code}</div>
+            <div style="padding:8px; border-right:1px solid #cbd5e0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
+            <div style="padding:8px; border-right:1px solid #cbd5e0; text-align:center;">${item.unit}</div>
+            <div style="padding:8px; border-right:1px solid #cbd5e0; text-align:right;">${parseFloat(item.purchase_price).toFixed(2)}</div>
             <div style="padding:8px; text-align:right;">
                 <input type="number" class="pricing-input selling-price-input" 
                        value="${parseFloat(item.selling_price).toFixed(2)}" 
