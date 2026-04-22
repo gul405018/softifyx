@@ -6151,7 +6151,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const list = document.getElementById('locationMaintList');
                 if (list) {
                     clearInterval(checkAndRun);
-                    console.log("SoftifyX: Init Inventory Locations View");
                     list.innerHTML = '<option>Loading...</option>';
                     
                     try {

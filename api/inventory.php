@@ -273,6 +273,14 @@ try {
             echo json_encode(['error' => 'Invalid action']);
             break;
         case 'get_locations':
+            // Robust per-company seeding: if no locations exist for this company, create Main Store
+            $check = $pdo->prepare("SELECT COUNT(*) FROM inv_locations WHERE company_id = ?");
+            $check->execute([$company_id]);
+            if ($check->fetchColumn() == 0) {
+                $pdo->prepare("INSERT INTO inv_locations (company_id, name, is_default) VALUES (?, 'Main Store', 1)")
+                    ->execute([$company_id]);
+            }
+            
             $stmt = $pdo->prepare("SELECT * FROM inv_locations WHERE company_id = ? ORDER BY is_default DESC, name ASC");
             $stmt->execute([$company_id]);
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
