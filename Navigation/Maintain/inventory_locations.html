@@ -1,0 +1,75 @@
+<div id="locationsMaintenanceContainer" data-module="Inventory Locations" style="width: 100%; height: 450px; background: white; display: flex; flex-direction: column; padding: 15px; font-family: 'Segoe UI', sans-serif; border-radius: 8px;">
+    
+    <!-- Top Row: Buttons (Right) -->
+    <div style="display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid #cbd5e0; padding-bottom: 10px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 6px;">
+            <button class="inv-btn" style="background: #10b981 !important; color: white !important;" onclick="resetLocationForm(true)">
+                <i class="fas fa-plus"></i> Add
+            </button>
+            <button class="inv-btn" style="background: #1e293b !important; color: white !important;" onclick="saveLocationMaint()">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <button class="inv-btn" style="background: #ef4444 !important; color: white !important;" onclick="deleteLocationMaint()">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+            <button class="inv-btn" onclick="closeSecondaryModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Bottom Row: List (Left) and Input (Right) -->
+    <div style="display: flex; gap: 20px; flex: 1; overflow: hidden;">
+        <!-- Location Navigation Listbox -->
+        <div style="width: 300px; display: flex; flex-direction: column;">
+            <select id="locationMaintList" size="15" 
+                    style="width: 100%; height: 100%; border: 2px inset #fff; outline: none; border-radius: 4px; font-size: 13px; box-shadow: inset 1px 1px 4px rgba(0,0,0,0.1); background: #f8fafc;" 
+                    onchange="onLocationMaintSelect(this.value)">
+            </select>
+        </div>
+        
+        <!-- Location Input Area -->
+        <div style="flex: 1; padding: 20px; background: #f1f5f9; border-radius: 6px; border: 1px solid #cbd5e0; display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 13px; font-weight: 700; color: #475569; font-style: italic;">Location Name</label>
+                <input type="text" id="locationMaintName" autocomplete="off" 
+                       style="width: 100%; height: 35px; border: 1px solid #cbd5e0; outline: none; padding: 0 12px; font-size: 14px; border-radius: 4px; font-weight: 700; color: #1e293b;" 
+                       disabled placeholder="Select or click Add...">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+                <label style="font-size: 13px; font-weight: 700; color: #475569; font-style: italic;">Description</label>
+                <textarea id="locationMaintDesc" 
+                          style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; padding: 10px 12px; font-size: 14px; border-radius: 4px; resize: none; font-family: inherit;" 
+                          disabled></textarea>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .inv-btn {
+            padding: 0 16px;
+            height: 32px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            cursor: pointer;
+            background: white;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .inv-btn:hover { background: #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        #locationMaintList option { 
+            padding: 10px 12px; 
+            font-size: 13px; 
+            border-bottom: 1px solid #e2e8f0; 
+            cursor: pointer;
+            color: #1e293b;
+        }
+        #locationMaintList option:hover { background: #cbd5e0; }
+        #locationMaintList option:checked { background: #1e293b !important; color: white !important; font-weight: 600; }
+    </style>
+</div>

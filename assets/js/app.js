@@ -2668,6 +2668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInv = (moduleName === "Chart of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
+                    let isInvLoc = (moduleName === "Inventory Locations" || (targetUrl && targetUrl.includes('inventory_locations.html')));
                     let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
                     
                     let initCallback = null;
@@ -2680,9 +2681,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isOB) initCallback = initOpeningBalancesView;
                     else if (isInv) initCallback = initChartOfInventoryView;
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
+                    else if (isInvLoc) initCallback = initInventoryLocationsView;
                     else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvOB);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -2714,6 +2716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
+                    let isInvLoc = (moduleName === "Inventory Locations" || (targetUrl && targetUrl.includes('inventory_locations.html')));
                     let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
                     
                     let initCallback = null;
@@ -2725,9 +2728,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isBank) initCallback = initBankAccountsView;
                     else if (isOB) initCallback = initOpeningBalancesView;
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
+                    else if (isInvLoc) initCallback = initInventoryLocationsView;
                     else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands || isInvOB);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands || isInvLoc || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                 });
             });
@@ -6134,3 +6138,142 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetInvMainForm = resetInvMainForm;
         window.resetInvSubForm = resetInvSubForm;
         window.resetInvItemForm = resetInvItemForm;
+
+        // --- INVENTORY LOCATIONS MAINTENANCE LOGIC ---
+        let locationMaintPool = [];
+        let activeLocationId = null;
+
+        async function initInventoryLocationsView() {
+            const list = document.getElementById('locationMaintList');
+            if (list) list.innerHTML = '<option>Loading...</option>';
+            
+            try {
+                const res = await fetch('api/inventory.php?action=get_locations');
+                if (res.ok) {
+                    locationMaintPool = await res.json();
+                    renderLocationMaintList();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderLocationMaintList() {
+            const list = document.getElementById('locationMaintList');
+            if (!list) return;
+            list.innerHTML = locationMaintPool.map(l => `<option value="${l.id}" ${activeLocationId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
+            if (activeLocationId) {
+                const selected = locationMaintPool.find(l => l.id == activeLocationId);
+                if (selected) {
+                    fillLocationForm(selected);
+                }
+            }
+        }
+
+        window.onLocationMaintSelect = function(id) {
+            activeLocationId = id;
+            const selected = locationMaintPool.find(l => l.id == id);
+            if (selected) {
+                fillLocationForm(selected);
+            }
+        };
+
+        function fillLocationForm(loc) {
+            const nameField = document.getElementById('locationMaintName');
+            const descField = document.getElementById('locationMaintDesc');
+            if (nameField) {
+                nameField.value = loc.name;
+                nameField.disabled = false;
+            }
+            if (descField) {
+                descField.value = loc.description || '';
+                descField.disabled = false;
+            }
+        }
+
+        window.resetLocationForm = function(isNew = false) {
+            if (isNew) {
+                activeLocationId = null;
+                const list = document.getElementById('locationMaintList');
+                if (list) list.value = '';
+                const nameField = document.getElementById('locationMaintName');
+                if (nameField) {
+                    nameField.value = '';
+                    nameField.disabled = false;
+                    nameField.focus();
+                }
+                const descField = document.getElementById('locationMaintDesc');
+                if (descField) {
+                    descField.value = '';
+                    descField.disabled = false;
+                }
+            }
+        };
+
+        window.saveLocationMaint = async function() {
+            const name = document.getElementById('locationMaintName')?.value || '';
+            const desc = document.getElementById('locationMaintDesc')?.value || '';
+            if (!name) { alert("Please enter a Location Name."); return; }
+
+            const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+            
+            try {
+                const res = await fetch('api/inventory.php?action=save_location&company_id=' + coId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: activeLocationId, name: name, description: desc })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    activeLocationId = result.id;
+                    await initInventoryLocationsView();
+                    // Also refresh any open Opening Balances view dropdown
+                    const locSelect = document.getElementById('invObLocationSelect');
+                    if (locSelect) {
+                        const locRes = await fetch('api/inventory.php?action=get_locations');
+                        if (locRes.ok) {
+                            const locations = await locRes.json();
+                            const currentVal = locSelect.value;
+                            locSelect.innerHTML = locations.map(l => `<option value="${l.id}" ${l.is_default == 1 ? 'selected' : ''}>${l.name}</option>`).join('');
+                            if (currentVal) locSelect.value = currentVal;
+                        }
+                    }
+                } else {
+                    alert(result.error || "Could not save location.");
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        window.deleteLocationMaint = async function() {
+            if (!activeLocationId) { alert("Please select a location to delete."); return; }
+            if (confirm("Are you sure you want to delete this location?")) {
+                const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+                try {
+                    const res = await fetch(`api/inventory.php?action=delete_location&id=${activeLocationId}&company_id=${coId}`);
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        activeLocationId = null;
+                        const nameField = document.getElementById('locationMaintName');
+                        if (nameField) { nameField.value = ''; nameField.disabled = true; }
+                        const descField = document.getElementById('locationMaintDesc');
+                        if (descField) { descField.value = ''; descField.disabled = true; }
+                        await initInventoryLocationsView();
+                        // Refresh OB Select
+                        const locSelect = document.getElementById('invObLocationSelect');
+                        if (locSelect) {
+                            const locRes = await fetch('api/inventory.php?action=get_locations');
+                            if (locRes.ok) {
+                                const locations = await locRes.json();
+                                locSelect.innerHTML = locations.map(l => `<option value="${l.id}"> ${l.name}</option>`).join('');
+                            }
+                        }
+                    } else {
+                        alert(result.error || "Could not delete location.");
+                    }
+                } catch (e) { console.error(e); }
+            }
+        };
+
+        window.initInventoryLocationsView = initInventoryLocationsView;
+        window.saveLocationMaint = saveLocationMaint;
+        window.deleteLocationMaint = deleteLocationMaint;
+        window.onLocationMaintSelect = onLocationMaintSelect;
+        window.resetLocationForm = resetLocationForm;

@@ -62,8 +62,14 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         company_id INT NOT NULL,
         name VARCHAR(255) NOT NULL,
+        description TEXT,
         is_default TINYINT(1) DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // Migration for existing tables: add description if not exists
+    try {
+        $pdo->exec("ALTER TABLE inv_locations ADD COLUMN description TEXT AFTER name");
+    } catch(Exception $e) {}
 
     // Seed default location if empty for company
     $checkLoc = $pdo->prepare("SELECT id FROM inv_locations LIMIT 1");
@@ -343,6 +349,45 @@ try {
                 ON DUPLICATE KEY UPDATE pieces = VALUES(pieces), quantity = VALUES(quantity), rate = VALUES(rate)
             ");
             $stmt->execute([$current_fy, $from_fy, $company_id, $location_id]);
+            echo json_encode(['status' => 'success']);
+            break;
+
+        case 'save_location':
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (isset($data['id']) && $data['id'] > 0) {
+                // UPDATE
+                $stmt = $pdo->prepare("UPDATE inv_locations SET name = ?, description = ? WHERE id = ? AND company_id = ?");
+                $stmt->execute([$data['name'], $data['description'] ?? '', $data['id'], $company_id]);
+                echo json_encode(['status' => 'success', 'id' => $data['id']]);
+            } else {
+                // INSERT
+                $stmt = $pdo->prepare("INSERT INTO inv_locations (company_id, name, description) VALUES (?, ?, ?)");
+                $stmt->execute([$company_id, $data['name'], $data['description'] ?? '']);
+                echo json_encode(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            }
+            break;
+
+        case 'delete_location':
+            $id = $_GET['id'] ?? 0;
+            // Check if is default Main Store (usually ID 1 or is_default=1)
+            $checkDef = $pdo->prepare("SELECT is_default FROM inv_locations WHERE id = ?");
+            $checkDef->execute([$id]);
+            if ($checkDef->fetchColumn() == 1) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Cannot delete the default Inventory Location.']);
+                exit;
+            }
+            // Check if used in opening balances
+            $checkUsed = $pdo->prepare("SELECT COUNT(*) FROM inv_opening_balances WHERE location_id = ?");
+            $checkUsed->execute([$id]);
+            if ($checkUsed->fetchColumn() > 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Cannot delete Location because it has existing Opening Balances recorded.']);
+                exit;
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM inv_locations WHERE id = ? AND company_id = ?");
+            $stmt->execute([$id, $company_id]);
             echo json_encode(['status' => 'success']);
             break;
     }
