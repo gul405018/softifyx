@@ -2826,7 +2826,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
                     let isInvLoc = (moduleName === "Inventory Locations" || (targetUrl && targetUrl.includes('inventory_locations.html')));
                     let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
-                    let isPriceMaint = (moduleName === "Item Price Settings" || (targetUrl && targetUrl.includes('item_price_settings.html')));
                     
                     let initCallback = null;
                     if (isCoa) initCallback = initChartOfAccountsView;
@@ -2840,9 +2839,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
                     else if (isInvLoc) initCallback = initInventoryLocationsView;
                     else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
-                    else if (isPriceMaint) initCallback = initItemPriceSettingsView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB || isPriceMaint);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -6297,155 +6295,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetInvSubForm = resetInvSubForm;
         window.resetInvItemForm = resetInvItemForm;
 
-        // --- ITEM PRICE SETTINGS LOGIC (GRID-BASED) ---
-        let priceItemsFullPool = [];
-        let priceCategoriesPool = [];
-        let priceBrandsPool = [];
 
-        async function initItemPriceSettingsView() {
-            // Force modal-wide and correct width behavior
-            const mainCont = document.getElementById('itemPriceSettingsContainer');
-            if (mainCont) {
-                const modal = mainCont.closest('.modal-container');
-                if (modal) {
-                    modal.classList.add('modal-wide');
-                    modal.style.maxWidth = '1000px';
-                }
-            }
-            let retries = 0;
-            const maxRetries = 20;
-            const checkAndRun = setInterval(async () => {
-                const body = document.getElementById('priceDataGridBody');
-                if (body) {
-                    clearInterval(checkAndRun);
-                    body.innerHTML = '<div style="padding:40px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading Data...</div>';
-                    
-                    try {
-                        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                        const coId = session.company_id || 1;
-                        const cb = `_cb=${Date.now()}`;
-                        const res = await fetch(`api/inventory.php?action=get_pricing_data&company_id=${coId}&${cb}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            priceItemsFullPool = data.items || [];
-                            priceBrandsPool = data.brands || [];
-                            priceCategoriesPool = data.categories || [];
-                            
-                            // Fill dropdowns
-                            const catSelect = document.getElementById('priceCatSelect');
-                            if (catSelect) {
-                                catSelect.innerHTML = '<option value="">Select Category...</option>' + 
-                                    priceCategoriesPool.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-                            }
-                            const brandSelect = document.getElementById('priceBrandSelect');
-                            if (brandSelect) {
-                                brandSelect.innerHTML = '<option value="">Select Brand...</option>' + 
-                                    priceBrandsPool.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-                            }
-                            
-                            renderPriceGrid();
-                        }
-                    } catch (e) { console.error("Price Init Error:", e); }
-                } else if (++retries >= maxRetries) {
-                    clearInterval(checkAndRun);
-                }
-            }, 100);
-        }
-        window.initItemPriceSettingsView = initItemPriceSettingsView;
-
-        window.togglePriceFilters = function() {
-            const scope = document.querySelector('input[name="priceScope"]:checked').value;
-            const catSelect = document.getElementById('priceCatSelect');
-            const brandSelect = document.getElementById('priceBrandSelect');
-            
-            if (catSelect) catSelect.disabled = (scope !== 'category');
-            if (brandSelect) brandSelect.disabled = (scope !== 'brand');
-            
-            renderPriceGrid();
-        };
-
-        window.renderPriceGrid = function() {
-            const body = document.getElementById('priceDataGridBody');
-            if (!body) return;
-            
-            const scope = document.querySelector('input[name="priceScope"]:checked')?.value || 'all';
-            const catId = document.getElementById('priceCatSelect')?.value;
-            const brandId = document.getElementById('priceBrandSelect')?.value;
-            
-            let filtered = priceItemsFullPool;
-            if (scope === 'category' && catId) {
-                filtered = priceItemsFullPool.filter(i => i.sub_id == catId);
-            } else if (scope === 'brand' && brandId) {
-                filtered = priceItemsFullPool.filter(i => i.brand_id == brandId);
-            }
-            
-            if (filtered.length === 0) {
-                body.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">No items found matching the selected criteria.</div>';
-                return;
-            }
-
-            body.innerHTML = filtered.map((item, idx) => `
-                <div class="price-grid-row" data-id="${item.id}">
-                    <div class="price-grid-cell" style="justify-content:center;">${idx + 1}</div>
-                    <div class="price-grid-cell">${item.code}</div>
-                    <div class="price-grid-cell">${item.name}</div>
-                    <div class="price-grid-cell" style="justify-content:center;">${item.unit || '-'}</div>
-                    <div class="price-grid-cell" style="justify-content:right; font-weight:bold;">${parseFloat(item.purchase_price).toFixed(2)}</div>
-                    <div class="price-grid-cell" style="padding:0;">
-                        <input type="number" step="0.01" class="price-grid-input grid-selling-price" 
-                               value="${parseFloat(item.selling_price).toFixed(2)}"
-                               data-purchase="${item.purchase_price}"
-                               onchange="this.parentElement.parentElement.classList.add('is-edited')">
-                    </div>
-                </div>
-            `).join('');
-        };
-
-        window.applyBulkGridMargin = function() {
-            const margin = parseFloat(document.getElementById('bulkMarginInput').value) || 0;
-            const rows = document.querySelectorAll('.price-grid-row');
-            rows.forEach(row => {
-                const input = row.querySelector('.grid-selling-price');
-                const purchase = parseFloat(input.getAttribute('data-purchase')) || 0;
-                const newPrice = purchase + (purchase * margin / 100);
-                input.value = newPrice.toFixed(2);
-                row.classList.add('is-edited');
-            });
-        };
-
-        window.savePriceChanges = async function() {
-            const editedRows = document.querySelectorAll('.price-grid-row');
-            const updates = [];
-            
-            editedRows.forEach(row => {
-                const id = row.getAttribute('data-id');
-                const sellingPrice = row.querySelector('.grid-selling-price').value;
-                updates.push({ id: id, selling_price: sellingPrice });
-            });
-
-            if (updates.length === 0) {
-                alert("No items to save.");
-                return;
-            }
-
-            const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
-            
-            try {
-                const res = await fetch('api/inventory.php?action=save_pricing_update&company_id=' + coId, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode: 'batch', updates: updates })
-                });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    alert("Pricing updated successfully.");
-                    updates.forEach(upd => {
-                        const item = priceItemsFullPool.find(i => i.id == upd.id);
-                        if (item) item.selling_price = upd.selling_price;
-                    });
-                    renderPriceGrid();
-                } else {
-                    alert(result.error || "Failed to update pricing.");
-                }
-            } catch (e) { console.error(e); }
-        };
