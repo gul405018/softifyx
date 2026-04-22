@@ -5875,36 +5875,56 @@ document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('invObGridBody');
             if (!grid) return;
 
-            if (displayedInvOb.length === 0) {
-                grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No existing balances. Use the search row below to add items.</div>';
-                calculateInvOBTotals();
-                return;
+            let html = '';
+            const minRows = 20;
+            const rowCount = Math.max(displayedInvOb.length, minRows);
+
+            for (let i = 0; i < rowCount; i++) {
+                const row = displayedInvOb[i] || null;
+                const isSelected = row && selectedInvObRowId === row.item_id;
+
+                html += `
+                    <div class="inv-ob-row ${isSelected ? 'selected' : ''}" 
+                         onclick="${row ? `selectInvObRow(${row.item_id})` : ''}" 
+                         style="display: grid; grid-template-columns: 30px 120px 1fr 100px 100px 100px 120px 140px; border-bottom: 1px solid #cbd5e0; min-height: 28px; align-items: center;">
+                        
+                        <!-- Indicator Column -->
+                        <div style="padding: 2px; border-right: 1px solid #cbd5e0; text-align: center; background: #f8fafc; color: #1F4E79; font-size: 10px; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 900;">
+                            ${isSelected ? '▶' : (i + 1)}
+                        </div>
+
+                        ${row ? `
+                            <div class="inv-ob-col text-center" style="font-weight: 600; color: #64748b; border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center; justify-content: center;">${row.code}</div>
+                            <div class="inv-ob-col" style="color: #1e293b; font-weight: 500; border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">${row.name}</div>
+                            <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">
+                                <input type="number" step="any" class="ob-input ${row.pieces != 0 ? 'has-value' : ''}" value="${row.pieces || 0}" 
+                                       onchange="updateInvObRowData(${i}, 'pieces', this.value)" onclick="event.stopPropagation()">
+                            </div>
+                            <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">
+                                <input type="number" step="any" class="ob-input ${row.quantity != 0 ? 'has-value' : ''}" value="${row.quantity || 0}" 
+                                       onchange="updateInvObRowData(${i}, 'quantity', this.value)" onclick="event.stopPropagation()">
+                            </div>
+                            <div class="inv-ob-col text-center" style="color: #64748b; border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center; justify-content: center;">${row.unit || ''}</div>
+                            <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">
+                                <input type="number" step="any" class="ob-input ${row.rate != 0 ? 'has-value' : ''}" value="${row.rate || 0}" 
+                                       onchange="updateInvObRowData(${i}, 'rate', this.value)" onclick="event.stopPropagation()">
+                            </div>
+                            <div class="inv-ob-col text-right" style="font-weight: 700; color: #1F4E79; text-align: right; height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px;">
+                                ${(parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            </div>
+                        ` : `
+                            <div style="border-right: 1px solid #cbd5e0; height: 100%;"></div>
+                            <div style="border-right: 1px solid #cbd5e0; height: 100%;"></div>
+                            <div style="border-right: 1px solid #cbd5e0; height: 100%;"></div>
+                            <div style="border-right: 1px solid #cbd5e0; height: 100%;"></div>
+                            <div style="border-right: 1px solid #cbd5e0; height: 100%;"></div>
+                            <div style="border-right: 1px solid #cbd5e0; height: 100%;"></div>
+                            <div></div>
+                        `}
+                    </div>
+                `;
             }
-
-            grid.innerHTML = displayedInvOb.map((row, idx) => `
-                <div class="inv-ob-row ${selectedInvObRowId === row.item_id ? 'selected' : ''}" 
-                     onclick="selectInvObRow(${row.item_id})" data-id="${row.item_id}">
-                    <div class="inv-ob-col text-center" style="font-weight: 600; color: #64748b;">${row.code}</div>
-                    <div class="inv-ob-col" style="color: #1e293b; font-weight: 500;">${row.name}</div>
-                    <div class="inv-ob-col">
-                        <input type="number" step="any" class="ob-input ${row.pieces != 0 ? 'has-value' : ''}" value="${row.pieces || 0}" 
-                               onchange="updateInvObRowData(${idx}, 'pieces', this.value)" onclick="event.stopPropagation()">
-                    </div>
-                    <div class="inv-ob-col">
-                        <input type="number" step="any" class="ob-input ${row.quantity != 0 ? 'has-value' : ''}" value="${row.quantity || 0}" 
-                               onchange="updateInvObRowData(${idx}, 'quantity', this.value)" onclick="event.stopPropagation()">
-                    </div>
-                    <div class="inv-ob-col text-center" style="color: #64748b;">${row.unit || ''}</div>
-                    <div class="inv-ob-col">
-                        <input type="number" step="any" class="ob-input ${row.rate != 0 ? 'has-value' : ''}" value="${row.rate || 0}" 
-                               onchange="updateInvObRowData(${idx}, 'rate', this.value)" onclick="event.stopPropagation()">
-                    </div>
-                    <div class="inv-ob-col text-right" style="font-weight: 700; color: #1F4E79; text-align: right;">
-                        ${(parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                    </div>
-                </div>
-            `).join('');
-
+            grid.innerHTML = html;
             calculateInvOBTotals();
         }
 
