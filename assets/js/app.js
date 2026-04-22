@@ -6303,6 +6303,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         let priceBrandsPool = [];
 
         async function initItemPriceSettingsView() {
+            // Force modal-wide and correct width behavior
+            const mainCont = document.getElementById('itemPriceSettingsContainer');
+            if (mainCont) {
+                const modal = mainCont.closest('.modal-container');
+                if (modal) {
+                    modal.classList.add('modal-wide');
+                    modal.style.maxWidth = '1000px';
+                }
+            }
             let retries = 0;
             const maxRetries = 20;
             const checkAndRun = setInterval(async () => {
