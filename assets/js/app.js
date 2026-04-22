@@ -6297,19 +6297,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetInvSubForm = resetInvSubForm;
         window.resetInvItemForm = resetInvItemForm;
 
-        // --- ITEM PRICE SETTINGS LOGIC ---
-        let priceItemsPool = [];
+        // --- ITEM PRICE SETTINGS LOGIC (GRID-BASED) ---
+        let priceItemsFullPool = [];
+        let priceCategoriesPool = [];
         let priceBrandsPool = [];
-        let activePriceEntityId = null;
 
         async function initItemPriceSettingsView() {
             let retries = 0;
             const maxRetries = 20;
             const checkAndRun = setInterval(async () => {
-                const list = document.getElementById('priceMaintList');
-                if (list) {
+                const body = document.getElementById('priceDataGridBody');
+                if (body) {
                     clearInterval(checkAndRun);
-                    list.innerHTML = '<option>Loading...</option>';
+                    body.innerHTML = '<div style="padding:40px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading Data...</div>';
+                    
                     try {
                         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                         const coId = session.company_id || 1;
@@ -6317,9 +6318,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const res = await fetch(`api/inventory.php?action=get_pricing_data&company_id=${coId}&${cb}`);
                         if (res.ok) {
                             const data = await res.json();
-                            priceItemsPool = data.items || [];
+                            priceItemsFullPool = data.items || [];
                             priceBrandsPool = data.brands || [];
-                            renderPriceSettingsList();
+                            priceCategoriesPool = data.categories || [];
+                            
+                            // Fill dropdowns
+                            const catSelect = document.getElementById('priceCatSelect');
+                            if (catSelect) {
+                                catSelect.innerHTML = '<option value="">Select Category...</option>' + 
+                                    priceCategoriesPool.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                            }
+                            const brandSelect = document.getElementById('priceBrandSelect');
+                            if (brandSelect) {
+                                brandSelect.innerHTML = '<option value="">Select Brand...</option>' + 
+                                    priceBrandsPool.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                            }
+                            
+                            renderPriceGrid();
                         }
                     } catch (e) { console.error("Price Init Error:", e); }
                 } else if (++retries >= maxRetries) {
@@ -6329,131 +6344,97 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         window.initItemPriceSettingsView = initItemPriceSettingsView;
 
-        function onPriceModeChange() {
-            activePriceEntityId = null;
-            renderPriceSettingsList();
-            resetPriceForm();
-        }
-        window.onPriceModeChange = onPriceModeChange;
-
-        function renderPriceSettingsList() {
-            const mode = document.getElementById('priceUpdateMode')?.value || 'item';
-            const list = document.getElementById('priceMaintList');
-            const label = document.getElementById('priceListLabel');
-            if (!list) return;
-
-            let html = '';
-            if (mode === 'item') {
-                label.textContent = "Select Item";
-                html = priceItemsPool.map(i => `<option value="${i.id}">${i.name} (${i.code})</option>`).join('');
-            } else if (mode === 'brand') {
-                label.textContent = "Select Brand";
-                html = priceBrandsPool.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-            } else if (mode === 'all') {
-                label.textContent = "Global Scope";
-                html = `<option value="all_scoped">All Inventory Items</option>`;
-            }
-            list.innerHTML = html;
-        }
-
-        window.onPriceEntitySelect = function(id) {
-            activePriceEntityId = id;
-            const mode = document.getElementById('priceUpdateMode').value;
-            const title = document.getElementById('priceTargetTitle');
-            const subtitle = document.getElementById('priceTargetSubtitle');
-            const singleDetails = document.getElementById('priceSingleDetails');
-            const bulkWarning = document.getElementById('priceBulkWarning');
+        window.togglePriceFilters = function() {
+            const scope = document.querySelector('input[name="priceScope"]:checked').value;
+            const catSelect = document.getElementById('priceCatSelect');
+            const brandSelect = document.getElementById('priceBrandSelect');
             
-            // Reset inputs
-            document.getElementById('priceMarginPct').value = '';
-            document.getElementById('priceSellingVal').value = '';
+            if (catSelect) catSelect.disabled = (scope !== 'category');
+            if (brandSelect) brandSelect.disabled = (scope !== 'brand');
             
-            if (mode === 'item') {
-                const item = priceItemsPool.find(i => i.id == id);
-                if (item) {
-                    title.textContent = item.name;
-                    subtitle.textContent = "Individual Item Price Setting";
-                    singleDetails.style.display = 'grid';
-                    bulkWarning.style.display = 'none';
-                    document.getElementById('priceItemCode').value = item.code;
-                    document.getElementById('pricePurchaseVal').value = item.purchase_price;
-                    document.getElementById('priceSellingVal').value = item.selling_price;
-                    if (item.purchase_price > 0) {
-                        const margin = ((item.selling_price - item.purchase_price) / item.purchase_price) * 100;
-                        document.getElementById('priceMarginPct').value = margin.toFixed(2);
-                    }
-                }
-            } else if (mode === 'brand') {
-                const brand = priceBrandsPool.find(b => b.id == id);
-                title.textContent = brand ? brand.name : "Selected Brand";
-                subtitle.textContent = "Bulk price update for all items in this brand";
-                singleDetails.style.display = 'none';
-                bulkWarning.style.display = 'block';
-            } else {
-                title.textContent = "All Inventory Items";
-                subtitle.textContent = "Global batch price update (Company Wide)";
-                singleDetails.style.display = 'none';
-                bulkWarning.style.display = 'block';
-            }
+            renderPriceGrid();
         };
 
-        window.calculateFromMargin = function() {
-            const mode = document.getElementById('priceUpdateMode').value;
-            if (mode !== 'item') return;
-            const purchase = parseFloat(document.getElementById('pricePurchaseVal').value) || 0;
-            const margin = parseFloat(document.getElementById('priceMarginPct').value) || 0;
-            const sellingInput = document.getElementById('priceSellingVal');
-            const calculated = purchase + (purchase * margin / 100);
-            sellingInput.value = calculated.toFixed(2);
-        };
-
-        window.calculateFromPrice = function() {
-            const mode = document.getElementById('priceUpdateMode').value;
-            if (mode !== 'item') return;
-            const purchase = parseFloat(document.getElementById('pricePurchaseVal').value) || 0;
-            const selling = parseFloat(document.getElementById('priceSellingVal').value) || 0;
-            const marginInput = document.getElementById('priceMarginPct');
-            if (purchase > 0) {
-                const margin = ((selling - purchase) / purchase) * 100;
-                marginInput.value = margin.toFixed(2);
+        window.renderPriceGrid = function() {
+            const body = document.getElementById('priceDataGridBody');
+            if (!body) return;
+            
+            const scope = document.querySelector('input[name="priceScope"]:checked')?.value || 'all';
+            const catId = document.getElementById('priceCatSelect')?.value;
+            const brandId = document.getElementById('priceBrandSelect')?.value;
+            
+            let filtered = priceItemsFullPool;
+            if (scope === 'category' && catId) {
+                filtered = priceItemsFullPool.filter(i => i.sub_id == catId);
+            } else if (scope === 'brand' && brandId) {
+                filtered = priceItemsFullPool.filter(i => i.brand_id == brandId);
             }
+            
+            if (filtered.length === 0) {
+                body.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">No items found matching the selected criteria.</div>';
+                return;
+            }
+
+            body.innerHTML = filtered.map((item, idx) => `
+                <div class="price-grid-row" data-id="${item.id}">
+                    <div class="price-grid-cell" style="justify-content:center;">${idx + 1}</div>
+                    <div class="price-grid-cell">${item.code}</div>
+                    <div class="price-grid-cell">${item.name}</div>
+                    <div class="price-grid-cell" style="justify-content:center;">${item.unit || '-'}</div>
+                    <div class="price-grid-cell" style="justify-content:right; font-weight:bold;">${parseFloat(item.purchase_price).toFixed(2)}</div>
+                    <div class="price-grid-cell" style="padding:0;">
+                        <input type="number" step="0.01" class="price-grid-input grid-selling-price" 
+                               value="${parseFloat(item.selling_price).toFixed(2)}"
+                               data-purchase="${item.purchase_price}"
+                               onchange="this.parentElement.parentElement.classList.add('is-edited')">
+                    </div>
+                </div>
+            `).join('');
         };
 
-        function resetPriceForm() {
-            const title = document.getElementById('priceTargetTitle');
-            if (title) title.textContent = "Select an entity to begin";
-            const subtitle = document.getElementById('priceTargetSubtitle');
-            if (subtitle) subtitle.textContent = "Manage individual or bulk selling prices";
-            const singleDetails = document.getElementById('priceSingleDetails');
-            if (singleDetails) singleDetails.style.display = 'none';
-            const bulkWarning = document.getElementById('priceBulkWarning');
-            if (bulkWarning) bulkWarning.style.display = 'none';
-        }
+        window.applyBulkGridMargin = function() {
+            const margin = parseFloat(document.getElementById('bulkMarginInput').value) || 0;
+            const rows = document.querySelectorAll('.price-grid-row');
+            rows.forEach(row => {
+                const input = row.querySelector('.grid-selling-price');
+                const purchase = parseFloat(input.getAttribute('data-purchase')) || 0;
+                const newPrice = purchase + (purchase * margin / 100);
+                input.value = newPrice.toFixed(2);
+                row.classList.add('is-edited');
+            });
+        };
 
-        window.savePriceSetting = async function() {
-            const mode = document.getElementById('priceUpdateMode').value;
-            if (!activePriceEntityId && mode !== 'all') { alert("Please select an item or brand."); return; }
+        window.savePriceChanges = async function() {
+            const editedRows = document.querySelectorAll('.price-grid-row');
+            const updates = [];
             
-            const margin = document.getElementById('priceMarginPct').value;
-            const sellingPrice = document.getElementById('priceSellingVal').value;
-            
+            editedRows.forEach(row => {
+                const id = row.getAttribute('data-id');
+                const sellingPrice = row.querySelector('.grid-selling-price').value;
+                updates.push({ id: id, selling_price: sellingPrice });
+            });
+
+            if (updates.length === 0) {
+                alert("No items to save.");
+                return;
+            }
+
             const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
             
             try {
                 const res = await fetch('api/inventory.php?action=save_pricing_update&company_id=' + coId, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        mode: mode, 
-                        id: (mode === 'all' ? 0 : activePriceEntityId),
-                        margin: margin,
-                        selling_price: sellingPrice
-                    })
+                    body: JSON.stringify({ mode: 'batch', updates: updates })
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
                     alert("Pricing updated successfully.");
-                    await initItemPriceSettingsView();
+                    updates.forEach(upd => {
+                        const item = priceItemsFullPool.find(i => i.id == upd.id);
+                        if (item) item.selling_price = upd.selling_price;
+                    });
+                    renderPriceGrid();
                 } else {
                     alert(result.error || "Failed to update pricing.");
                 }

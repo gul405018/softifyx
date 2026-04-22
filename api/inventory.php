@@ -400,21 +400,33 @@ try {
             break;
 
         case 'get_pricing_data':
-            $items = $pdo->prepare("SELECT id, code, name, purchase_price, selling_price, brand_id, sub_id FROM inv_items WHERE company_id = ? ORDER BY name ASC");
+            $items = $pdo->prepare("
+                SELECT i.id, i.code, i.name, i.purchase_price, i.selling_price, i.unit, i.brand_id, i.sub_id,
+                       b.name as brand_name, s.name as category_name
+                FROM inv_items i
+                LEFT JOIN inv_brands b ON i.brand_id = b.id
+                LEFT JOIN inv_sub_categories s ON i.sub_id = s.id
+                WHERE i.company_id = ? 
+                ORDER BY i.name ASC
+            ");
             $items->execute([$company_id]);
             
             $brands = $pdo->prepare("SELECT id, name FROM inv_brands WHERE company_id = ? ORDER BY name ASC");
             $brands->execute([$company_id]);
+
+            $categories = $pdo->prepare("SELECT id, name FROM inv_sub_categories WHERE company_id = ? ORDER BY name ASC");
+            $categories->execute([$company_id]);
             
             echo json_encode([
                 'items' => $items->fetchAll(PDO::FETCH_ASSOC),
-                'brands' => $brands->fetchAll(PDO::FETCH_ASSOC)
+                'brands' => $brands->fetchAll(PDO::FETCH_ASSOC),
+                'categories' => $categories->fetchAll(PDO::FETCH_ASSOC)
             ]);
             break;
 
         case 'save_pricing_update':
             $data = json_decode(file_get_contents('php://input'), true);
-            $mode = $data['mode'] ?? 'item'; // item, brand, all
+            $mode = $data['mode'] ?? 'item'; // item, brand, all, batch
             $margin = floatval($data['margin'] ?? 0);
             $targetId = $data['id'] ?? 0; // item_id or brand_id
             $directPrice = floatval($data['selling_price'] ?? 0);
@@ -429,6 +441,19 @@ try {
             } else if ($mode === 'all') {
                 $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = purchase_price + (purchase_price * ? / 100) WHERE company_id = ?");
                 $stmt->execute([$margin, $company_id]);
+            } else if ($mode === 'batch' && isset($data['updates'])) {
+                $pdo->beginTransaction();
+                try {
+                    $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = ? WHERE id = ? AND company_id = ?");
+                    foreach ($data['updates'] as $upd) {
+                        $stmt->execute([$upd['selling_price'], $upd['id'], $company_id]);
+                    }
+                    $pdo->commit();
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+                    exit;
+                }
             }
             echo json_encode(['status' => 'success']);
             break;

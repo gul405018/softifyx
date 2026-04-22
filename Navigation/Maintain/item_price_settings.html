@@ -1,107 +1,119 @@
-<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 100%; min-width: 970px; height: 500px; background: white; display: flex; flex-direction: column; padding: 15px; font-family: 'Segoe UI', sans-serif; border-radius: 8px;">
+<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 100%; min-width: 1000px; min-height: 600px; background: #f1f5f9; display: flex; flex-direction: column; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border-radius: 8px;">
     
-    <!-- Top Row: Buttons (Right) -->
-    <div style="display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid #cbd5e0; padding-bottom: 10px; margin-bottom: 20px;">
-        <div style="display: flex; gap: 6px;">
-            <button class="inv-btn" style="background: #1e293b !important; color: white !important;" onclick="savePriceSetting()">
-                <i class="fas fa-save"></i> Save / Apply
-            </button>
-            <button class="inv-btn" onclick="closeSecondaryModal()">Cancel</button>
+    <!-- Top Filter Section -->
+    <div style="background: #e2e8f0; border: 1px solid #cbd5e0; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <!-- Large Styled Title -->
+            <div style="background: #e2e8f0; padding: 10px 30px; border: 1px solid #94a3b8; border-bottom: 3px solid #64748b; border-right: 3px solid #64748b; font-weight: 900; font-style: italic; color: #1e293b; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 2px 2px 0 rgba(0,0,0,0.05);">
+                Inventory Price Settings
+            </div>
+
+            <!-- Radio Filter Group -->
+            <div style="display: flex; flex-direction: column; gap: 8px; background: white; padding: 15px; border: 1px solid #cbd5e0; border-radius: 4px; flex: 1; max-width: 500px; margin: 0 30px;">
+                <div style="display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600; color: #1e293b;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="radio" name="priceScope" value="all" checked onchange="togglePriceFilters()"> All Inventory Items
+                    </label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600; color: #1e293b;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100px;">
+                        <input type="radio" name="priceScope" value="category" onchange="togglePriceFilters()"> Category
+                    </label>
+                    <select id="priceCatSelect" disabled style="flex: 1; height: 32px; border: 1px solid #cbd5e0; border-radius: 4px; outline: none; padding: 0 8px; font-size: 13px;" onchange="renderPriceGrid()">
+                        <option value="">Select Category...</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600; color: #1e293b;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100px;">
+                        <input type="radio" name="priceScope" value="brand" onchange="togglePriceFilters()"> Brand
+                    </label>
+                    <select id="priceBrandSelect" disabled style="flex: 1; height: 32px; border: 1px solid #cbd5e0; border-radius: 4px; outline: none; padding: 0 8px; font-size: 13px;" onchange="renderPriceGrid()">
+                        <option value="">Select Brand...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px;">
+                <button class="price-action-btn" style="background: #10b981; color: white;" onclick="savePriceChanges()">
+                    <i class="fas fa-check-circle"></i> Save
+                </button>
+                <button class="price-action-btn" style="background: #ef4444; color: white;" onclick="closeSecondaryModal()">
+                    <i class="fas fa-times-circle"></i> Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Bulk Update Bar -->
+        <div style="display: flex; align-items: center; gap: 10px; background: #cbd5e0; padding: 8px 15px; border: 1px solid #94a3b8; border-radius: 4px;">
+            <span style="font-weight: 600; color: #1e293b; font-size: 14px;">Set</span>
+            <input type="number" id="bulkMarginInput" placeholder="0" style="width: 70px; height: 32px; border: 1px solid #94a3b8; border-radius: 4px; text-align: center; font-weight: 900; outline: none;">
+            <span style="font-weight: 600; color: #1e293b; font-size: 14px;">% Profit Margin on Purchase Price of all Items.</span>
+            <button onclick="applyBulkGridMargin()" style="background: #e2e8f0; border: 1px solid #94a3b8; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px;">Update</button>
         </div>
     </div>
 
-    <!-- Bottom Row: List (Left) and Input (Right) -->
-    <div style="display: flex; gap: 20px; flex: 1; overflow: hidden;">
-        <!-- Selection Sidebar -->
-        <div style="width: 300px; display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-                <label style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Update Mode</label>
-                <select id="priceUpdateMode" style="width: 100%; height: 35px; border: 1px solid #cbd5e0; border-radius: 4px; outline: none; padding: 0 8px; font-size: 13px; font-weight: 600;" onchange="onPriceModeChange()">
-                    <option value="item">Individual Item</option>
-                    <option value="brand">By Brand (Bulk)</option>
-                    <option value="all">All Inventory (Global)</option>
-                </select>
-            </div>
-
-            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-                <label id="priceListLabel" style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Select Item</label>
-                <select id="priceMaintList" size="15" 
-                        style="width: 100%; flex: 1; border: 2px inset #fff; outline: none; border-radius: 4px; font-size: 13px; box-shadow: inset 1px 1px 4px rgba(0,0,0,0.1); background: #f8fafc;" 
-                        onchange="onPriceEntitySelect(this.value)">
-                </select>
-            </div>
+    <!-- Data Grid -->
+    <div style="flex: 1; background: white; border: 2px solid #1e293b; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+        <!-- Table Header -->
+        <div style="display: grid; grid-template-columns: 50px 120px 1fr 100px 140px 140px; background: #f8fafc; border-bottom: 2px solid #1e293b; font-weight: bold; font-size: 13px; color: #1e293b;">
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">#</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0;">Item Code</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0;">Item Name</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">Unit</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: right;">Purchase Price</div>
+            <div style="padding: 10px; text-align: right;">Selling Price</div>
         </div>
         
-        <!-- Form Area -->
-        <div style="flex: 1; padding: 25px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 20px;">
-            
-            <div id="priceInfoBox" style="padding: 15px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #1e293b;">
-                <h4 id="priceTargetTitle" style="margin: 0; color: #1e293b; font-size: 16px;">Select an entity to begin</h4>
-                <p id="priceTargetSubtitle" style="margin: 5px 0 0; color: #64748b; font-size: 13px;">Manage individual or bulk selling prices</p>
-            </div>
-
-            <!-- Single Item Detail (Hidden in Bulk modes) -->
-            <div id="priceSingleDetails" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 13px; font-weight: 700; color: #475569; font-style: italic;">Item Code</label>
-                    <input type="text" id="priceItemCode" readonly style="width: 100%; height: 35px; border: 1px solid #e2e8f0; background: #f8fafc; padding: 0 12px; font-size: 14px; border-radius: 4px; font-weight: 600; color: #64748b;">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 13px; font-weight: 700; color: #475569; font-style: italic;">Purchase Price</label>
-                    <input type="number" id="pricePurchaseVal" readonly style="width: 100%; height: 35px; border: 1px solid #e2e8f0; background: #f8fafc; padding: 0 12px; font-size: 14px; border-radius: 4px; font-weight: 700; color: #1e293b; text-align: right;">
-                </div>
-            </div>
-
-            <!-- Margin & Selling Price Tool -->
-            <div style="display: flex; flex-direction: column; gap: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e0;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <label style="font-size: 13px; font-weight: 700; color: #1e293b;">Profit Margin (%)</label>
-                        <input type="number" id="priceMarginPct" placeholder="0.00" step="0.01" 
-                               style="width: 100%; height: 40px; border: 1px solid #3b82f6; outline: none; padding: 0 12px; font-size: 16px; border-radius: 4px; font-weight: 700; color: #1e293b; text-align: right;"
-                               oninput="calculateFromMargin()">
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <label style="font-size: 13px; font-weight: 700; color: #1e293b;">Selling Price</label>
-                        <input type="number" id="priceSellingVal" placeholder="0.00" step="0.01"
-                               style="width: 100%; height: 40px; border: 1px solid #cbd5e0; outline: none; padding: 0 12px; font-size: 16px; border-radius: 4px; font-weight: 700; color: #1e293b; text-align: right;"
-                               oninput="calculateFromPrice()">
-                    </div>
-                </div>
-                
-                <div id="priceBulkWarning" style="display: none; padding: 10px; background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; border-radius: 6px; font-size: 12px;">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Bulk Update:</strong> This margin will be applied to ALL items in the selected scope. This action cannot be undone easily.
-                </div>
+        <!-- Table Body -->
+        <div id="priceDataGridBody" style="flex: 1; overflow-y: auto;">
+            <div style="padding: 40px; text-align: center; color: #94a3b8;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+                <p>Initialising Grid...</p>
             </div>
         </div>
     </div>
 
     <style>
-        .inv-btn {
-            padding: 0 16px;
-            height: 32px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid #cbd5e0;
+        .price-action-btn {
+            width: 100px;
+            height: 45px;
+            border: 1px solid #94a3b8;
             border-radius: 4px;
-            cursor: pointer;
-            background: white;
-            color: #475569;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            gap: 2px;
             transition: all 0.2s;
         }
-        .inv-btn:hover { background: #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        
-        #priceMaintList option { 
-            padding: 10px 12px; 
-            font-size: 13px; 
-            border-bottom: 1px solid #e2e8f0; 
-            cursor: pointer;
-            color: #1e293b;
+        .price-action-btn i { font-size: 18px; }
+        .price-action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .price-grid-row {
+            display: grid;
+            grid-template-columns: 50px 120px 1fr 100px 140px 140px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
         }
-        #priceMaintList option:hover { background: #cbd5e0; }
-        #priceMaintList option:checked { background: #1e293b !important; color: white !important; font-weight: 600; }
+        .price-grid-row:hover { background: #f1f5f9; }
+        .price-grid-cell { padding: 8px 10px; border-right: 1px solid #e2e8f0; display: flex; align-items: center; color: #1e293b; }
+        .price-grid-cell:last-child { border-right: none; }
+        
+        .price-grid-input {
+            width: 100%;
+            height: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            text-align: right;
+            outline: none;
+            font-weight: bold;
+            padding: 0 5px;
+            transition: all 0.2s;
+        }
+        .price-grid-input:focus { border-color: #3b82f6; background: white; }
     </style>
 </div>
