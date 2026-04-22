@@ -2629,6 +2629,161 @@ async function fetchAPI(endpoint, data = null, method = 'GET') {
             }
         };
 
+// --- INVENTORY LOCATIONS MAINTENANCE LOGIC ---
+let locationMaintPool = [];
+let activeLocationId = null;
+
+async function initInventoryLocationsView() {
+    let retries = 0;
+    const maxRetries = 20;
+    const checkAndRun = setInterval(async () => {
+        const list = document.getElementById('locationMaintList');
+        if (list) {
+            clearInterval(checkAndRun);
+            list.innerHTML = '<option>Loading...</option>';
+            
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const coId = session.company_id || 1;
+                const cb = `_cb=${Date.now()}`;
+                
+                const res = await fetch(`api/inventory.php?action=get_locations&company_id=${coId}&${cb}`);
+                if (res.ok) {
+                    locationMaintPool = await res.json();
+                    renderLocationMaintList();
+                } else {
+                    console.error("Failed to fetch locations:", res.status);
+                    list.innerHTML = '<option value="">Error loading data</option>';
+                }
+            } catch (e) { 
+                console.error("Locations Load Error:", e);
+                list.innerHTML = '<option value="">Network Error</option>';
+            }
+        } else if (++retries >= maxRetries) {
+            clearInterval(checkAndRun);
+            console.error("Locations: Failed to find element #locationMaintList");
+        }
+    }, 100);
+}
+window.initInventoryLocationsView = initInventoryLocationsView;
+
+function renderLocationMaintList() {
+    const list = document.getElementById('locationMaintList');
+    if (!list) return;
+    list.innerHTML = locationMaintPool.map(l => `<option value="${l.id}" ${activeLocationId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
+    if (activeLocationId) {
+        const selected = locationMaintPool.find(l => l.id == activeLocationId);
+        if (selected) {
+            fillLocationForm(selected);
+        }
+    }
+}
+window.renderLocationMaintList = renderLocationMaintList;
+
+window.onLocationMaintSelect = function(id) {
+    activeLocationId = id;
+    const selected = locationMaintPool.find(l => l.id == id);
+    if (selected) {
+        fillLocationForm(selected);
+    }
+};
+
+function fillLocationForm(loc) {
+    const nameField = document.getElementById('locationMaintName');
+    const descField = document.getElementById('locationMaintDesc');
+    if (nameField) {
+        nameField.value = loc.name;
+        nameField.disabled = false;
+    }
+    if (descField) {
+        descField.value = loc.description || '';
+        descField.disabled = false;
+    }
+}
+
+window.resetLocationForm = function(isNew = false) {
+    if (isNew) {
+        activeLocationId = null;
+        const list = document.getElementById('locationMaintList');
+        if (list) list.value = '';
+        const nameField = document.getElementById('locationMaintName');
+        if (nameField) {
+            nameField.value = '';
+            nameField.disabled = false;
+            nameField.focus();
+        }
+        const descField = document.getElementById('locationMaintDesc');
+        if (descField) {
+            descField.value = '';
+            descField.disabled = false;
+        }
+    }
+};
+
+window.saveLocationMaint = async function() {
+    const name = document.getElementById('locationMaintName')?.value || '';
+    const desc = document.getElementById('locationMaintDesc')?.value || '';
+    if (!name) { alert("Please enter a Location Name."); return; }
+
+    const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+    
+    try {
+        const res = await fetch('api/inventory.php?action=save_location&company_id=' + coId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: activeLocationId, name: name, description: desc })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            activeLocationId = result.id;
+            await initInventoryLocationsView();
+            // Also refresh any open Opening Balances view dropdown
+            const locSelect = document.getElementById('invObLocationSelect');
+            if (locSelect) {
+                const locRes = await fetch('api/inventory.php?action=get_locations');
+                if (locRes.ok) {
+                    const locations = await locRes.json();
+                    const currentVal = locSelect.value;
+                    locSelect.innerHTML = locations.map(l => `<option value="${l.id}" ${l.is_default == 1 ? 'selected' : ''}>${l.name}</option>`).join('');
+                    if (currentVal) locSelect.value = currentVal;
+                }
+            }
+        } else {
+            alert(result.error || "Could not save location.");
+        }
+    } catch (e) { console.error(e); }
+};
+
+window.deleteLocationMaint = async function() {
+    if (!activeLocationId) { alert("Please select a location to delete."); return; }
+    if (confirm("Are you sure you want to delete this location?")) {
+        const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+        try {
+            const res = await fetch(`api/inventory.php?action=delete_location&id=${activeLocationId}&company_id=${coId}`);
+            const result = await res.json();
+            if (result.status === 'success') {
+                activeLocationId = null;
+                const nameField = document.getElementById('locationMaintName');
+                if (nameField) { nameField.value = ''; nameField.disabled = true; }
+                const descField = document.getElementById('locationMaintDesc');
+                if (descField) { descField.value = ''; descField.disabled = true; }
+                await initInventoryLocationsView();
+                // Refresh OB Select
+                const locSelect = document.getElementById('invObLocationSelect');
+                if (locSelect) {
+                    const locRes = await fetch('api/inventory.php?action=get_locations');
+                    if (locRes.ok) {
+                        const locations = await locRes.json();
+                        locSelect.innerHTML = locations.map(l => `<option value="${l.id}"> ${l.name}</option>`).join('');
+                    }
+                }
+            } else {
+                alert(result.error || "Could not delete location.");
+            }
+        } catch (e) { console.error(e); }
+    }
+};
+
 /**
  * Global App Initialization
  * Fetches and injects modular HTML components
@@ -6140,159 +6295,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetInvSubForm = resetInvSubForm;
         window.resetInvItemForm = resetInvItemForm;
 
-        // --- INVENTORY LOCATIONS MAINTENANCE LOGIC ---
-        let locationMaintPool = [];
-        let activeLocationId = null;
 
-        async function initInventoryLocationsView() {
-            let retries = 0;
-            const maxRetries = 20;
-            const checkAndRun = setInterval(async () => {
-                const list = document.getElementById('locationMaintList');
-                if (list) {
-                    clearInterval(checkAndRun);
-                    list.innerHTML = '<option>Loading...</option>';
-                    
-                    try {
-                        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                        const coId = session.company_id || 1;
-                        const cb = `_cb=${Date.now()}`;
-                        
-                        const res = await fetch(`api/inventory.php?action=get_locations&company_id=${coId}&${cb}`);
-                        if (res.ok) {
-                            locationMaintPool = await res.json();
-                            renderLocationMaintList();
-                        } else {
-                            console.error("Failed to fetch locations:", res.status);
-                            list.innerHTML = '<option value="">Error loading data</option>';
-                        }
-                    } catch (e) { 
-                        console.error("Locations Load Error:", e);
-                        list.innerHTML = '<option value="">Network Error</option>';
-                    }
-                } else if (++retries >= maxRetries) {
-                    clearInterval(checkAndRun);
-                    console.error("Locations: Failed to find element #locationMaintList");
-                }
-            }, 100);
-        }
-        window.initInventoryLocationsView = initInventoryLocationsView;
-
-        function renderLocationMaintList() {
-            const list = document.getElementById('locationMaintList');
-            if (!list) return;
-            list.innerHTML = locationMaintPool.map(l => `<option value="${l.id}" ${activeLocationId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
-            if (activeLocationId) {
-                const selected = locationMaintPool.find(l => l.id == activeLocationId);
-                if (selected) {
-                    fillLocationForm(selected);
-                }
-            }
-        }
-        window.renderLocationMaintList = renderLocationMaintList;
-
-        window.onLocationMaintSelect = function(id) {
-            activeLocationId = id;
-            const selected = locationMaintPool.find(l => l.id == id);
-            if (selected) {
-                fillLocationForm(selected);
-            }
-        };
-
-        function fillLocationForm(loc) {
-            const nameField = document.getElementById('locationMaintName');
-            const descField = document.getElementById('locationMaintDesc');
-            if (nameField) {
-                nameField.value = loc.name;
-                nameField.disabled = false;
-            }
-            if (descField) {
-                descField.value = loc.description || '';
-                descField.disabled = false;
-            }
-        }
-
-        window.resetLocationForm = function(isNew = false) {
-            if (isNew) {
-                activeLocationId = null;
-                const list = document.getElementById('locationMaintList');
-                if (list) list.value = '';
-                const nameField = document.getElementById('locationMaintName');
-                if (nameField) {
-                    nameField.value = '';
-                    nameField.disabled = false;
-                    nameField.focus();
-                }
-                const descField = document.getElementById('locationMaintDesc');
-                if (descField) {
-                    descField.value = '';
-                    descField.disabled = false;
-                }
-            }
-        };
-
-        window.saveLocationMaint = async function() {
-            const name = document.getElementById('locationMaintName')?.value || '';
-            const desc = document.getElementById('locationMaintDesc')?.value || '';
-            if (!name) { alert("Please enter a Location Name."); return; }
-
-            const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
-            
-            try {
-                const res = await fetch('api/inventory.php?action=save_location&company_id=' + coId, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: activeLocationId, name: name, description: desc })
-                });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    activeLocationId = result.id;
-                    await initInventoryLocationsView();
-                    // Also refresh any open Opening Balances view dropdown
-                    const locSelect = document.getElementById('invObLocationSelect');
-                    if (locSelect) {
-                        const locRes = await fetch('api/inventory.php?action=get_locations');
-                        if (locRes.ok) {
-                            const locations = await locRes.json();
-                            const currentVal = locSelect.value;
-                            locSelect.innerHTML = locations.map(l => `<option value="${l.id}" ${l.is_default == 1 ? 'selected' : ''}>${l.name}</option>`).join('');
-                            if (currentVal) locSelect.value = currentVal;
-                        }
-                    }
-                } else {
-                    alert(result.error || "Could not save location.");
-                }
-            } catch (e) { console.error(e); }
-        };
-
-        window.deleteLocationMaint = async function() {
-            if (!activeLocationId) { alert("Please select a location to delete."); return; }
-            if (confirm("Are you sure you want to delete this location?")) {
-                const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
-                try {
-                    const res = await fetch(`api/inventory.php?action=delete_location&id=${activeLocationId}&company_id=${coId}`);
-                    const result = await res.json();
-                    if (result.status === 'success') {
-                        activeLocationId = null;
-                        const nameField = document.getElementById('locationMaintName');
-                        if (nameField) { nameField.value = ''; nameField.disabled = true; }
-                        const descField = document.getElementById('locationMaintDesc');
-                        if (descField) { descField.value = ''; descField.disabled = true; }
-                        await initInventoryLocationsView();
-                        // Refresh OB Select
-                        const locSelect = document.getElementById('invObLocationSelect');
-                        if (locSelect) {
-                            const locRes = await fetch('api/inventory.php?action=get_locations');
-                            if (locRes.ok) {
-                                const locations = await locRes.json();
-                                locSelect.innerHTML = locations.map(l => `<option value="${l.id}"> ${l.name}</option>`).join('');
-                            }
-                        }
-                    } else {
-                        alert(result.error || "Could not delete location.");
-                    }
-                } catch (e) { console.error(e); }
-            }
-        };
-
-        window.resetLocationForm = resetLocationForm;
