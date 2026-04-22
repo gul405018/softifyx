@@ -1,7 +1,28 @@
-<div id="itemPriceSettingsContainer" data-module="Inventory Price Settings" style="width: 100%; max-width: 960px; margin: 0 auto; min-height: 600px; background: white; display: flex; flex-direction: column; padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; box-sizing: border-box;">
+<div id="itemPriceSettingsContainer" data-module="Inventory Price Settings" style="width: 100%; max-width: 980px; margin: 0 auto; min-height: 600px; background: white; display: flex; flex-direction: column; padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; box-sizing: border-box;">
     
+    <!-- Injection Script: Forces parent modal to be wide -->
+    <script>
+        (function() {
+            const container = document.getElementById('itemPriceSettingsContainer');
+            if (container) {
+                const modal = container.closest('.modal-container');
+                if (modal) {
+                    modal.classList.add('modal-wide');
+                    modal.style.maxWidth = '1000px';
+                    modal.style.width = '95%';
+                    // Also ensure body doesn't have restrictive padding
+                    const modalBody = modal.querySelector('.modal-body');
+                    if (modalBody) {
+                        modalBody.style.padding = '0';
+                        modalBody.style.background = 'white';
+                    }
+                }
+            }
+        })();
+    </script>
+
     <!-- Header Section: Title & Initial Filters -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; padding-top: 5px;">
         <!-- Left: Shadowed Title -->
         <div style="position: relative; background: #eee; padding: 8px 25px; border: 1px solid #999; box-shadow: 3px 3px 0px rgba(0,0,0,0.3); flex-shrink: 0;">
             <h2 style="margin: 0; font-style: italic; color: #1F4E79; font-size: 22px;">Inventory Price Settings</h2>
@@ -93,6 +114,7 @@
 </div>
 
 <style>
+    /* In-line overwrite to ensure pure white background and width consistency */
     .coa-btn {
         background: #ffffff;
         border: 1px solid #1F4E79;
