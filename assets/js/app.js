@@ -2344,8 +2344,8 @@
                         else if (url.includes('financial_year.html')) setTimeout(() => initFinancialYearView(), 10);
                         else if (url.includes('currency.html')) setTimeout(() => initCurrencyView(), 10);
                         else if (url.includes('chart_of_accounts.html')) setTimeout(() => initChartOfAccountsView(), 10);
-                        else if (url.includes('employees.html')) setTimeout(() => initEmployeesView(), 10);
-                        else if (url.includes('inventory_locations.html')) setTimeout(() => initInventoryLocationsView(), 10);
+                        else if (url.includes('employees.html')) setTimeout(() => window.initEmployeesView(), 10);
+                        else if (url.includes('inventory_locations.html')) setTimeout(() => window.initInventoryLocationsView(), 10);
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
@@ -6177,6 +6177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }, 100);
         }
+        window.initInventoryLocationsView = initInventoryLocationsView;
 
         function renderLocationMaintList() {
             const list = document.getElementById('locationMaintList');
@@ -6189,6 +6190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         }
+        window.renderLocationMaintList = renderLocationMaintList;
 
         window.onLocationMaintSelect = function(id) {
             activeLocationId = id;
@@ -6294,8 +6296,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
-        window.initInventoryLocationsView = initInventoryLocationsView;
-        window.saveLocationMaint = saveLocationMaint;
-        window.deleteLocationMaint = deleteLocationMaint;
-        window.onLocationMaintSelect = onLocationMaintSelect;
         window.resetLocationForm = resetLocationForm;
