@@ -5876,7 +5876,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let html = '';
             const minRows = 20;
-            const rowCount = Math.max(displayedInvOb.length + 1, minRows);
+            const bufferRows = 10;
+            const rowCount = Math.max(displayedInvOb.length + bufferRows, minRows);
 
             for (let i = 0; i < rowCount; i++) {
                 const row = displayedInvOb[i] || null;
