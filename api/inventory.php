@@ -57,6 +57,37 @@ try {
         UNIQUE KEY `inv_item_code_company` (`code`, `company_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
+    // 5. Inventory Locations
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inv_locations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        is_default TINYINT(1) DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // Seed default location if empty for company
+    $checkLoc = $pdo->prepare("SELECT id FROM inv_locations LIMIT 1");
+    $checkLoc->execute();
+    if (!$checkLoc->fetch()) {
+        $pdo->exec("INSERT INTO inv_locations (company_id, name, is_default) VALUES (1, 'Main Store', 1)");
+    }
+
+    // 6. Inventory Opening Balances
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inv_opening_balances (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        item_id INT NOT NULL,
+        fy_id INT NOT NULL,
+        location_id INT NOT NULL,
+        pieces DECIMAL(20,2) DEFAULT 0,
+        quantity DECIMAL(20,2) DEFAULT 0,
+        rate DECIMAL(20,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (item_id) REFERENCES inv_items(id) ON DELETE CASCADE,
+        FOREIGN KEY (location_id) REFERENCES inv_locations(id) ON DELETE CASCADE,
+        UNIQUE KEY `inv_ob_unique` (company_id, item_id, fy_id, location_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
 } catch (Exception $e) {
     // Silently continue if tables exist or other minor issues, 
     // real errors will be caught in the action block or PDO setup.
@@ -228,6 +259,79 @@ try {
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Invalid action']);
+            break;
+        case 'get_locations':
+            $stmt = $pdo->prepare("SELECT * FROM inv_locations WHERE company_id = ? ORDER BY is_default DESC, name ASC");
+            $stmt->execute([$company_id]);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'get_inv_opening_balances':
+            $fy_id = $_GET['fy_id'] ?? 0;
+            $location_id = $_GET['location_id'] ?? 0;
+            
+            // Fetch all items and left join with balances for specific FY/Location
+            $stmt = $pdo->prepare("
+                SELECT i.id as item_id, i.code, i.name, i.unit,
+                       COALESCE(ob.pieces, 0) as pieces,
+                       COALESCE(ob.quantity, 0) as quantity,
+                       COALESCE(ob.rate, 0) as rate
+                FROM inv_items i
+                LEFT JOIN inv_opening_balances ob ON i.id = ob.item_id AND ob.fy_id = :fy AND ob.location_id = :loc
+                WHERE i.company_id = :co
+                ORDER BY i.code ASC
+            ");
+            $stmt->execute(['fy' => $fy_id, 'loc' => $location_id, 'co' => $company_id]);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'save_inv_opening_balances':
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['fy_id']) || !isset($data['location_id']) || !isset($data['balances'])) {
+                echo json_encode(['error' => 'Missing data']);
+                exit;
+            }
+            
+            $fy_id = $data['fy_id'];
+            $location_id = $data['location_id'];
+            
+            $pdo->beginTransaction();
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO inv_opening_balances (company_id, item_id, fy_id, location_id, pieces, quantity, rate)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE pieces = VALUES(pieces), quantity = VALUES(quantity), rate = VALUES(rate)
+                ");
+                
+                foreach ($data['balances'] as $row) {
+                    $stmt->execute([
+                        $company_id, $row['item_id'], $fy_id, $location_id, 
+                        $row['pieces'], $row['quantity'], $row['rate']
+                    ]);
+                }
+                $pdo->commit();
+                echo json_encode(['status' => 'success']);
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            }
+            break;
+
+        case 'import_inv_opening_balances':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $current_fy = $data['fy_id'];
+            $from_fy = $data['from_fy_id'];
+            $location_id = $data['location_id'];
+
+            $stmt = $pdo->prepare("
+                INSERT INTO inv_opening_balances (company_id, item_id, fy_id, location_id, pieces, quantity, rate)
+                SELECT company_id, item_id, ?, location_id, pieces, quantity, rate
+                FROM inv_opening_balances
+                WHERE fy_id = ? AND company_id = ? AND location_id = ?
+                ON DUPLICATE KEY UPDATE pieces = VALUES(pieces), quantity = VALUES(quantity), rate = VALUES(rate)
+            ");
+            $stmt->execute([$current_fy, $from_fy, $company_id, $location_id]);
+            echo json_encode(['status' => 'success']);
             break;
     }
 } catch (Exception $e) {

@@ -2668,6 +2668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInv = (moduleName === "Chart of Inventory" || (targetUrl && targetUrl.includes('chart_of_inventory.html')));
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
+                    let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
                     
                     let initCallback = null;
                     if (isCoa) initCallback = initChartOfAccountsView;
@@ -2679,8 +2680,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isOB) initCallback = initOpeningBalancesView;
                     else if (isInv) initCallback = initChartOfInventoryView;
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
+                    else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -2712,6 +2714,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isBank = (moduleName === "Bank Accounts" || (targetUrl && targetUrl.includes('bank_accounts.html')));
                     let isOB = (moduleName === "Accounts Opening Balances" || (targetUrl && targetUrl.includes('accounts_opening_balances.html')));
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
+                    let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
                     
                     let initCallback = null;
                     if (isCoa) initCallback = initChartOfAccountsView;
@@ -2722,8 +2725,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isBank) initCallback = initBankAccountsView;
                     else if (isOB) initCallback = initOpeningBalancesView;
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
+                    else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                 });
             });
@@ -5804,6 +5808,199 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch(e) {}
         }
         window.loadInvBrands = loadInvBrands;
+
+        // --- INVENTORY OPENING BALANCES LOGIC ---
+        let invObPool = [];
+        let displayedInvOb = [];
+
+        async function initInventoryOpeningBalancesView() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const fyId = session.fy_id || 0;
+            if (!fyId) {
+                alert("Please select a Financial Year during login to use this module.");
+                return;
+            }
+
+            // Load Locations first
+            const locRes = await fetch('api/inventory.php?action=get_locations');
+            if (locRes.ok) {
+                const locations = await locRes.json();
+                const select = document.getElementById('invObLocationSelect');
+                if (select) {
+                    select.innerHTML = locations.map(l => `<option value="${l.id}" ${l.is_default == 1 ? 'selected' : ''}>${l.name}</option>`).join('');
+                }
+            }
+
+            // Initialization loop to wait for grid DOM
+            let retry = 0;
+            const check = setInterval(async () => {
+                if (document.getElementById('invObGridBody')) {
+                    clearInterval(check);
+                    loadInvOpeningBalances();
+                } else if (retry++ > 20) clearInterval(check);
+            }, 100);
+        }
+
+        async function loadInvOpeningBalances() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const fyId = session.fy_id || 0;
+            const coId = session.company_id || 1;
+            const locId = document.getElementById('invObLocationSelect')?.value || 0;
+
+            const grid = document.getElementById('invObGridBody');
+            if (grid) grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b;">Loading balances...</div>';
+
+            try {
+                const res = await fetch(`api/inventory.php?action=get_inv_opening_balances&company_id=${coId}&fy_id=${fyId}&location_id=${locId}`);
+                if (res.ok) {
+                    invObPool = await res.json();
+                    // Initial filter: Show all items (unlike accounts where we show non-zero only initially,
+                    // users usually want a full list to start entry)
+                    displayedInvOb = [...invObPool];
+                    renderInvObGrid();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderInvObGrid() {
+            const grid = document.getElementById('invObGridBody');
+            if (!grid) return;
+
+            if (displayedInvOb.length === 0) {
+                grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No items found.</div>';
+                calculateInvOBTotals();
+                return;
+            }
+
+            grid.innerHTML = displayedInvOb.map((row, idx) => `
+                <div class="inv-ob-row" data-id="${row.item_id}">
+                    <div class="inv-ob-col text-center" style="font-weight: 600; color: #64748b;">${row.code}</div>
+                    <div class="inv-ob-col" style="color: #1e293b;">${row.name}</div>
+                    <div class="inv-ob-col">
+                        <input type="number" class="ob-input ${row.pieces > 0 ? 'has-value' : ''}" value="${row.pieces || 0}" 
+                               onchange="updateInvObRowData(${idx}, 'pieces', this.value)">
+                    </div>
+                    <div class="inv-ob-col">
+                        <input type="number" class="ob-input ${row.quantity > 0 ? 'has-value' : ''}" value="${row.quantity || 0}" 
+                               onchange="updateInvObRowData(${idx}, 'quantity', this.value)">
+                    </div>
+                    <div class="inv-ob-col text-center" style="color: #64748b;">${row.unit || ''}</div>
+                    <div class="inv-ob-col">
+                        <input type="number" class="ob-input ${row.rate > 0 ? 'has-value' : ''}" value="${row.rate || 0}" 
+                               onchange="updateInvObRowData(${idx}, 'rate', this.value)">
+                    </div>
+                    <div class="inv-ob-col text-right" style="font-weight: 700; color: #1F4E79; text-align: right;">
+                        ${(parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    </div>
+                </div>
+            `).join('');
+
+            calculateInvOBTotals();
+        }
+
+        window.updateInvObRowData = function(idx, field, val) {
+            const row = displayedInvOb[idx];
+            row[field] = parseFloat(val) || 0;
+            
+            // Re-render only amount column for performance or just full grid if manageable
+            renderInvObGrid();
+        };
+
+        function calculateInvOBTotals() {
+            let total = 0;
+            displayedInvOb.forEach(r => {
+                total += (parseFloat(r.quantity) || 0) * (parseFloat(r.rate) || 0);
+            });
+            const field = document.getElementById('invObTotalAmount');
+            if (field) field.textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        window.filterInvObGrid = function(event) {
+            const term = (document.getElementById('invObSearchInput')?.value || '').toLowerCase();
+            if (!term) {
+                displayedInvOb = [...invObPool];
+            } else {
+                displayedInvOb = invObPool.filter(a => 
+                    a.name.toLowerCase().includes(term) || 
+                    a.code.toLowerCase().includes(term)
+                );
+            }
+            renderInvObGrid();
+        };
+
+        async function saveInvOpeningBalances() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const fyId = session.fy_id || 0;
+            const locId = document.getElementById('invObLocationSelect')?.value || 0;
+
+            if (!locId) { alert("Please select a location."); return; }
+
+            // Only send items that have non-zero pieces, quantity or rate
+            const toSave = invObPool.filter(a => a.pieces > 0 || a.quantity > 0 || a.rate > 0);
+
+            try {
+                const res = await fetch(`api/inventory.php?action=save_inv_opening_balances`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fy_id: fyId,
+                        location_id: locId,
+                        balances: toSave
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert("Opening Balances saved successfully!");
+                    loadInvOpeningBalances();
+                } else {
+                    alert("Error: " + (result.message || "Could not save."));
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function importInvBalances() {
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const currentFyId = session.fy_id || 0;
+            const locId = document.getElementById('invObLocationSelect')?.value || 0;
+
+            openSecondaryModularPopup('Navigation/Maintain/import_ob_wizard.html', 'fa-file-import', 'Import Inventory Balances', async () => {
+                // Load FYs into dropdown
+                const res = await fetch('api/maintain.php?action=get_fys');
+                if (res.ok) {
+                    const fys = await res.json();
+                    const sel = document.getElementById('importFromFySelect');
+                    if (sel) {
+                        sel.innerHTML = fys.filter(f => f.id != currentFyId).map(f => `<option value="${f.id}">${f.abbreviation}</option>`).join('');
+                    }
+                }
+                
+                // Override the generic confirm button logic
+                const confirmBtn = document.getElementById('confirmImportObBtn');
+                if (confirmBtn) {
+                    confirmBtn.onclick = async () => {
+                        const fromFyId = document.getElementById('importFromFySelect').value;
+                        if (!fromFyId) return;
+                        
+                        const impRes = await fetch('api/inventory.php?action=import_inv_opening_balances', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ fy_id: currentFyId, from_fy_id: fromFyId, location_id: locId })
+                        });
+                        const impResult = await impRes.json();
+                        if (impResult.status === 'success') {
+                            alert("Balances imported successfully!");
+                            closeSecondaryModal();
+                            loadInvOpeningBalances();
+                        }
+                    };
+                }
+            }, 'Import Wizard', false);
+        }
+
+        window.initInventoryOpeningBalancesView = initInventoryOpeningBalancesView;
+        window.loadInvOpeningBalances = loadInvOpeningBalances;
+        window.saveInvOpeningBalances = saveInvOpeningBalances;
+        window.importInvBalances = importInvBalances;
 
         document.addEventListener('keydown', (e) => {
             const container = document.getElementById('invCOAContainer');
