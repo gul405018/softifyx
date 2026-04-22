@@ -303,17 +303,23 @@ try {
             
             $pdo->beginTransaction();
             try {
+                // First delete all existing balances for this FY and Location to ensure synchronization
+                $del = $pdo->prepare("DELETE FROM inv_opening_balances WHERE company_id = ? AND fy_id = ? AND location_id = ?");
+                $del->execute([$company_id, $fy_id, $location_id]);
+
                 $stmt = $pdo->prepare("
                     INSERT INTO inv_opening_balances (company_id, item_id, fy_id, location_id, pieces, quantity, rate)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE pieces = VALUES(pieces), quantity = VALUES(quantity), rate = VALUES(rate)
                 ");
                 
                 foreach ($data['balances'] as $row) {
-                    $stmt->execute([
-                        $company_id, $row['item_id'], $fy_id, $location_id, 
-                        $row['pieces'], $row['quantity'], $row['rate']
-                    ]);
+                    // Only save if at least one value is non-zero
+                    if (($row['pieces'] ?? 0) != 0 || ($row['quantity'] ?? 0) != 0 || ($row['rate'] ?? 0) != 0) {
+                        $stmt->execute([
+                            $company_id, $row['item_id'], $fy_id, $location_id, 
+                            $row['pieces'], $row['quantity'], $row['rate']
+                        ]);
+                    }
                 }
                 $pdo->commit();
                 echo json_encode(['status' => 'success']);
