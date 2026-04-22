@@ -5876,7 +5876,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let html = '';
             const minRows = 20;
-            const rowCount = Math.max(displayedInvOb.length + 1, minRows); // +1 to always have at least one empty at the end if filled
+            const rowCount = Math.max(displayedInvOb.length + 1, minRows);
 
             for (let i = 0; i < rowCount; i++) {
                 const row = displayedInvOb[i] || null;
@@ -5893,32 +5893,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; padding: 2px 4px;">
                             <input type="text" class="ob-input text-left" style="font-weight: 600; color: #64748b; text-align: left;" 
-                                   value="${row ? row.code : ''}" placeholder="${!row ? '...' : ''}"
+                                   value="${row ? row.code : ''}" 
                                    onkeyup="handleInvObAddSearch(this, ${i})" onfocus="activeSearchRowIndex = ${i}; this.select()">
                         </div>
                         <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; padding: 2px 4px;">
                             <input type="text" class="ob-input text-left" style="color: #1e293b; font-weight: 500; text-align: left;" 
-                                   value="${row ? row.name : ''}" placeholder="${!row ? 'Search and select item...' : ''}"
+                                   value="${row ? row.name : ''}" 
                                    onkeyup="handleInvObAddSearch(this, ${i})" onfocus="activeSearchRowIndex = ${i}; this.select()">
                         </div>
                         
                         <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">
-                            <input type="number" step="any" class="ob-input ${row && row.pieces != 0 ? 'has-value' : ''}" value="${row ? row.pieces : 0}" 
+                            <input type="number" step="any" class="ob-input ${row && row.pieces != 0 ? 'has-value' : ''}" value="${row && row.pieces != 0 ? row.pieces : ''}" 
                                    ${!row ? 'disabled' : ''} onchange="updateInvObRowData(${i}, 'pieces', this.value)" onclick="event.stopPropagation()">
                         </div>
                         <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">
-                            <input type="number" step="any" class="ob-input ${row && row.quantity != 0 ? 'has-value' : ''}" value="${row ? row.quantity : 0}" 
+                            <input type="number" step="any" class="ob-input ${row && row.quantity != 0 ? 'has-value' : ''}" value="${row && row.quantity != 0 ? row.quantity : ''}" 
                                    ${!row ? 'disabled' : ''} onchange="updateInvObRowData(${i}, 'quantity', this.value)" onclick="event.stopPropagation()">
                         </div>
                         <div class="inv-ob-col text-center" style="color: #64748b; border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center; justify-content: center;">
                             ${row ? row.unit : ''}
                         </div>
                         <div class="inv-ob-col" style="border-right: 1px solid #cbd5e0; height: 100%; display: flex; align-items: center;">
-                            <input type="number" step="any" class="ob-input ${row && row.rate != 0 ? 'has-value' : ''}" value="${row ? row.rate : 0}" 
+                            <input type="number" step="any" class="ob-input ${row && row.rate != 0 ? 'has-value' : ''}" value="${row && row.rate != 0 ? row.rate : ''}" 
                                    ${!row ? 'disabled' : ''} onchange="updateInvObRowData(${i}, 'rate', this.value)" onclick="event.stopPropagation()">
                         </div>
                         <div class="inv-ob-col text-right" style="font-weight: 700; color: #1F4E79; text-align: right; height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px;">
-                            ${row ? (parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}
+                            ${row && (parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)) != 0 ? (parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : ''}
                         </div>
                     </div>
                 `;
@@ -5965,12 +5965,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function renderInvObSearchResults(matches, input) {
             const resultsDiv = document.getElementById('invObSearchResults');
-            const rect = input.getBoundingClientRect();
-            const containerRect = document.getElementById('invOpeningBalancesContainer').getBoundingClientRect();
+            const container = document.getElementById('invObGridContainer');
             
-            // Fixed relative positioning within container
-            resultsDiv.style.top = (rect.bottom - containerRect.top + 5) + 'px';
-            resultsDiv.style.left = (rect.left - containerRect.left) + 'px';
+            // Positioning directly under the input relative to the grid container
+            const inputRect = input.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            // Adjust position to be "Sat hi" (exactly under/next to the cell)
+            resultsDiv.style.top = (inputRect.bottom - containerRect.top + container.scrollTop) + 'px';
+            resultsDiv.style.left = (inputRect.left - containerRect.left) + 'px';
             resultsDiv.style.display = 'block';
 
             resultsDiv.innerHTML = matches.map(m => `
@@ -5983,7 +5986,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.addInvObItem = function(item) {
-            // Check if already in grid elsewhere
             const existingIdx = invObPool.findIndex(p => p.item_id == item.id);
             if (existingIdx !== -1 && existingIdx !== activeSearchRowIndex) {
                 alert("This item is already in your list.");
@@ -6016,7 +6018,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (displayedInvOb[idx]) {
                 displayedInvOb[idx][field] = parseFloat(val) || 0;
                 calculateInvOBTotals();
-                // We don't necessarily need to full re-render for speed, but let's do it for consistency unless slow
                 renderInvObGrid(); 
             }
         };
