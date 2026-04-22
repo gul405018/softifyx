@@ -2836,8 +2836,15 @@ window.initInventoryPriceSettingsView = initInventoryPriceSettingsView;
 
 function togglePricingFilters() {
     const type = document.querySelector('input[name="pricingFilterType"]:checked').value;
+    
+    // Toggle Groups
     document.getElementById('pricingCategoryGroup').style.display = (type === 'category' ? 'flex' : 'none');
     document.getElementById('pricingBrandGroup').style.display = (type === 'brand' ? 'flex' : 'none');
+    
+    // Toggle Placeholders
+    document.getElementById('pricingCategoryPlaceholder').style.display = (type === 'category' ? 'none' : 'block');
+    document.getElementById('pricingBrandPlaceholder').style.display = (type === 'brand' ? 'none' : 'block');
+    
     loadPricingGrid();
 }
 window.togglePricingFilters = togglePricingFilters;
@@ -2878,21 +2885,21 @@ function renderPricingGrid() {
     if (!grid) return;
 
     if (pricingItemsPool.length === 0) {
-        grid.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8;"><p>No items found.</p></div>';
+        grid.innerHTML = '<div style="padding:40px;text-align:center;color:#999;"><p>No items found.</p></div>';
         status.textContent = 'Showing 0 items';
         return;
     }
 
     grid.innerHTML = pricingItemsPool.map(item => `
         <div class="pricing-row" data-id="${item.id}">
-            <div style="padding:10px; text-align:center; border-right:1px solid #f1f5f9;">
+            <div style="padding:8px; text-align:center; border-right:1px solid #333;">
                 <input type="checkbox" class="pricing-row-checkbox" value="${item.id}">
             </div>
-            <div style="padding:10px; border-right:1px solid #f1f5f9; font-weight:600;">${item.code}</div>
-            <div style="padding:10px; border-right:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
-            <div style="padding:10px; border-right:1px solid #f1f5f9; text-align:center;">${item.unit}</div>
-            <div style="padding:10px; border-right:1px solid #f1f5f9; text-align:right; color:#64748b;">${parseFloat(item.purchase_price).toFixed(2)}</div>
-            <div style="padding:10px; text-align:right;">
+            <div style="padding:8px; border-right:1px solid #333; font-weight:600;">${item.code}</div>
+            <div style="padding:8px; border-right:1px solid #333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
+            <div style="padding:8px; border-right:1px solid #333; text-align:center;">${item.unit}</div>
+            <div style="padding:8px; border-right:1px solid #333; text-align:right;">${parseFloat(item.purchase_price).toFixed(2)}</div>
+            <div style="padding:8px; text-align:right;">
                 <input type="number" class="pricing-input selling-price-input" 
                        value="${parseFloat(item.selling_price).toFixed(2)}" 
                        data-purchase="${item.purchase_price}"
