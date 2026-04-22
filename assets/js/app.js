@@ -2332,6 +2332,8 @@
                             return;
                         }
                     }
+                    // Ensure isWide is true for Item Price Settings as a safety fallback
+                    if (url.includes('item_price_settings.html')) isWide = true;
                     
                     openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
                     
