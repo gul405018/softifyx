@@ -104,6 +104,47 @@ $company_id = $_GET['company_id'] ?? $_POST['company_id'] ?? $_SESSION['company_
 
 try {
     switch ($action) {
+        case 'get_pricing_data':
+            $type = $_GET['filter_type'] ?? 'all';
+            $filter_id = $_GET['filter_id'] ?? 0;
+            $items_query = "SELECT id, code, name, unit, purchase_price, selling_price FROM inv_items WHERE company_id = ?";
+            $params = [$company_id];
+            
+            if ($type === 'category' && $filter_id > 0) {
+                $items_query .= " AND sub_id = ?";
+                $params[] = $filter_id;
+            } else if ($type === 'brand' && $filter_id > 0) {
+                $items_query .= " AND brand_id = ?";
+                $params[] = $filter_id;
+            }
+            $items_query .= " ORDER BY code ASC";
+            
+            $stmt = $pdo->prepare($items_query);
+            $stmt->execute($params);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'save_pricing_data':
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['items']) || !is_array($data['items'])) {
+                echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
+                exit;
+            }
+            
+            $pdo->beginTransaction();
+            try {
+                $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = ? WHERE id = ? AND company_id = ?");
+                foreach ($data['items'] as $item) {
+                    $stmt->execute([$item['selling_price'], $item['id'], $company_id]);
+                }
+                $pdo->commit();
+                echo json_encode(['status' => 'success']);
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            }
+            break;
+
         case 'get_inventory_tree':
             // Fetch all categories and subcategories
             $mains = $pdo->prepare("SELECT * FROM inv_main_categories WHERE company_id = ? ORDER BY code");
