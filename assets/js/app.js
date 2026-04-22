@@ -6144,16 +6144,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         let activeLocationId = null;
 
         async function initInventoryLocationsView() {
-            const list = document.getElementById('locationMaintList');
-            if (list) list.innerHTML = '<option>Loading...</option>';
-            
-            try {
-                const res = await fetch('api/inventory.php?action=get_locations');
-                if (res.ok) {
-                    locationMaintPool = await res.json();
-                    renderLocationMaintList();
+            let retries = 0;
+            const maxRetries = 20;
+            const checkAndRun = setInterval(async () => {
+                const list = document.getElementById('locationMaintList');
+                if (list) {
+                    clearInterval(checkAndRun);
+                    console.log("SoftifyX: Init Inventory Locations View");
+                    list.innerHTML = '<option>Loading...</option>';
+                    
+                    try {
+                        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                        const coId = session.company_id || 1;
+                        const cb = `_cb=${Date.now()}`;
+                        
+                        const res = await fetch(`api/inventory.php?action=get_locations&company_id=${coId}&${cb}`);
+                        if (res.ok) {
+                            locationMaintPool = await res.json();
+                            renderLocationMaintList();
+                        } else {
+                            console.error("Failed to fetch locations:", res.status);
+                            list.innerHTML = '<option value="">Error loading data</option>';
+                        }
+                    } catch (e) { 
+                        console.error("Locations Load Error:", e);
+                        list.innerHTML = '<option value="">Network Error</option>';
+                    }
+                } else if (++retries >= maxRetries) {
+                    clearInterval(checkAndRun);
+                    console.error("Locations: Failed to find element #locationMaintList");
                 }
-            } catch (e) { console.error(e); }
+            }, 100);
         }
 
         function renderLocationMaintList() {
