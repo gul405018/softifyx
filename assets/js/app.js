@@ -2826,6 +2826,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
                     let isInvLoc = (moduleName === "Inventory Locations" || (targetUrl && targetUrl.includes('inventory_locations.html')));
                     let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
+                    let isPriceMaint = (moduleName === "Item Price Settings" || (targetUrl && targetUrl.includes('item_price_settings.html')));
                     
                     let initCallback = null;
                     if (isCoa) initCallback = initChartOfAccountsView;
@@ -2839,8 +2840,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
                     else if (isInvLoc) initCallback = initInventoryLocationsView;
                     else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
+                    else if (isPriceMaint) initCallback = initItemPriceSettingsView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB || isPriceMaint);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -6295,4 +6297,165 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.resetInvSubForm = resetInvSubForm;
         window.resetInvItemForm = resetInvItemForm;
 
+        // --- ITEM PRICE SETTINGS LOGIC ---
+        let priceItemsPool = [];
+        let priceBrandsPool = [];
+        let activePriceEntityId = null;
 
+        async function initItemPriceSettingsView() {
+            let retries = 0;
+            const maxRetries = 20;
+            const checkAndRun = setInterval(async () => {
+                const list = document.getElementById('priceMaintList');
+                if (list) {
+                    clearInterval(checkAndRun);
+                    list.innerHTML = '<option>Loading...</option>';
+                    try {
+                        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                        const coId = session.company_id || 1;
+                        const cb = `_cb=${Date.now()}`;
+                        const res = await fetch(`api/inventory.php?action=get_pricing_data&company_id=${coId}&${cb}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            priceItemsPool = data.items || [];
+                            priceBrandsPool = data.brands || [];
+                            renderPriceSettingsList();
+                        }
+                    } catch (e) { console.error("Price Init Error:", e); }
+                } else if (++retries >= maxRetries) {
+                    clearInterval(checkAndRun);
+                }
+            }, 100);
+        }
+        window.initItemPriceSettingsView = initItemPriceSettingsView;
+
+        function onPriceModeChange() {
+            activePriceEntityId = null;
+            renderPriceSettingsList();
+            resetPriceForm();
+        }
+        window.onPriceModeChange = onPriceModeChange;
+
+        function renderPriceSettingsList() {
+            const mode = document.getElementById('priceUpdateMode')?.value || 'item';
+            const list = document.getElementById('priceMaintList');
+            const label = document.getElementById('priceListLabel');
+            if (!list) return;
+
+            let html = '';
+            if (mode === 'item') {
+                label.textContent = "Select Item";
+                html = priceItemsPool.map(i => `<option value="${i.id}">${i.name} (${i.code})</option>`).join('');
+            } else if (mode === 'brand') {
+                label.textContent = "Select Brand";
+                html = priceBrandsPool.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            } else if (mode === 'all') {
+                label.textContent = "Global Scope";
+                html = `<option value="all_scoped">All Inventory Items</option>`;
+            }
+            list.innerHTML = html;
+        }
+
+        window.onPriceEntitySelect = function(id) {
+            activePriceEntityId = id;
+            const mode = document.getElementById('priceUpdateMode').value;
+            const title = document.getElementById('priceTargetTitle');
+            const subtitle = document.getElementById('priceTargetSubtitle');
+            const singleDetails = document.getElementById('priceSingleDetails');
+            const bulkWarning = document.getElementById('priceBulkWarning');
+            
+            // Reset inputs
+            document.getElementById('priceMarginPct').value = '';
+            document.getElementById('priceSellingVal').value = '';
+            
+            if (mode === 'item') {
+                const item = priceItemsPool.find(i => i.id == id);
+                if (item) {
+                    title.textContent = item.name;
+                    subtitle.textContent = "Individual Item Price Setting";
+                    singleDetails.style.display = 'grid';
+                    bulkWarning.style.display = 'none';
+                    document.getElementById('priceItemCode').value = item.code;
+                    document.getElementById('pricePurchaseVal').value = item.purchase_price;
+                    document.getElementById('priceSellingVal').value = item.selling_price;
+                    if (item.purchase_price > 0) {
+                        const margin = ((item.selling_price - item.purchase_price) / item.purchase_price) * 100;
+                        document.getElementById('priceMarginPct').value = margin.toFixed(2);
+                    }
+                }
+            } else if (mode === 'brand') {
+                const brand = priceBrandsPool.find(b => b.id == id);
+                title.textContent = brand ? brand.name : "Selected Brand";
+                subtitle.textContent = "Bulk price update for all items in this brand";
+                singleDetails.style.display = 'none';
+                bulkWarning.style.display = 'block';
+            } else {
+                title.textContent = "All Inventory Items";
+                subtitle.textContent = "Global batch price update (Company Wide)";
+                singleDetails.style.display = 'none';
+                bulkWarning.style.display = 'block';
+            }
+        };
+
+        window.calculateFromMargin = function() {
+            const mode = document.getElementById('priceUpdateMode').value;
+            if (mode !== 'item') return;
+            const purchase = parseFloat(document.getElementById('pricePurchaseVal').value) || 0;
+            const margin = parseFloat(document.getElementById('priceMarginPct').value) || 0;
+            const sellingInput = document.getElementById('priceSellingVal');
+            const calculated = purchase + (purchase * margin / 100);
+            sellingInput.value = calculated.toFixed(2);
+        };
+
+        window.calculateFromPrice = function() {
+            const mode = document.getElementById('priceUpdateMode').value;
+            if (mode !== 'item') return;
+            const purchase = parseFloat(document.getElementById('pricePurchaseVal').value) || 0;
+            const selling = parseFloat(document.getElementById('priceSellingVal').value) || 0;
+            const marginInput = document.getElementById('priceMarginPct');
+            if (purchase > 0) {
+                const margin = ((selling - purchase) / purchase) * 100;
+                marginInput.value = margin.toFixed(2);
+            }
+        };
+
+        function resetPriceForm() {
+            const title = document.getElementById('priceTargetTitle');
+            if (title) title.textContent = "Select an entity to begin";
+            const subtitle = document.getElementById('priceTargetSubtitle');
+            if (subtitle) subtitle.textContent = "Manage individual or bulk selling prices";
+            const singleDetails = document.getElementById('priceSingleDetails');
+            if (singleDetails) singleDetails.style.display = 'none';
+            const bulkWarning = document.getElementById('priceBulkWarning');
+            if (bulkWarning) bulkWarning.style.display = 'none';
+        }
+
+        window.savePriceSetting = async function() {
+            const mode = document.getElementById('priceUpdateMode').value;
+            if (!activePriceEntityId && mode !== 'all') { alert("Please select an item or brand."); return; }
+            
+            const margin = document.getElementById('priceMarginPct').value;
+            const sellingPrice = document.getElementById('priceSellingVal').value;
+            
+            const coId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+            
+            try {
+                const res = await fetch('api/inventory.php?action=save_pricing_update&company_id=' + coId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        mode: mode, 
+                        id: (mode === 'all' ? 0 : activePriceEntityId),
+                        margin: margin,
+                        selling_price: sellingPrice
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert("Pricing updated successfully.");
+                    await initItemPriceSettingsView();
+                } else {
+                    alert(result.error || "Failed to update pricing.");
+                }
+            } catch (e) { console.error(e); }
+        };

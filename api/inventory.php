@@ -398,6 +398,40 @@ try {
             $stmt->execute([$id, $company_id]);
             echo json_encode(['status' => 'success']);
             break;
+
+        case 'get_pricing_data':
+            $items = $pdo->prepare("SELECT id, code, name, purchase_price, selling_price, brand_id, sub_id FROM inv_items WHERE company_id = ? ORDER BY name ASC");
+            $items->execute([$company_id]);
+            
+            $brands = $pdo->prepare("SELECT id, name FROM inv_brands WHERE company_id = ? ORDER BY name ASC");
+            $brands->execute([$company_id]);
+            
+            echo json_encode([
+                'items' => $items->fetchAll(PDO::FETCH_ASSOC),
+                'brands' => $brands->fetchAll(PDO::FETCH_ASSOC)
+            ]);
+            break;
+
+        case 'save_pricing_update':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $mode = $data['mode'] ?? 'item'; // item, brand, all
+            $margin = floatval($data['margin'] ?? 0);
+            $targetId = $data['id'] ?? 0; // item_id or brand_id
+            $directPrice = floatval($data['selling_price'] ?? 0);
+
+            if ($mode === 'item') {
+                $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = ? WHERE id = ? AND company_id = ?");
+                $stmt->execute([$directPrice, $targetId, $company_id]);
+            } else if ($mode === 'brand') {
+                // Batch update by margin: Selling = Purchase + (Purchase * Margin/100)
+                $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = purchase_price + (purchase_price * ? / 100) WHERE brand_id = ? AND company_id = ?");
+                $stmt->execute([$margin, $targetId, $company_id]);
+            } else if ($mode === 'all') {
+                $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = purchase_price + (purchase_price * ? / 100) WHERE company_id = ?");
+                $stmt->execute([$margin, $company_id]);
+            }
+            echo json_encode(['status' => 'success']);
+            break;
     }
 } catch (Exception $e) {
     http_response_code(500);
