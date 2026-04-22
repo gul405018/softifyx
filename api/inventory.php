@@ -256,6 +256,12 @@ try {
             echo json_encode(['status' => 'success']);
             break;
 
+        case 'get_all_items_lookup':
+            $stmt = $pdo->prepare("SELECT id, code, name, unit, purchase_price FROM inv_items WHERE company_id = ? ORDER BY code");
+            $stmt->execute([$company_id]);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Invalid action']);

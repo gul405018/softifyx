@@ -5812,16 +5812,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         // --- INVENTORY OPENING BALANCES LOGIC ---
         let invObPool = [];
         let displayedInvOb = [];
+        let allInventoryItems = []; // For fast searching
+        let selectedInvObRowId = null; 
 
         async function initInventoryOpeningBalancesView() {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const fyId = session.fy_id || 0;
+            const coId = session.company_id || 1;
             if (!fyId) {
                 alert("Please select a Financial Year during login to use this module.");
                 return;
             }
 
-            // Load Locations first
+            // Load All Items for Search Cache
+            try {
+                const itemRes = await fetch(`api/inventory.php?action=get_all_items_lookup&company_id=${coId}`);
+                if (itemRes.ok) allInventoryItems = await itemRes.json();
+            } catch(e) {}
+
+            // Load Locations
             const locRes = await fetch('api/inventory.php?action=get_locations');
             if (locRes.ok) {
                 const locations = await locRes.json();
@@ -5831,7 +5840,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // Initialization loop to wait for grid DOM
             let retry = 0;
             const check = setInterval(async () => {
                 if (document.getElementById('invObGridBody')) {
@@ -5853,10 +5861,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const res = await fetch(`api/inventory.php?action=get_inv_opening_balances&company_id=${coId}&fy_id=${fyId}&location_id=${locId}`);
                 if (res.ok) {
-                    invObPool = await res.json();
-                    // Initial filter: Show all items (unlike accounts where we show non-zero only initially,
-                    // users usually want a full list to start entry)
+                    const data = await res.json();
+                    // FILTER: Only show items that have pre-existing balances recorded
+                    invObPool = data.filter(d => (parseFloat(d.pieces) || 0) > 0 || (parseFloat(d.quantity) || 0) > 0 || (parseFloat(d.rate) || 0) > 0);
                     displayedInvOb = [...invObPool];
+                    selectedInvObRowId = null;
                     renderInvObGrid();
                 }
             } catch (e) { console.error(e); }
@@ -5867,27 +5876,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!grid) return;
 
             if (displayedInvOb.length === 0) {
-                grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No items found.</div>';
+                grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No existing balances. Use the search row below to add items.</div>';
                 calculateInvOBTotals();
                 return;
             }
 
             grid.innerHTML = displayedInvOb.map((row, idx) => `
-                <div class="inv-ob-row" data-id="${row.item_id}">
+                <div class="inv-ob-row ${selectedInvObRowId === row.item_id ? 'selected' : ''}" 
+                     onclick="selectInvObRow(${row.item_id})" data-id="${row.item_id}">
                     <div class="inv-ob-col text-center" style="font-weight: 600; color: #64748b;">${row.code}</div>
-                    <div class="inv-ob-col" style="color: #1e293b;">${row.name}</div>
+                    <div class="inv-ob-col" style="color: #1e293b; font-weight: 500;">${row.name}</div>
                     <div class="inv-ob-col">
-                        <input type="number" class="ob-input ${row.pieces > 0 ? 'has-value' : ''}" value="${row.pieces || 0}" 
-                               onchange="updateInvObRowData(${idx}, 'pieces', this.value)">
+                        <input type="number" step="any" class="ob-input ${row.pieces != 0 ? 'has-value' : ''}" value="${row.pieces || 0}" 
+                               onchange="updateInvObRowData(${idx}, 'pieces', this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="inv-ob-col">
-                        <input type="number" class="ob-input ${row.quantity > 0 ? 'has-value' : ''}" value="${row.quantity || 0}" 
-                               onchange="updateInvObRowData(${idx}, 'quantity', this.value)">
+                        <input type="number" step="any" class="ob-input ${row.quantity != 0 ? 'has-value' : ''}" value="${row.quantity || 0}" 
+                               onchange="updateInvObRowData(${idx}, 'quantity', this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="inv-ob-col text-center" style="color: #64748b;">${row.unit || ''}</div>
                     <div class="inv-ob-col">
-                        <input type="number" class="ob-input ${row.rate > 0 ? 'has-value' : ''}" value="${row.rate || 0}" 
-                               onchange="updateInvObRowData(${idx}, 'rate', this.value)">
+                        <input type="number" step="any" class="ob-input ${row.rate != 0 ? 'has-value' : ''}" value="${row.rate || 0}" 
+                               onchange="updateInvObRowData(${idx}, 'rate', this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="inv-ob-col text-right" style="font-weight: 700; color: #1F4E79; text-align: right;">
                         ${(parseFloat(row.quantity || 0) * parseFloat(row.rate || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -5898,11 +5908,91 @@ document.addEventListener('DOMContentLoaded', async () => {
             calculateInvOBTotals();
         }
 
-        window.updateInvObRowData = function(idx, field, val) {
-            const row = displayedInvOb[idx];
-            row[field] = parseFloat(val) || 0;
+        window.selectInvObRow = function(itemId) {
+            selectedInvObRowId = itemId;
+            renderInvObGrid();
+        };
+
+        window.deleteSelectedInvObRow = function() {
+            if (!selectedInvObRowId) { alert("Please click a row to select it first."); return; }
+            if (confirm("Remove this item from the current list? (Changes applied on Save)")) {
+                invObPool = invObPool.filter(r => r.item_id != selectedInvObRowId);
+                displayedInvOb = [...invObPool];
+                selectedInvObRowId = null;
+                renderInvObGrid();
+            }
+        };
+
+        window.handleInvObAddSearch = function(input) {
+            const term = (input.value || '').toLowerCase();
+            const resultsDiv = document.getElementById('invObSearchResults');
+            if (term.length < 1) { 
+                resultsDiv.style.display = 'none'; 
+                return; 
+            }
             
-            // Re-render only amount column for performance or just full grid if manageable
+            // Filter from cache
+            const matches = allInventoryItems.filter(i => 
+                i.name.toLowerCase().includes(term) || 
+                i.code.toLowerCase().includes(term)
+            ).slice(0, 50); // Performance cap
+
+            if (matches.length > 0) {
+                renderInvObSearchResults(matches, input);
+            } else {
+                resultsDiv.style.display = 'none';
+            }
+        };
+
+        function renderInvObSearchResults(matches, input) {
+            const resultsDiv = document.getElementById('invObSearchResults');
+            const rect = input.getBoundingClientRect();
+            const containerRect = document.getElementById('invOpeningBalancesContainer').getBoundingClientRect();
+            
+            resultsDiv.style.top = (rect.bottom - containerRect.top + 5) + 'px';
+            resultsDiv.style.left = (rect.left - containerRect.left) + 'px';
+            resultsDiv.style.display = 'block';
+
+            resultsDiv.innerHTML = matches.map(m => `
+                <div class="result-item" onclick="addInvObItem(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                    <span style="color: #64748b; margin-right: 10px;">${m.code}</span>
+                    <span style="font-weight: 600;">${m.name}</span>
+                    <span style="float: right; color: #94a3b8; font-size: 11px;">${m.unit || ''}</span>
+                </div>
+            `).join('');
+        }
+
+        window.addInvObItem = function(item) {
+            // Check if already in grid
+            if (invObPool.some(p => p.item_id == item.id)) {
+                alert("This item is already in your list.");
+                document.getElementById('invObSearchResults').style.display = 'none';
+                return;
+            }
+
+            const newRow = {
+                item_id: item.id,
+                code: item.code,
+                name: item.name,
+                unit: item.unit,
+                pieces: 0,
+                quantity: 0,
+                rate: item.purchase_price || 0
+            };
+
+            invObPool.push(newRow);
+            displayedInvOb = [...invObPool];
+            
+            // Clean up search
+            document.getElementById('invObAddSearchInput').value = '';
+            document.getElementById('invObAddSearchDesc').value = '';
+            document.getElementById('invObSearchResults').style.display = 'none';
+            
+            renderInvObGrid();
+        };
+
+        window.updateInvObRowData = function(idx, field, val) {
+            displayedInvOb[idx][field] = parseFloat(val) || 0;
             renderInvObGrid();
         };
 
@@ -5931,13 +6021,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         async function saveInvOpeningBalances() {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
             const fyId = session.fy_id || 0;
+            const coId = session.company_id || 1;
             const locId = document.getElementById('invObLocationSelect')?.value || 0;
 
             if (!locId) { alert("Please select a location."); return; }
 
-            // Only send items that have non-zero pieces, quantity or rate
-            const toSave = invObPool.filter(a => a.pieces > 0 || a.quantity > 0 || a.rate > 0);
-
+            // Logic: We might want to "Clear" old balances that are no longer in our list? 
+            // The current API uses ON DUPLICATE KEY UPDATE.
+            // If the user deleted a row from the grid, we might need a "delete_ob_item" call or just handle it here.
+            // For now, we save everything in our list.
+            
             try {
                 const res = await fetch(`api/inventory.php?action=save_inv_opening_balances`, {
                     method: 'POST',
@@ -5945,7 +6038,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({
                         fy_id: fyId,
                         location_id: locId,
-                        balances: toSave
+                        balances: invObPool
                     })
                 });
                 const result = await res.json();
@@ -6002,12 +6095,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.saveInvOpeningBalances = saveInvOpeningBalances;
         window.importInvBalances = importInvBalances;
 
+        // --- GLOBAL RE-REGISTER (End of file or appropriate place) ---
+        window.selectInvObRow = selectInvObRow;
+        window.deleteSelectedInvObRow = deleteSelectedInvObRow;
+        window.handleInvObAddSearch = handleInvObAddSearch;
+        window.addInvObItem = addInvObItem;
+        window.updateInvObRowData = updateInvObRowData;
+
         document.addEventListener('keydown', (e) => {
             const container = document.getElementById('invCOAContainer');
             if (!container) return;
             if (e.ctrlKey && e.key.toLowerCase() === 'n') { e.preventDefault(); resetInvItemForm(true); }
             if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); saveInvItem(); }
             if (e.key === 'Escape') { resetInvItemForm(); }
+        });
+
+        // Register global events for Inv OB
+        document.addEventListener('click', (e) => {
+            const results = document.getElementById('invObSearchResults');
+            if (results && !results.contains(e.target) && !e.target.id?.includes('invObAddSearch')) {
+                results.style.display = 'none';
+            }
         });
 
         window.onInvMainSelect = onInvMainSelect;
