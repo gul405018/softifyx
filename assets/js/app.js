@@ -2332,8 +2332,6 @@
                             return;
                         }
                     }
-                    // Ensure isWide is true for Item Price Settings as a safety fallback
-                    if (url.includes('item_price_settings.html')) isWide = true;
                     
                     openModal({ icon: titleIcon, text: titleText }, html, isWide, activeModuleKey);
                     
@@ -2786,198 +2784,6 @@ window.deleteLocationMaint = async function() {
     }
 };
 
-// --- INVENTORY PRICE SETTINGS LOGIC ---
-let pricingItemsPool = [];
-
-async function initInventoryPriceSettingsView() {
-    let retries = 0;
-    const maxRetries = 20;
-    const checkAndRun = setInterval(async () => {
-        const container = document.getElementById('itemPriceSettingsContainer');
-        if (container) {
-            clearInterval(checkAndRun);
-            
-            // 1. Populate Dropdowns
-            try {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const coId = session.company_id || 1;
-                
-                // Fetch Categories (Subs) and Brands
-                const [treeRes, brandRes] = await Promise.all([
-                    fetch('api/inventory.php?action=get_inventory_tree'),
-                    fetch(`api/inventory.php?action=get_brands&company_id=${coId}`)
-                ]);
-                
-                if (treeRes.ok) {
-                    const tree = await treeRes.json();
-                    const catSelect = document.getElementById('pricingCategorySelect');
-                    if (catSelect) {
-                        catSelect.innerHTML = '<option value="">Select Sub-Category...</option>' + 
-                            tree.subs.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
-                    }
-                }
-                
-                if (brandRes.ok) {
-                    const brands = await brandRes.json();
-                    const brandSelect = document.getElementById('pricingBrandSelect');
-                    if (brandSelect) {
-                        brandSelect.innerHTML = '<option value="">Select Brand...</option>' + 
-                            brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-                    }
-                }
-                
-                // Initial Load
-                loadPricingGrid();
-            } catch (e) { console.error("Pricing Init Error:", e); }
-        } else if (++retries >= maxRetries) {
-            clearInterval(checkAndRun);
-        }
-    }, 100);
-}
-window.initInventoryPriceSettingsView = initInventoryPriceSettingsView;
-
-function togglePricingFilters() {
-    const type = document.querySelector('input[name="pricingFilterType"]:checked').value;
-    
-    // Toggle Groups
-    document.getElementById('pricingCategoryGroup').style.display = (type === 'category' ? 'flex' : 'none');
-    document.getElementById('pricingBrandGroup').style.display = (type === 'brand' ? 'flex' : 'none');
-    
-    // Toggle Placeholders
-    document.getElementById('pricingCategoryPlaceholder').style.display = (type === 'category' ? 'none' : 'block');
-    document.getElementById('pricingBrandPlaceholder').style.display = (type === 'brand' ? 'none' : 'block');
-    
-    loadPricingGrid();
-}
-window.togglePricingFilters = togglePricingFilters;
-
-async function loadPricingGrid() {
-    const grid = document.getElementById('pricingItemsGrid');
-    const status = document.getElementById('pricingStatusBar');
-    if (!grid) return;
-    
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8;"><p>Loading items...</p></div>';
-    
-    const type = document.querySelector('input[name="pricingFilterType"]:checked').value;
-    let filterId = 0;
-    if (type === 'category') filterId = document.getElementById('pricingCategorySelect').value || 0;
-    if (type === 'brand') filterId = document.getElementById('pricingBrandSelect').value || 0;
-    
-    try {
-        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-        const coId = session.company_id || 1;
-        const cb = `_cb=${Date.now()}`;
-        
-        const res = await fetch(`api/inventory.php?action=get_pricing_data&filter_type=${type}&filter_id=${filterId}&company_id=${coId}&${cb}`);
-        if (res.ok) {
-            pricingItemsPool = await res.json();
-            renderPricingGrid();
-        } else {
-            grid.innerHTML = '<div style="padding:40px;text-align:center;color:red;"><p>Failed to load data.</p></div>';
-        }
-    } catch (e) {
-        grid.innerHTML = '<div style="padding:40px;text-align:center;color:red;"><p>Network Error.</p></div>';
-    }
-}
-window.loadPricingGrid = loadPricingGrid;
-
-function renderPricingGrid() {
-    const grid = document.getElementById('pricingItemsGrid');
-    const status = document.getElementById('pricingStatusBar');
-    if (!grid) return;
-
-    if (pricingItemsPool.length === 0) {
-        grid.innerHTML = '<div style="padding:40px;text-align:center;color:#999;"><p>No items found.</p></div>';
-        status.textContent = 'Showing 0 items';
-        return;
-    }
-
-    grid.innerHTML = pricingItemsPool.map(item => `
-        <div class="pricing-row" data-id="${item.id}">
-            <div style="padding:8px; text-align:center; border-right:1px solid #cbd5e0;">
-                <input type="checkbox" class="pricing-row-checkbox" value="${item.id}">
-            </div>
-            <div style="padding:8px; border-right:1px solid #cbd5e0; font-weight:600;">${item.code}</div>
-            <div style="padding:8px; border-right:1px solid #cbd5e0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
-            <div style="padding:8px; border-right:1px solid #cbd5e0; text-align:center;">${item.unit}</div>
-            <div style="padding:8px; border-right:1px solid #cbd5e0; text-align:right;">${parseFloat(item.purchase_price).toFixed(2)}</div>
-            <div style="padding:8px; text-align:right;">
-                <input type="number" class="pricing-input selling-price-input" 
-                       value="${parseFloat(item.selling_price).toFixed(2)}" 
-                       data-purchase="${item.purchase_price}"
-                       onchange="this.value = parseFloat(this.value).toFixed(2)">
-            </div>
-        </div>
-    `).join('');
-    
-    status.textContent = `Showing ${pricingItemsPool.length} items`;
-}
-
-function togglePricingSelectAll(checked) {
-    document.querySelectorAll('.pricing-row-checkbox').forEach(cb => cb.checked = checked);
-}
-window.togglePricingSelectAll = togglePricingSelectAll;
-
-function applyProfitMargin() {
-    const margin = parseFloat(document.getElementById('globalProfitMargin').value) || 0;
-    const selectedCbs = Array.from(document.querySelectorAll('.pricing-row-checkbox:checked'));
-    
-    // If some checked, apply to checked. If NONE checked, apply to ALL shown.
-    const targets = selectedCbs.length > 0 
-        ? selectedCbs.map(cb => cb.closest('.pricing-row'))
-        : Array.from(document.querySelectorAll('.pricing-row'));
-
-    if (targets.length === 0) return alert("No items to update.");
-
-    targets.forEach(row => {
-        const input = row.querySelector('.selling-price-input');
-        const purchase = parseFloat(input.dataset.purchase) || 0;
-        const newSelling = purchase * (1 + (margin / 100));
-        input.value = newSelling.toFixed(2);
-    });
-}
-window.applyProfitMargin = applyProfitMargin;
-
-async function saveInventoryPrices() {
-    const btn = event.currentTarget;
-    const rows = document.querySelectorAll('.pricing-row');
-    const itemsToSave = [];
-
-    rows.forEach(row => {
-        const id = row.dataset.id;
-        const sellingPrice = row.querySelector('.selling-price-input').value;
-        itemsToSave.push({ id, selling_price: sellingPrice });
-    });
-
-    if (itemsToSave.length === 0) return alert("No items to save.");
-
-    try {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-        btn.disabled = true;
-
-        const res = await fetch('api/inventory.php?action=save_pricing_data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: itemsToSave })
-        });
-        const result = await res.json();
-        
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-
-        if (result.status === 'success') {
-            alert("Prices updated successfully!");
-        } else {
-            alert(result.error || result.message || "Failed to save prices.");
-        }
-    } catch (e) {
-        alert("Network Error while saving.");
-        console.error(e);
-    }
-}
-window.saveInventoryPrices = saveInventoryPrices;
-
 /**
  * Global App Initialization
  * Fetches and injects modular HTML components
@@ -3020,7 +2826,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
                     let isInvLoc = (moduleName === "Inventory Locations" || (targetUrl && targetUrl.includes('inventory_locations.html')));
                     let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
-                    let isInvPriceSettings = (moduleName === "Item Price Settings" || (targetUrl && targetUrl.includes('item_price_settings.html')));
                     
                     let initCallback = null;
                     if (isCoa) initCallback = initChartOfAccountsView;
@@ -3034,9 +2839,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
                     else if (isInvLoc) initCallback = initInventoryLocationsView;
                     else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
-                    else if (isInvPriceSettings) initCallback = initInventoryPriceSettingsView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB || isInvPriceSettings);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInv || isInvBrands || isInvLoc || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                     
                     if (window.hideAllDropdowns) window.hideAllDropdowns();
@@ -3070,7 +2874,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isInvBrands = (moduleName === "Inventory Brands" || (targetUrl && targetUrl.includes('inventory_brands.html')));
                     let isInvLoc = (moduleName === "Inventory Locations" || (targetUrl && targetUrl.includes('inventory_locations.html')));
                     let isInvOB = (moduleName === "Inventory Opening Balances" || (targetUrl && targetUrl.includes('inventory_opening_balances.html')));
-                    let isInvPriceSettings = (moduleName === "Item Price Settings" || (targetUrl && targetUrl.includes('item_price_settings.html')));
                     
                     let initCallback = null;
                     if (isCoa) initCallback = initChartOfAccountsView;
@@ -3083,9 +2886,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (isInvBrands) initCallback = initInventoryBrandsView;
                     else if (isInvLoc) initCallback = initInventoryLocationsView;
                     else if (isInvOB) initCallback = initInventoryOpeningBalancesView;
-                    else if (isInvPriceSettings) initCallback = initInventoryPriceSettingsView;
 
-                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands || isInvLoc || isInvOB || isInvPriceSettings);
+                    const isWide = (isCoa || isCust || isVend || isReg || isEmp || isBank || isOB || isInvBrands || isInvLoc || isInvOB);
                     window.openModularPopup(targetUrl, 'fa-file-alt', titleText, initCallback, moduleName, isWide);
                 });
             });

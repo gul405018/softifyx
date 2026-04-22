@@ -1,177 +1,142 @@
-<div id="itemPriceSettingsContainer" data-module="Inventory Price Settings" style="width: 100%; max-width: 980px; margin: 0 auto; min-height: 600px; background: white; display: flex; flex-direction: column; padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; box-sizing: border-box;">
+<div id="itemPriceSettingsContainer" data-module="Inventory Price Settings" style="width: 100%; min-width: 960px; height: 600px; background: white; display: flex; flex-direction: column; padding: 20px; font-family: 'Segoe UI', sans-serif; border-radius: 8px;">
     
-    <!-- Injection Script: Forces parent modal to be wide -->
-    <script>
-        (function() {
-            const container = document.getElementById('itemPriceSettingsContainer');
-            if (container) {
-                const modal = container.closest('.modal-container');
-                if (modal) {
-                    modal.classList.add('modal-wide');
-                    modal.style.maxWidth = '1000px';
-                    modal.style.width = '95%';
-                    // Also ensure body doesn't have restrictive padding
-                    const modalBody = modal.querySelector('.modal-body');
-                    if (modalBody) {
-                        modalBody.style.padding = '0';
-                        modalBody.style.background = 'white';
-                    }
-                }
-            }
-        })();
-    </script>
-
-    <!-- Header Section: Title & Initial Filters -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; padding-top: 5px;">
-        <!-- Left: Shadowed Title -->
-        <div style="position: relative; background: #eee; padding: 8px 25px; border: 1px solid #999; box-shadow: 3px 3px 0px rgba(0,0,0,0.3); flex-shrink: 0;">
-            <h2 style="margin: 0; font-style: italic; color: #1F4E79; font-size: 22px;">Inventory Price Settings</h2>
+    <!-- Header Section -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h2 style="margin: 0; color: #1e293b; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-tags" style="color: #3b82f6;"></i> Inventory Price Settings
+            </h2>
+            <span style="font-size: 13px; color: #64748b;">Manage item selling prices and margins</span>
         </div>
+        
+        <div style="display: flex; gap: 8px;">
+            <button class="inv-btn" style="background: #10b981 !important; color: white !important;" onclick="saveInventoryPrices()">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <button class="inv-btn" style="background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #e2e8f0 !important;" onclick="closeModal()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+    </div>
 
-        <!-- Right: Selection Options -->
-        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 450px;">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; font-weight: 700; color: #1F4E79;">
+    <!-- Filter & Margin Controls -->
+    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+            <!-- Selection Mode -->
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer;">
                     <input type="radio" name="pricingFilterType" value="all" checked onchange="togglePricingFilters()">
-                    <span>ALL INVENTORY ITEMS</span>
+                    <span>All Inventory Items</span>
                 </label>
-            </div>
-            
-            <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; font-weight: 700; color: #1F4E79; width: 90px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer;">
                     <input type="radio" name="pricingFilterType" value="category" onchange="togglePricingFilters()">
-                    <span>CATEGORY</span>
+                    <span>Category</span>
                 </label>
-                <div id="pricingCategoryGroup" style="display: none; flex: 1;">
-                    <select id="pricingCategorySelect" class="coa-input" onchange="loadPricingGrid()">
-                        <option value="">Select Sub-Category...</option>
-                    </select>
-                </div>
-                <div id="pricingCategoryPlaceholder" style="flex: 1; height: 26px; border: 1px solid #cbd5e0; background: #f8fafc; border-radius: 4px;"></div>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; font-weight: 700; color: #1F4E79; width: 90px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer;">
                     <input type="radio" name="pricingFilterType" value="brand" onchange="togglePricingFilters()">
-                    <span>BRAND</span>
+                    <span>Brand</span>
                 </label>
-                <div id="pricingBrandGroup" style="display: none; flex: 1;">
-                    <select id="pricingBrandSelect" class="coa-input" onchange="loadPricingGrid()">
-                        <option value="">Select Brand...</option>
-                    </select>
-                </div>
-                <div id="pricingBrandPlaceholder" style="flex: 1; height: 26px; border: 1px solid #cbd5e0; background: #f8fafc; border-radius: 4px;"></div>
+            </div>
+
+            <!-- Dropdowns -->
+            <div id="pricingCategoryGroup" style="display: none; align-items: center; gap: 10px;">
+                <select id="pricingCategorySelect" style="height: 35px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 10px; min-width: 200px; outline: none;" onchange="loadPricingGrid()">
+                    <option value="">Select Sub-Category...</option>
+                </select>
+            </div>
+            <div id="pricingBrandGroup" style="display: none; align-items: center; gap: 10px;">
+                <select id="pricingBrandSelect" style="height: 35px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 10px; min-width: 200px; outline: none;" onchange="loadPricingGrid()">
+                    <option value="">Select Brand...</option>
+                </select>
             </div>
         </div>
-    </div>
 
-    <!-- Secondary Controls Row -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 10px; background: #f8fafc; border: 1px solid #cbd5e0; border-radius: 4px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 12px; font-weight: 600; color: #334155;">Set</span>
-            <input type="number" id="globalProfitMargin" style="width: 55px; height: 24px; border: 1px solid #cbd5e0; text-align: center; border-radius: 4px; outline: none; font-size: 12px;">
-            <span style="font-size: 12px; font-weight: 600; color: #334155;">% Profit Margin on Purchase Price.</span>
-            <button onclick="applyProfitMargin()" class="coa-btn" style="background: #17a2b8 !important; color: white !important; border-color: #17a2b8 !important;">Update</button>
-        </div>
-
-        <div style="display: flex; gap: 6px;">
-            <button onclick="saveInventoryPrices()" class="coa-btn coa-save">Save</button>
-            <button onclick="closeModal()" class="coa-btn coa-cancel">Cancel</button>
+        <!-- Profit Margin Tool -->
+        <div style="display: flex; align-items: center; gap: 12px; border-top: 1px dashed #cbd5e0; pt-15; padding-top: 15px;">
+            <div style="background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                Quick Action
+            </div>
+            <span style="font-size: 14px; color: #334155;">Set</span>
+            <input type="number" id="globalProfitMargin" placeholder="0" style="width: 80px; height: 35px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 10px; text-align: center; outline: none; font-weight: 600;">
+            <span style="font-size: 14px; color: #334155;">% Profit Margin on Purchase Price of all Items</span>
+            <button class="inv-btn" style="background: #3b82f6 !important; color: white !important; height: 35px; padding: 0 15px;" onclick="applyProfitMargin()">
+                Update Prices
+            </button>
         </div>
     </div>
 
-    <!-- Divider Line -->
-    <div style="height: 2px; background: #1F4E79; margin-bottom: 10px;"></div>
-
-    <!-- Items Grid Section -->
-    <div style="flex: 1; border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column;">
-        <!-- Grid Header -->
-        <div style="background: #f8fafc; display: grid; grid-template-columns: 40px 100px 1fr 100px 140px 140px; border-bottom: 2px solid #1F4E79; font-weight: 700; font-size: 12px; color: #1F4E79;">
-            <div style="padding: 8px; border-right: 1px solid #cbd5e0; text-align: center;">
+    <!-- Items Grid -->
+    <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="background: #1e293b; color: white; display: grid; grid-template-columns: 50px 120px 1fr 100px 130px 130px; font-weight: 600; font-size: 13px;">
+            <div style="padding: 12px; border-right: 1px solid #334155; text-align: center;">
                 <input type="checkbox" id="pricingSelectAll" onchange="togglePricingSelectAll(this.checked)">
             </div>
-            <div style="padding: 8px; border-right: 1px solid #cbd5e0;">ITEM CODE</div>
-            <div style="padding: 8px; border-right: 1px solid #cbd5e0;">ITEM NAME</div>
-            <div style="padding: 8px; border-right: 1px solid #cbd5e0; text-align: center;">UNIT</div>
-            <div style="padding: 8px; border-right: 1px solid #cbd5e0; text-align: right;">PURCHASE PRICE</div>
-            <div style="padding: 8px; text-align: right;">SELLING PRICE</div>
+            <div style="padding: 12px; border-right: 1px solid #334155;">Item Code</div>
+            <div style="padding: 12px; border-right: 1px solid #334155;">Item Name</div>
+            <div style="padding: 12px; border-right: 1px solid #334155; text-align: center;">Unit</div>
+            <div style="padding: 12px; border-right: 1px solid #334155; text-align: right;">Purchase Price</div>
+            <div style="padding: 12px; text-align: right;">Selling Price</div>
         </div>
-        <!-- Grid Body -->
         <div id="pricingItemsGrid" style="flex: 1; overflow-y: auto; background: white;">
-            <!-- Rows injected here -->
+            <!-- Rows will be injected here -->
             <div style="padding: 40px; text-align: center; color: #94a3b8;">
+                <i class="fas fa-box-open" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i>
                 <p>Loading items...</p>
             </div>
         </div>
     </div>
     
-    <!-- Footer Status -->
-    <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #64748b; font-weight: 600;">
+    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;">
         <div id="pricingStatusBar">Showing 0 items</div>
-        <div>(Selling Price = Purchase + [Purchase * Margin / 100])</div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-info-circle"></i> Calculations: Purchase + (Purchase * Margin / 100)</span>
+        </div>
     </div>
 
 </div>
 
 <style>
-    /* In-line overwrite to ensure pure white background and width consistency */
-    .coa-btn {
-        background: #ffffff;
-        border: 1px solid #1F4E79;
-        padding: 0 12px;
-        font-size: 11px;
+    .inv-btn {
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        min-width: 70px;
-        border-radius: 4px;
-        color: #1F4E79;
-        transition: all 0.2s;
-        height: 26px;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
         outline: none;
     }
-    .coa-btn:hover { background: #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .coa-btn:active { transform: translateY(1px); }
-
-    .coa-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
-    .coa-save:hover { background: #153550 !important; }
-
-    .coa-cancel { background: #6c757d !important; color: white !important; border-color: #6c757d !important; }
-    .coa-cancel:hover { background: #5a6268 !important; }
-
-    .coa-input {
-        width: 100%;
-        height: 26px;
-        border: 1px solid #cbd5e0;
-        border-radius: 4px;
-        padding: 0 8px;
-        font-size: 12px;
-        outline: none;
-        box-sizing: border-box;
-    }
-    .coa-input:focus { border-color: #1F4E79; }
-
+    .inv-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .inv-btn:active { transform: translateY(0); }
+    
     .pricing-row {
         display: grid;
-        grid-template-columns: 40px 100px 1fr 100px 140px 140px;
+        grid-template-columns: 50px 120px 1fr 100px 130px 130px;
         border-bottom: 1px solid #f1f5f9;
-        transition: background 0.1s;
+        transition: background 0.2s;
         align-items: center;
     }
     .pricing-row:hover { background: #f8fafc; }
-
+    .pricing-row td {
+        padding: 10px;
+        font-size: 13px;
+        color: #334155;
+    }
     .pricing-input {
         width: 100%;
-        height: 24px;
+        height: 30px;
         border: 1px solid #cbd5e0;
-        border-radius: 3px;
-        padding: 0 5px;
+        border-radius: 4px;
+        padding: 0 8px;
         text-align: right;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
+        color: #1e293b;
         outline: none;
+        transition: border-color 0.2s;
     }
-    .pricing-input:focus { border-color: #1F4E79; }
+    .pricing-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
 </style>
