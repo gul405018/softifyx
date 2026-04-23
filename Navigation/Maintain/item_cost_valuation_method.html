@@ -28,14 +28,17 @@
         </div>
 
         <!-- Right: Top Buttons -->
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+            <!-- Row 1: Save & Cancel -->
             <div style="display: flex; gap: 8px;">
-                <div style="display: flex; border: 1px solid #cbd5e0; border-radius: 2px; overflow: hidden;">
-                    <button style="height: 32px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: none; border-right: 1px solid #cbd5e0; cursor: pointer;" onclick="window.CostMethodModule.bulkSet('Weighted Average Cost')">Set Weighted Average on all Items</button>
-                    <button style="height: 32px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: none; cursor: pointer;" onclick="window.CostMethodModule.bulkSet('Manual Cost')">Set Manual Cost on all Items.</button>
-                </div>
                 <button class="cost-btn cost-btn-save" onclick="window.CostMethodModule.save()">Save</button>
                 <button class="cost-btn cost-btn-cancel" onclick="closeModularPopup()">Cancel</button>
+            </div>
+            
+            <!-- Row 2: Bulk Actions -->
+            <div style="display: flex; gap: 8px;">
+                <button style="height: 32px; padding: 0 15px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="window.CostMethodModule.bulkSet('Weighted Average Cost')">Set Weighted Average on all Items</button>
+                <button style="height: 32px; padding: 0 15px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="window.CostMethodModule.bulkSet('Manual Cost')">Set Manual Cost on all Items.</button>
             </div>
         </div>
     </div>
