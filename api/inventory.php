@@ -428,16 +428,6 @@ try {
             $stmt->execute($params);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // FORCED TEST: Always add one item to see if rendering works
-            $results[] = [
-                'id' => 999999,
-                'code' => 'TEST-001',
-                'name' => 'SYSTEM TEST ITEM (If you see this, API is working)',
-                'unit' => 'EA',
-                'purchase_price' => 10.00,
-                'selling_price' => 15.00
-            ];
-            
             echo json_encode($results);
             break;
 

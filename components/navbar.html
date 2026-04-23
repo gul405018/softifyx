@@ -42,7 +42,7 @@
                 <div class="dropdown-item" data-target="Navigation/Maintain/inventory_opening_balances.html" data-module="Inventory Opening Balances">Inventory Opening Balances</div>
                 <div class="dropdown-item" data-target="Navigation/Maintain/inventory_brands.html" data-module="Inventory Brands">Inventory Brands</div>
                 <div class="dropdown-item" onclick="openModularPopup('Navigation/Maintain/inventory_locations.html', 'fa-map-marker-alt', 'Inventory Locations', null, 'Inventory Locations', true)">Inventory Locations</div>
-                <div class="dropdown-item" onclick="openModularPopup('Navigation/Maintain/item_price_settings.html', 'fa-tag', 'Item Price Settings', null, 'Item Price Settings', true)">Item Price Settings</div>
+                <div class="dropdown-item" onclick="openModularPopup('Navigation/Maintain/item_price_settings.html', 'fa-tag', 'Item Price Settings', () => window.PriceSettingsModule.init(), 'Item Price Settings', true)">Item Price Settings</div>
                 <div class="dropdown-item" data-target="Navigation/Maintain/item_sales_tax_rates.html" data-module="Item Sales Tax Rates">Item Sales Tax Rates</div>
                 <div class="dropdown-item" data-target="Navigation/Maintain/item_pre_order_levels.html" data-module="Item Pre-Order Levels">Item Pre-Order Levels</div>
                 <div class="dropdown-item" data-target="Navigation/Maintain/item_cost_valuation_method.html" data-module="Item Cost Valuation Method">Item Cost Valuation Method</div>

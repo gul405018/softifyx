@@ -10,22 +10,22 @@
         <div style="flex: 1; margin-left: 40px; display: flex; flex-direction: column; gap: 5px;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer;">
-                    <input type="radio" name="priceFilter" value="all" checked onchange="togglePriceFilters()"> All Inventory Items
+                    <input type="radio" name="priceFilter" value="all" checked onchange="window.PriceSettingsModule.toggleFilters()"> All Inventory Items
                 </label>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
-                    <input type="radio" name="priceFilter" value="category" onchange="togglePriceFilters()"> Category
+                    <input type="radio" name="priceFilter" value="category" onchange="window.PriceSettingsModule.toggleFilters()"> Category
                 </label>
-                <select id="priceCategorySelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="loadPriceSettingsData()">
+                <select id="priceCategorySelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.PriceSettingsModule.load()">
                     <option value="0">Select Category...</option>
                 </select>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
-                    <input type="radio" name="priceFilter" value="brand" onchange="togglePriceFilters()"> Brand
+                    <input type="radio" name="priceFilter" value="brand" onchange="window.PriceSettingsModule.toggleFilters()"> Brand
                 </label>
-                <select id="priceBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="loadPriceSettingsData()">
+                <select id="priceBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.PriceSettingsModule.load()">
                     <option value="0">Select Brand...</option>
                 </select>
             </div>
@@ -34,7 +34,7 @@
         <!-- Right: Top Buttons & Margin Box -->
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
             <div style="display: flex; gap: 8px;">
-                <button class="price-btn price-btn-save" onclick="saveBulkPrices()">Save</button>
+                <button class="price-btn price-btn-save" onclick="window.PriceSettingsModule.save()">Save</button>
                 <button class="price-btn price-btn-cancel" onclick="closeModularPopup()">Cancel</button>
             </div>
             
@@ -42,7 +42,7 @@
                 <span style="font-size: 12px; font-weight: 600; color: #1e293b;">Set</span>
                 <input type="number" id="profitMarginInput" style="width: 50px; height: 22px; text-align: center; border: 1px solid #94a3b8; font-weight: 700;" value="0">
                 <span style="font-size: 11px; font-weight: 600; color: #1e293b;">% Profit Margin on Purchase Price of all Items.</span>
-                <button style="height: 22px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #94a3b8; cursor: pointer;" onclick="applyProfitMargin()">Update</button>
+                <button style="height: 22px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #94a3b8; cursor: pointer;" onclick="window.PriceSettingsModule.applyMargin()">Update</button>
             </div>
         </div>
     </div>
