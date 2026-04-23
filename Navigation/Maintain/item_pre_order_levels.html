@@ -1,0 +1,107 @@
+<div id="itemReorderLevelsContainer" data-module="Item Pre-Order Levels" style="width: 930px; height: 600px; display: flex; flex-direction: column; gap: 10px; background: white; padding: 15px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
+    
+    <!-- Top Filter Bar -->
+    <div style="background: #f8fafc; padding: 15px; border-bottom: 1px solid #e2e8f0; position: relative; display: flex; align-items: center; justify-content: space-between; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+        <!-- Left: Filters -->
+        <div style="flex: 1; margin-left: 40px; display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer;">
+                    <input type="radio" name="reorderFilter" value="all" checked onchange="window.ReorderLevelsModule.toggleFilters()"> All Inventory Items
+                </label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="reorderFilter" value="category" onchange="window.ReorderLevelsModule.toggleFilters()"> Category
+                </label>
+                <select id="reorderCategorySelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.ReorderLevelsModule.load()">
+                    <option value="0">Select Category...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="reorderFilter" value="brand" onchange="window.ReorderLevelsModule.toggleFilters()"> Brand
+                </label>
+                <select id="reorderBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.ReorderLevelsModule.load()">
+                    <option value="0">Select Brand...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right: Top Buttons -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <button class="reorder-btn reorder-btn-save" onclick="window.ReorderLevelsModule.save()">Save</button>
+                <button class="reorder-btn reorder-btn-cancel" onclick="closeModularPopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div style="flex: 1; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: white;">
+        <div style="overflow-y: auto; flex: 1;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                    <tr>
+                        <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
+                        <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
+                        <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
+                        <th style="width: 100px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Unit</th>
+                        <th style="width: 200px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Re-Order Level Quantity</th>
+                    </tr>
+                </thead>
+                <tbody id="itemReorderLevelsTableBody">
+                    <!-- Rows will be populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <style>
+        .reorder-btn {
+            height: 32px;
+            min-width: 100px;
+            padding: 0 20px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .reorder-btn-save {
+            background: #1e293b;
+            color: white;
+            border: 1px solid #1e293b;
+        }
+        .reorder-btn-save:hover { background: #334155; }
+        .reorder-btn-cancel {
+            background: #f1f5f9;
+            color: #ef4444;
+            border: 1px solid #cbd5e0;
+        }
+        .reorder-btn-cancel:hover { background: #e2e8f0; }
+
+        #itemReorderLevelsTableBody tr:nth-child(even) { background-color: #f8fafc; }
+        #itemReorderLevelsTableBody tr:hover { background-color: #f1f5f9; }
+        #itemReorderLevelsTableBody td {
+            padding: 6px 8px;
+            font-size: 12px;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+        .reorder-input-cell {
+            width: 100px;
+            height: 24px;
+            border: 1px solid #cbd5e0;
+            border-radius: 2px;
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+        }
+        .reorder-input-cell:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+    </style>
+</div>
