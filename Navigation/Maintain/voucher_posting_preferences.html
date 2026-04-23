@@ -1,0 +1,59 @@
+<div id="voucherPrefsContainer" data-module="Voucher Posting Preferences" style="width: 500px; height: 350px; display: flex; flex-direction: column; gap: 20px; background: white; padding: 30px; font-family: 'Segoe UI', Arial, sans-serif; position: relative; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px;">
+        <label style="display: flex; align-items: center; gap: 15px; cursor: pointer; padding: 15px 25px; border: 1px dashed #cbd5e0; border-radius: 8px; background: #f8fafc; transition: all 0.2s; user-select: none;">
+            <input type="checkbox" id="autoPostVouchers" style="width: 22px; height: 22px; cursor: pointer; accent-color: #ef4444;">
+            <span style="font-size: 16px; font-weight: 700; color: #ef4444; font-style: italic;">Automatically post vouchers, when saved.</span>
+        </label>
+    </div>
+
+    <!-- Bottom Buttons -->
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        <button class="pref-btn pref-btn-save" onclick="window.VoucherPrefs.save()">
+            <i class="fas fa-check" style="margin-right: 8px;"></i> Save
+        </button>
+        <button class="pref-btn pref-btn-cancel" onclick="closeModularPopup()">
+            <i class="fas fa-times" style="margin-right: 8px;"></i> Cancel
+        </button>
+    </div>
+
+    <style>
+        .pref-btn {
+            height: 38px;
+            min-width: 100px;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: 1px solid #cbd5e0;
+        }
+        .pref-btn-save {
+            background: #f8fafc;
+            color: #16a34a;
+        }
+        .pref-btn-save:hover {
+            background: #f0fdf4;
+            border-color: #16a34a;
+            box-shadow: 0 2px 8px rgba(22, 163, 74, 0.1);
+        }
+        .pref-btn-cancel {
+            background: #f8fafc;
+            color: #ef4444;
+        }
+        .pref-btn-cancel:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+        }
+
+        label:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+    </style>
+</div>
