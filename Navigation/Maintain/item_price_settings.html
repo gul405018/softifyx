@@ -1,9 +1,9 @@
 <div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 930px; height: 650px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #cbd5e0; overflow: hidden;">
     
     <!-- Header Section -->
-    <div style="background: white; padding: 15px; border-bottom: 2px solid #cbd5e0; position: relative; display: flex; align-items: center; justify-content: space-between;">
+    <div style="background: #f8fafc; padding: 15px; border-bottom: 1px solid #e2e8f0; position: relative; display: flex; align-items: center; justify-content: space-between; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
         
-        <!-- Left: Empty or placeholder removed as requested -->
+        <!-- Left: Empty -->
         <div style="width: 10px;"></div>
 
         <!-- Middle: Options -->
@@ -48,17 +48,17 @@
     </div>
 
     <!-- Table Section -->
-    <div style="flex: 1; background: white; margin: 10px; border: 1px solid #cbd5e0; border-radius: 2px; overflow: hidden; display: flex; flex-direction: column;">
+    <div style="flex: 1; background: white; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column;">
         <div style="overflow-y: auto; flex: 1;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
                     <tr>
-                        <th style="width: 40px; border: 1px solid #cbd5e0; padding: 8px;"></th>
-                        <th style="width: 120px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Item Code</th>
-                        <th style="border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic; text-align: left;">Item Name</th>
-                        <th style="width: 80px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Unit</th>
-                        <th style="width: 150px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Purchase Price</th>
-                        <th style="width: 150px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Selling Price</th>
+                        <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
+                        <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
+                        <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
+                        <th style="width: 80px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Unit</th>
+                        <th style="width: 150px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Purchase Price</th>
+                        <th style="width: 150px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Selling Price</th>
                     </tr>
                 </thead>
                 <tbody id="priceSettingsTableBody">
@@ -105,7 +105,11 @@
         
         #priceSettingsTableBody tr:nth-child(even) { background: #f8fafc; }
         #priceSettingsTableBody tr:hover { background: #f1f5f9; }
-        #priceSettingsTableBody td { padding: 4px 8px; border: 1px solid #cbd5e0; }
+        #priceSettingsTableBody td { 
+            padding: 6px 8px; 
+            border-bottom: 1px solid #e2e8f0; 
+            border-right: 1px solid #e2e8f0; 
+        }
     </style>
 
 </div>
