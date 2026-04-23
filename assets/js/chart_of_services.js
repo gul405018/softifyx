@@ -86,7 +86,14 @@ window.ChartOfServices = {
 
     deleteCategory: async function() {
         if (!this.selectedCatId) return;
-        if (!confirm("Are you sure you want to delete this category and all its services?")) return;
+        
+        // --- DELETE PROTECTION ---
+        if (this.services && this.services.length > 0) {
+            alert("This category cannot be deleted because it still contains services. Please delete the services first.");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to delete this category?")) return;
         
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
