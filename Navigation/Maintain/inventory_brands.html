@@ -1,13 +1,16 @@
-<div id="brandsMaintenanceContainer" data-module="Inventory Brands" style="width: 100%; height: 350px; background: white; display: flex; flex-direction: column; padding: 15px; font-family: 'Segoe UI', sans-serif; border-radius: 8px;">
+<div id="brandsMaintenanceContainer" data-module="Inventory Brands" style="width: 930px; height: 350px; background: white; display: flex; flex-direction: column; padding: 20px; font-family: 'Segoe UI', sans-serif; position: relative;">
     
+    <!-- Section Header -->
+    <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 15px;">Inventory Brands Maintenance</div>
+
     <!-- Top Row: Buttons (Right) -->
     <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
-        <div style="display: flex; gap: 6px;">
-            <button class="inv-btn" onclick="alert('Brand Price List logic coming soon...')">Price Lists</button>
-            <button class="inv-btn" style="background: #10b981 !important; color: white !important;" onclick="resetBrandForm(true)">Add</button>
-            <button class="inv-btn" style="background: #1e293b !important; color: white !important;" onclick="saveBrand()">Save</button>
-            <button class="inv-btn" style="background: #ef4444 !important; color: white !important;" onclick="deleteBrand()">Delete</button>
-            <button class="inv-btn" onclick="closeSecondaryModal()">Cancel</button>
+        <div style="display: flex; gap: 8px;">
+            <button class="inv-btn inv-btn-chart" onclick="alert('Brand Price List logic coming soon...')">Price Lists</button>
+            <button class="inv-btn inv-btn-add" onclick="resetBrandForm(true)">Add</button>
+            <button class="inv-btn inv-btn-save" onclick="saveBrand()">Save</button>
+            <button class="inv-btn inv-btn-delete" onclick="deleteBrand()">Delete</button>
+            <button class="inv-btn inv-btn-cancel" onclick="closeSecondaryModal()">Cancel</button>
         </div>
     </div>
 
@@ -15,33 +18,43 @@
     <div style="display: flex; gap: 20px; flex: 1;">
         <!-- Brand Navigation Listbox -->
         <div style="width: 280px; display: flex; flex-direction: column;">
-            <select id="brandMaintList" size="10" style="width: 100%; height: 100%; border: 2px inset #fff; outline: none; border-radius: 4px; font-size: 13px; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);" onchange="onBrandMaintSelect(this.value)"></select>
+            <select id="brandMaintList" size="10" style="width: 100%; height: 100%; border: 1px solid #cbd5e0; outline: none; border-radius: 4px; font-size: 13px;" onchange="onBrandMaintSelect(this.value)"></select>
         </div>
         
         <!-- Brand Name Input Area -->
-        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 20px;">
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; border-radius: 4px; background: white;">
             <div style="display: flex; align-items: center; gap: 15px; width: 80%; max-width: 500px;">
-                <label style="font-size: 14px; font-weight: 600; font-style: italic; color: #475569; white-space: nowrap;">Brand Name</label>
-                <input type="text" id="brandMaintName" autocomplete="off" style="flex: 1; height: 32px; border: 1px solid #cbd5e0; outline: none; padding: 0 12px; font-size: 14px; border-radius: 4px; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.05);" disabled>
+                <label style="font-size: 14px; font-weight: 600; color: #475569; white-space: nowrap;">Brand Name</label>
+                <input type="text" id="brandMaintName" autocomplete="off" style="flex: 1; height: 32px; border: 1px solid #cbd5e0; outline: none; padding: 0 12px; font-size: 14px; border-radius: 4px;" disabled>
             </div>
         </div>
     </div>
 
     <style>
         .inv-btn {
-            padding: 4px 15px;
+            height: 30px;
+            min-width: 80px;
+            padding: 0 15px;
             font-size: 12px;
-            font-weight: 600;
-            border: 1px solid #cbd5e0;
+            font-weight: 700;
             border-radius: 4px;
+            color: white;
             cursor: pointer;
-            background: white;
-            color: #475569;
+            border: none;
             transition: all 0.2s;
         }
-        .inv-btn:hover { background: #f1f5f9; }
+        .inv-btn-chart { background: #0891b2; }
+        .inv-btn-chart:hover { background: #0e7490; }
+        .inv-btn-add { background: #22c55e; }
+        .inv-btn-add:hover { background: #16a34a; }
+        .inv-btn-save { background: #1e3a8a; }
+        .inv-btn-save:hover { background: #1e40af; }
+        .inv-btn-cancel { background: #94a3b8; }
+        .inv-btn-cancel:hover { background: #64748b; }
+        .inv-btn-delete { background: #ef4444; }
+        .inv-btn-delete:hover { background: #dc2626; }
         
-        #brandMaintList option { padding: 4px 8px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
-        #brandMaintList option:checked { background: #1e293b !important; color: white !important; }
+        #brandMaintList option { padding: 6px 12px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+        #brandMaintList option:checked { background: #eff6ff !important; color: #1e3a8a !important; font-weight: 700; border-left: 3px solid #1e3a8a; }
     </style>
 </div>

@@ -1,29 +1,30 @@
 <div id="employeesContainer" data-module="Employees"
-    style="min-height: 600px; width: 100%; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px;">
+    style="width: 930px; min-height: 600px; display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
 
-    <!-- Sub-header Removed as requested -->
+    <!-- Section Header -->
+    <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 5px;">Employees Maintenance</div>
 
-    <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
+    <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
         <!-- Left: Employee List -->
-        <div class="employees-sidebar" style="flex: 1.5; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; background: #f8fafc;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase;">Employee List</div>
+        <div class="employees-sidebar" style="flex: 1.5; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px; background: white;">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 10px; text-transform: uppercase;">Employee List</div>
             <select id="employeeList" size="20"
-                style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
+                style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px; background: white;"
                 onchange="onEmployeeSelect(this.value)"></select>
         </div>
 
         <!-- Right: Employee Details -->
-        <div style="flex: 2; display: flex; flex-direction: column; gap: 10px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px;">
+        <div style="flex: 2.5; display: flex; flex-direction: column; gap: 15px; border: 1px solid #e2e8f0; padding: 20px; border-radius: 4px; background: white;">
             <!-- Buttons Header -->
-            <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 5px;">
-                <button class="coa-btn coa-add" id="empAddBtn" onclick="resetEmployeeForm(true)">Add</button>
-                <button class="coa-btn coa-save" id="empSaveBtn" onclick="saveEmployee()" disabled>Save</button>
-                <button class="coa-btn coa-cancel" id="empCancelBtn" onclick="resetEmployeeForm(false)">Cancel</button>
-                <button class="coa-btn coa-delete" id="empDeleteBtn" onclick="deleteEmployee()">Delete</button>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
+                <button class="coa-btn coa-btn-add" id="empAddBtn" onclick="resetEmployeeForm(true)">Add</button>
+                <button class="coa-btn coa-btn-save" id="empSaveBtn" onclick="saveEmployee()" disabled>Save</button>
+                <button class="coa-btn coa-btn-delete" id="empDeleteBtn" onclick="deleteEmployee()" disabled>Delete</button>
+                <button class="coa-btn coa-btn-cancel" id="empCancelBtn" onclick="resetEmployeeForm(false)">Cancel</button>
             </div>
 
             <!-- Fields Grid -->
-            <div style="display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 8px 12px; align-content: start;">
+            <div style="display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 12px; align-content: start;">
                 
                 <label class="coa-label">Name</label>
                 <input type="text" id="empName" class="coa-input" style="grid-column: span 3;" disabled>
@@ -32,7 +33,7 @@
                 <input type="text" id="empFatherName" class="coa-input" style="grid-column: span 3;" disabled>
 
                 <label class="coa-label">Address</label>
-                <textarea id="empAddress" class="coa-input" style="grid-column: span 3; height: 50px; resize: none; padding-top: 4px;" disabled></textarea>
+                <textarea id="empAddress" class="coa-input" style="grid-column: span 3; height: 50px; resize: none; padding-top: 6px;" disabled></textarea>
 
                 <label class="coa-label">Telephone</label>
                 <input type="text" id="empTelephone" class="coa-input" disabled>
@@ -58,7 +59,7 @@
                 </select>
 
                 <label class="coa-label">Remarks</label>
-                <textarea id="empRemarks" class="coa-input" style="grid-column: span 3; height: 40px; resize: none; padding-top: 4px;" disabled></textarea>
+                <textarea id="empRemarks" class="coa-input" style="grid-column: span 3; height: 40px; resize: none; padding-top: 6px;" disabled></textarea>
 
                 <label class="coa-label">Reference</label>
                 <input type="text" id="empReference" class="coa-input" style="grid-column: span 3;" disabled>
@@ -75,70 +76,58 @@
 
     <style>
         .coa-btn {
-            background: #ffffff;
-            border: 1px solid #1F4E79;
-            padding: 2px 12px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            min-width: 70px;
+            height: 30px;
+            min-width: 80px;
+            padding: 0 15px;
+            font-size: 12px;
+            font-weight: 700;
             border-radius: 4px;
-            color: #1F4E79;
+            color: white;
+            cursor: pointer;
+            border: none;
             transition: all 0.2s;
-            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .coa-btn:hover:not(:disabled) {
-            background: #f1f5f9;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .coa-btn:active:not(:disabled) {
-            transform: translateY(1px);
-        }
-
         .coa-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            background: #f8fafc !important;
-            border-color: #cbd5e0 !important;
-            color: #94a3b8 !important;
+            background: #cbd5e0 !important;
+            color: #64748b !important;
         }
 
-        .coa-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
-        .coa-add:hover:not(:disabled) { background: #218838 !important; }
+        .coa-btn-add { background: #22c55e; }
+        .coa-btn-add:hover:not(:disabled) { background: #16a34a; }
+        .coa-btn-save { background: #1e3a8a; }
+        .coa-btn-save:hover:not(:disabled) { background: #1e40af; }
+        .coa-btn-cancel { background: #94a3b8; }
+        .coa-btn-cancel:hover:not(:disabled) { background: #64748b; }
+        .coa-btn-delete { background: #ef4444; }
+        .coa-btn-delete:hover:not(:disabled) { background: #dc2626; }
 
-        .coa-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
-        .coa-save:hover:not(:disabled) { background: #153550 !important; }
-
-        .coa-cancel { background: #6c757d !important; color: white !important; border-color: #6c757d !important; }
-        .coa-cancel:hover:not(:disabled) { background: #5a6268 !important; }
-
-        .coa-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
-        .coa-delete:hover:not(:disabled) { background: #c82333 !important; }
-
-        .coa-label { font-size: 11px; font-weight: 600; color: #334155; align-self: center; }
+        .coa-label { font-size: 11px; font-weight: 700; color: #475569; align-self: center; }
         .coa-input {
-            height: 28px;
+            height: 30px;
             border: 1px solid #cbd5e0;
             border-radius: 4px;
-            padding: 0 8px;
-            font-size: 12px;
+            padding: 0 10px;
+            font-size: 13px;
             outline: none;
             width: 100%;
             transition: all 0.2s;
+            background: white;
         }
 
         .coa-input:focus:not(:disabled) {
-            border-color: #1F4E79;
-            box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1);
+            border-color: #1e3a8a;
+            background: #eff6ff;
         }
 
         .coa-input:disabled { background-color: #f8fafc; color: #64748b; }
         
-        option:checked { background: #1F4E79 !important; color: white !important; }
+        #employeeList option { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #475569; }
+        #employeeList option:checked { background: #eff6ff !important; color: #1e3a8a !important; font-weight: 700; border-left: 3px solid #1e3a8a; }
     </style>
 </div>

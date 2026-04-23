@@ -1,34 +1,29 @@
 <div id="customersContainer" data-module="Customers"
-    style="min-height: 600px; display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; font-family: 'Segoe UI', Arial, sans-serif; border-radius: 4px;">
-
+    style="width: 930px; min-height: 600px; display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
 
     <!-- Section 1: Customer Type -->
-    <div
-        style="flex: 0.4; display: flex; flex-direction: column; min-height: 140px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
-        <div
-            style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">
-            Customer Type</div>
-        <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
+    <div style="flex: 0.4; display: flex; flex-direction: column; min-height: 160px; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px; background: white;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 15px;">Customer Type</div>
+        <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
-            <div style="flex: 1; display: flex; flex-direction: column;">
+            <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden;">
                 <select id="customerTypeList" size="5"
-                    style="width: 100%; height: 100px; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
+                    style="width: 100%; height: 100%; border: none; outline: none; font-size: 13px; background: white;"
                     onchange="onCustomerTypeSelect(this.value)"></select>
             </div>
 
             <!-- Right: Fields & Buttons -->
-            <div style="flex: 1.2; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px;">
-                    <button class="coa-btn coa-chart" onclick="printCustomers('type')">Chart</button>
-                    <button class="coa-btn coa-add" onclick="resetCustomerTypeForm(true)">Add</button>
-                    <button class="coa-btn coa-save" onclick="saveCustomerType()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetCustomerTypeForm()">Cancel</button>
-                    <button class="coa-btn coa-delete" onclick="deleteCustomerType()">Delete</button>
+            <div style="flex: 1.2; display: flex; flex-direction: column; gap: 12px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; background: white;">
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button class="coa-btn coa-btn-chart" onclick="printCustomers('type')">Chart</button>
+                    <button class="coa-btn coa-btn-add" onclick="resetCustomerTypeForm(true)">Add</button>
+                    <button class="coa-btn coa-btn-save" onclick="saveCustomerType()">Save</button>
+                    <button class="coa-btn coa-btn-delete" onclick="deleteCustomerType()">Delete</button>
+                    <button class="coa-btn coa-btn-cancel" onclick="resetCustomerTypeForm()">Cancel</button>
                 </div>
-                <div
-                    style="display: grid; grid-template-columns: 140px 1fr; gap: 10px 8px; align-content: start; margin-top: 4px; flex: 1;">
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-content: start; margin-top: 5px;">
                     <label class="coa-label">Sub Type Code</label>
-                    <input type="text" id="custSubTypeCode" class="coa-input" style="width: 100px;" disabled>
+                    <input type="text" id="custSubTypeCode" class="coa-input" style="width: 120px;" disabled>
 
                     <label class="coa-label">Customer Type</label>
                     <input type="text" id="custTypeName" class="coa-input" disabled>
@@ -38,33 +33,29 @@
     </div>
 
     <!-- Section 2: List of Customers -->
-    <div
-        style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px;">
-        <div
-            style="font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #1F4E79; padding-bottom: 2px;">
-            List of Customers</div>
-        <div style="display: flex; gap: 15px; flex: 1; align-items: stretch;">
+    <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px; background: white;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 15px;">List of Customers</div>
+        <div style="display: flex; gap: 20px; flex: 1; align-items: stretch;">
             <!-- Left: List -->
-            <div style="flex: 1; display: flex; flex-direction: column;">
+            <div style="flex: 1; display: flex; flex-direction: column; border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden;">
                 <select id="customerList" size="10"
-                    style="width: 100%; flex: 1; border: 1px solid #cbd5e0; outline: none; font-size: 13px; border-radius: 4px;"
+                    style="width: 100%; flex: 1; border: none; outline: none; font-size: 13px; background: white;"
                     onchange="onCustomerSelect(this.value)"></select>
             </div>
 
             <!-- Right: Detailed Fields -->
-            <div style="flex: 1.2; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 4px;">
-                    <button class="coa-btn coa-chart" onclick="printCustomers('list')">Chart</button>
-                    <button class="coa-btn coa-chart" style="background: #1F4E79 !important;"
+            <div style="flex: 1.2; display: flex; flex-direction: column; gap: 12px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; background: white;">
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 5px;">
+                    <button class="coa-btn coa-btn-chart" onclick="printCustomers('list')">Chart</button>
+                    <button class="coa-btn coa-btn-chart" style="background: #1e3a8a !important;"
                         onclick="findCustomer()"><i class="fas fa-search"></i> Find</button>
-                    <button class="coa-btn coa-add" onclick="resetCustomerForm(true)">Add</button>
-                    <button class="coa-btn coa-save" onclick="saveCustomer()">Save</button>
-                    <button class="coa-btn coa-cancel" onclick="resetCustomerForm()">Cancel</button>
-                    <button class="coa-btn coa-delete" onclick="deleteCustomer()">Delete</button>
+                    <button class="coa-btn coa-btn-add" onclick="resetCustomerForm(true)">Add</button>
+                    <button class="coa-btn coa-btn-save" onclick="saveCustomer()">Save</button>
+                    <button class="coa-btn coa-btn-delete" onclick="deleteCustomer()">Delete</button>
+                    <button class="coa-btn coa-btn-cancel" onclick="resetCustomerForm()">Cancel</button>
                 </div>
 
-                <div
-                    style="display: grid; grid-template-columns: 100px 1fr 100px 1fr; gap: 6px 8px; align-content: start;">
+                <div style="display: grid; grid-template-columns: 100px 1fr 100px 1fr; gap: 10px; align-content: start;">
                     <label class="coa-label">Account Code</label>
                     <input type="text" id="custAccountCode" class="coa-input" style="grid-column: span 3; width: 120px;"
                         disabled>
@@ -77,7 +68,7 @@
 
                     <label class="coa-label">Address</label>
                     <textarea id="custAddress" class="coa-input"
-                        style="grid-column: span 3; height: 50px; resize: none; padding-top: 4px;" disabled></textarea>
+                        style="grid-column: span 3; height: 50px; resize: none; padding-top: 6px;" disabled></textarea>
 
                     <label class="coa-label">Region</label>
                     <div style="display: flex; gap: 4px;">
@@ -131,139 +122,79 @@
 
                     <label class="coa-label">Remarks</label>
                     <textarea id="custRemarks" class="coa-input"
-                        style="grid-column: span 3; height: 40px; resize: none; padding-top: 4px;" disabled></textarea>
+                        style="grid-column: span 3; height: 40px; resize: none; padding-top: 6px;" disabled></textarea>
                 </div>
             </div>
         </div>
     </div>
 
-
     <style>
         .coa-btn {
-            background: #ffffff;
-            border: 1px solid #1F4E79;
-            padding: 2px 10px;
+            height: 30px;
+            min-width: 70px;
+            padding: 0 12px;
             font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            min-width: 60px;
+            font-weight: 700;
             border-radius: 4px;
-            color: #1F4E79;
+            color: white;
+            cursor: pointer;
+            border: none;
             transition: all 0.2s;
-            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
-        .coa-btn:hover {
-            background: #f1f5f9;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
+        .coa-btn-chart { background: #0891b2; }
+        .coa-btn-chart:hover { background: #0e7490; }
+        .coa-btn-add { background: #22c55e; }
+        .coa-btn-add:hover { background: #16a34a; }
+        .coa-btn-save { background: #1e3a8a; }
+        .coa-btn-save:hover { background: #1e40af; }
+        .coa-btn-cancel { background: #94a3b8; }
+        .coa-btn-cancel:hover { background: #64748b; }
+        .coa-btn-delete { background: #ef4444; }
+        .coa-btn-delete:hover { background: #dc2626; }
 
-        .coa-btn:active {
-            transform: translateY(1px);
-        }
-
-        .coa-chart {
-            background: #17a2b8 !important;
-            color: white !important;
-            border-color: #17a2b8 !important;
-        }
-
-        .coa-chart:hover {
-            background: #138496 !important;
-        }
-
-        .coa-add {
-            background: #28a745 !important;
-            color: white !important;
-            border-color: #28a745 !important;
-        }
-
-        .coa-add:hover {
-            background: #218838 !important;
-        }
-
-        .coa-save {
-            background: #1F4E79 !important;
-            color: white !important;
-            border-color: #1F4E79 !important;
-        }
-
-        .coa-save:hover {
-            background: #153550 !important;
-        }
-
-        .coa-cancel {
-            background: #6c757d !important;
-            color: white !important;
-            border-color: #6c757d !important;
-        }
-
-        .coa-cancel:hover {
-            background: #5a6268 !important;
-        }
-
-        .coa-delete {
-            background: #dc3545 !important;
-            color: white !important;
-            border-color: #dc3545 !important;
-        }
-
-        .coa-delete:hover {
-            background: #c82333 !important;
-        }
-
-        .coa-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #334155;
-            align-self: center;
-        }
-
+        .coa-label { font-size: 11px; font-weight: 700; color: #475569; align-self: center; }
         .coa-input {
-            height: 26px;
+            height: 28px;
             border: 1px solid #cbd5e0;
             border-radius: 4px;
-            padding: 0 6px;
+            padding: 0 8px;
             font-size: 12px;
             outline: none;
             width: 100%;
-            transition: border 0.2s;
+            transition: all 0.2s;
+            background: white;
         }
 
-        .coa-input:focus {
-            border-color: #1F4E79;
-            box-shadow: 0 0 0 1px rgba(31, 78, 121, 0.1);
+        .coa-input:focus:not(:disabled) {
+            border-color: #1e3a8a;
+            background: #eff6ff;
         }
 
         .small-manage-btn {
-            padding: 0 5px;
-            height: 26px;
-            background: #e2e8f0;
+            padding: 0 8px;
+            height: 28px;
+            background: #f1f5f9;
             border: 1px solid #cbd5e0;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 800;
+            color: #1e3a8a;
+            transition: all 0.2s;
         }
 
-        .small-manage-btn:hover {
-            background: #cbd5e0;
-        }
+        .small-manage-btn:hover { background: #e2e8f0; color: #1e40af; }
 
         select:disabled,
         input:disabled,
-        textarea:disabled {
-            background-color: #f8fafc;
-            color: #64748b;
-        }
+        textarea:disabled { background-color: #f8fafc; color: #64748b; }
 
-        option:checked {
-            background: #1F4E79 !important;
-            color: white !important;
-        }
-
-        option {
-            padding: 4px 8px;
-            border-bottom: 1px solid #f1f5f9;
-        }
+        option { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #475569; }
+        option:checked { background: #eff6ff !important; color: #1e3a8a !important; font-weight: 700; border-left: 3px solid #1e3a8a; }
     </style>
+</div>
 </div>
