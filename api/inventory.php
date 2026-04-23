@@ -375,6 +375,57 @@ try {
             }
             break;
 
+        case 'get_price_settings':
+            $filter_type = $_GET['filter_type'] ?? 'all';
+            $filter_id = $_GET['filter_id'] ?? 0;
+            
+            $query = "SELECT i.id, i.code, i.name, i.unit, i.purchase_price, i.selling_price, 
+                             mc.name as category_name, b.name as brand_name
+                      FROM inv_items i
+                      LEFT JOIN inv_sub_categories sc ON i.sub_id = sc.id
+                      LEFT JOIN inv_main_categories mc ON sc.main_id = mc.id
+                      LEFT JOIN inv_brands b ON i.brand_id = b.id
+                      WHERE i.company_id = :company_id";
+            
+            if ($filter_type === 'category' && $filter_id > 0) {
+                $query .= " AND sc.main_id = :filter_id";
+            } elseif ($filter_type === 'brand' && $filter_id > 0) {
+                $query .= " AND i.brand_id = :filter_id";
+            }
+            
+            $query .= " ORDER BY i.code";
+            
+            $stmt = $pdo->prepare($query);
+            $params = ['company_id' => $company_id];
+            if ($filter_id > 0 && $filter_type !== 'all') {
+                $params['filter_id'] = $filter_id;
+            }
+            
+            $stmt->execute($params);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'save_bulk_prices':
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['prices']) || !is_array($data['prices'])) {
+                echo json_encode(['error' => 'Invalid data']);
+                exit;
+            }
+            
+            $pdo->beginTransaction();
+            try {
+                $stmt = $pdo->prepare("UPDATE inv_items SET selling_price = ? WHERE id = ? AND company_id = ?");
+                foreach ($data['prices'] as $row) {
+                    $stmt->execute([$row['selling_price'], $row['item_id'], $company_id]);
+                }
+                $pdo->commit();
+                echo json_encode(['status' => 'success']);
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            }
+            break;
+
         case 'delete_location':
             $id = $_GET['id'] ?? 0;
             // Check if is default Main Store (usually ID 1 or is_default=1)
