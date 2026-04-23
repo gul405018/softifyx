@@ -99,22 +99,22 @@ try {
     $checkItems->execute();
     if (!$checkItems->fetch()) {
         // Create a sample category
-        $pdo->exec("INSERT IGNORE INTO inv_main_categories (company_id, code, name) VALUES (1, '01', 'Sample Category')");
+        $pdo->exec("INSERT IGNORE INTO inv_main_categories (company_id, code, name) VALUES ($company_id, '01', 'Sample Category')");
         $mainId = $pdo->lastInsertId() ?: 1;
         
         // Create a sample sub-category
-        $pdo->exec("INSERT IGNORE INTO inv_sub_categories (company_id, main_id, code, name) VALUES (1, $mainId, '0101', 'Sample Sub-Category')");
+        $pdo->exec("INSERT IGNORE INTO inv_sub_categories (company_id, main_id, code, name) VALUES ($company_id, $mainId, '0101', 'Sample Sub-Category')");
         $subId = $pdo->lastInsertId() ?: 1;
         
         // Create a sample brand
-        $pdo->exec("INSERT IGNORE INTO inv_brands (company_id, name) VALUES (1, 'Sample Brand')");
+        $pdo->exec("INSERT IGNORE INTO inv_brands (company_id, name) VALUES ($company_id, 'Sample Brand')");
         $brandId = $pdo->lastInsertId() ?: 1;
         
         // Create sample items
         $pdo->exec("INSERT IGNORE INTO inv_items (company_id, sub_id, code, name, brand_id, purchase_price, selling_price, unit) 
-                    VALUES (1, $subId, 'ITM-001', 'Sample Item 1', $brandId, 100, 150, 'Pcs')");
+                    VALUES ($company_id, $subId, 'ITM-001', 'Sample Item 1', $brandId, 100, 150, 'Pcs')");
         $pdo->exec("INSERT IGNORE INTO inv_items (company_id, sub_id, code, name, brand_id, purchase_price, selling_price, unit) 
-                    VALUES (1, $subId, 'ITM-002', 'Sample Item 2', $brandId, 200, 300, 'Pcs')");
+                    VALUES ($company_id, $subId, 'ITM-002', 'Sample Item 2', $brandId, 200, 300, 'Pcs')");
     }
 
 } catch (Exception $e) {
@@ -402,16 +402,17 @@ try {
             $filter_type = $_GET['filter_type'] ?? 'all';
             $filter_id = $_GET['filter_id'] ?? 0;
             
-            $query = "SELECT i.id, i.code, i.name, i.unit, i.purchase_price, i.selling_price, 
-                             mc.name as category_name, b.name as brand_name
-                      FROM inv_items i
-                      LEFT JOIN inv_sub_categories sc ON i.sub_id = sc.id
-                      LEFT JOIN inv_main_categories mc ON sc.main_id = mc.id
-                      LEFT JOIN inv_brands b ON i.brand_id = b.id
+            // Simplified query to ensure items show up even if categories/brands are not linked
+            $query = "SELECT i.id, i.code, i.name, i.unit, i.purchase_price, i.selling_price 
+                      FROM inv_items i 
                       WHERE i.company_id = :company_id";
             
             if ($filter_type === 'category' && $filter_id > 0) {
-                $query .= " AND sc.main_id = :filter_id";
+                // If filtering by category, we need the join
+                $query = "SELECT i.id, i.code, i.name, i.unit, i.purchase_price, i.selling_price 
+                          FROM inv_items i
+                          JOIN inv_sub_categories sc ON i.sub_id = sc.id
+                          WHERE i.company_id = :company_id AND sc.main_id = :filter_id";
             } elseif ($filter_type === 'brand' && $filter_id > 0) {
                 $query .= " AND i.brand_id = :filter_id";
             }
@@ -425,7 +426,21 @@ try {
             }
             
             $stmt->execute($params);
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // DEBUG: If empty, return a fake item to test the UI
+            if (empty($results) && $filter_type === 'all') {
+                $results = [[
+                    'id' => 0,
+                    'code' => 'DEBUG-001',
+                    'name' => 'Please Add Items in Chart of Inventory',
+                    'unit' => 'N/A',
+                    'purchase_price' => 0,
+                    'selling_price' => 0
+                ]];
+            }
+            
+            echo json_encode($results);
             break;
 
         case 'save_bulk_prices':
