@@ -94,6 +94,29 @@ try {
         UNIQUE KEY `inv_ob_unique` (company_id, item_id, fy_id, location_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
+    // Seed default data if empty to ensure form shows something
+    $checkItems = $pdo->prepare("SELECT id FROM inv_items LIMIT 1");
+    $checkItems->execute();
+    if (!$checkItems->fetch()) {
+        // Create a sample category
+        $pdo->exec("INSERT IGNORE INTO inv_main_categories (company_id, code, name) VALUES (1, '01', 'Sample Category')");
+        $mainId = $pdo->lastInsertId() ?: 1;
+        
+        // Create a sample sub-category
+        $pdo->exec("INSERT IGNORE INTO inv_sub_categories (company_id, main_id, code, name) VALUES (1, $mainId, '0101', 'Sample Sub-Category')");
+        $subId = $pdo->lastInsertId() ?: 1;
+        
+        // Create a sample brand
+        $pdo->exec("INSERT IGNORE INTO inv_brands (company_id, name) VALUES (1, 'Sample Brand')");
+        $brandId = $pdo->lastInsertId() ?: 1;
+        
+        // Create sample items
+        $pdo->exec("INSERT IGNORE INTO inv_items (company_id, sub_id, code, name, brand_id, purchase_price, selling_price, unit) 
+                    VALUES (1, $subId, 'ITM-001', 'Sample Item 1', $brandId, 100, 150, 'Pcs')");
+        $pdo->exec("INSERT IGNORE INTO inv_items (company_id, sub_id, code, name, brand_id, purchase_price, selling_price, unit) 
+                    VALUES (1, $subId, 'ITM-002', 'Sample Item 2', $brandId, 200, 300, 'Pcs')");
+    }
+
 } catch (Exception $e) {
     // Silently continue if tables exist or other minor issues, 
     // real errors will be caught in the action block or PDO setup.

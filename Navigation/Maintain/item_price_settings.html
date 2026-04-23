@@ -110,50 +110,82 @@
 
     <script>
         (function() {
-            const companyId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = session.company_id || 1;
             let priceItemsData = [];
 
             // Initialize Form
             async function initPriceSettings() {
+                console.log("Price Settings: Initializing for company", companyId);
+                
                 // Load Dropdowns
                 try {
+                    const cb = `_cb=${Date.now()}`;
                     const [treeRes, brandsRes] = await Promise.all([
-                        fetch(`api/inventory.php?action=get_inventory_tree&company_id=${companyId}`),
-                        fetch(`api/inventory.php?action=get_brands&company_id=${companyId}`)
+                        fetch(`api/inventory.php?action=get_inventory_tree&company_id=${companyId}&${cb}`),
+                        fetch(`api/inventory.php?action=get_brands&company_id=${companyId}&${cb}`)
                     ]);
                     
+                    if (!treeRes.ok || !brandsRes.ok) {
+                        throw new Error("Failed to fetch dropdown data");
+                    }
+
                     const tree = await treeRes.json();
                     const brands = await brandsRes.json();
+                    
+                    console.log("Price Settings: Tree data received", tree);
 
                     const catSelect = document.getElementById('priceCategorySelect');
-                    catSelect.innerHTML = '<option value="0">Select Category...</option>';
-                    tree.mains.forEach(m => {
-                        catSelect.innerHTML += `<option value="${m.id}">${m.code} - ${m.name}</option>`;
-                    });
+                    if (catSelect) {
+                        catSelect.innerHTML = '<option value="0">Select Category...</option>';
+                        if (tree.mains && Array.isArray(tree.mains)) {
+                            tree.mains.forEach(m => {
+                                catSelect.innerHTML += `<option value="${m.id}">${m.code} - ${m.name}</option>`;
+                            });
+                        }
+                    }
 
                     const brandSelect = document.getElementById('priceBrandSelect');
-                    brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
-                    brands.forEach(b => {
-                        brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
-                    });
+                    if (brandSelect) {
+                        brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
+                        if (brands && Array.isArray(brands)) {
+                            brands.forEach(b => {
+                                brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                            });
+                        }
+                    }
 
                     // Initial Data Load
                     loadPriceSettingsData();
-                } catch (e) { console.error(e); }
+                } catch (e) { 
+                    console.error("Price Settings Init Error:", e);
+                    const tbody = document.getElementById('priceSettingsTableBody');
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">Error initializing form. Check console.</td></tr>';
+                }
             }
 
             window.togglePriceFilters = function() {
-                const filter = document.querySelector('input[name="priceFilter"]:checked').value;
-                document.getElementById('priceCategorySelect').disabled = (filter !== 'category');
-                document.getElementById('priceBrandSelect').disabled = (filter !== 'brand');
+                const filterEl = document.querySelector('input[name="priceFilter"]:checked');
+                if (!filterEl) return;
+                
+                const filter = filterEl.value;
+                const catSel = document.getElementById('priceCategorySelect');
+                const brandSel = document.getElementById('priceBrandSelect');
+                
+                if (catSel) catSel.disabled = (filter !== 'category');
+                if (brandSel) brandSel.disabled = (filter !== 'brand');
+                
                 loadPriceSettingsData();
             };
 
             window.loadPriceSettingsData = async function() {
-                const filterType = document.querySelector('input[name="priceFilter"]:checked').value;
+                const filterEl = document.querySelector('input[name="priceFilter"]:checked');
+                if (!filterEl) return;
+
+                const filterType = filterEl.value;
                 let filterId = 0;
-                if (filterType === 'category') filterId = document.getElementById('priceCategorySelect').value;
-                if (filterType === 'brand') filterId = document.getElementById('priceBrandSelect').value;
+                if (filterType === 'category') filterId = document.getElementById('priceCategorySelect')?.value || 0;
+                if (filterType === 'brand') filterId = document.getElementById('priceBrandSelect')?.value || 0;
 
                 // If Category or Brand selected but no value chosen (0), clear the table and return
                 if (filterType !== 'all' && (filterId == 0 || filterId == '0')) {
@@ -162,18 +194,28 @@
                     return;
                 }
 
+                console.log(`Price Settings: Loading data for ${filterType} (ID: ${filterId})`);
+
                 try {
-                    const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${companyId}&filter_type=${filterType}&filter_id=${filterId}`);
+                    const cb = `_cb=${Date.now()}`;
+                    const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${companyId}&filter_type=${filterType}&filter_id=${filterId}&${cb}`);
+                    if (!res.ok) throw new Error("Fetch failed");
+                    
                     priceItemsData = await res.json();
+                    console.log("Price Settings: Items received", priceItemsData.length);
                     renderPriceTable();
-                } catch (e) { console.error(e); }
+                } catch (e) { 
+                    console.error("Price Settings Load Data Error:", e);
+                }
             };
 
             function renderPriceTable() {
                 const tbody = document.getElementById('priceSettingsTableBody');
+                if (!tbody) return;
+                
                 tbody.innerHTML = '';
                 
-                if (priceItemsData.length === 0) {
+                if (!priceItemsData || priceItemsData.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No items found</td></tr>';
                     return;
                 }
@@ -234,8 +276,8 @@
                 } catch (e) { alert('Failed to save prices.'); }
             };
 
-            // Run Init
-            initPriceSettings();
+            // Start Init with a small delay to ensure modal is ready
+            setTimeout(initPriceSettings, 200);
         })();
     </script>
 </div>
