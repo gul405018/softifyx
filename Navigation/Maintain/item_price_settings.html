@@ -109,39 +109,51 @@
         #priceSettingsTableBody td { padding: 4px 8px; border: 1px solid #cbd5e0; }
     </style>
 
-    <!-- Diagnostics & Debug Footer (Can be removed later) -->
-    <div id="priceDebugInfo" style="padding: 5px 15px; background: #fee2e2; border-top: 1px solid #ef4444; font-size: 11px; color: #991b1b; display: none; align-items: center; justify-content: space-between;">
-        <span><strong>Debug:</strong> Company ID: <span id="debugCoId">?</span> | Status: <span id="debugStatus">Pending</span></span>
-        <button onclick="seedSampleDataForUser()" style="background: #ef4444; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-weight: bold;">Seed Sample Data</button>
+    <!-- Diagnostics Bar -->
+    <div id="priceDebugInfo" style="padding: 5px 15px; background: #fee2e2; border-top: 1px solid #ef4444; font-size: 11px; color: #991b1b; display: flex; align-items: center; justify-content: space-between;">
+        <span><strong>Diagnostics:</strong> CoID: <span id="debugCoId">?</span> | Status: <span id="debugStatus">Initializing...</span></span>
+        <div style="display: flex; gap: 5px;">
+            <button onclick="window.checkPriceConnection()" style="background: #1e40af; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 10px;">Test API</button>
+            <button onclick="window.seedSampleDataForUser()" style="background: #991b1b; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 10px;">Seed Demo Data</button>
+        </div>
     </div>
 
     <script>
-        // Global variables
-        var priceItemsData = [];
-        var priceCompanyId = 1;
+        console.log("Price Settings Script: Starting Load...");
+        
+        // Ensure globals
+        window.priceItemsData = [];
+        window.priceCompanyId = 1;
 
-        async function initPriceSettings() {
+        window.initPriceSettings = async function() {
+            console.log("Price Settings: Running initPriceSettings...");
             try {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                priceCompanyId = session.company_id || 1;
-                document.getElementById('debugCoId').innerText = priceCompanyId;
-                document.getElementById('priceDebugInfo').style.display = 'flex';
+                const sessionStr = localStorage.getItem('softifyx_session');
+                const session = sessionStr ? JSON.parse(sessionStr) : {};
+                window.priceCompanyId = session.company_id || 1;
                 
-                console.log("Initializing Price Settings for Company:", priceCompanyId);
+                if (document.getElementById('debugCoId')) {
+                    document.getElementById('debugCoId').innerText = window.priceCompanyId;
+                }
                 
                 const [treeRes, brandsRes] = await Promise.all([
-                    fetch(`api/inventory.php?action=get_inventory_tree&company_id=${priceCompanyId}`),
-                    fetch(`api/inventory.php?action=get_brands&company_id=${priceCompanyId}`)
+                    fetch(`api/inventory.php?action=get_inventory_tree&company_id=${window.priceCompanyId}`),
+                    fetch(`api/inventory.php?action=get_brands&company_id=${window.priceCompanyId}`)
                 ]);
                 
+                if (!treeRes.ok || !brandsRes.ok) throw new Error("API Connection Failed");
+
                 const tree = await treeRes.json();
                 const brands = await brandsRes.json();
                 
+                console.log("Price Settings: Data Fetched", { tree, brands });
+
                 const catSelect = document.getElementById('priceCategorySelect');
                 const brandSelect = document.getElementById('priceBrandSelect');
                 
                 if (!catSelect || !brandSelect) {
-                    setTimeout(initPriceSettings, 200); // Retry if DOM not ready
+                    console.warn("Price Settings: UI elements not found, retrying in 300ms...");
+                    setTimeout(window.initPriceSettings, 300);
                     return;
                 }
 
@@ -152,7 +164,7 @@
                         const mainName = main ? main.name + " > " : "";
                         catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
                     });
-                    document.getElementById('debugStatus').innerText = "Data Loaded";
+                    document.getElementById('debugStatus').innerText = "Lists Loaded";
                 } else {
                     document.getElementById('debugStatus').innerText = "No Categories Found";
                 }
@@ -164,70 +176,68 @@
                     });
                 }
 
-                // Default load
-                loadPriceSettingsData();
+                // Load initial data (All items)
+                window.loadPriceSettingsData();
             } catch (e) { 
-                console.error("Initialization Error:", e);
-                document.getElementById('debugStatus').innerText = "Error: " + e.message;
+                console.error("Price Settings Error:", e);
+                if (document.getElementById('debugStatus')) {
+                    document.getElementById('debugStatus').innerText = "Error: " + e.message;
+                }
             }
-        }
+        };
 
         window.togglePriceFilters = function() {
-            // Find checked radio manually to avoid selector issues
             const radios = document.getElementsByName('priceFilter');
             let filter = 'all';
             for (let r of radios) {
-                if (r.checked) {
-                    filter = r.value;
-                    break;
-                }
+                if (r.checked) { filter = r.value; break; }
             }
             
-            console.log("Toggling Filter:", filter);
-            document.getElementById('priceCategorySelect').disabled = (filter !== 'category');
-            document.getElementById('priceBrandSelect').disabled = (filter !== 'brand');
+            const catSel = document.getElementById('priceCategorySelect');
+            const brnSel = document.getElementById('priceBrandSelect');
+            if (catSel) catSel.disabled = (filter !== 'category');
+            if (brnSel) brnSel.disabled = (filter !== 'brand');
             
-            loadPriceSettingsData();
+            window.loadPriceSettingsData();
         };
 
         window.loadPriceSettingsData = async function() {
             const radios = document.getElementsByName('priceFilter');
             let filterType = 'all';
             for (let r of radios) {
-                if (r.checked) {
-                    filterType = r.value;
-                    break;
-                }
+                if (r.checked) { filterType = r.value; break; }
             }
             
             let filterId = 0;
-            if (filterType === 'category') filterId = document.getElementById('priceCategorySelect').value;
-            if (filterType === 'brand') filterId = document.getElementById('priceBrandSelect').value;
+            const catSel = document.getElementById('priceCategorySelect');
+            const brnSel = document.getElementById('priceBrandSelect');
+            if (filterType === 'category' && catSel) filterId = catSel.value;
+            if (filterType === 'brand' && brnSel) filterId = brnSel.value;
 
             if (filterType !== 'all' && (filterId == 0 || filterId == '0')) {
-                priceItemsData = [];
-                renderPriceTable();
+                window.priceItemsData = [];
+                window.renderPriceTable();
                 return;
             }
 
             try {
-                const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${priceCompanyId}&filter_type=${filterType}&filter_id=${filterId}`);
-                priceItemsData = await res.json();
-                renderPriceTable();
-            } catch (e) { console.error("Data Load Error:", e); }
+                const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${window.priceCompanyId}&filter_type=${filterType}&filter_id=${filterId}`);
+                window.priceItemsData = await res.json();
+                window.renderPriceTable();
+            } catch (e) { console.error("Price Data Error:", e); }
         };
 
-        function renderPriceTable() {
+        window.renderPriceTable = function() {
             const tbody = document.getElementById('priceSettingsTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
             
-            if (!priceItemsData || priceItemsData.length === 0) {
+            if (!window.priceItemsData || window.priceItemsData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No items found. Click "All Inventory Items" or select a filter.</td></tr>';
                 return;
             }
 
-            priceItemsData.forEach(item => {
+            window.priceItemsData.forEach(item => {
                 tbody.innerHTML += `
                     <tr data-id="${item.id}">
                         <td style="text-align: center; color: #1e293b; font-size: 10px;"><i class="fas fa-play"></i></td>
@@ -238,15 +248,15 @@
                         <td>
                             <input type="number" step="0.01" class="price-input-cell" 
                                    value="${parseFloat(item.selling_price).toFixed(2)}" 
-                                   onchange="updateLocalPrice(${item.id}, this.value)">
+                                   onchange="window.updateLocalPrice(${item.id}, this.value)">
                         </td>
                     </tr>
                 `;
             });
-        }
+        };
 
         window.updateLocalPrice = function(id, val) {
-            const item = priceItemsData.find(i => i.id == id);
+            const item = window.priceItemsData.find(i => i.id == id);
             if (item) item.selling_price = parseFloat(val) || 0;
         };
 
@@ -254,22 +264,23 @@
             const margin = parseFloat(document.getElementById('profitMarginInput').value) || 0;
             if (margin === 0) return;
 
-            priceItemsData.forEach(item => {
+            window.priceItemsData.forEach(item => {
                 const purchase = parseFloat(item.purchase_price) || 0;
                 if (purchase > 0) {
                     item.selling_price = purchase + (purchase * (margin / 100));
                 }
             });
-            renderPriceTable();
+            window.renderPriceTable();
         };
 
         window.saveBulkPrices = async function() {
+            if (!window.priceItemsData || window.priceItemsData.length === 0) return alert("No items to save.");
             const payload = {
-                prices: priceItemsData.map(i => ({ item_id: i.id, selling_price: i.selling_price }))
+                prices: window.priceItemsData.map(i => ({ item_id: i.id, selling_price: i.selling_price }))
             };
 
             try {
-                const res = await fetch(`api/inventory.php?action=save_bulk_prices&company_id=${priceCompanyId}`, {
+                const res = await fetch(`api/inventory.php?action=save_bulk_prices&company_id=${window.priceCompanyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -283,14 +294,23 @@
             } catch (e) { alert('Failed to save prices.'); }
         };
 
+        window.checkPriceConnection = async function() {
+            try {
+                const res = await fetch(`api/inventory.php?action=debug_db&company_id=${window.priceCompanyId}`);
+                const data = await res.json();
+                alert("Database Connection Success!\nItems in DB: " + (data.counts.inv_items || 0));
+                window.initPriceSettings();
+            } catch (e) { alert("Database Connection Failed: " + e.message); }
+        };
+
         window.seedSampleDataForUser = async function() {
             if (confirm("This will add some sample categories and items to your database for testing. Continue?")) {
                 try {
-                    const res = await fetch(`api/inventory.php?action=seed_sample_data&company_id=${priceCompanyId}`);
+                    const res = await fetch(`api/inventory.php?action=seed_sample_data&company_id=${window.priceCompanyId}`);
                     const result = await res.json();
                     if (result.status === 'success') {
                         alert(result.message);
-                        initPriceSettings();
+                        window.initPriceSettings();
                     } else {
                         alert("Seed failed: " + result.message);
                     }
@@ -298,7 +318,7 @@
             }
         };
 
-        // Run Init
-        initPriceSettings();
+        // Trigger load
+        window.initPriceSettings();
     </script>
 </div>
