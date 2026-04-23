@@ -114,42 +114,60 @@
         var priceCompanyId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
 
         async function initPriceSettings() {
-            console.log("Initializing Price Settings for Company:", priceCompanyId);
-            try {
-                const [treeRes, brandsRes] = await Promise.all([
-                    fetch(`api/inventory.php?action=get_inventory_tree&company_id=${priceCompanyId}`),
-                    fetch(`api/inventory.php?action=get_brands&company_id=${priceCompanyId}`)
-                ]);
-                
-                const tree = await treeRes.json();
-                const brands = await brandsRes.json();
-                
-                console.log("Tree Data:", tree);
-                console.log("Brands Data:", brands);
-
+            let retries = 0;
+            const maxRetries = 20;
+            const checkReady = setInterval(async () => {
                 const catSelect = document.getElementById('priceCategorySelect');
-                catSelect.innerHTML = '<option value="0">Select Category...</option>';
-                if (tree && tree.subs) {
-                    tree.subs.forEach(s => {
-                        const main = tree.mains.find(m => m.id == s.main_id);
-                        const mainName = main ? main.name + " > " : "";
-                        catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
-                    });
-                }
+                if (catSelect || ++retries >= maxRetries) {
+                    clearInterval(checkReady);
+                    if (!catSelect) {
+                        console.error("Price Settings: Failed to find UI elements.");
+                        return;
+                    }
+                    
+                    console.log("Initializing Price Settings for Company:", priceCompanyId);
+                    try {
+                        const [treeRes, brandsRes] = await Promise.all([
+                            fetch(`api/inventory.php?action=get_inventory_tree&company_id=${priceCompanyId}`),
+                            fetch(`api/inventory.php?action=get_brands&company_id=${priceCompanyId}`)
+                        ]);
+                        
+                        const tree = await treeRes.json();
+                        const brands = await brandsRes.json();
+                        
+                        console.log("Tree Data:", tree);
+                        console.log("Brands Data:", brands);
 
-                const brandSelect = document.getElementById('priceBrandSelect');
-                brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
-                if (brands && Array.isArray(brands)) {
-                    brands.forEach(b => {
-                        brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
-                    });
-                }
+                        catSelect.innerHTML = '<option value="0">Select Category...</option>';
+                        if (tree && tree.subs && tree.subs.length > 0) {
+                            tree.subs.forEach(s => {
+                                const main = tree.mains.find(m => m.id == s.main_id);
+                                const mainName = main ? main.name + " > " : "";
+                                catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
+                            });
+                        } else {
+                            console.warn("No sub-categories found for this company.");
+                        }
 
-                // Initial Data Load (All Items)
-                loadPriceSettingsData();
-            } catch (e) { 
-                console.error("Initialization Error:", e); 
-            }
+                        const brandSelect = document.getElementById('priceBrandSelect');
+                        if (brandSelect) {
+                            brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
+                            if (brands && Array.isArray(brands) && brands.length > 0) {
+                                brands.forEach(b => {
+                                    brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                                });
+                            } else {
+                                console.warn("No brands found for this company.");
+                            }
+                        }
+
+                        // Initial Data Load (All Items)
+                        loadPriceSettingsData();
+                    } catch (e) { 
+                        console.error("Initialization Error:", e); 
+                    }
+                }
+            }, 100);
         }
 
         window.togglePriceFilters = function() {
