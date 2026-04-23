@@ -1,20 +1,39 @@
 <?php
+// SoftifyX ERP Database Connection Diagnostic Tool
+require_once 'api/db_config.php';
+
 header('Content-Type: text/plain');
+echo "=== SoftifyX ERP Database Connection Diagnostic ===\n\n";
+
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=softifyx_db', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    $tables = $pdo->query("SHOW TABLES LIKE 'inv_%'")->fetchAll(PDO::FETCH_COLUMN);
-    echo "Tables Found:\n" . implode("\n", $tables) . "\n\n";
-    
-    if (in_array('inv_items', $tables)) {
-        echo "Structure of inv_items:\n";
-        $cols = $pdo->query("DESCRIBE inv_items")->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($cols as $c) echo $c['Field'] . " - " . $c['Type'] . "\n";
-    } else {
-        echo "inv_items TABLE MISSING!\n";
+    // 1. Check Connection
+    echo "[1] Checking MySQL Connection... ";
+    if ($pdo) {
+        echo "OK! Connected to " . $db . " as user " . $user . "\n";
     }
+
+    // 2. Check Tables
+    echo "[2] Checking Required Tables...\n";
+    $tables = ['companies', 'users', 'user_rights', 'dashboard_summary', 'financial_years', 'currencies', 'coa_main', 'coa_sub', 'coa_list'];
+    
+    foreach ($tables as $table) {
+        try {
+            $stmt = $pdo->query("SELECT 1 FROM `$table` LIMIT 1");
+            echo "   - Table '$table': FOUND\n";
+        } catch (PDOException $e) {
+            echo "   - Table '$table': MISSING or ERROR (" . $e->getMessage() . ")\n";
+        }
+    }
+
+    // 3. User Count test
+    echo "\n[3] Checking User Data...\n";
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM users");
+    $rowCount = $stmt->fetchColumn();
+    echo "   - Number of users in database: " . $rowCount . "\n";
+
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
+    echo "\nFATAL ERROR: " . $e->getMessage() . "\n";
 }
+
+echo "\nIf everything says 'OK' and 'FOUND', the database is correctly configured.";
 ?>

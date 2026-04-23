@@ -426,60 +426,6 @@ try {
             }
             break;
 
-        case 'debug_db':
-            $counts = [];
-            foreach (['inv_main_categories', 'inv_sub_categories', 'inv_brands', 'inv_items', 'inv_locations'] as $tbl) {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM $tbl WHERE company_id = ?");
-                $stmt->execute([$company_id]);
-                $counts[$tbl] = $stmt->fetchColumn();
-            }
-            echo json_encode(['company_id' => $company_id, 'counts' => $counts]);
-            break;
-
-        case 'seed_sample_data':
-            try {
-                $pdo->beginTransaction();
-                // 1. Main Category
-                $pdo->prepare("INSERT IGNORE INTO inv_main_categories (company_id, code, name) VALUES (?, 'CAT-01', 'General Items')")->execute([$company_id]);
-                $main_id = $pdo->lastInsertId();
-                if (!$main_id) {
-                    $stmt = $pdo->prepare("SELECT id FROM inv_main_categories WHERE code = 'CAT-01' AND company_id = ?");
-                    $stmt->execute([$company_id]);
-                    $main_id = $stmt->fetchColumn();
-                }
-
-                // 2. Sub Category
-                $pdo->prepare("INSERT IGNORE INTO inv_sub_categories (company_id, main_id, code, name) VALUES (?, ?, 'SUB-01', 'General')")->execute([$company_id, $main_id]);
-                $sub_id = $pdo->lastInsertId();
-                if (!$sub_id) {
-                    $stmt = $pdo->prepare("SELECT id FROM inv_sub_categories WHERE code = 'SUB-01' AND company_id = ?");
-                    $stmt->execute([$company_id]);
-                    $sub_id = $stmt->fetchColumn();
-                }
-
-                // 3. Brand
-                $pdo->prepare("INSERT IGNORE INTO inv_brands (company_id, name) VALUES (?, 'Generic')")->execute([$company_id]);
-                $brand_id = $pdo->lastInsertId();
-                if (!$brand_id) {
-                    $stmt = $pdo->prepare("SELECT id FROM inv_brands WHERE name = 'Generic' AND company_id = ?");
-                    $stmt->execute([$company_id]);
-                    $brand_id = $stmt->fetchColumn();
-                }
-
-                // 4. Items
-                $pdo->prepare("INSERT IGNORE INTO inv_items (company_id, sub_id, brand_id, code, name, purchase_price, selling_price, unit) 
-                               VALUES (?, ?, ?, 'ITEM-001', 'Sample Item A', 100, 150, 'Pcs'),
-                                      (?, ?, ?, 'ITEM-002', 'Sample Item B', 200, 280, 'Pcs')")
-                    ->execute([$company_id, $sub_id, $brand_id, $company_id, $sub_id, $brand_id]);
-
-                $pdo->commit();
-                echo json_encode(['status' => 'success', 'message' => 'Sample data seeded successfully']);
-            } catch (Exception $e) {
-                $pdo->rollBack();
-                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
-            }
-            break;
-
         case 'delete_location':
             $id = $_GET['id'] ?? 0;
             // Check if is default Main Store (usually ID 1 or is_default=1)

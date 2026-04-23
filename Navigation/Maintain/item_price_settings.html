@@ -1,86 +1,243 @@
-<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 100%; min-height: 500px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Verdana; border: 1px solid #cbd5e0;">
+<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 930px; height: 650px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #cbd5e0; overflow: hidden;">
     
-    <!-- TOP SECTION -->
-    <div style="background: #f8fafc; padding: 20px; border-bottom: 2px solid #cbd5e0; flex-shrink: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <label style="font-size: 14px; font-weight: 700; color: #1F4E79; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <input type="radio" name="priceFilter" value="all" checked onclick="window.togglePriceFilters()"> All Inventory Items
-                </label>
-                
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label style="font-size: 13px; font-weight: 700; color: #1F4E79; width: 100px;">
-                        <input type="radio" name="priceFilter" value="category" onclick="window.togglePriceFilters()"> Category
-                    </label>
-                    <select id="priceCategorySelect" style="width: 320px; height: 28px; border: 1px solid #94a3b8; font-size: 12px; background: white;" disabled onchange="window.loadPriceSettingsData()">
-                        <option value="0">Select Category...</option>
-                    </select>
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label style="font-size: 13px; font-weight: 700; color: #1F4E79; width: 100px;">
-                        <input type="radio" name="priceFilter" value="brand" onclick="window.togglePriceFilters()"> Brand
-                    </label>
-                    <select id="priceBrandSelect" style="width: 320px; height: 28px; border: 1px solid #94a3b8; font-size: 12px; background: white;" disabled onchange="window.loadPriceSettingsData()">
-                        <option value="0">Select Brand...</option>
-                    </select>
-                    <button onclick="window.initPriceSettings()" style="height: 28px; background: #1F4E79; color: white; border: none; padding: 0 15px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 3px;">Refresh</button>
-                </div>
-            </div>
+    <!-- Header Section -->
+    <div style="background: white; padding: 15px; border-bottom: 2px solid #cbd5e0; position: relative; display: flex; align-items: center; justify-content: space-between;">
+        
+        <!-- Left: Empty or placeholder removed as requested -->
+        <div style="width: 10px;"></div>
 
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="window.saveBulkPrices()" style="height: 32px; min-width: 110px; background: #004d40; color: white; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; font-size: 13px;">Save Changes</button>
-                    <button onclick="window.closeModularPopup()" style="height: 32px; min-width: 110px; background: #546e7a; color: white; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; font-size: 13px;">Cancel</button>
-                </div>
-                <div style="background: #e2e8f0; padding: 10px; border: 1px solid #94a3b8; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 13px; font-weight: 700; color: #1F4E79;">Profit Margin:</span>
-                    <input type="number" id="profitMarginInput" value="0" style="width: 60px; height: 26px; text-align: center; border: 1px solid #94a3b8; font-weight: 700;">
-                    <span style="font-size: 12px; font-weight: 700; color: #334155;">%</span>
-                    <button onclick="window.applyProfitMargin()" style="height: 26px; background: #1F4E79; color: white; border: none; padding: 0 15px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 2px;">Apply to List</button>
-                </div>
+        <!-- Middle: Options -->
+        <div style="flex: 1; margin-left: 40px; display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer;">
+                    <input type="radio" name="priceFilter" value="all" checked onchange="togglePriceFilters()"> All Inventory Items
+                </label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="priceFilter" value="category" onchange="togglePriceFilters()"> Category
+                </label>
+                <select id="priceCategorySelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="loadPriceSettingsData()">
+                    <option value="0">Select Category...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="priceFilter" value="brand" onchange="togglePriceFilters()"> Brand
+                </label>
+                <select id="priceBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="loadPriceSettingsData()">
+                    <option value="0">Select Brand...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right: Top Buttons & Margin Box -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <button class="price-btn price-btn-save" onclick="saveBulkPrices()">Save</button>
+                <button class="price-btn price-btn-cancel" onclick="closeModularPopup()">Cancel</button>
+            </div>
+            
+            <div style="background: #cbd5e0; padding: 5px 10px; border: 1px solid #94a3b8; display: flex; align-items: center; gap: 5px; border-radius: 2px;">
+                <span style="font-size: 12px; font-weight: 600; color: #1e293b;">Set</span>
+                <input type="number" id="profitMarginInput" style="width: 50px; height: 22px; text-align: center; border: 1px solid #94a3b8; font-weight: 700;" value="0">
+                <span style="font-size: 11px; font-weight: 600; color: #1e293b;">% Profit Margin on Purchase Price of all Items.</span>
+                <button style="height: 22px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #94a3b8; cursor: pointer;" onclick="applyProfitMargin()">Update</button>
             </div>
         </div>
     </div>
 
-    <!-- DATA TABLE -->
-    <div style="flex: 1; min-height: 300px; background: white; overflow: hidden; display: flex; flex-direction: column;">
+    <!-- Table Section -->
+    <div style="flex: 1; background: white; margin: 10px; border: 1px solid #cbd5e0; border-radius: 2px; overflow: hidden; display: flex; flex-direction: column;">
         <div style="overflow-y: auto; flex: 1;">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
+                <thead style="position: sticky; top: 0; background: white; z-index: 10;">
                     <tr>
-                        <th style="width: 40px; border: 1px solid #cbd5e0; padding: 12px;"></th>
-                        <th style="width: 140px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Item Code</th>
-                        <th style="border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700; text-align: left;">Item Name</th>
-                        <th style="width: 90px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Unit</th>
-                        <th style="width: 140px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Purchase Price</th>
-                        <th style="width: 140px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Selling Price</th>
+                        <th style="width: 40px; border: 1px solid #cbd5e0; padding: 8px;"></th>
+                        <th style="width: 120px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Item Code</th>
+                        <th style="border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic; text-align: left;">Item Name</th>
+                        <th style="width: 80px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Unit</th>
+                        <th style="width: 150px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Purchase Price</th>
+                        <th style="width: 150px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Selling Price</th>
                     </tr>
                 </thead>
                 <tbody id="priceSettingsTableBody">
-                    <tr><td colspan="6" style="text-align: center; padding: 60px; font-size: 14px; color: #64748b;">
-                        <i class="fas fa-spinner fa-spin"></i> Connecting to Inventory Database...
-                    </td></tr>
+                    <!-- Data Rows will be injected here -->
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- DIAGNOSTICS -->
-    <div id="priceStatusFooter" style="height: 35px; background: #fee2e2; border-top: 2px solid #ef4444; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 12px; flex-shrink: 0;">
-        <span><strong style="color: #991b1b;">Connection:</strong> <span id="debugStatus" style="font-weight: 700;">Initializing</span> | <strong>ID:</strong> <span id="debugCoId">?</span></span>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="window.checkPriceConnection()" style="background: #1e40af; color: white; border: none; padding: 3px 12px; border-radius: 3px; cursor: pointer; font-weight: 700; font-size: 11px;">Test API</button>
-            <button onclick="window.seedSampleDataForUser()" style="background: #b91c1c; color: white; border: none; padding: 3px 12px; border-radius: 3px; cursor: pointer; font-weight: 700; font-size: 11px;">Fix Database</button>
-        </div>
-    </div>
-
     <style>
-        .price-input-cell { width: 95%; height: 26px; border: 1px solid #cbd5e0; text-align: center; font-weight: 700; border-radius: 2px; outline: none; }
-        .price-input-cell:focus { border-color: #1F4E79; background: #f0f9ff; }
+        .price-btn {
+            height: 32px;
+            min-width: 100px;
+            padding: 0 20px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .price-btn-save { background: #f1f5f9; border: 1px solid #94a3b8; color: #166534; }
+        .price-btn-save:hover { background: #dcfce7; border-color: #166534; }
+        .price-btn-save i { color: #166534; }
+
+        .price-btn-cancel { background: #f1f5f9; border: 1px solid #94a3b8; color: #991b1b; }
+        .price-btn-cancel:hover { background: #fee2e2; border-color: #991b1b; }
+        .price-btn-cancel i { color: #991b1b; }
+
+        .price-input-cell {
+            width: 100%;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-weight: 600;
+            outline: none;
+            background: #fff;
+        }
+        .price-input-cell:focus { border-color: #3b82f6; background: #eff6ff; }
+        
         #priceSettingsTableBody tr:nth-child(even) { background: #f8fafc; }
-        #priceSettingsTableBody tr:hover { background: #eff6ff; }
-        #priceSettingsTableBody td { padding: 8px 12px; border: 1px solid #cbd5e0; }
+        #priceSettingsTableBody tr:hover { background: #f1f5f9; }
+        #priceSettingsTableBody td { padding: 4px 8px; border: 1px solid #cbd5e0; }
     </style>
 
+    <script>
+        (function() {
+            const companyId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+            let priceItemsData = [];
+
+            // Initialize Form
+            async function initPriceSettings() {
+                // Load Dropdowns
+                try {
+                    const [treeRes, brandsRes] = await Promise.all([
+                        fetch(`api/inventory.php?action=get_inventory_tree&company_id=${companyId}`),
+                        fetch(`api/inventory.php?action=get_brands&company_id=${companyId}`)
+                    ]);
+                    
+                    const tree = await treeRes.json();
+                    const brands = await brandsRes.json();
+
+                    const catSelect = document.getElementById('priceCategorySelect');
+                    catSelect.innerHTML = '<option value="0">Select Category...</option>';
+                    tree.subs.forEach(s => {
+                        const main = tree.mains.find(m => m.id == s.main_id);
+                        const mainName = main ? main.name + " > " : "";
+                        catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
+                    });
+
+                    const brandSelect = document.getElementById('priceBrandSelect');
+                    brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
+                    brands.forEach(b => {
+                        brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                    });
+
+                    // Initial Data Load
+                    loadPriceSettingsData();
+                } catch (e) { console.error(e); }
+            }
+
+            window.togglePriceFilters = function() {
+                const filter = document.querySelector('input[name="priceFilter"]:checked').value;
+                document.getElementById('priceCategorySelect').disabled = (filter !== 'category');
+                document.getElementById('priceBrandSelect').disabled = (filter !== 'brand');
+                loadPriceSettingsData();
+            };
+
+            window.loadPriceSettingsData = async function() {
+                const filterType = document.querySelector('input[name="priceFilter"]:checked').value;
+                let filterId = 0;
+                if (filterType === 'category') filterId = document.getElementById('priceCategorySelect').value;
+                if (filterType === 'brand') filterId = document.getElementById('priceBrandSelect').value;
+
+                // If Category or Brand selected but no value chosen (0), clear the table and return
+                if (filterType !== 'all' && (filterId == 0 || filterId == '0')) {
+                    priceItemsData = [];
+                    renderPriceTable();
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${companyId}&filter_type=${filterType}&filter_id=${filterId}`);
+                    priceItemsData = await res.json();
+                    renderPriceTable();
+                } catch (e) { console.error(e); }
+            };
+
+            function renderPriceTable() {
+                const tbody = document.getElementById('priceSettingsTableBody');
+                tbody.innerHTML = '';
+                
+                if (priceItemsData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No items found</td></tr>';
+                    return;
+                }
+
+                priceItemsData.forEach(item => {
+                    tbody.innerHTML += `
+                        <tr data-id="${item.id}">
+                            <td style="text-align: center; color: #1e293b; font-size: 10px;"><i class="fas fa-play"></i></td>
+                            <td style="text-align: center; font-weight: 700;">${item.code}</td>
+                            <td>${item.name}</td>
+                            <td style="text-align: center;">${item.unit || ''}</td>
+                            <td style="text-align: center; font-weight: 700;">${parseFloat(item.purchase_price).toFixed(2)}</td>
+                            <td>
+                                <input type="number" step="0.01" class="price-input-cell" 
+                                       value="${parseFloat(item.selling_price).toFixed(2)}" 
+                                       onchange="updateLocalPrice(${item.id}, this.value)">
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            window.updateLocalPrice = function(id, val) {
+                const item = priceItemsData.find(i => i.id === id);
+                if (item) item.selling_price = parseFloat(val) || 0;
+            };
+
+            window.applyProfitMargin = function() {
+                const margin = parseFloat(document.getElementById('profitMarginInput').value) || 0;
+                if (margin === 0) return;
+
+                priceItemsData.forEach(item => {
+                    const purchase = parseFloat(item.purchase_price) || 0;
+                    if (purchase > 0) {
+                        item.selling_price = purchase + (purchase * (margin / 100));
+                    }
+                });
+                renderPriceTable();
+            };
+
+            window.saveBulkPrices = async function() {
+                const payload = {
+                    prices: priceItemsData.map(i => ({ item_id: i.id, selling_price: i.selling_price }))
+                };
+
+                try {
+                    const res = await fetch(`api/inventory.php?action=save_bulk_prices&company_id=${companyId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        alert('Prices updated successfully!');
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                } catch (e) { alert('Failed to save prices.'); }
+            };
+
+            // Run Init
+            initPriceSettings();
+        })();
+    </script>
 </div>
