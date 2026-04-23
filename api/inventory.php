@@ -212,6 +212,55 @@ try {
             }
             break;
 
+        case 'get_cost_settings':
+            $filter_type = $_GET['filter_type'] ?? 'all';
+            $filter_id = $_GET['filter_id'] ?? 0;
+            
+            $sql = "SELECT i.id, i.code, i.name, i.valuation_method as cost_method, i.unit 
+                    FROM inv_items i 
+                    WHERE i.company_id = ?";
+            $params = [$company_id];
+            
+            if ($filter_type === 'category') {
+                $sql .= " AND i.sub_id IN (SELECT id FROM inv_sub_categories WHERE main_id = ?)";
+                $params[] = $filter_id;
+            } else if ($filter_type === 'brand') {
+                $sql .= " AND i.brand_id = ?";
+                $params[] = $filter_id;
+            }
+            
+            $sql .= " ORDER BY i.code";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode($items);
+            break;
+
+        case 'save_bulk_cost_methods':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $methods = $data['methods'] ?? [];
+            
+            if (empty($methods)) {
+                echo json_encode(['status' => 'error', 'message' => 'No data to save']);
+                break;
+            }
+            
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("UPDATE inv_items SET valuation_method = ? WHERE id = ? AND company_id = ?");
+                foreach ($methods as $m) {
+                    $stmt->execute([$m['cost_method'], $m['item_id'], $company_id]);
+                }
+                $pdo->commit();
+                echo json_encode(['status' => 'success']);
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            }
+            break;
+
         case 'get_reorder_settings':
             $filter_type = $_GET['filter_type'] ?? 'all';
             $filter_id = $_GET['filter_id'] ?? 0;

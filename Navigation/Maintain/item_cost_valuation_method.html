@@ -1,0 +1,105 @@
+<div id="itemCostMethodContainer" data-module="Item Cost Valuation Method" style="width: 930px; height: 600px; display: flex; flex-direction: column; gap: 10px; background: white; padding: 15px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
+    
+    <!-- Top Filter Bar -->
+    <div style="background: #f8fafc; padding: 15px; border-bottom: 1px solid #e2e8f0; position: relative; display: flex; align-items: center; justify-content: space-between; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+        <!-- Left: Filters -->
+        <div style="flex: 1; margin-left: 40px; display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer;">
+                    <input type="radio" name="costFilter" value="all" checked onchange="window.CostMethodModule.toggleFilters()"> All Inventory Items
+                </label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="costFilter" value="category" onchange="window.CostMethodModule.toggleFilters()"> Category
+                </label>
+                <select id="costCategorySelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.CostMethodModule.load()">
+                    <option value="0">Select Category...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="costFilter" value="brand" onchange="window.CostMethodModule.toggleFilters()"> Brand
+                </label>
+                <select id="costBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.CostMethodModule.load()">
+                    <option value="0">Select Brand...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right: Top Buttons -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <div style="display: flex; border: 1px solid #cbd5e0; border-radius: 2px; overflow: hidden;">
+                    <button style="height: 32px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: none; border-right: 1px solid #cbd5e0; cursor: pointer;" onclick="window.CostMethodModule.bulkSet('Weighted Average Cost')">Set Weighted Average on all Items</button>
+                    <button style="height: 32px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: none; cursor: pointer;" onclick="window.CostMethodModule.bulkSet('Manual Cost')">Set Manual Cost on all Items.</button>
+                </div>
+                <button class="cost-btn cost-btn-save" onclick="window.CostMethodModule.save()">Save</button>
+                <button class="cost-btn cost-btn-cancel" onclick="closeModularPopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: right; padding-right: 20px;">
+        <span style="font-size: 11px; font-style: italic; color: #1e40af; font-weight: 600;">Double-click on selected item to change cost valuation method.</span>
+    </div>
+
+    <!-- Table Container -->
+    <div style="flex: 1; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: white;">
+        <div style="overflow-y: auto; flex: 1;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                    <tr>
+                        <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
+                        <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
+                        <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
+                        <th style="width: 250px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Method of Cost Valuation</th>
+                    </tr>
+                </thead>
+                <tbody id="itemCostMethodTableBody">
+                    <!-- Rows will be populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <style>
+        .cost-btn {
+            height: 32px;
+            min-width: 80px;
+            padding: 0 15px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .cost-btn-save {
+            background: #1e293b;
+            color: white;
+            border: 1px solid #1e293b;
+        }
+        .cost-btn-save:hover { background: #334155; }
+        .cost-btn-cancel {
+            background: #f1f5f9;
+            color: #ef4444;
+            border: 1px solid #cbd5e0;
+        }
+        .cost-btn-cancel:hover { background: #e2e8f0; }
+
+        #itemCostMethodTableBody tr:nth-child(even) { background-color: #f8fafc; }
+        #itemCostMethodTableBody tr:hover { background-color: #f1f5f9; cursor: pointer; }
+        #itemCostMethodTableBody td {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            user-select: none;
+        }
+    </style>
+</div>
