@@ -1,10 +1,10 @@
-<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 930px; height: 600px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Verdana; border: 1px solid #cbd5e0;">
+<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 100%; min-height: 500px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Verdana; border: 1px solid #cbd5e0;">
     
-    <!-- TOP SECTION: Filter Controls -->
-    <div style="background: #f1f5f9; padding: 15px; border-bottom: 2px solid #cbd5e0; flex-shrink: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label style="font-size: 13px; font-weight: 700; color: #1F4E79; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+    <!-- TOP SECTION -->
+    <div style="background: #f8fafc; padding: 20px; border-bottom: 2px solid #cbd5e0; flex-shrink: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="font-size: 14px; font-weight: 700; color: #1F4E79; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                     <input type="radio" name="priceFilter" value="all" checked onclick="window.togglePriceFilters()"> All Inventory Items
                 </label>
                 
@@ -12,7 +12,7 @@
                     <label style="font-size: 13px; font-weight: 700; color: #1F4E79; width: 100px;">
                         <input type="radio" name="priceFilter" value="category" onclick="window.togglePriceFilters()"> Category
                     </label>
-                    <select id="priceCategorySelect" style="width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px;" disabled onchange="window.loadPriceSettingsData()">
+                    <select id="priceCategorySelect" style="width: 320px; height: 28px; border: 1px solid #94a3b8; font-size: 12px; background: white;" disabled onchange="window.loadPriceSettingsData()">
                         <option value="0">Select Category...</option>
                     </select>
                 </div>
@@ -21,201 +21,227 @@
                     <label style="font-size: 13px; font-weight: 700; color: #1F4E79; width: 100px;">
                         <input type="radio" name="priceFilter" value="brand" onclick="window.togglePriceFilters()"> Brand
                     </label>
-                    <select id="priceBrandSelect" style="width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px;" disabled onchange="window.loadPriceSettingsData()">
+                    <select id="priceBrandSelect" style="width: 320px; height: 28px; border: 1px solid #94a3b8; font-size: 12px; background: white;" disabled onchange="window.loadPriceSettingsData()">
                         <option value="0">Select Brand...</option>
                     </select>
-                    <button onclick="window.initPriceSettings()" style="height: 26px; background: #1F4E79; color: white; border: none; padding: 0 15px; font-size: 11px; font-weight: 700; cursor: pointer;">Refresh Lists</button>
+                    <button onclick="window.initPriceSettings()" style="height: 28px; background: #1F4E79; color: white; border: none; padding: 0 15px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 3px;">Refresh</button>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="window.saveBulkPrices()" style="height: 30px; width: 100px; background: #004d40; color: white; border: none; font-weight: 700; cursor: pointer; border-radius: 3px;">Save</button>
-                    <button onclick="window.closeModularPopup()" style="height: 30px; width: 100px; background: #546e7a; color: white; border: none; font-weight: 700; cursor: pointer; border-radius: 3px;">Cancel</button>
+                    <button onclick="window.saveBulkPrices()" style="height: 32px; min-width: 110px; background: #004d40; color: white; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; font-size: 13px;">Save Changes</button>
+                    <button onclick="window.closeModularPopup()" style="height: 32px; min-width: 110px; background: #546e7a; color: white; border: none; font-weight: 700; cursor: pointer; border-radius: 4px; font-size: 13px;">Cancel</button>
                 </div>
-                <div style="background: #e2e8f0; padding: 8px; border: 1px solid #94a3b8; border-radius: 4px; display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 12px; font-weight: 700; color: #1F4E79;">Set</span>
-                    <input type="number" id="profitMarginInput" value="0" style="width: 50px; height: 22px; text-align: center; border: 1px solid #94a3b8;">
-                    <span style="font-size: 11px; font-weight: 700;">% Profit Margin</span>
-                    <button onclick="window.applyProfitMargin()" style="height: 22px; background: #1F4E79; color: white; border: none; padding: 0 10px; font-size: 11px; font-weight: 700; cursor: pointer;">Update</button>
+                <div style="background: #e2e8f0; padding: 10px; border: 1px solid #94a3b8; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 13px; font-weight: 700; color: #1F4E79;">Profit Margin:</span>
+                    <input type="number" id="profitMarginInput" value="0" style="width: 60px; height: 26px; text-align: center; border: 1px solid #94a3b8; font-weight: 700;">
+                    <span style="font-size: 12px; font-weight: 700; color: #334155;">%</span>
+                    <button onclick="window.applyProfitMargin()" style="height: 26px; background: #1F4E79; color: white; border: none; padding: 0 15px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 2px;">Apply to List</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MIDDLE SECTION: Table -->
-    <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; background: white;">
+    <!-- DATA TABLE -->
+    <div style="flex: 1; min-height: 300px; background: white; overflow: hidden; display: flex; flex-direction: column;">
         <div style="overflow-y: auto; flex: 1;">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
                     <tr>
-                        <th style="width: 40px; border: 1px solid #cbd5e0; padding: 10px;"></th>
-                        <th style="width: 120px; border: 1px solid #cbd5e0; padding: 10px; color: #1F4E79;">Item Code</th>
-                        <th style="border: 1px solid #cbd5e0; padding: 10px; color: #1F4E79; text-align: left;">Item Name</th>
-                        <th style="width: 80px; border: 1px solid #cbd5e0; padding: 10px; color: #1F4E79;">Unit</th>
-                        <th style="width: 120px; border: 1px solid #cbd5e0; padding: 10px; color: #1F4E79;">Purchase</th>
-                        <th style="width: 120px; border: 1px solid #cbd5e0; padding: 10px; color: #1F4E79;">Selling</th>
+                        <th style="width: 40px; border: 1px solid #cbd5e0; padding: 12px;"></th>
+                        <th style="width: 140px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Item Code</th>
+                        <th style="border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700; text-align: left;">Item Name</th>
+                        <th style="width: 90px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Unit</th>
+                        <th style="width: 140px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Purchase Price</th>
+                        <th style="width: 140px; border: 1px solid #cbd5e0; padding: 12px; color: #1F4E79; font-weight: 700;">Selling Price</th>
                     </tr>
                 </thead>
                 <tbody id="priceSettingsTableBody">
-                    <tr><td colspan="6" style="text-align: center; padding: 50px;">Please wait, loading data...</td></tr>
+                    <tr><td colspan="6" style="text-align: center; padding: 60px; font-size: 14px; color: #64748b;">
+                        <i class="fas fa-spinner fa-spin"></i> Connecting to Inventory Database...
+                    </td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- BOTTOM SECTION: Diagnostics -->
-    <div style="height: 35px; background: #fee2e2; border-top: 1px solid #ef4444; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px;">
-        <span><strong>Diagnostics:</strong> CoID: <span id="debugCoId">?</span> | Status: <span id="debugStatus">Init</span></span>
+    <!-- DIAGNOSTICS -->
+    <div id="priceStatusFooter" style="height: 35px; background: #fee2e2; border-top: 2px solid #ef4444; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 12px; flex-shrink: 0;">
+        <span><strong style="color: #991b1b;">Connection:</strong> <span id="debugStatus" style="font-weight: 700;">Initializing</span> | <strong>ID:</strong> <span id="debugCoId">?</span></span>
         <div style="display: flex; gap: 10px;">
-            <button onclick="window.checkPriceConnection()" style="background: #1e40af; color: white; border: none; padding: 2px 10px; border-radius: 2px; cursor: pointer;">Check API</button>
-            <button onclick="window.seedSampleDataForUser()" style="background: #c62828; color: white; border: none; padding: 2px 10px; border-radius: 2px; cursor: pointer;">Fix/Seed Data</button>
+            <button onclick="window.checkPriceConnection()" style="background: #1e40af; color: white; border: none; padding: 3px 12px; border-radius: 3px; cursor: pointer; font-weight: 700; font-size: 11px;">Test API</button>
+            <button onclick="window.seedSampleDataForUser()" style="background: #b91c1c; color: white; border: none; padding: 3px 12px; border-radius: 3px; cursor: pointer; font-weight: 700; font-size: 11px;">Fix Database</button>
         </div>
     </div>
 
     <style>
-        .price-input-cell { width: 90%; height: 24px; border: 1px solid #cbd5e0; text-align: center; font-weight: 700; border-radius: 2px; }
-        #priceSettingsTableBody tr:hover { background: #f1f5f9; }
-        #priceSettingsTableBody td { padding: 6px 10px; border: 1px solid #cbd5e0; }
+        .price-input-cell { width: 95%; height: 26px; border: 1px solid #cbd5e0; text-align: center; font-weight: 700; border-radius: 2px; outline: none; }
+        .price-input-cell:focus { border-color: #1F4E79; background: #f0f9ff; }
+        #priceSettingsTableBody tr:nth-child(even) { background: #f8fafc; }
+        #priceSettingsTableBody tr:hover { background: #eff6ff; }
+        #priceSettingsTableBody td { padding: 8px 12px; border: 1px solid #cbd5e0; }
     </style>
 
     <script>
-        (function() {
-            window.initPriceSettings = async function() {
-                console.log("Price Settings: Init Started");
-                const status = document.getElementById('debugStatus');
-                if (status) status.innerText = "Loading...";
-                
-                try {
-                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{"company_id":1}');
-                    window.priceCompanyId = session.company_id || 1;
-                    document.getElementById('debugCoId').innerText = window.priceCompanyId;
+        // Use a flag to prevent multiple inits
+        window.priceSettingsLoaded = false;
 
-                    const [treeRes, brandsRes] = await Promise.all([
-                        fetch(`api/inventory.php?action=get_inventory_tree&company_id=${window.priceCompanyId}`),
-                        fetch(`api/inventory.php?action=get_brands&company_id=${window.priceCompanyId}`)
-                    ]);
-                    
-                    const tree = await treeRes.json();
-                    const brands = await brandsRes.json();
-                    
-                    const catSelect = document.getElementById('priceCategorySelect');
-                    if (catSelect && tree.subs) {
-                        catSelect.innerHTML = '<option value="0">Select Category...</option>';
+        window.initPriceSettings = async function() {
+            if (window.priceSettingsLoaded) return;
+            console.log("Price Settings: Initializing...");
+            const status = document.getElementById('debugStatus');
+            const coIdEl = document.getElementById('debugCoId');
+            
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{"company_id":1}');
+                window.priceCompanyId = session.company_id || 1;
+                if (coIdEl) coIdEl.innerText = window.priceCompanyId;
+                if (status) status.innerText = "Loading Database...";
+
+                const [treeRes, brandsRes] = await Promise.all([
+                    fetch(`api/inventory.php?action=get_inventory_tree&company_id=${window.priceCompanyId}`),
+                    fetch(`api/inventory.php?action=get_brands&company_id=${window.priceCompanyId}`)
+                ]);
+                
+                const tree = await treeRes.json();
+                const brands = await brandsRes.json();
+                
+                const catSelect = document.getElementById('priceCategorySelect');
+                if (catSelect) {
+                    catSelect.innerHTML = '<option value="0">Select Category...</option>';
+                    if (tree && tree.subs) {
                         tree.subs.forEach(s => {
                             const main = (tree.mains || []).find(m => m.id == s.main_id);
                             catSelect.innerHTML += `<option value="${s.id}">${main ? main.name + ' > ' : ''}${s.name}</option>`;
                         });
                     }
-                    
-                    const brandSelect = document.getElementById('priceBrandSelect');
-                    if (brandSelect && brands) {
-                        brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
-                        brands.forEach(b => brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`);
-                    }
-
-                    if (status) status.innerText = "Connected";
-                    window.loadPriceSettingsData();
-                } catch (e) {
-                    console.error(e);
-                    if (status) status.innerText = "API Error";
                 }
-            };
-
-            window.togglePriceFilters = function() {
-                const radios = document.getElementsByName('priceFilter');
-                let val = 'all';
-                for (let r of radios) { if (r.checked) val = r.value; }
-                document.getElementById('priceCategorySelect').disabled = (val !== 'category');
-                document.getElementById('priceBrandSelect').disabled = (val !== 'brand');
-                window.loadPriceSettingsData();
-            };
-
-            window.loadPriceSettingsData = async function() {
-                const radios = document.getElementsByName('priceFilter');
-                let type = 'all';
-                for (let r of radios) { if (r.checked) type = r.value; }
                 
-                let id = 0;
-                if (type === 'category') id = document.getElementById('priceCategorySelect').value;
-                if (type === 'brand') id = document.getElementById('priceBrandSelect').value;
-
-                try {
-                    const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${window.priceCompanyId}&filter_type=${type}&filter_id=${id}`);
-                    window.priceItemsData = await res.json();
-                    window.renderPriceTable();
-                } catch (e) { console.error(e); }
-            };
-
-            window.renderPriceTable = function() {
-                const tbody = document.getElementById('priceSettingsTableBody');
-                if (!tbody) return;
-                tbody.innerHTML = '';
-                if (!window.priceItemsData || window.priceItemsData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">No items found.</td></tr>';
-                    return;
+                const brandSelect = document.getElementById('priceBrandSelect');
+                if (brandSelect && brands) {
+                    brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
+                    brands.forEach(b => brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`);
                 }
-                window.priceItemsData.forEach(item => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="text-align: center; color: #1F4E79;"><i class="fas fa-play"></i></td>
-                            <td style="text-align: center; font-weight: 700;">${item.code}</td>
-                            <td>${item.name}</td>
-                            <td style="text-align: center;">${item.unit || ''}</td>
-                            <td style="text-align: center; font-weight: 700;">${parseFloat(item.purchase_price).toFixed(2)}</td>
-                            <td style="text-align: center;">
-                                <input type="number" step="0.01" class="price-input-cell" value="${parseFloat(item.selling_price).toFixed(2)}" onchange="window.updateLocalPrice(${item.id}, this.value)">
-                            </td>
-                        </tr>`;
-                });
-            };
 
-            window.updateLocalPrice = function(id, val) {
-                const item = window.priceItemsData.find(i => i.id == id);
-                if (item) item.selling_price = parseFloat(val) || 0;
-            };
+                if (status) status.innerText = "Online";
+                window.priceSettingsLoaded = true;
+                window.loadPriceSettingsData();
+            } catch (e) {
+                console.error("Price Init Error:", e);
+                if (status) status.innerText = "Offline/Error";
+            }
+        };
 
-            window.applyProfitMargin = function() {
-                const margin = parseFloat(document.getElementById('profitMarginInput').value) || 0;
-                window.priceItemsData.forEach(item => {
-                    const p = parseFloat(item.purchase_price) || 0;
-                    item.selling_price = p + (p * (margin / 100));
-                });
+        window.togglePriceFilters = function() {
+            const radios = document.getElementsByName('priceFilter');
+            let val = 'all';
+            for (let r of radios) { if (r.checked) val = r.value; }
+            const cat = document.getElementById('priceCategorySelect');
+            const brn = document.getElementById('priceBrandSelect');
+            if (cat) cat.disabled = (val !== 'category');
+            if (brn) brn.disabled = (val !== 'brand');
+            window.loadPriceSettingsData();
+        };
+
+        window.loadPriceSettingsData = async function() {
+            const radios = document.getElementsByName('priceFilter');
+            let type = 'all';
+            for (let r of radios) { if (r.checked) type = r.value; }
+            
+            let id = 0;
+            const cat = document.getElementById('priceCategorySelect');
+            const brn = document.getElementById('priceBrandSelect');
+            if (type === 'category' && cat) id = cat.value;
+            if (type === 'brand' && brn) id = brn.value;
+
+            const tbody = document.getElementById('priceSettingsTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Fetching items...</td></tr>';
+
+            try {
+                const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${window.priceCompanyId}&filter_type=${type}&filter_id=${id}`);
+                window.priceItemsData = await res.json();
                 window.renderPriceTable();
-            };
+            } catch (e) { console.error(e); }
+        };
 
-            window.saveBulkPrices = async function() {
-                const payload = { prices: window.priceItemsData.map(i => ({ item_id: i.id, selling_price: i.selling_price })) };
-                try {
-                    await fetch(`api/inventory.php?action=save_bulk_prices&company_id=${window.priceCompanyId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    alert("Saved!");
-                } catch (e) { alert("Error saving."); }
-            };
+        window.renderPriceTable = function() {
+            const tbody = document.getElementById('priceSettingsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (!window.priceItemsData || window.priceItemsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 50px; font-weight: 600; color: #94a3b8;">No inventory items found.</td></tr>';
+                return;
+            }
 
-            window.checkPriceConnection = async function() {
-                try {
-                    const res = await fetch(`api/inventory.php?action=debug_db&company_id=${window.priceCompanyId}`);
-                    const data = await res.json();
-                    alert("Items in DB: " + data.counts.inv_items);
-                    window.initPriceSettings();
-                } catch (e) { alert("API Connection Failed."); }
-            };
+            window.priceItemsData.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align: center; color: #1F4E79;"><i class="fas fa-play"></i></td>
+                        <td style="text-align: center; font-weight: 700; color: #1e293b;">${item.code}</td>
+                        <td style="color: #334155;">${item.name}</td>
+                        <td style="text-align: center;">${item.unit || ''}</td>
+                        <td style="text-align: center; font-weight: 700; color: #166534;">${parseFloat(item.purchase_price).toFixed(2)}</td>
+                        <td style="text-align: center;">
+                            <input type="number" step="0.01" class="price-input-cell" value="${parseFloat(item.selling_price).toFixed(2)}" onchange="window.updateLocalPrice(${item.id}, this.value)">
+                        </td>
+                    </tr>`;
+            });
+        };
 
-            window.seedSampleDataForUser = async function() {
-                if (!confirm("Fix/Seed Demo Data?")) return;
-                try {
-                    await fetch(`api/inventory.php?action=seed_sample_data&company_id=${window.priceCompanyId}`);
-                    alert("Database Fixed! Re-opening...");
-                    window.initPriceSettings();
-                } catch (e) { alert("Action Failed."); }
-            };
+        window.updateLocalPrice = function(id, val) {
+            const item = window.priceItemsData.find(i => i.id == id);
+            if (item) item.selling_price = parseFloat(val) || 0;
+        };
 
-            // Run
-            setTimeout(window.initPriceSettings, 200);
-        })();
+        window.applyProfitMargin = function() {
+            const margin = parseFloat(document.getElementById('profitMarginInput').value) || 0;
+            if (margin === 0) return;
+            window.priceItemsData.forEach(item => {
+                const p = parseFloat(item.purchase_price) || 0;
+                item.selling_price = p + (p * (margin / 100));
+            });
+            window.renderPriceTable();
+        };
+
+        window.saveBulkPrices = async function() {
+            if (!window.priceItemsData || window.priceItemsData.length === 0) return;
+            const payload = { prices: window.priceItemsData.map(i => ({ item_id: i.id, selling_price: i.selling_price })) };
+            try {
+                const res = await fetch(`api/inventory.php?action=save_bulk_prices&company_id=${window.priceCompanyId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (result.status === 'success') alert("✅ Prices Updated Successfully!");
+            } catch (e) { alert("❌ Error saving prices."); }
+        };
+
+        window.checkPriceConnection = async function() {
+            try {
+                const res = await fetch(`api/inventory.php?action=debug_db&company_id=${window.priceCompanyId}`);
+                const data = await res.json();
+                alert("Database Status:\nItems: " + data.counts.inv_items + "\nCategories: " + data.counts.inv_main_categories + "\nCompany ID: " + data.company_id);
+                window.priceSettingsLoaded = false;
+                window.initPriceSettings();
+            } catch (e) { alert("API Connection Failed."); }
+        };
+
+        window.seedSampleDataForUser = async function() {
+            if (!confirm("This will fix your database and add General Items for testing. Proceed?")) return;
+            try {
+                await fetch(`api/inventory.php?action=seed_sample_data&company_id=${window.priceCompanyId}`);
+                alert("Database Fixed! Loading your items...");
+                window.priceSettingsLoaded = false;
+                window.initPriceSettings();
+            } catch (e) { alert("Action Failed."); }
+        };
+
+        // Execute if it was already defined globally
+        if (typeof window.initPriceSettings === 'function') {
+            setTimeout(window.initPriceSettings, 300);
+        }
     </script>
 </div>

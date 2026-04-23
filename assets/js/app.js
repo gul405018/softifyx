@@ -2346,6 +2346,7 @@
                         else if (url.includes('chart_of_accounts.html')) setTimeout(() => initChartOfAccountsView(), 10);
                         else if (url.includes('employees.html')) setTimeout(() => window.initEmployeesView(), 10);
                         else if (url.includes('inventory_locations.html')) setTimeout(() => window.initInventoryLocationsView(), 10);
+                        else if (url.includes('item_price_settings.html')) setTimeout(() => { if (typeof window.initPriceSettings === 'function') window.initPriceSettings(); }, 50);
                     }
                 } else {
                     openModal({ icon: titleIcon, text: titleText }, 
