@@ -1,7 +1,7 @@
-<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 960px; height: 650px; background: #f1f5f9; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #cbd5e0; overflow: hidden;">
+<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 930px; height: 650px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #cbd5e0; overflow: hidden;">
     
     <!-- Header Section -->
-    <div style="background: #e2e8f0; padding: 15px; border-bottom: 2px solid #cbd5e0; position: relative; display: flex; align-items: center; justify-content: space-between;">
+    <div style="background: white; padding: 15px; border-bottom: 2px solid #cbd5e0; position: relative; display: flex; align-items: center; justify-content: space-between;">
         
         <!-- Left: Empty or placeholder removed as requested -->
         <div style="width: 10px;"></div>
@@ -51,7 +51,7 @@
     <div style="flex: 1; background: white; margin: 10px; border: 1px solid #cbd5e0; border-radius: 2px; overflow: hidden; display: flex; flex-direction: column;">
         <div style="overflow-y: auto; flex: 1;">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                <thead style="position: sticky; top: 0; background: white; z-index: 10;">
                     <tr>
                         <th style="width: 40px; border: 1px solid #cbd5e0; padding: 8px;"></th>
                         <th style="width: 120px; border: 1px solid #cbd5e0; padding: 8px; color: #1e293b; font-style: italic;">Item Code</th>
@@ -127,8 +127,10 @@
 
                     const catSelect = document.getElementById('priceCategorySelect');
                     catSelect.innerHTML = '<option value="0">Select Category...</option>';
-                    tree.mains.forEach(m => {
-                        catSelect.innerHTML += `<option value="${m.id}">${m.code} - ${m.name}</option>`;
+                    tree.subs.forEach(s => {
+                        const main = tree.mains.find(m => m.id == s.main_id);
+                        const mainName = main ? main.name + " > " : "";
+                        catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
                     });
 
                     const brandSelect = document.getElementById('priceBrandSelect');
@@ -181,7 +183,7 @@
                 priceItemsData.forEach(item => {
                     tbody.innerHTML += `
                         <tr data-id="${item.id}">
-                            <td style="text-align: center;"><input type="checkbox" checked disabled></td>
+                            <td style="text-align: center; color: #1e293b; font-size: 10px;"><i class="fas fa-play"></i></td>
                             <td style="text-align: center; font-weight: 700;">${item.code}</td>
                             <td>${item.name}</td>
                             <td style="text-align: center;">${item.unit || ''}</td>
