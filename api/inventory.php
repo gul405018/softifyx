@@ -388,7 +388,7 @@ try {
                       WHERE i.company_id = :company_id";
             
             if ($filter_type === 'category' && $filter_id > 0) {
-                $query .= " AND i.sub_id = :filter_id";
+                $query .= " AND sc.main_id = :filter_id";
             } elseif ($filter_type === 'brand' && $filter_id > 0) {
                 $query .= " AND i.brand_id = :filter_id";
             }

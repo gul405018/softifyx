@@ -127,10 +127,8 @@
 
                     const catSelect = document.getElementById('priceCategorySelect');
                     catSelect.innerHTML = '<option value="0">Select Category...</option>';
-                    tree.subs.forEach(s => {
-                        const main = tree.mains.find(m => m.id == s.main_id);
-                        const mainName = main ? main.name + " > " : "";
-                        catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
+                    tree.mains.forEach(m => {
+                        catSelect.innerHTML += `<option value="${m.id}">${m.code} - ${m.name}</option>`;
                     });
 
                     const brandSelect = document.getElementById('priceBrandSelect');
