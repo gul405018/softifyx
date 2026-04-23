@@ -28,6 +28,7 @@
                 <select id="priceBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="loadPriceSettingsData()">
                     <option value="0">Select Brand...</option>
                 </select>
+                <button onclick="initPriceSettings()" style="height: 26px; font-size: 11px; background: #f1f5f9; border: 1px solid #cbd5e0; cursor: pointer; padding: 0 10px;">Refresh Lists</button>
             </div>
         </div>
 
@@ -108,75 +109,81 @@
         #priceSettingsTableBody td { padding: 4px 8px; border: 1px solid #cbd5e0; }
     </style>
 
+    <!-- Diagnostics & Debug Footer (Can be removed later) -->
+    <div id="priceDebugInfo" style="padding: 5px 15px; background: #fee2e2; border-top: 1px solid #ef4444; font-size: 11px; color: #991b1b; display: none; align-items: center; justify-content: space-between;">
+        <span><strong>Debug:</strong> Company ID: <span id="debugCoId">?</span> | Status: <span id="debugStatus">Pending</span></span>
+        <button onclick="seedSampleDataForUser()" style="background: #ef4444; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-weight: bold;">Seed Sample Data</button>
+    </div>
+
     <script>
-        // Use a persistent variable for data
+        // Global variables
         var priceItemsData = [];
-        var priceCompanyId = JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1;
+        var priceCompanyId = 1;
 
         async function initPriceSettings() {
-            let retries = 0;
-            const maxRetries = 20;
-            const checkReady = setInterval(async () => {
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                priceCompanyId = session.company_id || 1;
+                document.getElementById('debugCoId').innerText = priceCompanyId;
+                document.getElementById('priceDebugInfo').style.display = 'flex';
+                
+                console.log("Initializing Price Settings for Company:", priceCompanyId);
+                
+                const [treeRes, brandsRes] = await Promise.all([
+                    fetch(`api/inventory.php?action=get_inventory_tree&company_id=${priceCompanyId}`),
+                    fetch(`api/inventory.php?action=get_brands&company_id=${priceCompanyId}`)
+                ]);
+                
+                const tree = await treeRes.json();
+                const brands = await brandsRes.json();
+                
                 const catSelect = document.getElementById('priceCategorySelect');
-                if (catSelect || ++retries >= maxRetries) {
-                    clearInterval(checkReady);
-                    if (!catSelect) {
-                        console.error("Price Settings: Failed to find UI elements.");
-                        return;
-                    }
-                    
-                    console.log("Initializing Price Settings for Company:", priceCompanyId);
-                    try {
-                        const [treeRes, brandsRes] = await Promise.all([
-                            fetch(`api/inventory.php?action=get_inventory_tree&company_id=${priceCompanyId}`),
-                            fetch(`api/inventory.php?action=get_brands&company_id=${priceCompanyId}`)
-                        ]);
-                        
-                        const tree = await treeRes.json();
-                        const brands = await brandsRes.json();
-                        
-                        console.log("Tree Data:", tree);
-                        console.log("Brands Data:", brands);
-
-                        catSelect.innerHTML = '<option value="0">Select Category...</option>';
-                        if (tree && tree.subs && tree.subs.length > 0) {
-                            tree.subs.forEach(s => {
-                                const main = tree.mains.find(m => m.id == s.main_id);
-                                const mainName = main ? main.name + " > " : "";
-                                catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
-                            });
-                        } else {
-                            console.warn("No sub-categories found for this company.");
-                        }
-
-                        const brandSelect = document.getElementById('priceBrandSelect');
-                        if (brandSelect) {
-                            brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
-                            if (brands && Array.isArray(brands) && brands.length > 0) {
-                                brands.forEach(b => {
-                                    brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
-                                });
-                            } else {
-                                console.warn("No brands found for this company.");
-                            }
-                        }
-
-                        // Initial Data Load (All Items)
-                        loadPriceSettingsData();
-                    } catch (e) { 
-                        console.error("Initialization Error:", e); 
-                    }
+                const brandSelect = document.getElementById('priceBrandSelect');
+                
+                if (!catSelect || !brandSelect) {
+                    setTimeout(initPriceSettings, 200); // Retry if DOM not ready
+                    return;
                 }
-            }, 100);
+
+                catSelect.innerHTML = '<option value="0">Select Category...</option>';
+                if (tree && tree.subs && tree.subs.length > 0) {
+                    tree.subs.forEach(s => {
+                        const main = (tree.mains || []).find(m => m.id == s.main_id);
+                        const mainName = main ? main.name + " > " : "";
+                        catSelect.innerHTML += `<option value="${s.id}">${mainName}${s.name}</option>`;
+                    });
+                    document.getElementById('debugStatus').innerText = "Data Loaded";
+                } else {
+                    document.getElementById('debugStatus').innerText = "No Categories Found";
+                }
+
+                brandSelect.innerHTML = '<option value="0">Select Brand...</option>';
+                if (brands && Array.isArray(brands) && brands.length > 0) {
+                    brands.forEach(b => {
+                        brandSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                    });
+                }
+
+                // Default load
+                loadPriceSettingsData();
+            } catch (e) { 
+                console.error("Initialization Error:", e);
+                document.getElementById('debugStatus').innerText = "Error: " + e.message;
+            }
         }
 
         window.togglePriceFilters = function() {
-            const filterEl = document.querySelector('input[name="priceFilter"]:checked');
-            if (!filterEl) return;
+            // Find checked radio manually to avoid selector issues
+            const radios = document.getElementsByName('priceFilter');
+            let filter = 'all';
+            for (let r of radios) {
+                if (r.checked) {
+                    filter = r.value;
+                    break;
+                }
+            }
             
-            const filter = filterEl.value;
-            console.log("Filter Changed to:", filter);
-            
+            console.log("Toggling Filter:", filter);
             document.getElementById('priceCategorySelect').disabled = (filter !== 'category');
             document.getElementById('priceBrandSelect').disabled = (filter !== 'brand');
             
@@ -184,15 +191,18 @@
         };
 
         window.loadPriceSettingsData = async function() {
-            const filterEl = document.querySelector('input[name="priceFilter"]:checked');
-            if (!filterEl) return;
+            const radios = document.getElementsByName('priceFilter');
+            let filterType = 'all';
+            for (let r of radios) {
+                if (r.checked) {
+                    filterType = r.value;
+                    break;
+                }
+            }
             
-            const filterType = filterEl.value;
             let filterId = 0;
             if (filterType === 'category') filterId = document.getElementById('priceCategorySelect').value;
             if (filterType === 'brand') filterId = document.getElementById('priceBrandSelect').value;
-
-            console.log("Loading Data for:", filterType, "ID:", filterId);
 
             if (filterType !== 'all' && (filterId == 0 || filterId == '0')) {
                 priceItemsData = [];
@@ -203,19 +213,17 @@
             try {
                 const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${priceCompanyId}&filter_type=${filterType}&filter_id=${filterId}`);
                 priceItemsData = await res.json();
-                console.log("Loaded Items:", priceItemsData.length);
                 renderPriceTable();
-            } catch (e) { 
-                console.error("Data Load Error:", e); 
-            }
+            } catch (e) { console.error("Data Load Error:", e); }
         };
 
         function renderPriceTable() {
             const tbody = document.getElementById('priceSettingsTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
             
             if (!priceItemsData || priceItemsData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No items found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No items found. Click "All Inventory Items" or select a filter.</td></tr>';
                 return;
             }
 
@@ -275,7 +283,22 @@
             } catch (e) { alert('Failed to save prices.'); }
         };
 
-        // Run Init immediately
+        window.seedSampleDataForUser = async function() {
+            if (confirm("This will add some sample categories and items to your database for testing. Continue?")) {
+                try {
+                    const res = await fetch(`api/inventory.php?action=seed_sample_data&company_id=${priceCompanyId}`);
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        alert(result.message);
+                        initPriceSettings();
+                    } else {
+                        alert("Seed failed: " + result.message);
+                    }
+                } catch (e) { alert("Network error during seed."); }
+            }
+        };
+
+        // Run Init
         initPriceSettings();
     </script>
 </div>
