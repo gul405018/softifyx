@@ -428,22 +428,7 @@ try {
             $stmt->execute($params);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // FINAL VERIFICATION: Forced item to confirm rendering
-            $items[] = [
-                'id' => 888,
-                'code' => 'LIVE-TEST',
-                'name' => 'API CONNECTION OK - Please check your database items.',
-                'unit' => 'EA',
-                'purchase_price' => 10.00,
-                'selling_price' => 20.00
-            ];
-            
-            echo json_encode([
-                'items' => $items,
-                'debug_query' => $sql,
-                'debug_company_id' => $company_id,
-                'debug_params' => $params
-            ]);
+            echo json_encode($items);
             break;
 
         case 'save_bulk_prices':
