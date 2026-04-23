@@ -1,7 +1,7 @@
-<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 930px; height: 650px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #cbd5e0; overflow: hidden; position: relative;">
+<div id="itemPriceSettingsContainer" data-module="Item Price Settings" style="width: 930px; height: 650px; background: white; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #cbd5e0; overflow: hidden;">
     
-    <!-- Header Section -->
-    <div style="background: #f8fafc; padding: 15px; border-bottom: 2px solid #cbd5e0; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+    <!-- Header Section (Filters & Actions) -->
+    <div id="priceHeader" style="flex-shrink: 0; background: #f1f5f9; padding: 15px; border-bottom: 2px solid #cbd5e0; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; min-height: 100px;">
         
         <!-- Left: Filters -->
         <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
@@ -15,7 +15,7 @@
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #1F4E79; width: 100px; cursor: pointer;">
                     <input type="radio" name="priceFilter" value="category" onclick="window.togglePriceFilters()"> Category
                 </label>
-                <select id="priceCategorySelect" style="flex: 1; max-width: 350px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.loadPriceSettingsData()">
+                <select id="priceCategorySelect" style="flex: 1; max-width: 350px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none; background: white;" disabled onchange="window.loadPriceSettingsData()">
                     <option value="0">Select Category...</option>
                 </select>
                 <button onclick="window.initPriceSettings()" style="height: 26px; font-size: 11px; background: #1F4E79; color: white; border: none; border-radius: 2px; cursor: pointer; padding: 0 10px; font-weight: 700;">Refresh</button>
@@ -25,7 +25,7 @@
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #1F4E79; width: 100px; cursor: pointer;">
                     <input type="radio" name="priceFilter" value="brand" onclick="window.togglePriceFilters()"> Brand
                 </label>
-                <select id="priceBrandSelect" style="flex: 1; max-width: 350px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.loadPriceSettingsData()">
+                <select id="priceBrandSelect" style="flex: 1; max-width: 350px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none; background: white;" disabled onchange="window.loadPriceSettingsData()">
                     <option value="0">Select Brand...</option>
                 </select>
             </div>
@@ -34,8 +34,8 @@
         <!-- Right: Actions -->
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
             <div style="display: flex; gap: 10px;">
-                <button class="price-btn-erp price-save" onclick="window.saveBulkPrices()">Save</button>
-                <button class="price-btn-erp price-cancel" onclick="window.closeModularPopup()">Cancel</button>
+                <button class="erp-price-btn erp-save" onclick="window.saveBulkPrices()">Save</button>
+                <button class="erp-price-btn erp-cancel" onclick="window.closeModularPopup()">Cancel</button>
             </div>
             
             <div style="background: #e2e8f0; padding: 6px 12px; border: 1px solid #cbd5e0; display: flex; align-items: center; gap: 8px; border-radius: 4px;">
@@ -51,7 +51,7 @@
     <div style="flex: 1; background: white; margin: 0; overflow: hidden; display: flex; flex-direction: column; border-bottom: 1px solid #cbd5e0;">
         <div style="overflow-y: auto; flex: 1;">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
                     <tr>
                         <th style="width: 40px; border: 1px solid #cbd5e0; padding: 10px;"></th>
                         <th style="width: 130px; border: 1px solid #cbd5e0; padding: 10px; color: #1F4E79; font-weight: 700;">Item Code</th>
@@ -69,8 +69,8 @@
     </div>
 
     <!-- Diagnostics Bar -->
-    <div id="priceDebugBar" style="height: 30px; background: #fee2e2; border-top: 1px solid #ef4444; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; color: #991b1b;">
-        <span><strong>Status:</strong> <span id="debugStatus">Ready</span> | <strong>Company:</strong> <span id="debugCoId">1</span></span>
+    <div id="priceDebugBar" style="flex-shrink: 0; height: 35px; background: #fee2e2; border-top: 1px solid #ef4444; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; color: #991b1b;">
+        <span><strong>Diagnostics:</strong> CoID: <span id="debugCoId">?</span> | Status: <span id="debugStatus">Init...</span></span>
         <div style="display: flex; gap: 10px;">
             <button onclick="window.checkPriceConnection()" style="background: #1e40af; color: white; border: none; padding: 2px 10px; border-radius: 2px; cursor: pointer; font-weight: 700;">Test API</button>
             <button onclick="window.seedSampleDataForUser()" style="background: #c62828; color: white; border: none; padding: 2px 10px; border-radius: 2px; cursor: pointer; font-weight: 700;">Seed Demo</button>
@@ -78,9 +78,9 @@
     </div>
 
     <style>
-        .price-btn-erp {
-            height: 28px;
-            min-width: 80px;
+        .erp-price-btn {
+            height: 30px;
+            min-width: 90px;
             padding: 0 15px;
             font-size: 12px;
             font-weight: 700;
@@ -90,11 +90,11 @@
             color: white;
             transition: all 0.2s;
         }
-        .price-save { background: #004d40; border-color: #004d40; }
-        .price-save:hover { background: #00695c; }
+        .erp-save { background: #004d40; border-color: #004d40; }
+        .erp-save:hover { background: #00695c; }
         
-        .price-cancel { background: #546e7a; border-color: #546e7a; }
-        .price-cancel:hover { background: #78909c; }
+        .erp-cancel { background: #546e7a; border-color: #546e7a; }
+        .erp-cancel:hover { background: #78909c; }
 
         .price-input-cell {
             width: 90%;
@@ -115,22 +115,17 @@
 
     <script>
         (function() {
-            console.log("Price Settings: Script Execution Started");
-            
-            // Global state
+            // State
             window.priceItemsData = [];
             window.priceCompanyId = 1;
 
             window.initPriceSettings = async function() {
                 try {
-                    const sessionStr = localStorage.getItem('softifyx_session');
-                    const session = sessionStr ? JSON.parse(sessionStr) : {};
+                    const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                     window.priceCompanyId = session.company_id || 1;
                     
-                    const coDisplay = document.getElementById('debugCoId');
-                    const statusDisplay = document.getElementById('debugStatus');
-                    if (coDisplay) coDisplay.innerText = window.priceCompanyId;
-                    if (statusDisplay) statusDisplay.innerText = "Fetching Lists...";
+                    document.getElementById('debugCoId').innerText = window.priceCompanyId;
+                    document.getElementById('debugStatus').innerText = "Fetching...";
 
                     const [treeRes, brandsRes] = await Promise.all([
                         fetch(`api/inventory.php?action=get_inventory_tree&company_id=${window.priceCompanyId}`),
@@ -163,11 +158,11 @@
                         }
                     }
 
-                    if (statusDisplay) statusDisplay.innerText = "Ready";
+                    document.getElementById('debugStatus').innerText = "Ready";
                     window.loadPriceSettingsData();
                 } catch (e) { 
-                    console.error("Price Settings Init Error:", e);
-                    if (document.getElementById('debugStatus')) document.getElementById('debugStatus').innerText = "Load Failed";
+                    console.error("Init Error:", e);
+                    document.getElementById('debugStatus').innerText = "Load Failed";
                 }
             };
 
@@ -176,11 +171,8 @@
                 let filter = 'all';
                 for (let r of radios) { if (r.checked) { filter = r.value; break; } }
                 
-                const catSel = document.getElementById('priceCategorySelect');
-                const brnSel = document.getElementById('priceBrandSelect');
-                if (catSel) catSel.disabled = (filter !== 'category');
-                if (brnSel) brnSel.disabled = (filter !== 'brand');
-                
+                document.getElementById('priceCategorySelect').disabled = (filter !== 'category');
+                document.getElementById('priceBrandSelect').disabled = (filter !== 'brand');
                 window.loadPriceSettingsData();
             };
 
@@ -190,10 +182,8 @@
                 for (let r of radios) { if (r.checked) { filterType = r.value; break; } }
                 
                 let filterId = 0;
-                const catSel = document.getElementById('priceCategorySelect');
-                const brnSel = document.getElementById('priceBrandSelect');
-                if (filterType === 'category' && catSel) filterId = catSel.value;
-                if (filterType === 'brand' && brnSel) filterId = brnSel.value;
+                if (filterType === 'category') filterId = document.getElementById('priceCategorySelect').value;
+                if (filterType === 'brand') filterId = document.getElementById('priceBrandSelect').value;
 
                 if (filterType !== 'all' && (filterId == 0 || filterId == '0')) {
                     window.priceItemsData = [];
@@ -205,7 +195,7 @@
                     const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${window.priceCompanyId}&filter_type=${filterType}&filter_id=${filterId}`);
                     window.priceItemsData = await res.json();
                     window.renderPriceTable();
-                } catch (e) { console.error("Price Data Load Error:", e); }
+                } catch (e) { console.error("Data Load Error:", e); }
             };
 
             window.renderPriceTable = function() {
@@ -214,7 +204,7 @@
                 tbody.innerHTML = '';
                 
                 if (!window.priceItemsData || window.priceItemsData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #64748b; font-weight: 600;">No items found in this selection.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #64748b; font-weight: 600;">No items found.</td></tr>';
                     return;
                 }
 
@@ -244,18 +234,15 @@
             window.applyProfitMargin = function() {
                 const margin = parseFloat(document.getElementById('profitMarginInput').value) || 0;
                 if (margin === 0) return;
-
                 window.priceItemsData.forEach(item => {
                     const purchase = parseFloat(item.purchase_price) || 0;
-                    if (purchase > 0) {
-                        item.selling_price = purchase + (purchase * (margin / 100));
-                    }
+                    if (purchase > 0) item.selling_price = purchase + (purchase * (margin / 100));
                 });
                 window.renderPriceTable();
             };
 
             window.saveBulkPrices = async function() {
-                if (!window.priceItemsData || window.priceItemsData.length === 0) return alert("No items to save.");
+                if (window.priceItemsData.length === 0) return;
                 try {
                     const payload = { prices: window.priceItemsData.map(i => ({ item_id: i.id, selling_price: i.selling_price })) };
                     const res = await fetch(`api/inventory.php?action=save_bulk_prices&company_id=${window.priceCompanyId}`, {
@@ -265,31 +252,29 @@
                     });
                     const result = await res.json();
                     if (result.status === 'success') alert('Prices updated successfully!');
-                    else alert('Error: ' + result.message);
-                } catch (e) { alert('Failed to save prices.'); }
+                } catch (e) { alert('Save failed.'); }
             };
 
             window.checkPriceConnection = async function() {
                 try {
                     const res = await fetch(`api/inventory.php?action=debug_db&company_id=${window.priceCompanyId}`);
                     const data = await res.json();
-                    alert("API Check:\nItems: " + data.counts.inv_items + "\nCategories: " + data.counts.inv_main_categories);
+                    alert("Items: " + data.counts.inv_items + "\nCategories: " + data.counts.inv_main_categories);
                     window.initPriceSettings();
-                } catch (e) { alert("API Connection Failed."); }
+                } catch (e) { alert("API Offline."); }
             };
 
             window.seedSampleDataForUser = async function() {
-                if (confirm("Seed sample data?")) {
-                    try {
-                        const res = await fetch(`api/inventory.php?action=seed_sample_data&company_id=${window.priceCompanyId}`);
-                        const result = await res.json();
-                        if (result.status === 'success') { alert("Seeded!"); window.initPriceSettings(); }
-                    } catch (e) { alert("Seed Failed."); }
-                }
+                if (!confirm("Seed demo data?")) return;
+                try {
+                    const res = await fetch(`api/inventory.php?action=seed_sample_data&company_id=${window.priceCompanyId}`);
+                    const result = await res.json();
+                    if (result.status === 'success') { alert("Seeded!"); window.initPriceSettings(); }
+                } catch (e) { alert("Seed Failed."); }
             };
 
             // Start
-            setTimeout(window.initPriceSettings, 100);
+            setTimeout(window.initPriceSettings, 200);
         })();
     </script>
 </div>
