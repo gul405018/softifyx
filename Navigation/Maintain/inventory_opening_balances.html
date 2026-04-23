@@ -1,125 +1,122 @@
 <div id="invOpeningBalancesContainer" data-module="Inventory Opening Balances" 
-     style="width: 930px; min-height: 600px; display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
+     style="min-height: 600px; display: flex; flex-direction: column; gap: 12px; background: white; padding: 15px; font-family: 'Segoe UI', Arial, sans-serif;">
     
-    <!-- Action Header -->
-    <div style="display: flex; justify-content: flex-end; border-bottom: 2px solid #1e3a8a; padding-bottom: 15px;">
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="ob-btn ob-btn-chart" onclick="window.openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-sitemap', 'Chart of Inventory', window.initChartOfInventoryView, 'Chart of Inventory', true)">
+    <!-- Top Row: Action Buttons (Title Removed) -->
+    <div style="display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid #cbd5e0; padding-bottom: 10px;">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+            <button class="ob-btn" onclick="window.openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-sitemap', 'Chart of Inventory', window.initChartOfInventoryView, 'Chart of Inventory', true)">
                 New Item
             </button>
-            <button class="ob-btn ob-btn-chart" onclick="importInvBalances()">
+            <button class="ob-btn" onclick="importInvBalances()">
                 Import Balances
             </button>
-            <button class="ob-btn ob-btn-chart" onclick="alert('Import Items logic coming soon...')">Import Items</button>
-            <button class="ob-btn ob-btn-save" onclick="saveInvOpeningBalances()">
+            <button class="ob-btn" onclick="alert('Import Items logic coming soon...')">Import Items</button>
+            <button class="ob-btn ob-save" onclick="saveInvOpeningBalances()">
                 Save (Ctrl+S)
             </button>
-            <button class="ob-btn ob-btn-cancel" onclick="closeModularPopup()">
+            <button class="ob-btn ob-cancel" onclick="closeModularPopup()">
                 Cancel
             </button>
-            <button class="ob-btn ob-btn-delete" onclick="deleteSelectedInvObRow()">Delete</button>
-            <button class="ob-btn ob-btn-chart">Print</button>
+            <button class="ob-btn ob-delete" onclick="deleteSelectedInvObRow()">Delete</button>
+            <button class="ob-btn">Print</button>
         </div>
     </div>
 
-    <!-- Location Selection Section -->
-    <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
-        <label style="font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Inventory Location</label>
-        <select id="invObLocationSelect" style="width: 300px; height: 32px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; outline: none; background: white;" onchange="loadInvOpeningBalances()">
-            <!-- Locations loaded by JS -->
-        </select>
+    <!-- Search & Location Row -->
+    <div style="display: flex; align-items: center; gap: 20px; padding: 10px 0; border-bottom: 1px solid #cbd5e0;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <label style="font-size: 13px; font-weight: 700; color: #334155; font-style: italic;">Inventory Location</label>
+            <select id="invObLocationSelect" style="width: 250px; height: 32px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; outline: none;" onchange="loadInvOpeningBalances()">
+                <!-- Locations loaded by JS -->
+            </select>
+        </div>
     </div>
 
     <!-- Main Data Grid -->
-    <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; position: relative; background: white;">
+    <div style="flex: 1; border: 1px solid #cbd5e0; border-radius: 0; overflow: hidden; display: flex; flex-direction: column; position: relative;">
         <!-- Floating Search Results List -->
         <div id="invObSearchResults" 
-             style="position: absolute; top: 0; left: 0; width: 400px; background: white; border: 1px solid #cbd5e0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; max-height: 250px; overflow-y: auto; border-radius: 4px;">
+             style="position: absolute; width: 400px; background: white; border: 2px solid #1F4E79; border-radius: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: none; max-height: 250px; overflow-y: auto;">
         </div>
 
         <!-- Header -->
-        <div style="display: grid; grid-template-columns: 30px 120px 1fr 100px 100px 100px 120px 140px; background: #eff6ff; border-bottom: 2px solid #1e3a8a; font-weight: 800; font-size: 11px; color: #1e3a8a; text-transform: uppercase;">
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0; background: #dbeafe;"></div>
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0; text-align: center;">Item Code</div>
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0;">Description</div>
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0; text-align: center;">Pieces</div>
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0; text-align: center;">Quantity</div>
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0; text-align: center;">Unit</div>
-            <div style="padding: 12px; border-right: 1px solid #cbd5e0; text-align: center;">Rate</div>
-            <div style="padding: 12px; text-align: center;">Amount</div>
+        <div style="display: grid; grid-template-columns: 30px 120px 1fr 100px 100px 100px 120px 140px; background: #f1f5f9; border-bottom: 1px solid #cbd5e0; font-weight: 700; font-size: 12px; color: #1F4E79; text-transform: uppercase;">
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; background: #e2e8f0; border-bottom: 1px solid #cbd5e0;"></div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">Item Code</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0;">Description</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">Pieces</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">Quantity</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">Unit</div>
+            <div style="padding: 10px; border-right: 1px solid #cbd5e0; text-align: center;">Rate</div>
+            <div style="padding: 10px; text-align: center;">Amount</div>
         </div>
         <!-- Body -->
         <div id="invObGridContainer" style="flex: 1; overflow-y: auto; background: white;">
             <div id="invObGridBody">
-                <div style="padding: 40px; text-align: center; color: #64748b; font-size: 13px;">Loading stock records...</div>
+                <!-- Data Rows dynamically rendered -->
             </div>
         </div>
     </div>
 
-    <!-- Totals Footer -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: 2px solid #1e3a8a; border-radius: 0 0 4px 4px;">
-        <div style="display: grid; grid-template-columns: 1fr 140px; font-weight: 800; font-size: 13px; color: #1e3a8a;">
-            <div style="padding: 12px; text-align: right; text-transform: uppercase;">Total Valuation Amount</div>
-            <div style="padding: 12px; border-left: 1px solid #e2e8f0; background: white; text-align: right; color: #1e3a8a;" id="invObTotalAmount">0.00</div>
+    <!-- Totals Footer (Matched to Worksheet style) -->
+    <div style="background: #ccc; border: 1px solid #999; margin-top: 0;">
+        <div style="display: grid; grid-template-columns: 1fr 140px; font-weight: 700; font-size: 13px; color: #333;">
+            <div style="padding: 6px 12px; text-align: right; text-transform: italic;">Totals</div>
+            <div style="padding: 4px; border-left: 1px solid #999; background: #fff; margin: 2px; border: 1px solid #666; text-align: right;" id="invObTotalAmount">0.00</div>
         </div>
     </div>
 
     <style>
         .ob-btn {
-            height: 30px;
-            min-width: 80px;
+            background: #1F4E79;
+            border: 1px solid #1F4E79;
             padding: 0 12px;
-            font-size: 11px;
-            font-weight: 700;
-            border-radius: 4px;
-            color: white;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            border: none;
-            transition: all 0.2s;
+            border-radius: 4px;
+            color: white !important;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
+            transition: all 0.2s;
         }
+        .ob-btn:hover { background: #2c6aa0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        .ob-btn-chart { background: #0891b2; }
-        .ob-btn-chart:hover { background: #0e7490; }
-        .ob-btn-add { background: #22c55e; }
-        .ob-btn-add:hover { background: #16a34a; }
-        .ob-btn-save { background: #1e3a8a; }
-        .ob-btn-save:hover { background: #1e40af; }
-        .ob-btn-cancel { background: #94a3b8; }
-        .ob-btn-cancel:hover { background: #64748b; }
-        .ob-btn-delete { background: #ef4444; }
-        .ob-btn-delete:hover { background: #dc2626; }
+        .ob-save { background: #10a37f !important; border-color: #10a37f !important; }
+        .ob-save:hover { background: #0e8f6f !important; }
+
+        .ob-cancel { background: #64748b !important; border-color: #64748b !important; }
+        .ob-delete { background: #ef4444 !important; border-color: #ef4444 !important; }
+
+        .ob-find { min-width: 100px; }
 
         .inv-ob-row {
             display: grid;
-            grid-template-columns: 30px 120px 1fr 100px 100px 100px 120px 140px;
+            grid-template-columns: 120px 1fr 100px 100px 100px 120px 140px;
             border-bottom: 1px solid #f1f5f9;
-            transition: all 0.2s;
+            transition: background 0.1s;
             align-items: center;
-            min-height: 32px;
+            min-height: 28px;
             cursor: pointer;
         }
         .inv-ob-row:hover { background: #f8fafc !important; }
-        .inv-ob-row.selected { background: #eff6ff !important; border-left: 3px solid #1e3a8a; }
+        .inv-ob-row.selected { background: #fffde7 !important; outline: 2px solid #1F4E79; z-index: 1; }
         
         .inv-ob-col {
-            padding: 4px 12px;
+            padding: 2px 8px;
             font-size: 13px;
             border-right: 1px solid #f1f5f9;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
-            height: 100%;
-            display: flex;
-            align-items: center;
         }
         
         .ob-input {
             width: 100%;
-            height: 24px;
+            height: 22px;
             border: 1px solid transparent;
             text-align: right;
             outline: none;
@@ -127,28 +124,23 @@
             font-family: inherit;
             font-size: 13px;
             border-radius: 2px;
-            transition: all 0.2s;
         }
         .ob-input:focus {
             background: white;
-            border-color: #1e3a8a;
-            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+            border-color: #1F4E79;
+            box-shadow: 0 0 0 1px rgba(31, 78, 121, 0.1);
         }
-        .ob-input.has-value { font-weight: 800; color: #1e3a8a; }
+        .ob-input.has-value { font-weight: 700; color: #1F4E79; }
         
         .result-item {
-            padding: 10px 15px;
+            padding: 8px 12px;
             font-size: 13px;
             cursor: pointer;
             border-bottom: 1px solid #f1f5f9;
-            transition: all 0.2s;
-            color: #475569;
         }
-        .result-item:hover { background: #eff6ff; color: #1e3a8a; font-weight: 700; }
-        .result-item:last-child { border-bottom: none; }
+        .result-item:hover { background: #f1f5f9; color: #1F4E79; font-weight: 600; }
 
         .text-center { text-align: center; }
         .text-left { text-align: left; }
     </style>
-</div>
 </div>

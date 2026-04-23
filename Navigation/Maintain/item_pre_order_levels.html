@@ -37,46 +37,52 @@
     </div>
 
     <!-- Table Container -->
-    <div style="flex: 1; margin: 10px; display: flex; flex-direction: column;">
-        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 5px;">Inventory Items List</div>
-        
-        <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: white;">
-            <div style="overflow-y: auto; flex: 1;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
-                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
-                        <tr>
-                            <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
-                            <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
-                            <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
-                            <th style="width: 100px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Unit</th>
-                            <th style="width: 200px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Re-Order Level Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itemReorderLevelsTableBody">
-                        <!-- Rows will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
+    <div style="flex: 1; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: white;">
+        <div style="overflow-y: auto; flex: 1;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                    <tr>
+                        <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
+                        <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
+                        <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
+                        <th style="width: 100px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Unit</th>
+                        <th style="width: 200px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Re-Order Level Quantity</th>
+                    </tr>
+                </thead>
+                <tbody id="itemReorderLevelsTableBody">
+                    <!-- Rows will be populated by JS -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <style>
         .reorder-btn {
-            height: 30px;
-            min-width: 80px;
-            padding: 0 15px;
-            font-size: 12px;
+            height: 32px;
+            min-width: 100px;
+            padding: 0 20px;
+            font-size: 13px;
             font-weight: 700;
             border-radius: 4px;
-            color: white;
             cursor: pointer;
-            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.2s;
+            border: 1px solid transparent;
         }
-        .reorder-btn-save { background: #1e3a8a; }
-        .reorder-btn-save:hover { background: #1e40af; }
-        .reorder-btn-cancel { background: #94a3b8; }
-        .reorder-btn-cancel:hover { background: #64748b; }
+        .reorder-btn-save {
+            background: #1e293b;
+            color: white;
+            border: 1px solid #1e293b;
+        }
+        .reorder-btn-save:hover { background: #334155; }
+        .reorder-btn-cancel {
+            background: #f1f5f9;
+            color: #ef4444;
+            border: 1px solid #cbd5e0;
+        }
+        .reorder-btn-cancel:hover { background: #e2e8f0; }
 
         #itemReorderLevelsTableBody tr:nth-child(even) { background-color: #f8fafc; }
         #itemReorderLevelsTableBody tr:hover { background-color: #f1f5f9; }
@@ -96,6 +102,6 @@
             font-weight: 700;
             outline: none;
         }
-        .reorder-input-cell:focus { border-color: #1e3a8a; background: #eff6ff; }
+        .reorder-input-cell:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
     </style>
 </div>

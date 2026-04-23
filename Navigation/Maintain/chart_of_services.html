@@ -117,19 +117,15 @@
     <style>
         .serv-btn {
             height: 30px;
-            min-width: 75px;
+            min-width: 70px;
             padding: 0 12px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             border-radius: 4px;
             color: white;
             cursor: pointer;
             border: none;
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
         }
         .serv-btn-chart { background: #0891b2; }
         .serv-btn-chart:hover { background: #0e7490; }
@@ -142,29 +138,16 @@
         .serv-btn-delete { background: #ef4444; }
         .serv-btn-delete:hover { background: #dc2626; }
 
-        #servCatListBody tr, #servItemListBody tr { cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: all 0.2s; }
+        #servCatListBody tr, #servItemListBody tr { cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         #servCatListBody tr:hover, #servItemListBody tr:hover { background: #f8fafc; }
-        #servCatListBody tr.active, #servItemListBody tr.active { 
-            background: #eff6ff !important; 
-            color: #1e3a8a !important; 
-            font-weight: 700; 
-            border-left: 3px solid #1e3a8a; 
-        }
-        #servCatListBody td, #servItemListBody td { padding: 10px 15px; font-size: 13px; color: #475569; }
+        #servCatListBody tr.active, #servItemListBody tr.active { background: #1e3a8a; color: white; }
+        #servCatListBody td, #servItemListBody td { padding: 8px 12px; }
         
         #chartOfServicesContainer input, #chartOfServicesContainer textarea {
-            transition: all 0.2s;
-            font-size: 12px;
+            transition: border-color 0.2s;
         }
         #chartOfServicesContainer input:focus, #chartOfServicesContainer textarea:focus {
             border-color: #1e3a8a !important;
-            background: #eff6ff;
-            outline: none;
-        }
-        
-        #chartOfServicesContainer input:disabled, #chartOfServicesContainer textarea:disabled {
-            background: #f8fafc;
-            color: #64748b;
         }
     </style>
 </div>

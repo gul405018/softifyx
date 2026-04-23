@@ -10,13 +10,14 @@
             </div>
             <!-- Fields & Buttons -->
             <div style="width: 590px; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button class="inv-btn inv-btn-chart" onclick="printInvChart('main')">Chart</button>
-                    <button class="inv-btn inv-btn-chart" onclick="printInvPriceList('main')">Price List</button>
-                    <button class="inv-btn inv-btn-add" onclick="resetInvMainForm(true)">Add</button>
-                    <button class="inv-btn inv-btn-save" onclick="saveInvMain()">Save</button>
-                    <button class="inv-btn inv-btn-delete" onclick="deleteInvMain()">Delete</button>
-                    <button class="inv-btn inv-btn-cancel" onclick="resetInvMainForm()">Cancel</button>
+                <div style="display: flex; justify-content: flex-start; gap: 5px; margin-left: 125px;">
+                    <button class="inv-btn" onclick="printInvChart('main')">Chart</button>
+                    <button class="inv-btn" onclick="printInvPriceList('main')">Price List</button>
+                    <div style="width: 20px;"></div>
+                    <button class="inv-btn inv-add" onclick="resetInvMainForm(true)">Add</button>
+                    <button class="inv-btn inv-save" onclick="saveInvMain()">Save</button>
+                    <button class="inv-btn inv-cancel" onclick="resetInvMainForm()">Cancel</button>
+                    <button class="inv-btn inv-delete" onclick="deleteInvMain()">Delete</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 120px 1fr; gap: 5px; align-items: center;">
                     <label class="inv-label">Main Category Code</label>
@@ -39,13 +40,14 @@
             </div>
             <!-- Fields & Buttons -->
             <div style="width: 590px; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button class="inv-btn inv-btn-chart" onclick="printInvChart('sub')">Chart</button>
-                    <button class="inv-btn inv-btn-chart" onclick="printInvPriceList('sub')">Price List</button>
-                    <button class="inv-btn inv-btn-add" onclick="resetInvSubForm(true)">Add</button>
-                    <button class="inv-btn inv-btn-save" onclick="saveInvSub()">Save</button>
-                    <button class="inv-btn inv-btn-delete" onclick="deleteInvSub()">Delete</button>
-                    <button class="inv-btn inv-btn-cancel" onclick="resetInvSubForm()">Cancel</button>
+                <div style="display: flex; justify-content: flex-start; gap: 5px; margin-left: 125px;">
+                    <button class="inv-btn" onclick="printInvChart('sub')">Chart</button>
+                    <button class="inv-btn" onclick="printInvPriceList('sub')">Price List</button>
+                    <div style="width: 20px;"></div>
+                    <button class="inv-btn inv-add" onclick="resetInvSubForm(true)">Add</button>
+                    <button class="inv-btn inv-save" onclick="saveInvSub()">Save</button>
+                    <button class="inv-btn inv-cancel" onclick="resetInvSubForm()">Cancel</button>
+                    <button class="inv-btn inv-delete" onclick="deleteInvSub()">Delete</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 120px 1fr; gap: 5px; align-items: center;">
                     <label class="inv-label">Sub Category Code</label>
@@ -68,14 +70,15 @@
             </div>
             <!-- Fields & Buttons -->
             <div style="width: 590px; display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 5px;">
-                    <button class="inv-btn inv-btn-chart">Chart</button>
-                    <button class="inv-btn inv-btn-chart">Price List</button>
-                    <button class="inv-btn inv-btn-chart" onclick="findInvItem()"><i class="fas fa-search"></i> Find</button>
-                    <button class="inv-btn inv-btn-add" onclick="resetInvItemForm(true)">Add</button>
-                    <button class="inv-btn inv-btn-save" onclick="saveInvItem()">Save</button>
-                    <button class="inv-btn inv-btn-delete" onclick="deleteInvItem()">Delete</button>
-                    <button class="inv-btn inv-btn-cancel" onclick="resetInvItemForm()">Cancel</button>
+                <div style="display: flex; justify-content: flex-start; gap: 3px; margin-bottom: 5px; margin-left: 125px;">
+                    <button class="inv-btn">Chart</button>
+                    <button class="inv-btn">Price List</button>
+                    <button class="inv-btn"><i class="fas fa-search"></i> Find</button>
+                    <div style="width: 15px;"></div>
+                    <button class="inv-btn inv-add" onclick="resetInvItemForm(true)">Add</button>
+                    <button class="inv-btn inv-save" onclick="saveInvItem()">Save</button>
+                    <button class="inv-btn inv-cancel" onclick="resetInvItemForm()">Cancel</button>
+                    <button class="inv-btn inv-delete" onclick="deleteInvItem()">Delete</button>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 120px 1fr; gap: 4px; align-items: center;">
@@ -160,52 +163,43 @@
 
     <style>
         .inv-btn {
-            height: 30px;
-            min-width: 70px;
-            padding: 0 12px;
+            background: #1F4E79;
+            color: white;
+            border: 1px solid #1F4E79;
+            padding: 2px 10px;
             font-size: 11px;
             font-weight: 700;
-            border-radius: 4px;
-            color: white;
             cursor: pointer;
-            border: none;
+            min-width: 60px;
+            border-radius: 3px;
             transition: all 0.2s;
-            display: flex;
+            height: 26px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
         }
+        .inv-btn:hover { background: #2c6aa0; border-color: #2c6aa0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .inv-btn:active { transform: translateY(1px); }
+        .inv-btn:disabled { background: #94a3b8; border-color: #94a3b8; cursor: not-allowed; }
 
-        .inv-btn-chart { background: #0891b2; }
-        .inv-btn-chart:hover { background: #0e7490; }
-        .inv-btn-add { background: #22c55e; }
-        .inv-btn-add:hover { background: #16a34a; }
-        .inv-btn-save { background: #1e3a8a; }
-        .inv-btn-save:hover { background: #1e40af; }
-        .inv-btn-cancel { background: #94a3b8; }
-        .inv-btn-cancel:hover { background: #64748b; }
-        .inv-btn-delete { background: #ef4444; }
-        .inv-btn-delete:hover { background: #dc2626; }
+        .inv-save { background: #004d40 !important; border-color: #004d40 !important; }
+        .inv-save:hover { background: #00695c !important; }
+
+        .inv-cancel { background: #546e7a !important; border-color: #546e7a !important; }
+        .inv-cancel:hover { background: #78909c !important; }
+
+        .inv-delete { background: #c62828 !important; border-color: #c62828 !important; }
+        .inv-delete:hover { background: #e53935 !important; }
         
-        .inv-label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; }
-        .inv-input {
-            height: 28px;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            padding: 0 8px;
-            font-size: 12px;
-            outline: none;
-            width: 100%;
-            transition: all 0.2s;
-            background: white;
-        }
-        .inv-input:focus:not(:disabled) { border-color: #1e3a8a; background: #eff6ff; }
-        .inv-input:disabled { background: #f8fafc; color: #64748b; }
+        .inv-label { font-size: 10px; font-weight: 700; color: #1F4E79; text-transform: uppercase; }
+        .inv-input { height: 24px; border: 1px solid #cbd5e0; border-radius: 2px; padding: 0 8px; font-size: 11px; outline: none; width: 100%; transition: all 0.2s; }
+        .inv-input:focus { border-color: #1F4E79; box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1); background: #fff; }
+        .inv-input:disabled { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
         
-        fieldset { border: 1px solid #e2e8f0 !important; background: #fff; margin-bottom: 10px; padding: 15px !important; }
-        legend { font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; border-bottom: 2px solid #1e3a8a; padding: 0 10px 4px 10px !important; margin-bottom: 10px; }
+        fieldset { border: 1px solid #e2e8f0 !important; background: #fff; }
+        legend { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 0 10px !important; }
         
-        select option { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #475569; }
-        select option:checked { background: #eff6ff !important; color: #1e3a8a !important; font-weight: 700; border-left: 3px solid #1e3a8a; }
+        select option { padding: 6px; border-bottom: 1px solid #f1f5f9; }
+        select option:checked { background: #1F4E79 !important; color: white !important; }
     </style>
 </div>

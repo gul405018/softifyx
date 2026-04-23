@@ -35,60 +35,60 @@
                 <button class="cost-btn cost-btn-cancel" onclick="closeModularPopup()">Cancel</button>
             </div>
             
-    <!-- Table Container -->
-    <div style="flex: 1; margin: 10px; display: flex; flex-direction: column;">
-        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 5px;">Inventory Items List</div>
-        
-        <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: white;">
-            <div style="overflow-y: auto; flex: 1;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
-                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
-                        <tr>
-                            <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
-                            <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
-                            <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
-                            <th style="width: 250px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Method of Cost Valuation</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itemCostMethodTableBody">
-                        <!-- Rows will be populated by JS -->
-                    </tbody>
-                </table>
+            <!-- Row 2: Bulk Actions -->
+            <div style="display: flex; gap: 8px;">
+                <button style="height: 32px; padding: 0 15px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="window.CostMethodModule.bulkSet('Weighted Average Cost')">Set Weighted Average on all Items</button>
+                <button style="height: 32px; padding: 0 15px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onclick="window.CostMethodModule.bulkSet('Manual Cost')">Set Manual Cost on all Items.</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div style="flex: 1; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: white;">
+        <div style="overflow-y: auto; flex: 1;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                    <tr>
+                        <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
+                        <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
+                        <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
+                        <th style="width: 250px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Method of Cost Valuation</th>
+                    </tr>
+                </thead>
+                <tbody id="itemCostMethodTableBody">
+                    <!-- Rows will be populated by JS -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <style>
         .cost-btn {
-            height: 30px;
+            height: 32px;
             min-width: 80px;
             padding: 0 15px;
             font-size: 12px;
             font-weight: 700;
             border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .cost-btn-save {
+            background: #1e293b;
             color: white;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
+            border: 1px solid #1e293b;
         }
-        .cost-btn-save { background: #1e3a8a; }
-        .cost-btn-save:hover { background: #1e40af; }
-        .cost-btn-cancel { background: #94a3b8; }
-        .cost-btn-cancel:hover { background: #64748b; }
-
-        .cost-bulk-btn {
-            height: 30px;
-            padding: 0 15px;
-            font-size: 11px;
-            font-weight: 700;
-            background: #f8fafc;
+        .cost-btn-save:hover { background: #334155; }
+        .cost-btn-cancel {
+            background: #f1f5f9;
+            color: #ef4444;
             border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            cursor: pointer;
-            color: #1e3a8a;
-            transition: all 0.2s;
         }
-        .cost-bulk-btn:hover { background: #eff6ff; border-color: #1e3a8a; }
+        .cost-btn-cancel:hover { background: #e2e8f0; }
 
         #itemCostMethodTableBody tr:nth-child(even) { background-color: #f8fafc; }
         #itemCostMethodTableBody tr:hover { background-color: #f1f5f9; cursor: pointer; }

@@ -48,47 +48,49 @@
     </div>
 
     <!-- Table Section -->
-    <div style="flex: 1; background: white; margin: 10px; display: flex; flex-direction: column;">
-        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase; margin-bottom: 5px;">Inventory Items List</div>
-        
-        <div style="border: 1px solid #e2e8f0; border-radius: 4px; flex: 1; overflow: hidden; display: flex; flex-direction: column;">
-            <div style="overflow-y: auto; flex: 1;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
-                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
-                        <tr>
-                            <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
-                            <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
-                            <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
-                            <th style="width: 80px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Unit</th>
-                            <th style="width: 150px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Purchase Price</th>
-                            <th style="width: 150px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Selling Price</th>
-                        </tr>
-                    </thead>
-                    <tbody id="priceSettingsTableBody">
-                        <!-- Data Rows will be injected here -->
-                    </tbody>
-                </table>
-            </div>
+    <div style="flex: 1; background: white; margin: 10px; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="overflow-y: auto; flex: 1;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                    <tr>
+                        <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px;"></th>
+                        <th style="width: 120px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Item Code</th>
+                        <th style="border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left;">Item Name</th>
+                        <th style="width: 80px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Unit</th>
+                        <th style="width: 150px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Purchase Price</th>
+                        <th style="width: 150px; border-bottom: 2px solid #e2e8f0; padding: 8px; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center;">Selling Price</th>
+                    </tr>
+                </thead>
+                <tbody id="priceSettingsTableBody">
+                    <!-- Data Rows will be injected here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <style>
         .price-btn {
-            height: 30px;
-            min-width: 80px;
-            padding: 0 15px;
-            font-size: 12px;
+            height: 32px;
+            min-width: 100px;
+            padding: 0 20px;
+            font-size: 13px;
             font-weight: 700;
             border-radius: 4px;
-            color: white;
             cursor: pointer;
-            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.2s;
+            border: 1px solid transparent;
         }
-        .price-btn-save { background: #1e3a8a; }
-        .price-btn-save:hover { background: #1e40af; }
-        .price-btn-cancel { background: #94a3b8; }
-        .price-btn-cancel:hover { background: #64748b; }
+        
+        .price-btn-save { background: #f1f5f9; border: 1px solid #94a3b8; color: #166534; }
+        .price-btn-save:hover { background: #dcfce7; border-color: #166534; }
+        .price-btn-save i { color: #166534; }
+
+        .price-btn-cancel { background: #f1f5f9; border: 1px solid #94a3b8; color: #991b1b; }
+        .price-btn-cancel:hover { background: #fee2e2; border-color: #991b1b; }
+        .price-btn-cancel i { color: #991b1b; }
 
         .price-input-cell {
             width: 100%;
@@ -99,7 +101,7 @@
             outline: none;
             background: #fff;
         }
-        .price-input-cell:focus { border-color: #1e3a8a; background: #eff6ff; }
+        .price-input-cell:focus { border-color: #3b82f6; background: #eff6ff; }
         
         #priceSettingsTableBody tr:nth-child(even) { background: #f8fafc; }
         #priceSettingsTableBody tr:hover { background: #f1f5f9; }
