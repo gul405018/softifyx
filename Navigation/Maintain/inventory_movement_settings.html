@@ -1,7 +1,7 @@
-<div id="invMovementSettingsContainer" data-module="Inventory Movement Settings" style="width: 1000px; height: 450px; display: flex; flex-direction: column; gap: 20px; background: white; padding: 25px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
+<div id="invMovementSettingsContainer" data-module="Inventory Movement Settings" style="width: 930px; height: 400px; display: flex; flex-direction: column; gap: 20px; background: white; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
 
     <!-- Top Buttons -->
-    <div style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+    <div style="display: flex; justify-content: flex-end; gap: 10px; padding-bottom: 15px; border-bottom: 2px solid #1e3a8a;">
         <button class="inv-pref-btn inv-pref-btn-save" onclick="window.InvMovementPrefs.save()">
             <i class="fas fa-save" style="margin-right: 8px;"></i> Save
         </button>
@@ -11,16 +11,14 @@
     </div>
 
     <!-- Inwards Section -->
-    <div style="border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden; background: #f8fafc;">
-        <div style="background: #e2e8f0; padding: 8px 15px; font-weight: 700; color: #475569; font-size: 14px; text-align: center; border-bottom: 1px solid #cbd5e0;">
-            Inwards Inventory Movement Through
-        </div>
-        <div style="padding: 20px 40px; display: flex; flex-direction: column; gap: 12px;">
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #334155;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Inwards Inventory Movement Through</div>
+        <div style="display: flex; gap: 30px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; background: white;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #475569;">
                 <input type="radio" name="inwardsMovement" value="gate_pass" style="width: 18px; height: 18px; cursor: pointer;">
                 <span style="font-style: italic;">Inwards Gate Passes</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #334155;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #475569;">
                 <input type="radio" name="inwardsMovement" value="purchases" checked style="width: 18px; height: 18px; cursor: pointer;">
                 <span style="font-style: italic;">Purchases</span>
             </label>
@@ -28,20 +26,18 @@
     </div>
 
     <!-- Outwards Section -->
-    <div style="border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden; background: #f8fafc;">
-        <div style="background: #e2e8f0; padding: 8px 15px; font-weight: 700; color: #475569; font-size: 14px; text-align: center; border-bottom: 1px solid #cbd5e0;">
-            Outwards Inventory Movement Through
-        </div>
-        <div style="padding: 20px 40px; display: flex; flex-direction: column; gap: 12px;">
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #334155;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Outwards Inventory Movement Through</div>
+        <div style="display: flex; gap: 30px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; background: white;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #475569;">
                 <input type="radio" name="outwardsMovement" value="gate_pass" style="width: 18px; height: 18px; cursor: pointer;">
                 <span style="font-style: italic;">Outwards Gate Passes</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #334155;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #475569;">
                 <input type="radio" name="outwardsMovement" value="delivery_challans" style="width: 18px; height: 18px; cursor: pointer;">
                 <span style="font-style: italic;">Delivery Challans</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #334155;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #475569;">
                 <input type="radio" name="outwardsMovement" value="sale_invoices" checked style="width: 18px; height: 18px; cursor: pointer;">
                 <span style="font-style: italic;">Sale Invoices</span>
             </label>
@@ -50,10 +46,10 @@
 
     <style>
         .inv-pref-btn {
-            height: 34px;
+            height: 32px;
             min-width: 90px;
             padding: 0 15px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             border-radius: 4px;
             cursor: pointer;
@@ -62,11 +58,11 @@
             justify-content: center;
             transition: all 0.2s;
             border: 1px solid #cbd5e0;
-            background: white;
+            background: #1e3a8a;
+            color: white;
         }
-        .inv-pref-btn-save { color: #16a34a; }
-        .inv-pref-btn-save:hover { background: #f0fdf4; border-color: #16a34a; }
-        .inv-pref-btn-cancel { color: #ef4444; }
-        .inv-pref-btn-cancel:hover { background: #fef2f2; border-color: #ef4444; }
+        .inv-pref-btn-save:hover { background: #1e40af; }
+        .inv-pref-btn-cancel { background: white; color: #ef4444; border-color: #ef4444; }
+        .inv-pref-btn-cancel:hover { background: #fef2f2; }
     </style>
 </div>
