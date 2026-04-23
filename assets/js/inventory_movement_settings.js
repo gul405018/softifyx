@@ -33,21 +33,29 @@ window.InvMovementPrefs = {
         const inVal = document.querySelector('input[name="inwardsMovement"]:checked')?.value;
         const outVal = document.querySelector('input[name="outwardsMovement"]:checked')?.value;
 
+        const payload = {
+            settings: [
+                { key: 'inv_move_in', value: inVal },
+                { key: 'inv_move_out', value: outVal }
+            ]
+        };
+
         try {
-            await Promise.all([
-                fetch(`api/settings.php?action=save_setting&company_id=${companyId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'inv_move_in', value: inVal })
-                }),
-                fetch(`api/settings.php?action=save_setting&company_id=${companyId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'inv_move_out', value: outVal })
-                })
-            ]);
-            alert("Movement preferences saved successfully!");
-            closeModularPopup();
-        } catch (e) { console.error("Save Movement Settings Error:", e); }
+            const res = await fetch(`api/settings.php?action=save_bulk_settings&company_id=${companyId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert("Movement preferences saved successfully!");
+                closeModularPopup();
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (e) { 
+            console.error("Save Movement Settings Error:", e);
+            alert("Failed to save settings. Check console for details.");
+        }
     }
 };

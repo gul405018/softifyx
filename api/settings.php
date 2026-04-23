@@ -25,6 +25,26 @@ switch ($action) {
         echo json_encode(['value' => $row ? $row['setting_value'] : null]);
         break;
 
+    case 'save_bulk_settings':
+        $data = json_decode(file_get_contents('php://input'), true);
+        $settings = $data['settings'] ?? [];
+        
+        try {
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare("INSERT INTO company_settings (company_id, setting_key, setting_value) 
+                                   VALUES (?, ?, ?) 
+                                   ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            foreach ($settings as $s) {
+                $stmt->execute([$company_id, $s['key'], $s['value']]);
+            }
+            $pdo->commit();
+            echo json_encode(['status' => 'success']);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+        break;
+
     case 'save_setting':
         $data = json_decode(file_get_contents('php://input'), true);
         $key = $data['key'] ?? '';
