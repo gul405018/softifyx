@@ -428,17 +428,15 @@ try {
             $stmt->execute($params);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // DEBUG: If empty, return a fake item to test the UI
-            if (empty($results) && $filter_type === 'all') {
-                $results = [[
-                    'id' => 0,
-                    'code' => 'DEBUG-001',
-                    'name' => 'Please Add Items in Chart of Inventory',
-                    'unit' => 'N/A',
-                    'purchase_price' => 0,
-                    'selling_price' => 0
-                ]];
-            }
+            // FORCED TEST: Always add one item to see if rendering works
+            $results[] = [
+                'id' => 999999,
+                'code' => 'TEST-001',
+                'name' => 'SYSTEM TEST ITEM (If you see this, API is working)',
+                'unit' => 'EA',
+                'purchase_price' => 10.00,
+                'selling_price' => 15.00
+            ];
             
             echo json_encode($results);
             break;
