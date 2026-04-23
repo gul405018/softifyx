@@ -75,7 +75,16 @@ window.PriceSettingsModule = {
             const res = await fetch(`api/inventory.php?action=get_price_settings&company_id=${companyId}&filter_type=${filterType}&filter_id=${filterId}&${cb}`);
             if (!res.ok) throw new Error("Fetch failed");
             const resData = await res.json();
-            this.data = Array.isArray(resData) ? resData : [];
+            
+            // Handle both array format and object format gracefully
+            if (Array.isArray(resData)) {
+                this.data = resData;
+            } else if (resData && Array.isArray(resData.items)) {
+                this.data = resData.items;
+            } else {
+                this.data = [];
+            }
+            
             this.render();
         } catch (e) { console.error("Price Settings Load Error:", e); }
     },

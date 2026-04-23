@@ -428,6 +428,8 @@ try {
             $stmt->execute($params);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
+            error_log("Price Settings: company=" . $company_id . " filter=" . $filter_type . " count=" . count($items));
+            
             echo json_encode($items);
             break;
 
