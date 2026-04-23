@@ -1,0 +1,109 @@
+<div id="itemTaxRatesContainer" data-module="Item Sales Tax Rates" style="width: 930px; height: 600px; display: flex; flex-direction: column; gap: 10px; background: white; padding: 15px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
+    
+    <!-- Top Filter Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; background: #f8fafc; padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px;">
+        <!-- Left: Filters -->
+        <div style="flex: 1; margin-left: 40px; display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer;">
+                    <input type="radio" name="taxFilter" value="all" checked onchange="window.TaxRatesModule.toggleFilters()"> All Inventory Items
+                </label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="taxFilter" value="category" onchange="window.TaxRatesModule.toggleFilters()"> Category
+                </label>
+                <select id="taxCategorySelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.TaxRatesModule.load()">
+                    <option value="0">Select Category...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #334155; width: 100px; cursor: pointer;">
+                    <input type="radio" name="taxFilter" value="brand" onchange="window.TaxRatesModule.toggleFilters()"> Brand
+                </label>
+                <select id="taxBrandSelect" style="flex: 1; max-width: 300px; height: 26px; border: 1px solid #94a3b8; font-size: 12px; outline: none;" disabled onchange="window.TaxRatesModule.load()">
+                    <option value="0">Select Brand...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right: Top Buttons & Margin Box -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <button class="tax-btn tax-btn-save" onclick="window.TaxRatesModule.save()">Save</button>
+                <button class="tax-btn tax-btn-cancel" onclick="closeModularPopup()">Cancel</button>
+            </div>
+            
+            <div style="background: #cbd5e0; padding: 5px 10px; border: 1px solid #94a3b8; display: flex; align-items: center; gap: 5px; border-radius: 2px;">
+                <span style="font-size: 12px; font-weight: 600; color: #1e293b;">Set</span>
+                <input type="number" id="gstRateInput" style="width: 50px; height: 22px; text-align: center; border: 1px solid #94a3b8; font-weight: 700;" value="0">
+                <span style="font-size: 11px; font-weight: 600; color: #1e293b;">% rate on all Items.</span>
+                <button style="height: 22px; padding: 0 10px; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #94a3b8; cursor: pointer;" onclick="window.TaxRatesModule.applyGST()">Update GST</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div style="flex: 1; border: 1px solid #cbd5e0; border-radius: 4px; overflow-y: auto; background: white;">
+        <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                <tr>
+                    <th style="width: 40px; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0;"></th>
+                    <th style="width: 120px; padding: 8px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; text-align: center;">Item Code</th>
+                    <th style="padding: 8px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; text-align: left;">Item Name</th>
+                    <th style="width: 120px; padding: 8px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; text-align: center;">G.S.T. Rate</th>
+                </tr>
+            </thead>
+            <tbody id="itemTaxRatesTableBody">
+                <!-- Rows will be populated by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        .tax-btn {
+            height: 28px;
+            padding: 0 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tax-btn-save {
+            background: #1e293b;
+            color: white;
+            border: 1px solid #1e293b;
+        }
+        .tax-btn-save:hover { background: #334155; }
+        .tax-btn-cancel {
+            background: #f1f5f9;
+            color: #ef4444;
+            border: 1px solid #cbd5e0;
+        }
+        .tax-btn-cancel:hover { background: #e2e8f0; }
+
+        #itemTaxRatesTableBody tr:nth-child(even) { background-color: #f8fafc; }
+        #itemTaxRatesTableBody tr:hover { background-color: #f1f5f9; }
+        #itemTaxRatesTableBody td {
+            padding: 6px 8px;
+            font-size: 12px;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+        .tax-input-cell {
+            width: 80px;
+            height: 22px;
+            border: 1px solid #cbd5e0;
+            border-radius: 2px;
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+        }
+        .tax-input-cell:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+    </style>
+</div>

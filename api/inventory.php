@@ -212,6 +212,55 @@ try {
             }
             break;
 
+        case 'get_tax_settings':
+            $filter_type = $_GET['filter_type'] ?? 'all';
+            $filter_id = $_GET['filter_id'] ?? 0;
+            
+            $sql = "SELECT i.id, i.code, i.name, i.tax_rate, i.unit 
+                    FROM inv_items i 
+                    WHERE i.company_id = ?";
+            $params = [$company_id];
+            
+            if ($filter_type === 'category') {
+                $sql .= " AND i.sub_id IN (SELECT id FROM inv_sub_categories WHERE main_id = ?)";
+                $params[] = $filter_id;
+            } else if ($filter_type === 'brand') {
+                $sql .= " AND i.brand_id = ?";
+                $params[] = $filter_id;
+            }
+            
+            $sql .= " ORDER BY i.code";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode($items);
+            break;
+
+        case 'save_bulk_taxes':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $taxes = $data['taxes'] ?? [];
+            
+            if (empty($taxes)) {
+                echo json_encode(['status' => 'error', 'message' => 'No data to save']);
+                break;
+            }
+            
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("UPDATE inv_items SET tax_rate = ? WHERE id = ? AND company_id = ?");
+                foreach ($taxes as $t) {
+                    $stmt->execute([$t['tax_rate'], $t['item_id'], $company_id]);
+                }
+                $pdo->commit();
+                echo json_encode(['status' => 'success']);
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            }
+            break;
+
         case 'delete_main':
             $id = $_GET['id'] ?? 0;
             // Check if has sub-categories
