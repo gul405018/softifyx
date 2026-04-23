@@ -1,12 +1,12 @@
-<div id="chartOfServicesContainer" data-module="Chart of Services" style="width: 1000px; height: 750px; display: flex; flex-direction: column; gap: 15px; background: #f1f5f9; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; position: relative; overflow-y: auto;">
+<div id="chartOfServicesContainer" data-module="Chart of Services" style="width: 930px; height: 680px; display: flex; flex-direction: column; gap: 20px; background: white; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; position: relative;">
 
     <!-- Section 1: Service Categories -->
-    <div style="background: white; border: 1px solid #cbd5e0; border-radius: 4px; padding: 15px; display: flex; flex-direction: column; gap: 10px; position: relative;">
-        <div style="position: absolute; top: -10px; left: 15px; background: #f1f5f9; padding: 0 10px; font-size: 14px; font-weight: 700; color: #1e40af; border: 1px solid #cbd5e0; border-radius: 4px;">Service Categories</div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase;">Service Categories</div>
         
-        <div style="display: flex; gap: 20px; margin-top: 5px;">
+        <div style="display: flex; gap: 20px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; background: white;">
             <!-- Category List -->
-            <div style="width: 350px; height: 180px; border: 1px solid #cbd5e0; background: white; overflow-y: auto; border-radius: 2px;">
+            <div style="width: 320px; height: 160px; border: 1px solid #cbd5e0; background: white; overflow-y: auto; border-radius: 2px;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <tbody id="servCatListBody">
                         <!-- Categories injected here -->
@@ -15,22 +15,23 @@
             </div>
 
             <!-- Category Form -->
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button class="serv-btn" onclick="window.ChartOfServices.addCategory()"><i class="fas fa-plus"></i> Add</button>
-                    <button class="serv-btn serv-btn-save" onclick="window.ChartOfServices.saveCategory()"><i class="fas fa-save"></i> Save</button>
-                    <button class="serv-btn serv-btn-cancel" onclick="window.ChartOfServices.resetCatForm()"><i class="fas fa-times"></i> Cancel</button>
-                    <button class="serv-btn serv-btn-delete" onclick="window.ChartOfServices.deleteCategory()"><i class="fas fa-trash"></i> Delete</button>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button class="serv-btn serv-btn-chart" onclick="alert('Rate List opening...')">Chart</button>
+                    <button class="serv-btn serv-btn-add" onclick="window.ChartOfServices.addCategory()">Add</button>
+                    <button class="serv-btn serv-btn-save" onclick="window.ChartOfServices.saveCategory()">Save</button>
+                    <button class="serv-btn serv-btn-cancel" onclick="window.ChartOfServices.resetCatForm()">Cancel</button>
+                    <button class="serv-btn serv-btn-delete" onclick="window.ChartOfServices.deleteCategory()">Delete</button>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Category Code</span>
-                        <input type="text" id="servCatCode" style="width: 150px; height: 28px; border: 1px solid #94a3b8; padding: 0 8px; outline: none; font-weight: 700;">
+                        <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Category Code</span>
+                        <input type="text" id="servCatCode" style="width: 120px; height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Category Name</span>
-                        <input type="text" id="servCatName" style="flex: 1; height: 28px; border: 1px solid #94a3b8; padding: 0 8px; outline: none;">
+                        <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Category Name</span>
+                        <input type="text" id="servCatName" style="flex: 1; height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; outline: none;">
                     </div>
                 </div>
             </div>
@@ -38,12 +39,12 @@
     </div>
 
     <!-- Section 2: List of Services -->
-    <div style="background: white; border: 1px solid #cbd5e0; border-radius: 4px; padding: 15px; display: flex; flex-direction: column; gap: 10px; position: relative;">
-        <div style="position: absolute; top: -10px; left: 15px; background: #f1f5f9; padding: 0 10px; font-size: 14px; font-weight: 700; color: #1e40af; border: 1px solid #cbd5e0; border-radius: 4px;">List of Services</div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; text-transform: uppercase;">List of Services</div>
         
-        <div style="display: flex; gap: 20px; margin-top: 5px;">
+        <div style="display: flex; gap: 20px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; background: white;">
             <!-- Service List -->
-            <div style="width: 350px; height: 350px; border: 1px solid #cbd5e0; background: white; overflow-y: auto; border-radius: 2px;">
+            <div style="width: 320px; height: 320px; border: 1px solid #cbd5e0; background: white; overflow-y: auto; border-radius: 2px;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <tbody id="servItemListBody">
                         <!-- Services injected here -->
@@ -53,103 +54,100 @@
 
             <!-- Service Form -->
             <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button class="serv-btn" onclick="window.ChartOfServices.addService()"><i class="fas fa-plus"></i> Add</button>
-                    <button class="serv-btn serv-btn-save" onclick="window.ChartOfServices.saveService()"><i class="fas fa-save"></i> Save</button>
-                    <button class="serv-btn serv-btn-cancel" onclick="window.ChartOfServices.resetItemForm()"><i class="fas fa-times"></i> Cancel</button>
-                    <button class="serv-btn serv-btn-delete" onclick="window.ChartOfServices.deleteService()"><i class="fas fa-trash"></i> Delete</button>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button class="serv-btn serv-btn-chart" onclick="alert('Rate List opening...')">Chart</button>
+                    <button class="serv-btn serv-btn-add" onclick="window.ChartOfServices.addService()">Add</button>
+                    <button class="serv-btn serv-btn-save" onclick="window.ChartOfServices.saveService()">Save</button>
+                    <button class="serv-btn serv-btn-cancel" onclick="window.ChartOfServices.resetItemForm()">Cancel</button>
+                    <button class="serv-btn serv-btn-delete" onclick="window.ChartOfServices.deleteService()">Delete</button>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Service Code</span>
-                        <input type="text" id="servItemCode" style="width: 150px; height: 28px; border: 1px solid #94a3b8; padding: 0 8px; outline: none; font-weight: 700;">
+                        <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Service Code</span>
+                        <input type="text" id="servItemCode" style="width: 120px; height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Service Name</span>
-                        <input type="text" id="servItemName" style="flex: 1; height: 28px; border: 1px solid #94a3b8; padding: 0 8px; outline: none;">
+                        <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Service Name</span>
+                        <input type="text" id="servItemName" style="flex: 1; height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; outline: none;">
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155; padding-top: 5px;">Description</span>
-                        <textarea id="servItemDesc" style="flex: 1; height: 60px; border: 1px solid #94a3b8; padding: 8px; outline: none; resize: none; font-family: inherit; font-size: 12px;"></textarea>
+                        <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569; padding-top: 5px;">Description</span>
+                        <textarea id="servItemDesc" style="flex: 1; height: 50px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 8px; outline: none; resize: none; font-family: inherit; font-size: 12px;"></textarea>
                     </div>
                     
-                    <div style="display: flex; gap: 20px; margin-top: 10px;">
+                    <div style="display: flex; gap: 20px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Selling Price</span>
-                            <input type="number" id="servItemPrice" value="0" style="width: 100px; height: 28px; border: 1px solid #94a3b8; padding: 0 8px; outline: none; text-align: right; font-weight: 700;">
+                            <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Selling Price</span>
+                            <input type="number" id="servItemPrice" value="0" style="width: 100px; height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; outline: none; text-align: right;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 13px; font-weight: 700; color: #334155;">Measurement Unit</span>
-                            <input type="text" id="servItemUnit" style="width: 80px; height: 28px; border: 1px solid #94a3b8; padding: 0 8px; outline: none; text-align: center;">
+                            <span style="font-size: 13px; font-weight: 600; color: #475569;">Unit</span>
+                            <input type="text" id="servItemUnit" style="width: 80px; height: 28px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 0 8px; outline: none;">
                         </div>
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Sales Tax Rate</span>
-                            <div style="display: flex; align-items: center; border: 1px solid #94a3b8;">
+                            <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Tax Rate</span>
+                            <div style="display: flex; align-items: center; border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden;">
                                 <input type="number" id="servItemTax" value="0" style="width: 60px; height: 28px; border: none; padding: 0 8px; outline: none; text-align: right;">
-                                <span style="background: #f1f5f9; padding: 0 8px; height: 28px; display: flex; align-items: center; border-left: 1px solid #94a3b8; font-size: 12px; font-weight: 700;">%</span>
+                                <span style="background: #f8fafc; padding: 0 8px; height: 28px; display: flex; align-items: center; border-left: 1px solid #cbd5e0; font-size: 12px;">%</span>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 15px;">
-                            <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer;">
                                 <input type="radio" name="servTaxType" value="Percent" checked> Percent
                             </label>
-                            <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer;">
                                 <input type="radio" name="servTaxType" value="Amount"> Amount
                             </label>
                         </div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                        <span style="width: 120px; font-size: 13px; font-weight: 700; color: #334155;">Inactive Service</span>
-                        <input type="checkbox" id="servItemInactive" style="width: 18px; height: 18px; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 110px; font-size: 13px; font-weight: 600; color: #475569;">Inactive Service</span>
+                        <input type="checkbox" id="servItemInactive" style="width: 16px; height: 16px; cursor: pointer;">
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer Keys -->
-    <div style="text-align: right; color: #ef4444; font-size: 13px; font-weight: 700; margin-top: 10px;">
-        Press: Ctrl+N to add new account, Ctrl+S to save changes and ESC to cancel
-    </div>
-
     <style>
         .serv-btn {
-            height: 32px;
-            padding: 0 15px;
+            height: 30px;
+            min-width: 70px;
+            padding: 0 12px;
             font-size: 12px;
             font-weight: 700;
-            background: #f1f5f9;
-            border: 1px solid #94a3b8;
             border-radius: 4px;
-            color: #334155;
+            color: white;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            border: none;
             transition: all 0.2s;
         }
-        .serv-btn:hover { background: #e2e8f0; border-color: #64748b; }
-        .serv-btn i { font-size: 14px; }
-        .serv-btn-save { color: #166534; }
-        .serv-btn-save:hover { background: #dcfce7; border-color: #166534; }
-        .serv-btn-cancel { color: #991b1b; }
-        .serv-btn-cancel:hover { background: #fee2e2; border-color: #991b1b; }
-        .serv-btn-delete { color: #525252; }
-        .serv-btn-delete:hover { background: #d4d4d4; border-color: #525252; }
+        .serv-btn-chart { background: #0891b2; }
+        .serv-btn-chart:hover { background: #0e7490; }
+        .serv-btn-add { background: #22c55e; }
+        .serv-btn-add:hover { background: #16a34a; }
+        .serv-btn-save { background: #1e3a8a; }
+        .serv-btn-save:hover { background: #1e40af; }
+        .serv-btn-cancel { background: #94a3b8; }
+        .serv-btn-cancel:hover { background: #64748b; }
+        .serv-btn-delete { background: #ef4444; }
+        .serv-btn-delete:hover { background: #dc2626; }
 
-        #servCatListBody tr, #servItemListBody tr { cursor: pointer; border-bottom: 1px solid #e2e8f0; }
+        #servCatListBody tr, #servItemListBody tr { cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         #servCatListBody tr:hover, #servItemListBody tr:hover { background: #f8fafc; }
-        #servCatListBody tr.active, #servItemListBody tr.active { background: #eff6ff; }
-        #servCatListBody td, #servItemListBody td { padding: 8px 12px; color: #334155; }
+        #servCatListBody tr.active, #servItemListBody tr.active { background: #1e3a8a; color: white; }
+        #servCatListBody td, #servItemListBody td { padding: 8px 12px; }
         
-        /* Custom scrollbar for containers */
-        #chartOfServicesContainer::-webkit-scrollbar { width: 8px; }
-        #chartOfServicesContainer::-webkit-scrollbar-track { background: #f1f5f9; }
-        #chartOfServicesContainer::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+        #chartOfServicesContainer input, #chartOfServicesContainer textarea {
+            transition: border-color 0.2s;
+        }
+        #chartOfServicesContainer input:focus, #chartOfServicesContainer textarea:focus {
+            border-color: #1e3a8a !important;
+        }
     </style>
 </div>
