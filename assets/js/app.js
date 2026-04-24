@@ -5660,10 +5660,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetInvItemForm(generate = false) {
-            const list = document.getElementById('invSubList');
-            const subId = selectedInvSubId || (list ? list.value : null);
-            
-            if (generate && !subId) return alert("Select a Sub Category first!");
+            if (generate && !selectedInvSubId) return alert("Select a Sub Category first!");
             selectedInvItemId = null;
             enableInvItemFields(generate);
             const ids = [
@@ -5685,27 +5682,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('invItemInactive').checked = false;
 
             if (generate) {
-                const sub = invSubs.find(s => s.id == subId);
-                if (!sub) {
-                    console.error("SoftifyX: Sub-category not found for ID", subId);
-                    return;
-                }
+                const sub = invSubs.find(s => s.id == selectedInvSubId);
                 let nextNum = 1;
                 if (invItems.length > 0) {
                     const prefixLen = sub.code.toString().length;
                     const lastParts = invItems.map(i => {
                         const sCode = i.code.toString();
                         if (sCode.startsWith(sub.code.toString())) {
-                            const suffix = sCode.substring(prefixLen);
-                            return parseInt(suffix) || 0;
+                            return parseInt(sCode.substring(prefixLen)) || 0;
                         }
                         return 0;
                     });
                     nextNum = Math.max(...lastParts) + 1;
                 }
-                const newCode = sub.code.toString() + nextNum.toString().padStart(3, '0');
-                console.log(`SoftifyX: Generating Code. Parent=${sub.code}, NextNum=${nextNum}, Final=${newCode}`);
-                document.getElementById('invItemCode').value = newCode;
+                document.getElementById('invItemCode').value = sub.code.toString() + nextNum.toString().padStart(3, '0');
                 document.getElementById('invItemName').focus();
             } else {
                 document.getElementById('invItemCode').value = '';
@@ -5756,16 +5746,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveInvItem() {
-            const list = document.getElementById('invSubList');
-            const subId = selectedInvSubId || (list ? list.value : null);
-            
-            if (!subId) return alert("Select a Sub Category first!");
+            if (!selectedInvSubId) return alert("Select a Sub Category first!");
             const code = document.getElementById('invItemCode').value.trim();
             const name = document.getElementById('invItemName').value.trim();
             if (!code || !name) return alert("Item Code and Name are required!");
 
             const payload = {
-                sub_id: subId,
+                sub_id: selectedInvSubId,
                 code: code,
                 name: name,
                 description: document.getElementById('invItemDesc').value,
@@ -5799,14 +5786,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const result = await res.json();
-                if (res.ok && result.status === 'success') {
+                if (res.ok) {
                     alert("Inventory item saved successfully.");
-                    fetchInvItems(subId);
+                    fetchInvItems(selectedInvSubId);
                 } else {
-                    alert("Save failed: " + (result.error || result.message || "Unknown error"));
+                    alert("Save failed.");
                 }
-            } catch (e) { alert("Save error: " + e.message); }
+            } catch (e) { alert("Save error."); }
         }
 
         async function deleteInvMain() {
