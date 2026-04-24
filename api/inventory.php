@@ -160,6 +160,24 @@ try {
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
+        case 'get_all_items':
+            $stmt = $pdo->prepare("
+                SELECT i.*, b.name as brand_name, i.code as coa_list_id 
+                FROM inv_items i 
+                LEFT JOIN inv_brands b ON i.brand_id = b.id 
+                WHERE i.company_id = ? AND i.is_inactive = 0
+                ORDER BY i.code
+            ");
+            $stmt->execute([$company_id]);
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Map 'id' to 'coa_list_id' for compatibility with selectGridItem if needed
+            foreach($items as &$item) {
+                $item['coa_list_id'] = $item['id'];
+            }
+            echo json_encode($items);
+            break;
+
         case 'save_main':
             $data = json_decode(file_get_contents('php://input'), true);
             if (isset($data['id'])) {
