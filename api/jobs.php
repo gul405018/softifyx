@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt = $pdo->prepare("
             SELECT cl.id, cl.code, cl.name, c.contact_person, c.address, c.telephone
             FROM coa_list cl
-            JOIN customers c ON cl.id = c.coa_list_id
+            LEFT JOIN customers c ON cl.id = c.coa_list_id
             WHERE cl.company_id = ?
             ORDER BY cl.code ASC
         ");
