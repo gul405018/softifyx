@@ -5564,28 +5564,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('invItemDesc').value = item.description || '';
                 document.getElementById('invItemBrand').value = item.brand_id || '';
                 document.getElementById('invItemRack').value = item.rack_no || '';
-                
-                // New Fields
-                if(document.getElementById('invItemType')) document.getElementById('invItemType').value = item.item_type || 'finished';
-                if(document.getElementById('invItemMin')) document.getElementById('invItemMin').value = item.min_stock || 0;
-                if(document.getElementById('invItemMax')) document.getElementById('invItemMax').value = item.max_stock || 0;
-                if(document.getElementById('invItemOpQty')) document.getElementById('invItemOpQty').value = item.opening_qty || 0;
-                if(document.getElementById('invItemOpRate')) document.getElementById('invItemOpRate').value = item.opening_rate || 0;
-
-                // Existing Fields
-                const purchaseField = document.getElementById('invItemPurchasePrice');
-                if(purchaseField) purchaseField.value = item.purchase_price || '';
-                
-                const sellingField = document.getElementById('invItemSellingPrice');
-                if(sellingField) sellingField.value = item.selling_price || '';
-                
-                document.getElementById('invItemUnit').value = item.unit || 'pcs';
-                
-                const qtyPerPieceField = document.getElementById('invItemQtyPerPiece');
-                if(qtyPerPieceField) qtyPerPieceField.value = item.qty_per_piece || '';
-                
-                const taxRateField = document.getElementById('invItemTaxRate');
-                if(taxRateField) taxRateField.value = item.tax_rate || '';
+                document.getElementById('invItemPurchasePrice').value = item.purchase_price || '';
+                document.getElementById('invItemSellingPrice').value = item.selling_price || '';
+                document.getElementById('invItemUnit').value = item.unit || 'Pcs';
+                document.getElementById('invItemQtyPerPiece').value = item.qty_per_piece || '';
+                document.getElementById('invItemTaxRate').value = item.tax_rate || '';
                 
                 const taxRadios = document.getElementsByName('taxType');
                 taxRadios.forEach(r => r.checked = (r.value === item.tax_type));
@@ -5593,16 +5576,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const valRadios = document.getElementsByName('costValuation');
                 valRadios.forEach(r => r.checked = (r.value === item.valuation_method));
                 
-                const valCostField = document.getElementById('invItemValuationCost');
-                if(valCostField) valCostField.value = item.valuation_cost || '';
-                
-                const orderQtyField = document.getElementById('invItemOrderQty');
-                if(orderQtyField) orderQtyField.value = item.order_qty || '';
-                
+                document.getElementById('invItemValuationCost').value = item.valuation_cost || '';
+                document.getElementById('invItemOrderQty').value = item.order_qty || '';
                 document.getElementById('invItemInactive').checked = !!parseInt(item.is_inactive);
                 
-                enableInvItemFields(true);
-                document.getElementById('invItemCode').disabled = true;
+                enableInvItemFields(true); // Auto-edit enabled
+                document.getElementById('invItemCode').disabled = true; // Lock code
             }
         }
 
@@ -5618,8 +5597,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ids = [
                 'invItemCode', 'invItemName', 'invItemDesc', 'invItemBrand', 'invItemRack',
                 'invItemPurchasePrice', 'invItemSellingPrice', 'invItemUnit', 'invItemQtyPerPiece',
-                'invItemTaxRate', 'invItemValuationCost', 'invItemOrderQty', 'invItemInactive',
-                'invItemType', 'invItemMin', 'invItemMax', 'invItemOpQty', 'invItemOpRate'
+                'invItemTaxRate', 'invItemValuationCost', 'invItemOrderQty', 'invItemInactive'
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
@@ -5665,34 +5643,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             enableInvItemFields(generate);
             const ids = [
                 'invItemName', 'invItemDesc', 'invItemBrand', 'invItemRack',
-                'invItemPurchasePrice', 'invItemSellingPrice', 'invItemValuationCost', 'invItemOrderQty',
-                'invItemType', 'invItemMin', 'invItemMax', 'invItemOpQty', 'invItemOpRate'
+                'invItemPurchasePrice', 'invItemSellingPrice', 'invItemValuationCost', 'invItemOrderQty'
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    if(id === 'invItemType') el.value = 'finished';
-                    else if(['invItemMin', 'invItemMax', 'invItemOpQty', 'invItemOpRate'].includes(id)) el.value = 0;
-                    else el.value = '';
-                }
+                if (el) el.value = '';
             });
-            document.getElementById('invItemUnit').value = 'pcs';
-            if(document.getElementById('invItemQtyPerPiece')) document.getElementById('invItemQtyPerPiece').value = '';
-            if(document.getElementById('invItemTaxRate')) document.getElementById('invItemTaxRate').value = '';
+            document.getElementById('invItemUnit').value = 'Pcs';
+            document.getElementById('invItemQtyPerPiece').value = '';
+            document.getElementById('invItemTaxRate').value = '';
             document.getElementById('invItemInactive').checked = false;
 
             if (generate) {
                 const sub = invSubs.find(s => s.id == selectedInvSubId);
                 let nextNum = 1;
                 if (invItems.length > 0) {
-                    const prefixLen = sub.code.toString().length;
-                    const lastParts = invItems.map(i => {
-                        const sCode = i.code.toString();
-                        if (sCode.startsWith(sub.code.toString())) {
-                            return parseInt(sCode.substring(prefixLen)) || 0;
-                        }
-                        return 0;
-                    });
+                    const lastParts = invItems.map(i => parseInt(i.code.toString().substring(4)) || 0);
                     nextNum = Math.max(...lastParts) + 1;
                 }
                 document.getElementById('invItemCode').value = sub.code.toString() + nextNum.toString().padStart(3, '0');
@@ -5758,24 +5724,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 description: document.getElementById('invItemDesc').value,
                 brand_id: document.getElementById('invItemBrand').value || null,
                 rack_no: document.getElementById('invItemRack').value,
+                purchase_price: document.getElementById('invItemPurchasePrice').value,
+                selling_price: document.getElementById('invItemSellingPrice').value,
                 unit: document.getElementById('invItemUnit').value,
-                
-                // New Fields
-                item_type: document.getElementById('invItemType').value,
-                min_stock: document.getElementById('invItemMin').value,
-                max_stock: document.getElementById('invItemMax').value,
-                opening_qty: document.getElementById('invItemOpQty').value,
-                opening_rate: document.getElementById('invItemOpRate').value,
-
-                // Optional/Old Fields
-                purchase_price: document.getElementById('invItemPurchasePrice')?.value || 0,
-                selling_price: document.getElementById('invItemSellingPrice')?.value || 0,
-                qty_per_piece: document.getElementById('invItemQtyPerPiece')?.value || 0,
-                tax_rate: document.getElementById('invItemTaxRate')?.value || 0,
+                qty_per_piece: document.getElementById('invItemQtyPerPiece').value,
+                tax_rate: document.getElementById('invItemTaxRate').value,
                 tax_type: Array.from(document.getElementsByName('taxType')).find(r => r.checked)?.value || 'Percent',
                 valuation_method: Array.from(document.getElementsByName('costValuation')).find(r => r.checked)?.value || 'Weighted Average',
-                valuation_cost: document.getElementById('invItemValuationCost')?.value || 0,
-                order_qty: document.getElementById('invItemOrderQty')?.value || 0,
+                valuation_cost: document.getElementById('invItemValuationCost').value,
+                order_qty: document.getElementById('invItemOrderQty').value,
                 is_inactive: document.getElementById('invItemInactive').checked ? 1 : 0
             };
             if (selectedInvItemId) payload.id = selectedInvItemId;
@@ -5789,10 +5746,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (res.ok) {
                     alert("Inventory item saved successfully.");
                     fetchInvItems(selectedInvSubId);
-                } else {
-                    alert("Save failed.");
                 }
-            } catch (e) { alert("Save error."); }
+            } catch (e) { alert("Save failed."); }
         }
 
         async function deleteInvMain() {
@@ -5830,13 +5785,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.deleteInvSub = deleteInvSub;
 
         async function deleteInvItem() {
-            const list = document.getElementById('invItemList');
-            const itemId = selectedInvItemId || (list ? list.value : null);
-            
-            if (!itemId) return alert("Select an Item to delete.");
+            if (!selectedInvItemId) return alert("Select an Item to delete.");
             if (confirm("Are you sure you want to delete this inventory item?")) {
                 try {
-                    const res = await fetch(`api/inventory.php?action=delete_item&id=${itemId}`, { method: 'POST' });
+                    const res = await fetch(`api/inventory.php?action=delete_item&id=${selectedInvItemId}`, { method: 'POST' });
                     if (res.ok) {
                         alert("Inventory item deleted.");
                         fetchInvItems(selectedInvSubId);
