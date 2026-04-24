@@ -140,6 +140,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         sendResponse($stmt->fetchAll());
     }
 
+    if ($action === 'get_coa_balance' && isset($_GET['coa_id'])) {
+        $coaId = $_GET['coa_id'];
+        $fyId = $_GET['fy_id'] ?? 0;
+        
+        $stmt = $pdo->prepare("
+            SELECT (SUM(debit) - SUM(credit)) as balance 
+            FROM (
+                SELECT debit, credit FROM coa_opening_balances WHERE coa_id = ? AND fy_id = ?
+                UNION ALL
+                SELECT debit, credit FROM voucher_details WHERE coa_id = ?
+            ) as t
+        ");
+        $stmt->execute([$coaId, $fyId, $coaId]);
+        sendResponse($stmt->fetch());
+    }
+
     if ($action === 'get_fys') {
         $stmt = $pdo->prepare("SELECT id, abbreviation FROM financial_years WHERE company_id = ? ORDER BY start_date DESC");
         $stmt->execute([$company_id]);

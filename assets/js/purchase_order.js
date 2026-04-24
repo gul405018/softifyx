@@ -93,7 +93,7 @@ window.POModule = {
         document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
     },
 
-    selectVendor: function(coaId) {
+    selectVendor: async function(coaId) {
         const v = this.vendors.find(x => x.coa_list_id == coaId);
         if (v) {
             document.getElementById('vendor_code').value = v.code;
@@ -103,8 +103,19 @@ window.POModule = {
             document.getElementById('vendor_gst').value = v.st_reg_no || '';
             document.getElementById('vendor_ntn').value = v.ntn_cnic || '';
             this.selectedVendorCoaId = v.coa_list_id;
+            
+            // Fetch Balance
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const res = await fetch(`api/maintain.php?action=get_coa_balance&coa_id=${coaId}&fy_id=${session.fy_id || 0}`);
+                const bal = await res.json();
+                const balEl = document.getElementById('vendor_balance');
+                if (balEl) balEl.value = parseFloat(bal.balance || 0).toFixed(2);
+            } catch(e) { console.error("Balance fetch error:", e); }
         }
         document.getElementById('vendor_suggest').style.display = 'none';
+        // Move focus to PO Date or Deliv Date
+        document.getElementById('po_date').focus();
     },
 
     // --- GRID LOGIC ---
@@ -197,13 +208,68 @@ window.POModule = {
             tr.querySelector('.item-code-search').value = item.code;
             tr.cells[2].querySelector('input').value = item.name;
             tr.cells[5].querySelector('input').value = item.unit || 'Pcs';
-            tr.querySelector('.rate').value = (item.selling_price && item.selling_price != 0) ? item.selling_price : '';
-            tr.querySelector('.tax-rate').value = (item.tax_rate && item.tax_rate != 0) ? item.tax_rate : '';
+            tr.querySelector('.rate').value = (item.selling_price && parseFloat(item.selling_price) !== 0) ? item.selling_price : '';
+            tr.querySelector('.tax-rate').value = (item.tax_rate && parseFloat(item.tax_rate) !== 0) ? item.tax_rate : '';
             this.calculateRow(rowIndex);
+            
             // Move focus to Pieces
-            tr.querySelector('.pieces').focus();
+            const piecesInput = tr.querySelector('.pieces');
+            if (piecesInput) piecesInput.focus();
         }
-        tr.querySelector('.grid-suggest').style.display = 'none';
+        const suggest = tr.querySelector('.grid-suggest');
+        if (suggest) suggest.style.display = 'none';
+    },
+
+    findPO: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        const sn = prompt("Enter PO Serial Number to Find:");
+        if (!sn) return;
+
+        try {
+            const res = await fetch(`api/purchases.php?action=get_po&serial_no=${sn}&company_id=${companyId}`);
+            const po = await res.json();
+            if (po && po.id) {
+                this.loadPOData(po);
+            } else {
+                alert("PO Not Found!");
+            }
+        } catch (e) { console.error("Find PO Error:", e); }
+    },
+
+    loadPOData: function(po) {
+        this.currentId = po.id;
+        document.getElementById('po_sn').value = po.serial_no;
+        document.getElementById('po_date').value = po.po_date;
+        document.getElementById('po_delivery_date').value = po.delivery_date;
+        document.getElementById('po_payment_terms').value = po.payment_terms;
+        document.getElementById('po_job_ref').value = po.job_id || '';
+        document.getElementById('po_employee_ref').value = po.employee_id || '';
+        document.getElementById('po_terms').value = po.terms_conditions || '';
+        document.getElementById('po_remarks').value = po.remarks || '';
+        document.getElementById('po_is_cancelled').checked = parseInt(po.is_cancelled) === 1;
+
+        // Load Vendor Info
+        const vendor = this.vendors.find(v => v.coa_list_id == po.vendor_coa_id);
+        if (vendor) {
+            this.selectVendor(vendor.coa_list_id);
+        }
+
+        // Load Items
+        const tbody = document.getElementById('poGridBody');
+        tbody.innerHTML = '';
+        if (po.items && po.items.length > 0) {
+            po.items.forEach(item => this.addRow(item));
+        }
+        
+        // Ensure at least 8 rows
+        const currentRows = tbody.children.length;
+        if (currentRows < 8) {
+            for (let i = 0; i < (8 - currentRows); i++) {
+                this.addRow();
+            }
+        }
+        this.calculateTotals();
     },
 
     calculateRow: function(rowIndex) {
@@ -413,25 +479,7 @@ window.POModule = {
             const res = await fetch(`api/purchases.php?action=get_po&serial_no=${sn}&company_id=${companyId}`);
             const po = await res.json();
             if (po && po.id) {
-                this.currentId = po.id;
-                document.getElementById('po_sn').value = po.serial_no;
-                document.getElementById('po_date').value = po.po_date;
-                document.getElementById('po_delivery_date').value = po.delivery_date;
-                document.getElementById('po_payment_terms').value = po.payment_terms;
-                document.getElementById('po_job_ref').value = po.job_ref || '';
-                document.getElementById('po_employee_ref').value = po.employee_ref_id || '';
-                document.getElementById('po_terms').value = po.terms_conditions;
-                document.getElementById('po_remarks').value = po.remarks;
-                document.getElementById('po_is_cancelled').checked = (po.is_cancelled == 1);
-                
-                // Select Vendor
-                this.selectVendor(po.vendor_coa_id);
-                
-                // Render Items
-                document.getElementById('poGridBody').innerHTML = '';
-                po.items.forEach(item => this.addRow(item));
-                this.addRow(); // Empty last row
-                this.calculateTotals();
+                this.loadPOData(po);
             } else {
                 if (dir === 'next') this.resetForm(true);
             }
