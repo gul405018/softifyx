@@ -5564,11 +5564,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('invItemDesc').value = item.description || '';
                 document.getElementById('invItemBrand').value = item.brand_id || '';
                 document.getElementById('invItemRack').value = item.rack_no || '';
-                document.getElementById('invItemPurchasePrice').value = item.purchase_price || '';
-                document.getElementById('invItemSellingPrice').value = item.selling_price || '';
-                document.getElementById('invItemUnit').value = item.unit || 'Pcs';
-                document.getElementById('invItemQtyPerPiece').value = item.qty_per_piece || '';
-                document.getElementById('invItemTaxRate').value = item.tax_rate || '';
+                
+                // New Fields
+                if(document.getElementById('invItemType')) document.getElementById('invItemType').value = item.item_type || 'finished';
+                if(document.getElementById('invItemMin')) document.getElementById('invItemMin').value = item.min_stock || 0;
+                if(document.getElementById('invItemMax')) document.getElementById('invItemMax').value = item.max_stock || 0;
+                if(document.getElementById('invItemOpQty')) document.getElementById('invItemOpQty').value = item.opening_qty || 0;
+                if(document.getElementById('invItemOpRate')) document.getElementById('invItemOpRate').value = item.opening_rate || 0;
+
+                // Existing Fields
+                const purchaseField = document.getElementById('invItemPurchasePrice');
+                if(purchaseField) purchaseField.value = item.purchase_price || '';
+                
+                const sellingField = document.getElementById('invItemSellingPrice');
+                if(sellingField) sellingField.value = item.selling_price || '';
+                
+                document.getElementById('invItemUnit').value = item.unit || 'pcs';
+                
+                const qtyPerPieceField = document.getElementById('invItemQtyPerPiece');
+                if(qtyPerPieceField) qtyPerPieceField.value = item.qty_per_piece || '';
+                
+                const taxRateField = document.getElementById('invItemTaxRate');
+                if(taxRateField) taxRateField.value = item.tax_rate || '';
                 
                 const taxRadios = document.getElementsByName('taxType');
                 taxRadios.forEach(r => r.checked = (r.value === item.tax_type));
@@ -5576,12 +5593,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const valRadios = document.getElementsByName('costValuation');
                 valRadios.forEach(r => r.checked = (r.value === item.valuation_method));
                 
-                document.getElementById('invItemValuationCost').value = item.valuation_cost || '';
-                document.getElementById('invItemOrderQty').value = item.order_qty || '';
+                const valCostField = document.getElementById('invItemValuationCost');
+                if(valCostField) valCostField.value = item.valuation_cost || '';
+                
+                const orderQtyField = document.getElementById('invItemOrderQty');
+                if(orderQtyField) orderQtyField.value = item.order_qty || '';
+                
                 document.getElementById('invItemInactive').checked = !!parseInt(item.is_inactive);
                 
-                enableInvItemFields(true); // Auto-edit enabled
-                document.getElementById('invItemCode').disabled = true; // Lock code
+                enableInvItemFields(true);
+                document.getElementById('invItemCode').disabled = true;
             }
         }
 
@@ -5597,7 +5618,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ids = [
                 'invItemCode', 'invItemName', 'invItemDesc', 'invItemBrand', 'invItemRack',
                 'invItemPurchasePrice', 'invItemSellingPrice', 'invItemUnit', 'invItemQtyPerPiece',
-                'invItemTaxRate', 'invItemValuationCost', 'invItemOrderQty', 'invItemInactive'
+                'invItemTaxRate', 'invItemValuationCost', 'invItemOrderQty', 'invItemInactive',
+                'invItemType', 'invItemMin', 'invItemMax', 'invItemOpQty', 'invItemOpRate'
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
@@ -5643,15 +5665,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             enableInvItemFields(generate);
             const ids = [
                 'invItemName', 'invItemDesc', 'invItemBrand', 'invItemRack',
-                'invItemPurchasePrice', 'invItemSellingPrice', 'invItemValuationCost', 'invItemOrderQty'
+                'invItemPurchasePrice', 'invItemSellingPrice', 'invItemValuationCost', 'invItemOrderQty',
+                'invItemType', 'invItemMin', 'invItemMax', 'invItemOpQty', 'invItemOpRate'
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.value = '';
+                if (el) {
+                    if(id === 'invItemType') el.value = 'finished';
+                    else if(['invItemMin', 'invItemMax', 'invItemOpQty', 'invItemOpRate'].includes(id)) el.value = 0;
+                    else el.value = '';
+                }
             });
-            document.getElementById('invItemUnit').value = 'Pcs';
-            document.getElementById('invItemQtyPerPiece').value = '';
-            document.getElementById('invItemTaxRate').value = '';
+            document.getElementById('invItemUnit').value = 'pcs';
+            if(document.getElementById('invItemQtyPerPiece')) document.getElementById('invItemQtyPerPiece').value = '';
+            if(document.getElementById('invItemTaxRate')) document.getElementById('invItemTaxRate').value = '';
             document.getElementById('invItemInactive').checked = false;
 
             if (generate) {
@@ -5724,15 +5751,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 description: document.getElementById('invItemDesc').value,
                 brand_id: document.getElementById('invItemBrand').value || null,
                 rack_no: document.getElementById('invItemRack').value,
-                purchase_price: document.getElementById('invItemPurchasePrice').value,
-                selling_price: document.getElementById('invItemSellingPrice').value,
                 unit: document.getElementById('invItemUnit').value,
-                qty_per_piece: document.getElementById('invItemQtyPerPiece').value,
-                tax_rate: document.getElementById('invItemTaxRate').value,
+                
+                // New Fields
+                item_type: document.getElementById('invItemType').value,
+                min_stock: document.getElementById('invItemMin').value,
+                max_stock: document.getElementById('invItemMax').value,
+                opening_qty: document.getElementById('invItemOpQty').value,
+                opening_rate: document.getElementById('invItemOpRate').value,
+
+                // Optional/Old Fields
+                purchase_price: document.getElementById('invItemPurchasePrice')?.value || 0,
+                selling_price: document.getElementById('invItemSellingPrice')?.value || 0,
+                qty_per_piece: document.getElementById('invItemQtyPerPiece')?.value || 0,
+                tax_rate: document.getElementById('invItemTaxRate')?.value || 0,
                 tax_type: Array.from(document.getElementsByName('taxType')).find(r => r.checked)?.value || 'Percent',
                 valuation_method: Array.from(document.getElementsByName('costValuation')).find(r => r.checked)?.value || 'Weighted Average',
-                valuation_cost: document.getElementById('invItemValuationCost').value,
-                order_qty: document.getElementById('invItemOrderQty').value,
+                valuation_cost: document.getElementById('invItemValuationCost')?.value || 0,
+                order_qty: document.getElementById('invItemOrderQty')?.value || 0,
                 is_inactive: document.getElementById('invItemInactive').checked ? 1 : 0
             };
             if (selectedInvItemId) payload.id = selectedInvItemId;
