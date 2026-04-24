@@ -59,7 +59,7 @@
         <div class="menu-item" id="purchasesMenu">
             Purchases <i class="fas fa-chevron-down"></i>
             <div class="dropdown">
-                <div class="dropdown-item" data-target="Navigation/Purchases/purchase_orders.html" data-module="Purchase Orders">Purchase Orders</div>
+                <div class="dropdown-item" onclick="openModularPopup('Navigation/Purchases/purchase_order.html', 'fa-shopping-cart', 'Purchase Order', () => window.POModule.init(), 'Purchase Order', true)">Purchase Order</div>
                 <div class="dropdown-item" data-target="Navigation/Purchases/purchases_sales_tax.html" data-module="Purchases (Sales Tax)">Purchases (Sales Tax)</div>
                 <div class="dropdown-item" data-target="Navigation/Purchases/purchases_non_tax.html" data-module="Purchases (Non Tax)">Purchases (Non Tax)</div>
                 <div class="dropdown-item" data-target="Navigation/Purchases/purchases_return_debit_notes.html" data-module="Purchases Return/Debit Notes">Purchases Return/Debit Notes</div>
