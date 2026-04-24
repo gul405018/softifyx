@@ -154,9 +154,11 @@ window.POModule = {
         });
 
         // Add next row if last row is filled
-        codeInput.onfocus = () => {
+        codeInput.oninput = (e) => {
             const tbody = document.getElementById('poGridBody');
-            if (tr === tbody.lastElementChild) this.addRow();
+            if (tr === tbody.lastElementChild && e.target.value.trim() !== '') {
+                this.addRow();
+            }
         };
     },
 
@@ -281,9 +283,11 @@ window.POModule = {
         });
         document.getElementById('po_is_cancelled').checked = false;
 
-        // Reset Grid
+        // Reset Grid with 8 rows
         document.getElementById('poGridBody').innerHTML = '';
-        this.addRow();
+        for (let i = 0; i < 8; i++) {
+            this.addRow();
+        }
 
         if (isNew) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
