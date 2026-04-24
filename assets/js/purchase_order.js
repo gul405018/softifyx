@@ -111,16 +111,16 @@ window.POModule = {
                 <div class="po-suggest grid-suggest"></div>
             </td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.description || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num pieces" value="${data.pieces || ''}"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num qty" value="${data.quantity || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num pieces" value="${(data.pieces && data.pieces != 0) ? data.pieces : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num qty" value="${(data.quantity && data.quantity != 0) ? data.quantity : ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num rate" value="${data.rate || ''}"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${data.value_excl_tax || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num tax-rate" value="${data.tax_rate || ''}"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" value="${data.tax_amount || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num frth-rate" value="${data.further_tax_rate || ''}"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-amt" value="${data.further_tax_amount || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${data.value_incl_tax || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num rate" value="${(data.rate && data.rate != 0) ? data.rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${(data.value_excl_tax && data.value_excl_tax != 0) ? data.value_excl_tax : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num tax-rate" value="${(data.tax_rate && data.tax_rate != 0) ? data.tax_rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" value="${(data.tax_amount && data.tax_amount != 0) ? data.tax_amount : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num frth-rate" value="${(data.further_tax_rate && data.further_tax_rate != 0) ? data.further_tax_rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-amt" value="${(data.further_tax_amount && data.further_tax_amount != 0) ? data.further_tax_amount : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${(data.value_incl_tax && data.value_incl_tax != 0) ? data.value_incl_tax : ''}" readonly></td>
         `;
         tbody.appendChild(tr);
         this.setupGridEvents(tr);
@@ -185,8 +185,8 @@ window.POModule = {
             tr.querySelector('.item-code-search').value = item.code;
             tr.cells[2].querySelector('input').value = item.name;
             tr.cells[5].querySelector('input').value = item.unit || 'Pcs';
-            tr.querySelector('.rate').value = item.selling_price || 0;
-            tr.querySelector('.tax-rate').value = item.tax_rate || 0;
+            tr.querySelector('.rate').value = (item.selling_price && item.selling_price != 0) ? item.selling_price : '';
+            tr.querySelector('.tax-rate').value = (item.tax_rate && item.tax_rate != 0) ? item.tax_rate : '';
             this.calculateRow(rowIndex);
             // Move focus to Pieces
             tr.querySelector('.pieces').focus();
