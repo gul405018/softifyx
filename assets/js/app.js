@@ -5685,7 +5685,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const sub = invSubs.find(s => s.id == selectedInvSubId);
                 let nextNum = 1;
                 if (invItems.length > 0) {
-                    const lastParts = invItems.map(i => parseInt(i.code.toString().substring(4)) || 0);
+                    // Dynamic substring based on sub category code length
+                    const prefixLen = sub.code.toString().length;
+                    const lastParts = invItems.map(i => {
+                        const suffix = i.code.toString().substring(prefixLen);
+                        return parseInt(suffix) || 0;
+                    });
                     nextNum = Math.max(...lastParts) + 1;
                 }
                 document.getElementById('invItemCode').value = sub.code.toString() + nextNum.toString().padStart(3, '0');
@@ -5821,10 +5826,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.deleteInvSub = deleteInvSub;
 
         async function deleteInvItem() {
-            if (!selectedInvItemId) return alert("Select an Item to delete.");
+            const list = document.getElementById('invItemList');
+            const itemId = selectedInvItemId || (list ? list.value : null);
+            
+            if (!itemId) return alert("Select an Item to delete.");
             if (confirm("Are you sure you want to delete this inventory item?")) {
                 try {
-                    const res = await fetch(`api/inventory.php?action=delete_item&id=${selectedInvItemId}`, { method: 'POST' });
+                    const res = await fetch(`api/inventory.php?action=delete_item&id=${itemId}`, { method: 'POST' });
                     if (res.ok) {
                         alert("Inventory item deleted.");
                         fetchInvItems(selectedInvSubId);

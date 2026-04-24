@@ -51,11 +51,30 @@ try {
         valuation_cost DECIMAL(20,2) DEFAULT 0,
         order_qty DECIMAL(20,2) DEFAULT 0,
         is_inactive TINYINT(1) DEFAULT 0,
+        item_type VARCHAR(50) DEFAULT 'finished',
+        min_stock DECIMAL(20,2) DEFAULT 0,
+        max_stock DECIMAL(20,2) DEFAULT 0,
+        opening_qty DECIMAL(20,2) DEFAULT 0,
+        opening_rate DECIMAL(20,2) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sub_id) REFERENCES inv_sub_categories(id) ON DELETE CASCADE,
         FOREIGN KEY (brand_id) REFERENCES inv_brands(id) ON DELETE SET NULL,
         UNIQUE KEY `inv_item_code_company` (`code`, `company_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // Migration for missing columns in inv_items
+    $newCols = [
+        'item_type' => "VARCHAR(50) DEFAULT 'finished'",
+        'min_stock' => "DECIMAL(20,2) DEFAULT 0",
+        'max_stock' => "DECIMAL(20,2) DEFAULT 0",
+        'opening_qty' => "DECIMAL(20,2) DEFAULT 0",
+        'opening_rate' => "DECIMAL(20,2) DEFAULT 0"
+    ];
+    foreach ($newCols as $col => $def) {
+        try {
+            $pdo->exec("ALTER TABLE inv_items ADD COLUMN $col $def");
+        } catch (Exception $e) {}
+    }
 
     // 5. Inventory Locations
     $pdo->exec("CREATE TABLE IF NOT EXISTS inv_locations (
@@ -191,8 +210,12 @@ try {
             $fields = [
                 'company_id', 'sub_id', 'code', 'name', 'description', 'brand_id', 'rack_no',
                 'purchase_price', 'selling_price', 'unit', 'qty_per_piece', 'tax_rate',
-                'tax_type', 'valuation_method', 'valuation_cost', 'order_qty', 'is_inactive'
+                'tax_type', 'valuation_method', 'valuation_cost', 'order_qty', 'is_inactive',
+                'item_type', 'min_stock', 'max_stock', 'opening_qty', 'opening_rate'
             ];
+            
+            // Clean data for brand_id nulls
+            if (isset($data['brand_id']) && empty($data['brand_id'])) $data['brand_id'] = null;
             
             if (isset($data['id'])) {
                 $setPart = implode(', ', array_map(fn($f) => "$f = :$f", array_slice($fields, 1)));
