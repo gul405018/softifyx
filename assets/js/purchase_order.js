@@ -223,7 +223,7 @@ window.POModule = {
 
         const setVal = (sel, val) => {
             const el = tr.querySelector(sel);
-            if (el) el.value = val > 0 ? val.toFixed(2) : '';
+            if (el) el.value = (val && val != 0) ? val.toFixed(2) : '';
         };
 
         setVal('.val-excl', valExcl);
