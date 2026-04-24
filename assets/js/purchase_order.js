@@ -121,14 +121,14 @@ window.POModule = {
                 <div class="po-suggest grid-suggest"></div>
             </td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.description || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num pieces" value="${(data.pieces && parseFloat(data.pieces) !== 0) ? data.pieces : ''}"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num qty" value="${(data.quantity && parseFloat(data.quantity) !== 0) ? data.quantity : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value="${(data.pieces && parseFloat(data.pieces) !== 0) ? data.pieces : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value="${(data.quantity && parseFloat(data.quantity) !== 0) ? data.quantity : ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num rate" value="${(data.rate && parseFloat(data.rate) !== 0) ? data.rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value="${(data.rate && parseFloat(data.rate) !== 0) ? data.rate : ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${(data.value_excl_tax && parseFloat(data.value_excl_tax) !== 0) ? data.value_excl_tax : ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num tax-rate" value="${(data.tax_rate && parseFloat(data.tax_rate) !== 0) ? data.tax_rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-rate" value="${(data.tax_rate && parseFloat(data.tax_rate) !== 0) ? data.tax_rate : ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" value="${(data.tax_amount && parseFloat(data.tax_amount) !== 0) ? data.tax_amount : ''}" readonly></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num frth-rate" value="${(data.further_tax_rate && parseFloat(data.further_tax_rate) !== 0) ? data.further_tax_rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-rate" value="${(data.further_tax_rate && parseFloat(data.further_tax_rate) !== 0) ? data.further_tax_rate : ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-amt" value="${(data.further_tax_amount && parseFloat(data.further_tax_amount) !== 0) ? data.further_tax_amount : ''}" readonly></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${(data.value_incl_tax && parseFloat(data.value_incl_tax) !== 0) ? data.value_incl_tax : ''}" readonly></td>
         `;
