@@ -1,28 +1,22 @@
 <!-- 
     Purchase Order Module 
-    Size: Width 950px, Height 750px 
+    Size: Width 950px, Height 550px 
 -->
-<div id="purchaseOrderContainer" data-module="Purchase Order" style="width: 950px; height: 750px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+<div id="purchaseOrderContainer" data-module="Purchase Order" style="width: 950px; height: 550px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
     
     <!-- Top Toolbar -->
-    <div style="background: #e2e8f0; padding: 4px; display: flex; gap: 3px; border-bottom: 1px solid #cbd5e0; align-items: center;">
+    <div style="background: #e2e8f0; padding: 3px; display: flex; gap: 3px; border-bottom: 1px solid #cbd5e0; align-items: center;">
         <button class="po-tool-btn po-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/vendors.html', 'fa-user-tie', 'Vendors/Suppliers', null, 'Vendors', true)">New Vendor</button>
         <button class="po-tool-btn po-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-boxes', 'Chart Of Inventory', null, 'Chart of Inventory', true)">New Item</button>
         
-        <div style="width: 1px; height: 18px; background: #cbd5e0; margin: 0 3px;"></div>
+        <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 2px;"></div>
         
         <button class="po-tool-btn po-btn-add" onclick="window.POModule.resetForm(true)">Add</button>
         <button class="po-tool-btn po-btn-save" onclick="window.POModule.savePO()">Save</button>
         <button class="po-tool-btn po-btn-cancel" onclick="window.POModule.resetForm()">Cancel</button>
         <button class="po-tool-btn po-btn-delete" onclick="window.POModule.deletePO()">Delete</button>
         
-        <div style="width: 1px; height: 18px; background: #cbd5e0; margin: 0 3px;"></div>
-        
-        <button class="po-tool-btn po-btn-info">Convert IGP</button>
-        <button class="po-tool-btn po-btn-info">Conv. Tax</button>
-        <button class="po-tool-btn po-btn-info">Conv. Purchase</button>
-        
-        <div style="width: 1px; height: 18px; background: #cbd5e0; margin: 0 3px;"></div>
+        <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 2px;"></div>
         
         <button class="po-tool-btn po-btn-info">Find</button>
         <button class="po-tool-btn po-btn-info">Retrieve Last</button>
@@ -34,27 +28,27 @@
     </div>
 
     <!-- Main Content Area -->
-    <div style="flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; background: white; overflow: hidden;">
+    <div style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 6px; background: white; overflow: hidden;">
         
         <!-- Header Info Rows -->
-        <div style="display: flex; gap: 15px;">
+        <div style="display: flex; gap: 10px;">
             <!-- Left Side: Order Details -->
-            <div style="flex: 1; display: grid; grid-template-columns: 120px 1fr; gap: 4px; align-content: start;">
+            <div style="flex: 1; display: grid; grid-template-columns: 110px 1fr; gap: 3px; align-content: start;">
                 <label class="po-label">Serial No</label>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <button class="po-nav-btn" onclick="window.POModule.navigate('prev')"><<</button>
-                    <input type="text" id="po_sn" class="po-input" style="width: 70px; text-align: center; color: blue; font-weight: 700; font-size: 12px;" readonly>
+                    <input type="text" id="po_sn" class="po-input" style="width: 60px; text-align: center; color: blue; font-weight: 700; font-size: 11px;" readonly>
                     <button class="po-nav-btn" onclick="window.POModule.navigate('next')">>></button>
-                    <label style="margin-left: 10px; font-size: 10px; display: flex; align-items: center; gap: 3px; color: #475569;">
+                    <label style="margin-left: 10px; font-size: 9px; display: flex; align-items: center; gap: 2px; color: #475569;">
                         Cancel <input type="checkbox" id="po_is_cancelled">
                     </label>
                 </div>
 
                 <label class="po-label">Date</label>
-                <input type="date" id="po_date" class="po-input" style="width: 120px;">
+                <input type="date" id="po_date" class="po-input" style="width: 110px;">
 
                 <label class="po-label">Deliv. Date</label>
-                <input type="date" id="po_delivery_date" class="po-input" style="width: 120px;">
+                <input type="date" id="po_delivery_date" class="po-input" style="width: 110px;">
 
                 <label class="po-label">Payment Terms</label>
                 <input type="text" id="po_payment_terms" class="po-input">
@@ -71,24 +65,24 @@
             </div>
 
             <!-- Right Side: Vendor Info -->
-            <div style="width: 400px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px; background: #f8fafc; position: relative;">
-                <div style="position: absolute; top: -8px; left: 10px; background: #f8fafc; padding: 0 4px; font-size: 9px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">Vendor Information</div>
-                <div style="display: grid; grid-template-columns: 70px 1fr; gap: 4px;">
+            <div style="width: 380px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px; background: #f8fafc; position: relative;">
+                <div style="position: absolute; top: -7px; left: 10px; background: #f8fafc; padding: 0 4px; font-size: 9px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">Vendor Information</div>
+                <div style="display: grid; grid-template-columns: 60px 1fr; gap: 3px;">
                     <label class="po-label">Code</label>
                     <div style="display: flex; gap: 4px;">
                         <div style="position: relative; flex: 1;">
                             <input type="text" id="vendor_code" class="po-input" placeholder="Search vendor...">
                             <div id="vendor_suggest" class="po-suggest"></div>
                         </div>
-                        <label class="po-label" style="min-width: 40px; text-align: right;">Bal.</label>
-                        <input type="text" id="vendor_balance" class="po-input" style="width: 80px; text-align: right;" readonly>
+                        <label class="po-label" style="min-width: 30px; text-align: right;">Bal.</label>
+                        <input type="text" id="vendor_balance" class="po-input" style="width: 70px; text-align: right;" readonly>
                     </div>
 
                     <label class="po-label">Name</label>
                     <input type="text" id="vendor_name" class="po-input" readonly>
 
                     <label class="po-label">Address</label>
-                    <textarea id="vendor_address" class="po-input" style="height: 34px; resize: none;" readonly></textarea>
+                    <textarea id="vendor_address" class="po-input" style="height: 28px; resize: none;" readonly></textarea>
 
                     <label class="po-label">Telephone</label>
                     <input type="text" id="vendor_tel" class="po-input" readonly>
@@ -96,31 +90,31 @@
                     <label class="po-label">GST/NTN</label>
                     <div style="display: flex; gap: 4px;">
                         <input type="text" id="vendor_gst" class="po-input" placeholder="GST" readonly>
-                        <input type="text" id="vendor_ntn" class="po-input" placeholder="NTN" readonly style="width: 100px;">
+                        <input type="text" id="vendor_ntn" class="po-input" placeholder="NTN" readonly style="width: 90px;">
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Grid Table Section -->
-        <div style="flex: 1; border: 1px solid #cbd5e0; overflow: hidden; display: flex; flex-direction: column; background: #fff;">
+        <div style="flex: 1; border: 1px solid #cbd5e0; overflow: hidden; display: flex; flex-direction: column; background: #fff; min-height: 220px;">
             <div style="flex: 1; overflow-y: auto;">
                 <table id="poGrid" style="width: 100%; border-collapse: collapse; background: white; table-layout: fixed;">
                     <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
                         <tr>
                             <th style="width: 25px; border: 1px solid #cbd5e0;"></th>
-                            <th style="width: 85px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Item Code</th>
-                            <th style="width: 170px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Description</th>
-                            <th style="width: 50px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Pieces</th>
-                            <th style="width: 60px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Quantity</th>
-                            <th style="width: 45px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Unit</th>
-                            <th style="width: 70px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Rate</th>
-                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Val Excl</th>
-                            <th style="width: 40px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Tax%</th>
-                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Tax Amt</th>
-                            <th style="width: 40px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Frth%</th>
-                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Frth Amt</th>
-                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 3px; text-transform: uppercase;">Val Incl</th>
+                            <th style="width: 85px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Item Code</th>
+                            <th style="width: 170px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Description</th>
+                            <th style="width: 50px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Pieces</th>
+                            <th style="width: 60px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Quantity</th>
+                            <th style="width: 45px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Unit</th>
+                            <th style="width: 70px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Rate</th>
+                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Val Excl</th>
+                            <th style="width: 40px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Tax%</th>
+                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Tax Amt</th>
+                            <th style="width: 40px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Frth%</th>
+                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Frth Amt</th>
+                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Val Incl</th>
                         </tr>
                     </thead>
                     <tbody id="poGridBody">
@@ -145,23 +139,23 @@
         </div>
 
         <!-- Footer Section -->
-        <div style="display: flex; gap: 15px; margin-bottom: 2px;">
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label class="po-label" style="min-width: 90px;">Amt Words:</label>
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <label class="po-label" style="min-width: 80px;">Amt Words:</label>
                     <span id="po_amt_words" style="font-size: 9px; font-weight: 700; color: #1e3a8a;">Rupees zero and 00/100 only.</span>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <label class="po-label" style="min-width: 90px;">Terms & Cond.</label>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
-                        <textarea id="po_terms" class="po-input" style="height: 44px; resize: none; font-size: 9px;"></textarea>
-                        <button class="po-small-btn" onclick="window.POModule.setDefaultTerms()">Set as Default</button>
+                <div style="display: flex; gap: 5px;">
+                    <label class="po-label" style="min-width: 80px;">Terms/Cond.</label>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                        <textarea id="po_terms" class="po-input" style="height: 34px; resize: none; font-size: 9px;"></textarea>
+                        <button class="po-small-btn" onclick="window.POModule.setDefaultTerms()">Set Default</button>
                     </div>
                 </div>
             </div>
-            <div style="width: 320px; display: flex; flex-direction: column; gap: 3px;">
+            <div style="width: 300px; display: flex; flex-direction: column; gap: 2px;">
                 <label class="po-label">Remarks</label>
-                <textarea id="po_remarks" class="po-input" style="height: 60px; resize: none; font-size: 9px;"></textarea>
+                <textarea id="po_remarks" class="po-input" style="height: 50px; resize: none; font-size: 9px;"></textarea>
             </div>
         </div>
     </div>
