@@ -52,7 +52,7 @@ window.POModule = {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
         try {
-            const res = await fetch(`api/inventory.php?action=get_all_items_lookup&company_id=${companyId}`);
+            const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${companyId}`);
             this.inventory = await res.json();
             console.log("PO Module: Inventory loaded:", this.inventory.length);
         } catch (e) { console.error("PO Module: Load Inventory Error:", e); }
@@ -188,7 +188,7 @@ window.POModule = {
                 
                 if (matches.length > 0) {
                     suggest.innerHTML = matches.map(i => `
-                        <div onclick="window.POModule.selectGridItem(${idx}, ${i.id})" 
+                        <div onclick="window.POModule.selectGridItem(${idx}, ${i.coa_list_id})" 
                              style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
                              <b>${i.code}</b> - ${i.name} <small style="color:#64748b;">(${i.unit || 'Pcs'})</small>
                         </div>
@@ -228,15 +228,15 @@ window.POModule = {
         document.addEventListener('click', (e) => { if (e.target !== codeInput) suggest.style.display = 'none'; });
     },
 
-    selectGridItem: function(rowIndex, itemId) {
-        const item = this.inventory.find(x => x.id == itemId);
+    selectGridItem: function(rowIndex, coaId) {
+        const item = this.inventory.find(x => x.coa_list_id == coaId);
         const tr = document.querySelector(`#poGridBody tr[data-index="${rowIndex}"]`);
         if (item && tr) {
-            tr.dataset.itemId = item.id;
+            tr.dataset.coaId = item.coa_list_id;
             tr.querySelector('.item-code-search').value = item.code;
             tr.cells[2].querySelector('input').value = item.name;
             tr.cells[5].querySelector('input').value = item.unit || 'Pcs';
-            tr.querySelector('.rate').value = (item.purchase_price && parseFloat(item.purchase_price) !== 0) ? item.purchase_price : '';
+            tr.querySelector('.rate').value = (item.selling_price && parseFloat(item.selling_price) !== 0) ? item.selling_price : '';
             tr.querySelector('.tax-rate').value = (item.tax_rate && parseFloat(item.tax_rate) !== 0) ? item.tax_rate : '';
             this.calculateRow(rowIndex);
             
@@ -439,10 +439,10 @@ window.POModule = {
 
         const items = [];
         document.querySelectorAll('#poGridBody tr').forEach(tr => {
-            const itemId = tr.dataset.itemId;
-            if (itemId) {
+            const coaId = tr.dataset.coaId;
+            if (coaId) {
                 items.push({
-                    item_id: itemId,
+                    item_coa_id: coaId,
                     description: tr.cells[2].querySelector('input').value,
                     pieces: tr.querySelector('.pieces').value,
                     quantity: tr.querySelector('.qty').value,
