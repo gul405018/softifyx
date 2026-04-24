@@ -172,52 +172,60 @@ window.POModule = {
         const codeInput = tr.querySelector('.item-code-search');
         const suggest = tr.querySelector('.grid-suggest');
         
-        // Item Autocomplete (Smart Search)
-        codeInput.oninput = (e) => {
+        // --- Combined Input Handler (Autocomplete + AutoRow) ---
+        codeInput.addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
-            if (!val) { suggest.style.display = 'none'; return; }
-            const searchWords = val.split(/\s+/);
             
-            const matches = this.inventory.filter(i => {
-                const searchStr = `${i.code} ${i.name} ${i.unit || ''}`.toLowerCase();
-                return searchWords.every(word => searchStr.includes(word));
-            }).slice(0, 15);
-            
-            if (matches.length > 0) {
-                suggest.innerHTML = matches.map(i => `
-                    <div onclick="window.POModule.selectGridItem(${idx}, ${i.coa_list_id})"><b>${i.code}</b> - ${i.name} <small style="color:#64748b;">(${i.unit || 'Pcs'})</small></div>
-                `).join('');
-                suggest.style.display = 'block';
-            } else { suggest.style.display = 'none'; }
-        };
+            // 1. Autocomplete Logic
+            if (!val) { 
+                suggest.style.display = 'none'; 
+            } else {
+                const searchWords = val.split(/\s+/);
+                const matches = this.inventory.filter(i => {
+                    const searchStr = `${i.code} ${i.name} ${i.unit || ''}`.toLowerCase();
+                    return searchWords.every(word => searchStr.includes(word));
+                }).slice(0, 15);
+                
+                if (matches.length > 0) {
+                    suggest.innerHTML = matches.map(i => `
+                        <div onclick="window.POModule.selectGridItem(${idx}, ${i.coa_list_id})" 
+                             style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                             <b>${i.code}</b> - ${i.name} <small style="color:#64748b;">(${i.unit || 'Pcs'})</small>
+                        </div>
+                    `).join('');
+                    suggest.style.display = 'block';
+                    suggest.style.zIndex = '9999';
+                } else { 
+                    suggest.style.display = 'none'; 
+                }
+            }
+
+            // 2. Auto-Row Expansion Logic
+            const tbody = document.getElementById('poGridBody');
+            if (tr === tbody.lastElementChild && val !== '') {
+                this.addRow();
+            }
+        });
 
         // Calculations on Input
         tr.querySelectorAll('input.num').forEach(input => {
             input.oninput = () => this.calculateRow(idx);
         });
 
-        // Add next row if last row is filled OR Enter is pressed
-        const handleAutoRow = (e) => {
-            const tbody = document.getElementById('poGridBody');
-            if (tr === tbody.lastElementChild) {
-                if (e.type === 'input' && e.target.value.trim() !== '') {
-                    this.addRow();
-                } else if (e.type === 'keydown' && e.key === 'Enter') {
-                    this.addRow();
-                }
-            }
-        };
-
-        codeInput.oninput = handleAutoRow;
-        
-        // Add Enter key listener to all inputs in the row to handle expansion
+        // Add Enter key listener for navigation/expansion
         tr.querySelectorAll('input').forEach(input => {
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && tr === document.getElementById('poGridBody').lastElementChild) {
-                    this.addRow();
+                if (e.key === 'Enter') {
+                    if (tr === document.getElementById('poGridBody').lastElementChild) {
+                        this.addRow();
+                    }
+                    // Optional: focus next row or pieces input
                 }
             });
         });
+
+        // Close suggestions on outside click
+        document.addEventListener('click', (e) => { if (e.target !== codeInput) suggest.style.display = 'none'; });
     },
 
     selectGridItem: function(rowIndex, coaId) {
