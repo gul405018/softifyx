@@ -5660,7 +5660,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function resetInvItemForm(generate = false) {
-            if (generate && !selectedInvSubId) return alert("Select a Sub Category first!");
+            const list = document.getElementById('invSubList');
+            const subId = selectedInvSubId || (list ? list.value : null);
+            
+            if (generate && !subId) return alert("Select a Sub Category first!");
             selectedInvItemId = null;
             enableInvItemFields(generate);
             const ids = [
@@ -5682,18 +5685,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('invItemInactive').checked = false;
 
             if (generate) {
-                const sub = invSubs.find(s => s.id == selectedInvSubId);
+                const sub = invSubs.find(s => s.id == subId);
+                if (!sub) {
+                    console.error("SoftifyX: Sub-category not found for ID", subId);
+                    return;
+                }
                 let nextNum = 1;
                 if (invItems.length > 0) {
-                    // Dynamic substring based on sub category code length
                     const prefixLen = sub.code.toString().length;
                     const lastParts = invItems.map(i => {
-                        const suffix = i.code.toString().substring(prefixLen);
-                        return parseInt(suffix) || 0;
+                        const sCode = i.code.toString();
+                        if (sCode.startsWith(sub.code.toString())) {
+                            const suffix = sCode.substring(prefixLen);
+                            return parseInt(suffix) || 0;
+                        }
+                        return 0;
                     });
                     nextNum = Math.max(...lastParts) + 1;
                 }
-                document.getElementById('invItemCode').value = sub.code.toString() + nextNum.toString().padStart(3, '0');
+                const newCode = sub.code.toString() + nextNum.toString().padStart(3, '0');
+                console.log(`SoftifyX: Generating Code. Parent=${sub.code}, NextNum=${nextNum}, Final=${newCode}`);
+                document.getElementById('invItemCode').value = newCode;
                 document.getElementById('invItemName').focus();
             } else {
                 document.getElementById('invItemCode').value = '';
@@ -5744,13 +5756,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async function saveInvItem() {
-            if (!selectedInvSubId) return alert("Select a Sub Category first!");
+            const list = document.getElementById('invSubList');
+            const subId = selectedInvSubId || (list ? list.value : null);
+            
+            if (!subId) return alert("Select a Sub Category first!");
             const code = document.getElementById('invItemCode').value.trim();
             const name = document.getElementById('invItemName').value.trim();
             if (!code || !name) return alert("Item Code and Name are required!");
 
             const payload = {
-                sub_id: selectedInvSubId,
+                sub_id: subId,
                 code: code,
                 name: name,
                 description: document.getElementById('invItemDesc').value,
@@ -5784,11 +5799,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (res.ok) {
+                const result = await res.json();
+                if (res.ok && result.status === 'success') {
                     alert("Inventory item saved successfully.");
-                    fetchInvItems(selectedInvSubId);
+                    fetchInvItems(subId);
+                } else {
+                    alert("Save failed: " + (result.error || result.message || "Unknown error"));
                 }
-            } catch (e) { alert("Save failed."); }
+            } catch (e) { alert("Save error: " + e.message); }
         }
 
         async function deleteInvMain() {
