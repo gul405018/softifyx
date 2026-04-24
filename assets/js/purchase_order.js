@@ -105,22 +105,22 @@ window.POModule = {
         tr.dataset.index = rowIndex;
         
         tr.innerHTML = `
-            <td style="text-align:center; font-size:10px; color:#64748b;">${rowIndex + 1}</td>
-            <td>
+            <td style="text-align:center; font-size:10px; color:#64748b; border: 1px solid #cbd5e0;">${rowIndex + 1}</td>
+            <td style="border: 1px solid #cbd5e0;">
                 <input type="text" class="grid-input item-code-search" placeholder="Code..." value="${data.item_code || ''}">
                 <div class="po-suggest grid-suggest"></div>
             </td>
-            <td><input type="text" class="grid-input" value="${data.description || ''}" readonly></td>
-            <td><input type="number" class="grid-input num pieces" value="${data.pieces || 0}"></td>
-            <td><input type="number" class="grid-input num qty" value="${data.quantity || 0}"></td>
-            <td><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
-            <td><input type="number" class="grid-input num rate" value="${data.rate || 0}"></td>
-            <td><input type="number" class="grid-input num val-excl" value="${data.value_excl_tax || 0}" readonly></td>
-            <td><input type="number" class="grid-input num tax-rate" value="${data.tax_rate || 0}"></td>
-            <td><input type="number" class="grid-input num tax-amt" value="${data.tax_amount || 0}" readonly></td>
-            <td><input type="number" class="grid-input num frth-rate" value="${data.further_tax_rate || 0}"></td>
-            <td><input type="number" class="grid-input num frth-amt" value="${data.further_tax_amount || 0}" readonly></td>
-            <td><input type="number" class="grid-input num val-incl" value="${data.value_incl_tax || 0}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.description || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num pieces" value="${data.pieces || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num qty" value="${data.quantity || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num rate" value="${data.rate || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${data.value_excl_tax || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num tax-rate" value="${data.tax_rate || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" value="${data.tax_amount || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="number" class="grid-input num frth-rate" value="${data.further_tax_rate || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-amt" value="${data.further_tax_amount || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${data.value_incl_tax || ''}" readonly></td>
         `;
         tbody.appendChild(tr);
         this.setupGridEvents(tr);
@@ -209,10 +209,15 @@ window.POModule = {
         const frthAmt = (valExcl * frthRate) / 100;
         const valIncl = valExcl + taxAmt + frthAmt;
 
-        tr.querySelector('.val-excl').value = valExcl.toFixed(2);
-        tr.querySelector('.tax-amt').value = taxAmt.toFixed(2);
-        tr.querySelector('.frth-amt').value = frthAmt.toFixed(2);
-        tr.querySelector('.val-incl').value = valIncl.toFixed(2);
+        const setVal = (sel, val) => {
+            const el = tr.querySelector(sel);
+            if (el) el.value = val > 0 ? val.toFixed(2) : '';
+        };
+
+        setVal('.val-excl', valExcl);
+        setVal('.tax-amt', taxAmt);
+        setVal('.frth-amt', frthAmt);
+        setVal('.val-incl', valIncl);
 
         this.calculateTotals();
     },
@@ -229,12 +234,17 @@ window.POModule = {
             tIncl += parseFloat(tr.querySelector('.val-incl').value) || 0;
         });
 
-        document.getElementById('tot_pieces').value = tPieces.toFixed(2);
-        document.getElementById('tot_qty').value = tQty.toFixed(2);
-        document.getElementById('tot_excl').value = tExcl.toFixed(2);
-        document.getElementById('tot_tax').value = tTax.toFixed(2);
-        document.getElementById('tot_further').value = tFrth.toFixed(2);
-        document.getElementById('tot_incl').value = tIncl.toFixed(2);
+        const setTot = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val > 0 ? val.toFixed(2) : '0.00';
+        };
+
+        setTot('tot_pieces', tPieces);
+        setTot('tot_qty', tQty);
+        setTot('tot_excl', tExcl);
+        setTot('tot_tax', tTax);
+        setTot('tot_further', tFrth);
+        setTot('tot_incl', tIncl);
 
         this.updateAmountInWords(tIncl);
     },

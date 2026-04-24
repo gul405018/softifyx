@@ -1,29 +1,23 @@
 <!-- 
     Purchase Order Module 
-    Size: Width 950px, Height 500px 
+    Size: Width 950px, Height 580px 
 -->
-<div id="purchaseOrderContainer" data-module="Purchase Order"
-    style="width: 950px; height: 500px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
-
+<div id="purchaseOrderContainer" data-module="Purchase Order" style="width: 950px; height: 580px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+    
     <!-- Top Toolbar -->
-    <div
-        style="background: #e2e8f0; padding: 2px; display: flex; gap: 3px; border-bottom: 1px solid #cbd5e0; align-items: center;">
-        <button class="po-tool-btn po-btn-info"
-            onclick="openSecondaryModularPopup('Navigation/Maintain/vendors.html', 'fa-user-tie', 'Vendors/Suppliers', null, 'Vendors', true)">New
-            Vendor</button>
-        <button class="po-tool-btn po-btn-info"
-            onclick="openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-boxes', 'Chart Of Inventory', null, 'Chart of Inventory', true)">New
-            Item</button>
-
+    <div style="background: #e2e8f0; padding: 3px; display: flex; gap: 3px; border-bottom: 1px solid #cbd5e0; align-items: center;">
+        <button class="po-tool-btn po-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/vendors.html', 'fa-user-tie', 'Vendors/Suppliers', null, 'Vendors', true)">New Vendor</button>
+        <button class="po-tool-btn po-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-boxes', 'Chart Of Inventory', null, 'Chart of Inventory', true)">New Item</button>
+        
         <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 2px;"></div>
-
+        
         <button class="po-tool-btn po-btn-add" onclick="window.POModule.resetForm(true)">Add</button>
         <button class="po-tool-btn po-btn-save" onclick="window.POModule.savePO()">Save</button>
         <button class="po-tool-btn po-btn-cancel" onclick="window.POModule.resetForm()">Cancel</button>
         <button class="po-tool-btn po-btn-delete" onclick="window.POModule.deletePO()">Delete</button>
-
+        
         <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 2px;"></div>
-
+        
         <button class="po-tool-btn po-btn-info">Find</button>
         <button class="po-tool-btn po-btn-info">Retrieve Last</button>
         <button class="po-tool-btn po-btn-info">Print Set.</button>
@@ -31,25 +25,20 @@
     </div>
 
     <!-- Main Content Area -->
-    <div
-        style="flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 3px; background: white; overflow: hidden;">
-
+    <div style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 6px; background: white; overflow: hidden;">
+        
         <!-- Header Info Rows -->
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 10px;">
             <!-- Left Side: Order Details -->
-            <div style="flex: 1; display: grid; grid-template-columns: 90px 1fr; gap: 2px; align-content: start;">
+            <div style="flex: 1; display: grid; grid-template-columns: 100px 1fr; gap: 4px; align-content: start;">
                 <label class="po-label">Serial No</label>
-                <div style="display: flex; align-items: center; gap: 3px;">
-                    <button class="po-nav-btn" onclick="window.POModule.navigate('prev')">
-                        <<< /button>
-                            <input type="text" id="po_sn" class="po-input"
-                                style="width: 50px; text-align: center; color: blue; font-weight: 700; font-size: 11px;"
-                                readonly>
-                            <button class="po-nav-btn" onclick="window.POModule.navigate('next')">>></button>
-                            <label
-                                style="margin-left: 8px; font-size: 8px; display: flex; align-items: center; gap: 2px; color: #475569;">
-                                Cancel <input type="checkbox" id="po_is_cancelled">
-                            </label>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button class="po-nav-btn" onclick="window.POModule.navigate('prev')"><<</button>
+                    <input type="text" id="po_sn" class="po-input" style="width: 60px; text-align: center; color: blue; font-weight: 700; font-size: 11px;" readonly>
+                    <button class="po-nav-btn" onclick="window.POModule.navigate('next')">>></button>
+                    <label style="margin-left: 10px; font-size: 9px; display: flex; align-items: center; gap: 3px; color: #475569;">
+                        Cancel <input type="checkbox" id="po_is_cancelled">
+                    </label>
                 </div>
 
                 <label class="po-label">Date</label>
