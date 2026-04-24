@@ -23,19 +23,23 @@ window.POModule = {
     loadVendors: async function() {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
+        console.log("PO Module: Loading Vendors for company", companyId);
         try {
             const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
             this.vendors = await res.json();
-        } catch (e) { console.error("Load Vendors Error:", e); }
+            console.log(`PO Module: ${this.vendors.length} Vendors loaded.`);
+        } catch (e) { console.error("PO Module: Load Vendors Error:", e); }
     },
 
     loadInventory: async function() {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
+        console.log("PO Module: Loading Inventory for company", companyId);
         try {
             const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${companyId}`);
             this.inventory = await res.json();
-        } catch (e) { console.error("Load Inventory Error:", e); }
+            console.log(`PO Module: ${this.inventory.length} Inventory items loaded.`);
+        } catch (e) { console.error("PO Module: Load Inventory Error:", e); }
     },
 
     loadEmployees: async function() {
@@ -45,9 +49,11 @@ window.POModule = {
             const res = await fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`);
             this.employees = await res.json();
             const select = document.getElementById('po_employee_ref');
-            select.innerHTML = '<option value="">Select Employee</option>';
-            this.employees.forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
-        } catch (e) { console.error("Load Employees Error:", e); }
+            if (select) {
+                select.innerHTML = '<option value="">Select Employee</option>';
+                this.employees.forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
+            }
+        } catch (e) { console.error("PO Module: Load Employees Error:", e); }
     },
 
     loadJobs: async function() {
@@ -57,9 +63,11 @@ window.POModule = {
             const res = await fetch(`api/jobs.php?action=get_jobs&company_id=${companyId}`);
             this.jobs = await res.json();
             const select = document.getElementById('po_job_ref');
-            select.innerHTML = '<option value="">Select Job</option>';
-            this.jobs.forEach(j => select.innerHTML += `<option value="${j.id}">${j.job_no} - ${j.description}</option>`);
-        } catch (e) { console.error("Load Jobs Error:", e); }
+            if (select) {
+                select.innerHTML = '<option value="">Select Job</option>';
+                this.jobs.forEach(j => select.innerHTML += `<option value="${j.id}">${j.job_no} - ${j.description}</option>`);
+            }
+        } catch (e) { console.error("PO Module: Load Jobs Error:", e); }
     },
 
     setupVendorSearch: function() {
@@ -68,15 +76,17 @@ window.POModule = {
         if (!input || !suggest) return;
 
         input.oninput = (e) => {
-            const val = e.target.value.toLowerCase();
+            const val = e.target.value.toLowerCase().trim();
             if (!val) { suggest.style.display = 'none'; return; }
-            const matches = this.vendors.filter(v => 
-                v.code.toLowerCase().includes(val) || 
-                v.name.toLowerCase().includes(val)
-            ).slice(0, 10);
+            const searchWords = val.split(/\s+/);
+            
+            const matches = this.vendors.filter(v => {
+                const searchStr = `${v.code} ${v.name} ${v.address || ''} ${v.telephone || ''}`.toLowerCase();
+                return searchWords.every(word => searchStr.includes(word));
+            }).slice(0, 15);
 
             if (matches.length > 0) {
-                suggest.innerHTML = matches.map(v => `<div onclick="window.POModule.selectVendor(${v.coa_list_id})">${v.code} - ${v.name}</div>`).join('');
+                suggest.innerHTML = matches.map(v => `<div onclick="window.POModule.selectVendor(${v.coa_list_id})"><b>${v.code}</b> - ${v.name} <br><small style="color:#64748b;">${v.address || ''}</small></div>`).join('');
                 suggest.style.display = 'block';
             } else { suggest.style.display = 'none'; }
         };
@@ -131,18 +141,20 @@ window.POModule = {
         const codeInput = tr.querySelector('.item-code-search');
         const suggest = tr.querySelector('.grid-suggest');
         
-        // Item Autocomplete
+        // Item Autocomplete (Smart Search)
         codeInput.oninput = (e) => {
-            const val = e.target.value.toLowerCase();
+            const val = e.target.value.toLowerCase().trim();
             if (!val) { suggest.style.display = 'none'; return; }
-            const matches = this.inventory.filter(i => 
-                i.code.toLowerCase().includes(val) || 
-                i.name.toLowerCase().includes(val)
-            ).slice(0, 10);
+            const searchWords = val.split(/\s+/);
+            
+            const matches = this.inventory.filter(i => {
+                const searchStr = `${i.code} ${i.name} ${i.unit || ''}`.toLowerCase();
+                return searchWords.every(word => searchStr.includes(word));
+            }).slice(0, 15);
             
             if (matches.length > 0) {
                 suggest.innerHTML = matches.map(i => `
-                    <div onclick="window.POModule.selectGridItem(${idx}, ${i.coa_list_id})">${i.code} - ${i.name}</div>
+                    <div onclick="window.POModule.selectGridItem(${idx}, ${i.coa_list_id})"><b>${i.code}</b> - ${i.name} <small style="color:#64748b;">(${i.unit || 'Pcs'})</small></div>
                 `).join('');
                 suggest.style.display = 'block';
             } else { suggest.style.display = 'none'; }
