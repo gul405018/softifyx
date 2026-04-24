@@ -2455,6 +2455,7 @@
         window.reorderItem = reorderItem;
         window.hideAllDropdowns = hideAllDropdowns; // Expose globally for router if needed
         window.openModularPopup = openModularPopup;
+        window.openSecondaryModularPopup = openSecondaryModularPopup;
 
         // Utilities
         window.togglePasswordVisibility = function(inputId, iconElement) {
