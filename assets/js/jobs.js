@@ -113,9 +113,12 @@ window.JobsModule = {
                 return;
             }
             const matches = this.customers.filter(c => 
-                c.code.toLowerCase().includes(val) || 
-                c.name.toLowerCase().includes(val)
-            ).slice(0, 10);
+                (c.code && c.code.toLowerCase().includes(val)) || 
+                (c.name && c.name.toLowerCase().includes(val)) ||
+                (c.contact_person && c.contact_person.toLowerCase().includes(val)) ||
+                (c.address && c.address.toLowerCase().includes(val)) ||
+                (c.telephone && c.telephone.toLowerCase().includes(val))
+            ).slice(0, 15);
 
             if (matches.length > 0) {
                 suggest.innerHTML = matches.map(c => `
