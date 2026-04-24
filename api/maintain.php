@@ -96,17 +96,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         sendResponse($stmt->fetchAll());
     }
 
-    if ($action === 'get_vendors' && isset($_GET['sub_id'])) {
-        $subId = $_GET['sub_id'];
-        $stmt = $pdo->prepare("
+    if ($action === 'get_vendors') {
+        $subId = $_GET['sub_id'] ?? null;
+        $sql = "
             SELECT cl.*, v.contact_person, v.address, v.telephone, v.mobile, v.fax, v.email, v.website, 
                    v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
             FROM coa_list cl
             LEFT JOIN vendors v ON cl.id = v.coa_list_id
-            WHERE cl.sub_id = ? AND cl.company_id = ?
-            ORDER BY cl.code ASC
-        ");
-        $stmt->execute([$subId, $company_id]);
+            WHERE cl.company_id = ?
+        ";
+        $params = [$company_id];
+        if ($subId) {
+            $sql .= " AND cl.sub_id = ?";
+            $params[] = $subId;
+        }
+        $sql .= " ORDER BY cl.code ASC";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         sendResponse($stmt->fetchAll());
     }
 

@@ -23,22 +23,38 @@ window.POModule = {
     loadVendors: async function() {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
-        console.log("PO Module: Loading Vendors for company", companyId);
+        console.log("PO Module: Fetching Vendors...");
         try {
-            const res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
+            // Stage 1: Try VND
+            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
             this.vendors = await res.json();
-            console.log(`PO Module: ${this.vendors.length} Vendors loaded.`);
+            
+            // Stage 2: Try SUP if empty
+            if (!this.vendors || this.vendors.length === 0) {
+                console.log("PO Module: No VND, trying SUP...");
+                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${companyId}`);
+                this.vendors = await res.json();
+            }
+            
+            // Stage 3: Try generic coa_list if still empty
+            if (!this.vendors || this.vendors.length === 0) {
+                console.log("PO Module: Still empty, trying generic search...");
+                res = await fetch(`api/maintain.php?action=get_vendors&company_id=${companyId}`); // might work if PHP handles it
+                const backup = await res.json();
+                if (backup && backup.length > 0) this.vendors = backup;
+            }
+            
+            console.log("PO Module: Final Vendors loaded:", this.vendors.length);
         } catch (e) { console.error("PO Module: Load Vendors Error:", e); }
     },
 
     loadInventory: async function() {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
-        console.log("PO Module: Loading Inventory for company", companyId);
         try {
             const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${companyId}`);
             this.inventory = await res.json();
-            console.log(`PO Module: ${this.inventory.length} Inventory items loaded.`);
+            console.log("PO Module: Inventory loaded:", this.inventory.length);
         } catch (e) { console.error("PO Module: Load Inventory Error:", e); }
     },
 
@@ -78,18 +94,24 @@ window.POModule = {
         input.oninput = (e) => {
             const val = e.target.value.toLowerCase().trim();
             if (!val) { suggest.style.display = 'none'; return; }
-            const searchWords = val.split(/\s+/);
             
+            console.log("PO Module: Searching vendors for:", val);
+            const searchWords = val.split(/\s+/);
             const matches = this.vendors.filter(v => {
-                const searchStr = `${v.code} ${v.name} ${v.address || ''} ${v.telephone || ''}`.toLowerCase();
+                const searchStr = `${v.code} ${v.name} ${v.address || ''}`.toLowerCase();
                 return searchWords.every(word => searchStr.includes(word));
             }).slice(0, 15);
 
             if (matches.length > 0) {
-                suggest.innerHTML = matches.map(v => `<div onclick="window.POModule.selectVendor(${v.coa_list_id})"><b>${v.code}</b> - ${v.name} <br><small style="color:#64748b;">${v.address || ''}</small></div>`).join('');
+                suggest.innerHTML = matches.map(v => `<div onclick="window.POModule.selectVendor(${v.coa_list_id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;"><b>${v.code}</b> - ${v.name}</div>`).join('');
                 suggest.style.display = 'block';
-            } else { suggest.style.display = 'none'; }
+                suggest.style.zIndex = '9999'; // Force on top
+            } else { 
+                console.log("PO Module: No matches found in", this.vendors.length, "vendors");
+                suggest.style.display = 'none'; 
+            }
         };
+        // Close on blur or outside click
         document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
     },
 
@@ -104,7 +126,6 @@ window.POModule = {
             document.getElementById('vendor_ntn').value = v.ntn_cnic || '';
             this.selectedVendorCoaId = v.coa_list_id;
             
-            // Fetch Balance
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const res = await fetch(`api/maintain.php?action=get_coa_balance&coa_id=${coaId}&fy_id=${session.fy_id || 0}`);
@@ -114,7 +135,6 @@ window.POModule = {
             } catch(e) { console.error("Balance fetch error:", e); }
         }
         document.getElementById('vendor_suggest').style.display = 'none';
-        // Move focus to PO Date or Deliv Date
         document.getElementById('po_date').focus();
     },
 
