@@ -153,13 +153,28 @@ window.POModule = {
             input.oninput = () => this.calculateRow(idx);
         });
 
-        // Add next row if last row is filled
-        codeInput.oninput = (e) => {
+        // Add next row if last row is filled OR Enter is pressed
+        const handleAutoRow = (e) => {
             const tbody = document.getElementById('poGridBody');
-            if (tr === tbody.lastElementChild && e.target.value.trim() !== '') {
-                this.addRow();
+            if (tr === tbody.lastElementChild) {
+                if (e.type === 'input' && e.target.value.trim() !== '') {
+                    this.addRow();
+                } else if (e.type === 'keydown' && e.key === 'Enter') {
+                    this.addRow();
+                }
             }
         };
+
+        codeInput.oninput = handleAutoRow;
+        
+        // Add Enter key listener to all inputs in the row to handle expansion
+        tr.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && tr === document.getElementById('poGridBody').lastElementChild) {
+                    this.addRow();
+                }
+            });
+        });
     },
 
     selectGridItem: function(rowIndex, coaId) {
