@@ -102,13 +102,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             SELECT cl.*, v.contact_person, v.address, v.telephone, v.mobile, v.fax, v.email, v.website, 
                    v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
             FROM coa_list cl
-            INNER JOIN vendors v ON cl.id = v.coa_list_id
+            LEFT JOIN vendors v ON cl.id = v.coa_list_id
             WHERE cl.company_id = ?
         ";
         $params = [$company_id];
         if ($subId) {
             $sql .= " AND cl.sub_id = ?";
             $params[] = $subId;
+        } else {
+            $sql .= " AND cl.sub_id IN (
+                SELECT id FROM coa_sub WHERE main_id IN (
+                    SELECT id FROM coa_main WHERE 
+                        LOWER(name) LIKE '%vendor%' OR 
+                        LOWER(name) LIKE '%supplier%' OR 
+                        LOWER(name) LIKE '%creditor%' OR 
+                        LOWER(name) LIKE '%payable%'
+                )
+            )";
         }
         $sql .= " ORDER BY cl.code ASC";
         
