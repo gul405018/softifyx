@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             SELECT cl.*, v.contact_person, v.address, v.telephone, v.mobile, v.fax, v.email, v.website, 
                    v.st_reg_no, v.ntn_cnic, v.credit_terms, v.remarks
             FROM coa_list cl
-            LEFT JOIN vendors v ON cl.id = v.coa_list_id
+            INNER JOIN vendors v ON cl.id = v.coa_list_id
             WHERE cl.company_id = ?
         ";
         $params = [$company_id];
