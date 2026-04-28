@@ -103,7 +103,7 @@ window.POModule = {
             }).slice(0, 15);
 
             if (matches.length > 0) {
-                suggest.innerHTML = matches.map(v => `<div onclick="window.POModule.selectVendor(${v.coa_list_id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;"><b>${v.code}</b> - ${v.name}</div>`).join('');
+                suggest.innerHTML = matches.map(v => `<div onclick="window.POModule.selectVendor(${v.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;"><b>${v.code}</b> - ${v.name}</div>`).join('');
                 suggest.style.display = 'block';
                 suggest.style.zIndex = '9999'; // Force on top
             } else { 
@@ -116,7 +116,7 @@ window.POModule = {
     },
 
     selectVendor: async function(coaId) {
-        const v = this.vendors.find(x => x.coa_list_id == coaId);
+        const v = this.vendors.find(x => x.id == coaId || x.coa_list_id == coaId);
         if (v) {
             document.getElementById('vendor_code').value = v.code;
             document.getElementById('vendor_name').value = v.name;
@@ -124,7 +124,7 @@ window.POModule = {
             document.getElementById('vendor_tel').value = v.telephone || '';
             document.getElementById('vendor_gst').value = v.st_reg_no || '';
             document.getElementById('vendor_ntn').value = v.ntn_cnic || '';
-            this.selectedVendorCoaId = v.coa_list_id;
+            this.selectedVendorCoaId = v.id;
             
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
@@ -278,9 +278,9 @@ window.POModule = {
         document.getElementById('po_is_cancelled').checked = parseInt(po.is_cancelled) === 1;
 
         // Load Vendor Info
-        const vendor = this.vendors.find(v => v.coa_list_id == po.vendor_coa_id);
+        const vendor = this.vendors.find(v => v.id == po.vendor_coa_id || v.coa_list_id == po.vendor_coa_id);
         if (vendor) {
-            this.selectVendor(vendor.coa_list_id);
+            this.selectVendor(po.vendor_coa_id);
         }
 
         // Load Items
