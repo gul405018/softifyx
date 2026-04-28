@@ -66,9 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmt->execute([$sn, $company_id]);
             $po = $stmt->fetch();
             if ($po) {
-                $stmtItems = $pdo->prepare("SELECT i.*, cl.code as item_code, cl.name as item_name 
+                $stmtItems = $pdo->prepare("SELECT i.*, inv.code as item_code, inv.name as item_name 
                                            FROM purchase_order_items i 
-                                           JOIN coa_list cl ON i.item_coa_id = cl.id 
+                                           JOIN inv_items inv ON i.item_coa_id = inv.id 
                                            WHERE i.po_id = ?");
                 $stmtItems->execute([$po['id']]);
                 $po['items'] = $stmtItems->fetchAll();

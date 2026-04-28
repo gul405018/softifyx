@@ -164,6 +164,9 @@ window.POModule = {
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${(data.value_incl_tax && parseFloat(data.value_incl_tax) !== 0) ? data.value_incl_tax : ''}" readonly></td>
         `;
         tbody.appendChild(tr);
+        if (data.item_coa_id) {
+            tr.dataset.coaId = data.item_coa_id;
+        }
         this.setupGridEvents(tr);
     },
 
