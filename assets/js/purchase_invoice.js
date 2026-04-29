@@ -329,7 +329,7 @@ window.PIModule = {
         // Tax
         document.getElementById('tot_excl').value = tGross.toFixed(2);
         document.getElementById('tot_stax').value = tStax.toFixed(2);
-        document.getElementById('tot_further').value = tFtax.toFixed(2);
+        document.getElementById('tot_ftax').value = tFtax.toFixed(2);
         document.getElementById('tot_incl').value = tNet.toFixed(2);
         
         // Non-Tax
@@ -362,7 +362,7 @@ window.PIModule = {
 
     resetForm: async function(fetchNext = false) {
         this.currentId = null;
-        document.querySelectorAll('input:not(#expense_code):not(#expense_name), textarea').forEach(el => {
+        document.querySelectorAll('#purchaseInvoiceContainer input:not(#expense_code):not(#expense_name), #purchaseInvoiceContainer textarea').forEach(el => {
             if(el.type === 'checkbox') el.checked = false;
             else el.value = '';
         });
