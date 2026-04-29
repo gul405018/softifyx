@@ -6,13 +6,12 @@ window.PRModule = {
     companyId: JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1,
 
     init: function() {
-        this.resetForm();
+        this.resetForm(true);
         this.setupAutocomplete();
         this.setupKeyboardShortcuts();
-        this.loadInitialData();
     },
 
-    resetForm: function() {
+    resetForm: function(isNew = false) {
         this.currentId = null;
         document.getElementById('pr_sn').value = '';
         document.getElementById('pr_date').value = new Date().toISOString().split('T')[0];
@@ -23,10 +22,9 @@ window.PRModule = {
         document.getElementById('pr_nature').value = 'Purchase Return (Reduces Inventory)';
         document.getElementById('pr_pay_terms').value = '';
         
-        // Default Expense Account (Purchase Returns - 50001003 as per screenshot)
         document.getElementById('expense_coa_code').value = '50001003';
         document.getElementById('expense_coa_name').value = 'Purchase Returns';
-        document.getElementById('expense_coa_id').value = ''; // Will find if needed
+        document.getElementById('expense_coa_id').value = '';
         
         document.getElementById('vendor_code').value = '';
         document.getElementById('vendor_name').value = '';
@@ -34,7 +32,7 @@ window.PRModule = {
         document.getElementById('vendor_tel').value = '';
         document.getElementById('vendor_gst').value = '';
         document.getElementById('vendor_ntn').value = '';
-        document.getElementById('vendor_balance').textContent = '0.00';
+        document.getElementById('vendor_balance').value = '0.00';
         document.getElementById('vendor_coa_id').value = '';
         
         document.getElementById('pr_remarks').value = '';
@@ -43,7 +41,7 @@ window.PRModule = {
         document.getElementById('pr_is_cancelled').checked = false;
 
         this.renderGrid();
-        this.getNextSerial();
+        if (isNew) this.getNextSerial();
         this.calculateTotals();
     },
 
@@ -68,34 +66,32 @@ window.PRModule = {
         const rowCount = tbody.rows.length;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="border: 1px solid #cbd5e0; text-align: center; font-size: 10px;">${rowCount + 1}</td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input item-code-search"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input item-name" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input pieces" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input qty" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input rate" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input val-excl" readonly tabindex="-1" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input tax-rate" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input tax-amt" readonly tabindex="-1" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input ftax-rate" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input ftax-amt" readonly tabindex="-1" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input val-incl" readonly tabindex="-1" value="0.00"></td>
+            <td style="text-align: center; font-size: 9px; background: #f8fafc;">${rowCount + 1}</td>
+            <td><input type="text" class="grid-input item-code-search" placeholder="..."></td>
+            <td><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
+            <td><input type="number" class="grid-input num pieces" value="0.00"></td>
+            <td><input type="number" class="grid-input num qty" value="0.00"></td>
+            <td><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
+            <td><input type="number" class="grid-input num rate" value="0.00"></td>
+            <td><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value="0.00"></td>
+            <td><input type="number" class="grid-input num tax-rate" value="0.00"></td>
+            <td><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value="0.00"></td>
+            <td><input type="number" class="grid-input num ftax-rate" value="0.00"></td>
+            <td><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value="0.00"></td>
+            <td><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value="0.00"></td>
             <input type="hidden" class="item-coa-id">
         `;
 
-        // Add events
-        const inputs = tr.querySelectorAll('input');
+        const inputs = tr.querySelectorAll('input:not([readonly])');
         inputs.forEach(input => {
             input.addEventListener('input', () => this.calculateRow(tr));
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    const nextTr = tr.nextElementSibling;
-                    if (nextTr) {
-                        nextTr.querySelector('.item-code-search').focus();
-                    } else {
+                    const nextInput = this.getNextInput(input);
+                    if (nextInput) nextInput.focus();
+                    else {
                         this.addEmptyRow();
-                        tr.nextElementSibling.querySelector('.item-code-search').focus();
+                        this.getNextInput(input).focus();
                     }
                 }
             });
@@ -103,6 +99,12 @@ window.PRModule = {
 
         this.setupItemAutocomplete(tr);
         tbody.appendChild(tr);
+    },
+
+    getNextInput: function(current) {
+        const inputs = Array.from(document.querySelectorAll('#prGridBody input:not([readonly])'));
+        const index = inputs.indexOf(current);
+        return inputs[index + 1];
     },
 
     calculateRow: function(tr) {
@@ -129,12 +131,15 @@ window.PRModule = {
         let totPcs = 0, totQty = 0, totExcl = 0, totTax = 0, totFTax = 0, totIncl = 0;
 
         document.querySelectorAll('#prGridBody tr').forEach(tr => {
-            totPcs += parseFloat(tr.querySelector('.pieces').value) || 0;
-            totQty += parseFloat(tr.querySelector('.qty').value) || 0;
-            totExcl += parseFloat(tr.querySelector('.val-excl').value) || 0;
-            totTax += parseFloat(tr.querySelector('.tax-amt').value) || 0;
-            totFTax += parseFloat(tr.querySelector('.ftax-amt').value) || 0;
-            totIncl += parseFloat(tr.querySelector('.val-incl').value) || 0;
+            const coaId = tr.querySelector('.item-coa-id').value;
+            if (coaId) {
+                totPcs += parseFloat(tr.querySelector('.pieces').value) || 0;
+                totQty += parseFloat(tr.querySelector('.qty').value) || 0;
+                totExcl += parseFloat(tr.querySelector('.val-excl').value) || 0;
+                totTax += parseFloat(tr.querySelector('.tax-amt').value) || 0;
+                totFTax += parseFloat(tr.querySelector('.ftax-amt').value) || 0;
+                totIncl += parseFloat(tr.querySelector('.val-incl').value) || 0;
+            }
         });
 
         document.getElementById('tot_pieces').value = totPcs.toFixed(2);
@@ -159,22 +164,19 @@ window.PRModule = {
 
     setupAutocomplete: function() {
         const vCode = document.getElementById('vendor_code');
-        const vName = document.getElementById('vendor_name');
-
         const handleSelect = (v) => {
             vCode.value = v.code;
-            vName.value = v.name;
+            document.getElementById('vendor_name').value = v.name;
             document.getElementById('vendor_address').value = v.address || '';
             document.getElementById('vendor_tel').value = v.phone || '';
             document.getElementById('vendor_gst').value = v.gst || '';
             document.getElementById('vendor_ntn').value = v.ntn || '';
             document.getElementById('vendor_coa_id').value = v.coa_list_id;
-            document.getElementById('vendor_balance').textContent = parseFloat(v.balance || 0).toFixed(2);
+            document.getElementById('vendor_balance').value = parseFloat(v.balance || 0).toFixed(2);
         };
 
         if (window.setupSmartSearch) {
-            setupSmartSearch(vCode, 'vendor_code', handleSelect);
-            setupSmartSearch(vName, 'vendor_name', handleSelect);
+            setupSmartSearch(vCode, 'vendor_code', handleSelect, 'vendor_suggest');
         }
     },
 
@@ -184,7 +186,7 @@ window.PRModule = {
             setupSmartSearch(input, 'item_code', (item) => {
                 input.value = item.code;
                 tr.querySelector('.item-name').value = item.name;
-                tr.cells[5].querySelector('input').value = item.unit || 'Pcs';
+                tr.querySelector('.unit').value = item.unit || 'Pcs';
                 tr.querySelector('.item-coa-id').value = item.id;
                 tr.querySelector('.pieces').focus();
             });
@@ -204,7 +206,7 @@ window.PRModule = {
             payment_terms: document.getElementById('pr_pay_terms').value,
             expense_account: document.getElementById('expense_coa_code').value,
             vendor_coa_id: document.getElementById('vendor_coa_id').value,
-            inventory_location_id: 0, // Default
+            inventory_location_id: document.getElementById('pr_location').value,
             job_no: document.getElementById('pr_job').value,
             employee_ref: document.getElementById('pr_employee').value,
             remarks: document.getElementById('pr_remarks').value,
@@ -226,7 +228,7 @@ window.PRModule = {
                     description: tr.querySelector('.item-name').value,
                     pieces: tr.querySelector('.pieces').value,
                     quantity: tr.querySelector('.qty').value,
-                    unit: tr.cells[5].querySelector('input').value,
+                    unit: tr.querySelector('.unit').value,
                     rate: tr.querySelector('.rate').value,
                     value_excl_tax: tr.querySelector('.val-excl').value,
                     tax_rate: tr.querySelector('.tax-rate').value,
@@ -284,7 +286,7 @@ window.PRModule = {
                         document.getElementById('vendor_tel').value = data.vendor.phone || '';
                         document.getElementById('vendor_gst').value = data.vendor.gst || '';
                         document.getElementById('vendor_ntn').value = data.vendor.ntn || '';
-                        document.getElementById('vendor_balance').textContent = parseFloat(data.vendor.balance || 0).toFixed(2);
+                        document.getElementById('vendor_balance').value = parseFloat(data.vendor.balance || 0).toFixed(2);
                     }
 
                     const tbody = document.getElementById('prGridBody');
@@ -296,7 +298,7 @@ window.PRModule = {
                         tr.querySelector('.item-name').value = item.name;
                         tr.querySelector('.pieces').value = item.pieces;
                         tr.querySelector('.qty').value = item.quantity;
-                        tr.cells[5].querySelector('input').value = item.unit;
+                        tr.querySelector('.unit').value = item.unit;
                         tr.querySelector('.rate').value = item.rate;
                         tr.querySelector('.tax-rate').value = item.tax_rate;
                         tr.querySelector('.ftax-rate').value = item.further_tax_rate;
@@ -326,7 +328,7 @@ window.PRModule = {
                 .then(res => {
                     if (res.status === 'success') {
                         alert("Deleted!");
-                        this.resetForm();
+                        this.resetForm(true);
                     }
                 });
         }
@@ -343,25 +345,57 @@ window.PRModule = {
     },
 
     print: function() {
-        if (!this.currentId) return alert("Save/Load first!");
-        // Simplified print for now, similar to PO
+        if (!this.currentId) return alert("Please save or load a record first.");
+        const sn = document.getElementById('pr_sn').value;
+        const date = document.getElementById('pr_date').value;
+        const vName = document.getElementById('vendor_name').value;
+        const netTot = document.getElementById('pr_net_tot').value;
+
         const printWindow = window.open('', '_blank', 'width=800,height=600');
-        const html = `<html><body><h2>Purchase Return / Debit Note</h2><p>Serial No: ${document.getElementById('pr_sn').value}</p></body></html>`;
+        const html = `
+            <html>
+            <head><title>Purchase Return - ${sn}</title></head>
+            <body style="font-family: Arial; padding: 20px;">
+                <h2 style="text-align:center;">PURCHASE RETURN / DEBIT NOTE</h2>
+                <hr>
+                <p><b>Serial No:</b> ${sn} &nbsp;&nbsp;&nbsp; <b>Date:</b> ${date}</p>
+                <p><b>Vendor:</b> ${vName}</p>
+                <table border="1" width="100%" style="border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                        <tr style="background:#f2f2f2;"><th>#</th><th>Code</th><th>Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr>
+                    </thead>
+                    <tbody>
+                        ${Array.from(document.querySelectorAll('#prGridBody tr')).filter(tr => tr.querySelector('.item-coa-id').value).map((tr, i) => `
+                            <tr>
+                                <td align="center">${i+1}</td>
+                                <td>${tr.querySelector('.item-code-search').value}</td>
+                                <td>${tr.querySelector('.item-name').value}</td>
+                                <td align="center">${tr.querySelector('.qty').value}</td>
+                                <td align="right">${tr.querySelector('.rate').value}</td>
+                                <td align="right">${tr.querySelector('.val-incl').value}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr><th colspan="5" align="right">NET TOTAL:</th><th align="right">${netTot}</th></tr>
+                    </tfoot>
+                </table>
+                <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
+            </body>
+            </html>
+        `;
         printWindow.document.write(html);
         printWindow.document.close();
-        printWindow.print();
-    },
-
-    loadInitialData: function() {
-        // Load Jobs, Employees etc if needed
     },
 
     setupKeyboardShortcuts: function() {
-        document.addEventListener('keydown', (e) => {
+        const handler = (e) => {
             if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
                 this.save();
             }
-        });
+        };
+        document.removeEventListener('keydown', handler);
+        document.addEventListener('keydown', handler);
     }
 };
