@@ -515,5 +515,200 @@ window.POModule = {
                 if (dir === 'next') this.resetForm(true);
             }
         } catch (e) { console.error("Navigation Error:", e); }
+    },
+
+    deletePO: async function() {
+        if (!this.currentId) {
+            alert("No Purchase Order loaded to delete.");
+            return;
+        }
+        
+        if (!confirm("Are you sure you want to delete this Purchase Order? This action cannot be undone.")) {
+            return;
+        }
+
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+
+        try {
+            const res = await fetch(`api/purchases.php?action=delete_po&id=${this.currentId}&company_id=${companyId}`);
+            const result = await res.json();
+            
+            if (result.status === 'success') {
+                alert("Purchase Order deleted successfully.");
+                this.resetForm(true);
+            } else {
+                alert("Error deleting PO: " + (result.message || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error("Delete PO Error:", e);
+            alert("Failed to delete Purchase Order.");
+        }
+    },
+
+    printPO: function() {
+        if (!this.currentId) {
+            alert("Please save or load a Purchase Order before printing.");
+            return;
+        }
+
+        const sn = document.getElementById('po_sn').value;
+        const poDate = document.getElementById('po_date').value;
+        const delDate = document.getElementById('po_delivery_date').value;
+        const payTerms = document.getElementById('po_payment_terms').value;
+        
+        const vCode = document.getElementById('vendor_code').value;
+        const vName = document.getElementById('vendor_name').value;
+        const vAddress = document.getElementById('vendor_address').value;
+        const vTel = document.getElementById('vendor_tel').value;
+
+        const totPieces = document.getElementById('tot_pieces').value;
+        const totQty = document.getElementById('tot_qty').value;
+        const totIncl = document.getElementById('tot_incl').value;
+        const amtWords = document.getElementById('po_amt_words').innerText;
+        const remarks = document.getElementById('po_remarks').value;
+
+        // Collect items
+        let itemsHtml = '';
+        document.querySelectorAll('#poGridBody tr').forEach((tr, index) => {
+            const code = tr.querySelector('.item-code-search').value;
+            if (!code) return; // Skip empty rows
+            
+            const desc = tr.cells[2].querySelector('input').value;
+            const pieces = tr.querySelector('.pieces').value;
+            const qty = tr.querySelector('.qty').value;
+            const unit = tr.cells[5].querySelector('input').value;
+            const rate = tr.querySelector('.rate').value;
+            const valExcl = tr.querySelector('.val-excl').value;
+            const taxAmt = tr.querySelector('.tax-amt').value;
+            const valIncl = tr.querySelector('.val-incl').value;
+            
+            itemsHtml += `
+                <tr>
+                    <td style="border:1px solid #000; padding:4px; text-align:center;">${index + 1}</td>
+                    <td style="border:1px solid #000; padding:4px;">${code}</td>
+                    <td style="border:1px solid #000; padding:4px;">${desc}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:center;">${pieces}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:center;">${qty} ${unit}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${rate}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${valExcl}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${taxAmt}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${valIncl}</td>
+                </tr>
+            `;
+        });
+
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        
+        const html = `
+            <html>
+            <head>
+                <title>Purchase Order - ${sn}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .header h2 { margin: 0; padding: 0; }
+                    .details-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+                    .details-table td { padding: 4px; vertical-align: top; }
+                    .grid-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
+                    .grid-table th { border: 1px solid #000; padding: 4px; background: #f0f0f0; text-align: center; }
+                    .totals { text-align: right; margin-top: 20px; font-weight: bold; }
+                    .footer { margin-top: 40px; font-size: 11px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>PURCHASE ORDER</h2>
+                    <p>Serial No: <b>${sn}</b></p>
+                </div>
+                
+                <table class="details-table">
+                    <tr>
+                        <td width="50%">
+                            <b>Vendor Details:</b><br>
+                            Name: ${vName} (${vCode})<br>
+                            Address: ${vAddress}<br>
+                            Tel: ${vTel}
+                        </td>
+                        <td width="50%">
+                            <b>Order Details:</b><br>
+                            Date: ${poDate}<br>
+                            Delivery Date: ${delDate}<br>
+                            Payment Terms: ${payTerms}
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="grid-table">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th>Pieces</th>
+                            <th>Quantity</th>
+                            <th>Rate</th>
+                            <th>Value Excl.</th>
+                            <th>Tax Amt</th>
+                            <th>Value Incl.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3" style="text-align:right; border:1px solid #000;">TOTALS:</th>
+                            <th style="border:1px solid #000; text-align:center;">${totPieces}</th>
+                            <th style="border:1px solid #000; text-align:center;">${totQty}</th>
+                            <th style="border:1px solid #000;"></th>
+                            <th style="border:1px solid #000;"></th>
+                            <th style="border:1px solid #000;"></th>
+                            <th style="border:1px solid #000; text-align:right;">${totIncl}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="margin-bottom: 10px;">
+                    <b>Amount in Words:</b> ${amtWords}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <b>Remarks:</b> ${remarks}
+                </div>
+
+                <div class="footer">
+                    <table width="100%">
+                        <tr>
+                            <td width="33%" style="text-align:center;">
+                                <br><br><br>
+                                _______________________<br>
+                                Prepared By
+                            </td>
+                            <td width="33%" style="text-align:center;">
+                                <br><br><br>
+                                _______________________<br>
+                                Checked By
+                            </td>
+                            <td width="33%" style="text-align:center;">
+                                <br><br><br>
+                                _______________________<br>
+                                Authorized Signatory
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
     }
 };
