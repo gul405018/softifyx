@@ -442,8 +442,16 @@ window.PIModule = {
         let snVal = document.getElementById('pi_sn').value;
         let sn = parseInt(snVal) || 0;
         
-        if (dir === 'next') sn++;
-        else sn--;
+        // If SN is empty (New mode), first fetch the maximum SN from DB
+        if (sn === 0 || isNaN(sn)) {
+            const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}`);
+            const data = await res.json();
+            sn = data.next_sn || 1;
+            if (dir === 'prev') sn--; // To get the last saved one
+        } else {
+            if (dir === 'next') sn++;
+            else sn--;
+        }
         
         if (sn < 1) return;
 
@@ -455,7 +463,7 @@ window.PIModule = {
             } else if (dir === 'next') {
                 this.resetForm(true);
             } else {
-                alert("No earlier invoice found.");
+                alert("No record found at Serial No: " + sn);
             }
         } catch (e) {}
     },

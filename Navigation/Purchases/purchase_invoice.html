@@ -1,5 +1,5 @@
 <!-- Purchase Invoice Module -->
-<div id="purchaseInvoiceContainer" data-module="Purchase Invoice" style="width: 940px; height: 540px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+<div id="purchaseInvoiceContainer" data-module="Purchase Invoice" style="width: 950px; height: 600px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-y: auto; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
     
     <!-- Top Toolbar -->
     <div style="background: #e2e8f0; padding: 2px; display: flex; gap: 2px; border-bottom: 1px solid #cbd5e0; align-items: center; overflow-x: auto;">
@@ -27,9 +27,9 @@
             <div style="flex: 1; display: grid; grid-template-columns: 100px 100px 40px 100px; gap: 4px; align-content: start; align-items: center;">
                 <label class="po-label">Serial No</label>
                 <div style="display: flex; align-items: center; gap: 4px; grid-column: 2 / span 2;">
-                    <button class="po-nav-btn" onclick="window.PIModule.navigate('prev')"><<</button>
+                    <button class="po-nav-btn" onclick="window.PIModule.navigate('prev')">&lt;&lt;</button>
                     <input type="text" id="pi_sn" class="po-input" style="width: 60px; text-align: center; color: blue; font-weight: 700; font-size: 11px;" readonly>
-                    <button class="po-nav-btn" onclick="window.PIModule.navigate('next')">>></button>
+                    <button class="po-nav-btn" onclick="window.PIModule.navigate('next')">&gt;&gt;</button>
                 </div>
                 <label style="font-size: 9px; display: flex; align-items: center; justify-content: flex-end; gap: 3px; color: #475569;">
                     Cancel <input type="checkbox" id="pi_is_cancelled">
