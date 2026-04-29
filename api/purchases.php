@@ -95,8 +95,51 @@ try {
         net_amount DECIMAL(15,2) DEFAULT 0,
         FOREIGN KEY (invoice_id) REFERENCES purchase_invoices(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-} catch (Exception $e) {
-}
+    $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_returns (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL,
+        serial_no INT NOT NULL,
+        return_date DATE,
+        purchase_no VARCHAR(100),
+        purchase_date DATE,
+        vendor_invoice_no VARCHAR(100),
+        vendor_invoice_date DATE,
+        nature_of_debit_note VARCHAR(100),
+        payment_terms VARCHAR(255),
+        expense_account VARCHAR(50),
+        vendor_coa_id INT NOT NULL,
+        inventory_location_id INT,
+        job_no VARCHAR(100),
+        employee_ref VARCHAR(100),
+        amount_in_words VARCHAR(255),
+        remarks TEXT,
+        carriage_freight DECIMAL(15,2) DEFAULT 0,
+        net_total DECIMAL(15,2) DEFAULT 0,
+        amount_received DECIMAL(15,2) DEFAULT 0,
+        is_cancelled TINYINT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX (company_id),
+        INDEX (serial_no)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_return_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        return_id INT NOT NULL,
+        item_coa_id INT NOT NULL,
+        description TEXT,
+        pieces DECIMAL(15,2) DEFAULT 0,
+        quantity DECIMAL(15,2) DEFAULT 0,
+        unit VARCHAR(50),
+        rate DECIMAL(15,2) DEFAULT 0,
+        value_excl_tax DECIMAL(15,2) DEFAULT 0,
+        tax_rate DECIMAL(15,2) DEFAULT 0,
+        tax_amount DECIMAL(15,2) DEFAULT 0,
+        further_tax_rate DECIMAL(15,2) DEFAULT 0,
+        further_tax_amount DECIMAL(15,2) DEFAULT 0,
+        value_incl_tax DECIMAL(15,2) DEFAULT 0,
+        FOREIGN KEY (return_id) REFERENCES purchase_returns(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+} catch (Exception $e) { }
 
 $action = $_GET['action'] ?? '';
 $company_id = $_GET['company_id'] ?? 1;
@@ -172,6 +215,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
         }
         echo json_encode($inv ?: []);
+    }
+
+    if ($action === 'get_next_return_serial') {
+        $stmt = $pdo->prepare("SELECT MAX(serial_no) as max_sn FROM purchase_returns WHERE company_id = ?");
+        $stmt->execute([$company_id]);
+        $row = $stmt->fetch();
+        echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
+    }
+
+    if ($action === 'get_return') {
+        $sn = $_GET['serial_no'] ?? 0;
+        $stmt = $pdo->prepare("SELECT * FROM purchase_returns WHERE serial_no=? AND company_id=?");
+        $stmt->execute([$sn, $company_id]);
+        $ret = $stmt->fetch();
+        if ($ret) {
+            $stmt = $pdo->prepare("SELECT pri.*, itm.code as code, itm.name as name 
+                                   FROM purchase_return_items pri 
+                                   JOIN inv_items itm ON pri.item_coa_id = itm.id 
+                                   WHERE pri.return_id=?");
+            $stmt->execute([$ret['id']]);
+            $ret['items'] = $stmt->fetchAll();
+
+            $stmt = $pdo->prepare("SELECT * FROM vendors WHERE coa_list_id=?");
+            $stmt->execute([$ret['vendor_coa_id']]);
+            $ret['vendor'] = $stmt->fetch();
+
+            if (!$ret['vendor']) {
+                $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE id=?");
+                $stmt->execute([$ret['vendor_coa_id']]);
+                $coa = $stmt->fetch();
+                if ($coa) {
+                    $ret['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']];
+                }
+            }
+        }
+        echo json_encode($ret ?: []);
     }
 }
 
@@ -359,6 +438,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $item['further_tax_rate'] ?: 0,
                     $item['further_tax_amount'] ?: 0,
                     $item['net_amount'] ?: 0
+                ]);
+            }
+        }
+        echo json_encode(['status' => 'success', 'id' => $id]);
+    }
+    if ($action === 'delete_return') {
+        $id = $_GET['id'] ?? null;
+        if ($id) {
+            $pdo->prepare("DELETE FROM purchase_returns WHERE id=? AND company_id=?")->execute([$id, $company_id]);
+            echo json_encode(['status' => 'success']);
+        }
+    }
+
+    if ($action === 'save_return') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $id = $data['id'] ?? null;
+
+        $fields = [
+            'company_id' => $company_id,
+            'serial_no' => $data['serial_no'],
+            'return_date' => $data['return_date'],
+            'purchase_no' => $data['purchase_no'],
+            'purchase_date' => $data['purchase_date'],
+            'vendor_invoice_no' => $data['vendor_invoice_no'],
+            'vendor_invoice_date' => $data['vendor_invoice_date'],
+            'nature_of_debit_note' => $data['nature_of_debit_note'],
+            'payment_terms' => $data['payment_terms'],
+            'expense_account' => $data['expense_account'],
+            'vendor_coa_id' => $data['vendor_coa_id'],
+            'inventory_location_id' => $data['inventory_location_id'],
+            'job_no' => $data['job_no'],
+            'employee_ref' => $data['employee_ref'],
+            'amount_in_words' => $data['amount_in_words'],
+            'remarks' => $data['remarks'],
+            'carriage_freight' => $data['carriage_freight'] ?: 0,
+            'net_total' => $data['net_total'] ?: 0,
+            'amount_received' => $data['amount_received'] ?: 0,
+            'is_cancelled' => $data['is_cancelled'] ?: 0
+        ];
+
+        if ($id) {
+            $setClause = implode(', ', array_map(function ($k) { return "$k = ?"; }, array_keys($fields)));
+            $stmt = $pdo->prepare("UPDATE purchase_returns SET $setClause WHERE id=? AND company_id=?");
+            $values = array_values($fields);
+            $values[] = $id;
+            $values[] = $company_id;
+            $stmt->execute($values);
+            $pdo->prepare("DELETE FROM purchase_return_items WHERE return_id=?")->execute([$id]);
+        } else {
+            $cols = implode(', ', array_keys($fields));
+            $placeholders = implode(', ', array_fill(0, count($fields), '?'));
+            $stmt = $pdo->prepare("INSERT INTO purchase_returns ($cols) VALUES ($placeholders)");
+            $stmt->execute(array_values($fields));
+            $id = $pdo->lastInsertId();
+        }
+
+        if (!empty($data['items'])) {
+            $stmt = $pdo->prepare("INSERT INTO purchase_return_items (return_id, item_coa_id, description, pieces, quantity, unit, rate, value_excl_tax, tax_rate, tax_amount, further_tax_rate, further_tax_amount, value_incl_tax) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            foreach ($data['items'] as $item) {
+                if (!$item['item_coa_id']) continue;
+                $stmt->execute([
+                    $id, $item['item_coa_id'], $item['description'],
+                    $item['pieces'] ?: 0, $item['quantity'] ?: 0, $item['unit'], $item['rate'] ?: 0,
+                    $item['value_excl_tax'] ?: 0, $item['tax_rate'] ?: 0, $item['tax_amount'] ?: 0,
+                    $item['further_tax_rate'] ?: 0, $item['further_tax_amount'] ?: 0, $item['value_incl_tax'] ?: 0
                 ]);
             }
         }
