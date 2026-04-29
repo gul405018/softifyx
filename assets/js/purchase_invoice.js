@@ -1,262 +1,263 @@
 window.PIModule = {
+    vendors: [],
+    inventory: [],
+    employees: [],
+    jobs: [],
     currentId: null,
-    
-    init: function() {
+
+    init: async function() {
+        console.log("PI Module: Initializing...");
+        // Load data upfront like Purchase Order module
+        await Promise.all([
+            this.loadVendors(),
+            this.loadInventory(),
+            this.loadEmployees(),
+            this.loadJobs()
+        ]);
+        
         this.resetForm(true);
         this.setupKeyboardShortcuts();
-        this.setupCalculations();
         this.setupVendorSearch();
         this.setupExpenseSearch();
-        this.addEmptyRow();
         this.toggleTaxMode();
     },
 
+    loadVendors: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        try {
+            // Match PO logic: Try VND then SUP then generic
+            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
+            this.vendors = await res.json();
+            if (!this.vendors || this.vendors.length === 0) {
+                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${companyId}`);
+                this.vendors = await res.json();
+            }
+            if (!this.vendors || this.vendors.length === 0) {
+                res = await fetch(`api/maintain.php?action=get_vendors&company_id=${companyId}`);
+                const backup = await res.json();
+                if (backup) this.vendors = backup;
+            }
+        } catch (e) { console.error("PI Module: Load Vendors Error:", e); }
+    },
+
+    loadInventory: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        try {
+            const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${companyId}`);
+            this.inventory = await res.json();
+        } catch (e) { console.error("PI Module: Load Inventory Error:", e); }
+    },
+
+    loadEmployees: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        try {
+            const res = await fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`);
+            this.employees = await res.json();
+            const select = document.getElementById('pi_emp_ref'); // In PI it was an input, maybe make it a select later?
+        } catch (e) {}
+    },
+
+    loadJobs: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        try {
+            const res = await fetch(`api/jobs.php?action=get_jobs&company_id=${companyId}`);
+            this.jobs = await res.json();
+        } catch (e) {}
+    },
+
     setupKeyboardShortcuts: function() {
-        document.addEventListener('keydown', (e) => {
+        // Remove existing to avoid duplicates if re-opened
+        const handler = (e) => {
             if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
                 this.saveInvoice();
             }
-        });
-    },
-
-    toggleTaxMode: function() {
-        const isTax = document.getElementById('pi_is_tax').checked;
-        const taxCols = document.querySelectorAll('.pi-tax-col, .pi-tax-field');
-        const nonTaxCols = document.querySelectorAll('.pi-nontax-col');
-        
-        taxCols.forEach(el => el.style.display = isTax ? '' : 'none');
-        nonTaxCols.forEach(el => el.style.display = isTax ? 'none' : '');
-        
-        this.calculateTotals();
+        };
+        document.removeEventListener('keydown', handler);
+        document.addEventListener('keydown', handler);
     },
 
     setupVendorSearch: function() {
         const input = document.getElementById('vendor_code');
         const suggest = document.getElementById('vendor_suggest');
-        const nameField = document.getElementById('vendor_name');
-        const addrField = document.getElementById('vendor_address');
-        const telField = document.getElementById('vendor_tel');
-        const gstField = document.getElementById('vendor_gst');
-        const ntnField = document.getElementById('vendor_ntn');
+        if (!input || !suggest) return;
 
-        let timeout = null;
-
-        input.addEventListener('input', (e) => {
-            clearTimeout(timeout);
-            const val = e.target.value.trim();
-            if (val.length < 2) {
-                suggest.style.display = 'none';
-                return;
-            }
-
-            timeout = setTimeout(async () => {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const coId = session.company_id || 1;
-                try {
-                    const res = await fetch(`api/maintain.php?action=get_vendors&company_id=${coId}`);
-                    const vendors = await res.json();
-                    
-                    const matches = vendors.filter(v => 
-                        v.code.toLowerCase().includes(val.toLowerCase()) || 
-                        v.name.toLowerCase().includes(val.toLowerCase())
-                    ).slice(0, 10);
-
-                    if (matches.length > 0) {
-                        suggest.innerHTML = matches.map(v => 
-                            `<div data-id="${v.coa_list_id || v.id}" data-code="${v.code}" data-name="${v.name}" data-addr="${v.address || ''}" data-tel="${v.telephone || ''}" data-gst="${v.st_reg_no || ''}" data-ntn="${v.ntn_cnic || ''}">
-                                <b>${v.code}</b> - ${v.name}
-                            </div>`
-                        ).join('');
-                        suggest.style.display = 'block';
-                    } else {
-                        suggest.style.display = 'none';
-                    }
-                } catch(e) { console.error("Vendor Search Error:", e); }
-            }, 300);
-        });
-
-        suggest.addEventListener('click', (e) => {
-            const div = e.target.closest('div');
-            if (!div) return;
+        input.oninput = (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (!val) { suggest.style.display = 'none'; return; }
             
-            input.dataset.coaId = div.dataset.id;
-            input.value = div.dataset.code;
-            nameField.value = div.dataset.name;
-            addrField.value = div.dataset.addr;
-            telField.value = div.dataset.tel;
-            gstField.value = div.dataset.gst;
-            ntnField.value = div.dataset.ntn;
-            suggest.style.display = 'none';
-        });
+            const searchWords = val.split(/\s+/);
+            const matches = this.vendors.filter(v => {
+                const searchStr = `${v.code} ${v.name} ${v.address || ''}`.toLowerCase();
+                return searchWords.every(word => searchStr.includes(word));
+            }).slice(0, 15);
 
-        document.addEventListener('click', (e) => {
-            if (e.target !== input && e.target !== suggest) suggest.style.display = 'none';
-        });
+            if (matches.length > 0) {
+                suggest.innerHTML = matches.map(v => 
+                    `<div onclick="window.PIModule.selectVendor(${v.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                        <b>${v.code}</b> - ${v.name}
+                    </div>`
+                ).join('');
+                suggest.style.display = 'block';
+                suggest.style.zIndex = '9999';
+            } else { suggest.style.display = 'none'; }
+        };
+        document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
+    },
+
+    selectVendor: async function(coaId) {
+        const v = this.vendors.find(x => x.id == coaId || x.coa_list_id == coaId);
+        if (v) {
+            document.getElementById('vendor_code').value = v.code;
+            document.getElementById('vendor_code').dataset.coaId = v.id;
+            document.getElementById('vendor_name').value = v.name;
+            document.getElementById('vendor_address').value = v.address || '';
+            document.getElementById('vendor_tel').value = v.telephone || '';
+            document.getElementById('vendor_gst').value = v.st_reg_no || '';
+            document.getElementById('vendor_ntn').value = v.ntn_cnic || '';
+            
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const res = await fetch(`api/maintain.php?action=get_coa_balance&coa_id=${coaId}&fy_id=${session.fy_id || 0}`);
+                const bal = await res.json();
+                document.getElementById('vendor_balance').value = parseFloat(bal.balance || 0).toFixed(2);
+            } catch(e) {}
+        }
+        document.getElementById('vendor_suggest').style.display = 'none';
     },
 
     setupExpenseSearch: function() {
         const input = document.getElementById('expense_name');
         const codeField = document.getElementById('expense_code');
         const suggest = document.getElementById('expense_suggest');
+        if (!input || !suggest) return;
 
-        let timeout = null;
+        input.oninput = async (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (val.length < 2) { suggest.style.display = 'none'; return; }
 
-        input.addEventListener('input', (e) => {
-            clearTimeout(timeout);
-            const val = e.target.value.trim();
-            if (val.length < 2) {
-                suggest.style.display = 'none';
-                return;
-            }
-
-            timeout = setTimeout(async () => {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const coId = session.company_id || 1;
-                try {
-                    const res = await fetch(`api/admin.php?action=get_coa_list&company_id=${coId}`);
-                    const coa = await res.json();
-                    
-                    const matches = coa.filter(c => 
-                        (c.account_type === 'Expense' || c.account_type === 'Cost of Sales') &&
-                        (c.account_code.includes(val) || c.account_name.toLowerCase().includes(val.toLowerCase()))
-                    ).slice(0, 10);
-
-                    if (matches.length > 0) {
-                        suggest.innerHTML = matches.map(c => 
-                            `<div data-code="${c.account_code}" data-name="${c.account_name}">
-                                <b>${c.account_code}</b> - ${c.account_name}
-                            </div>`
-                        ).join('');
-                        suggest.style.display = 'block';
-                    } else {
-                        suggest.style.display = 'none';
-                    }
-                } catch(e) {}
-            }, 300);
-        });
-
-        suggest.addEventListener('click', (e) => {
-            const div = e.target.closest('div');
-            if (!div) return;
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const res = await fetch(`api/admin.php?action=get_coa_list&company_id=${session.company_id || 1}`);
+            const coa = await res.json();
             
-            codeField.value = div.dataset.code;
-            input.value = div.dataset.name;
-            suggest.style.display = 'none';
-        });
+            const matches = coa.filter(c => 
+                (c.account_type === 'Expense' || c.account_type === 'Cost of Sales') &&
+                (c.account_code.includes(val) || c.account_name.toLowerCase().includes(val.toLowerCase()))
+            ).slice(0, 10);
 
-        document.addEventListener('click', (e) => {
-            if (e.target !== input && e.target !== suggest) suggest.style.display = 'none';
-        });
+            if (matches.length > 0) {
+                suggest.innerHTML = matches.map(c => 
+                    `<div onclick="window.PIModule.selectExpense('${c.account_code}', '${c.account_name}')" style="padding:5px; cursor:pointer; border-bottom:1px solid #eee;">
+                        <b>${c.account_code}</b> - ${c.account_name}
+                    </div>`
+                ).join('');
+                suggest.style.display = 'block';
+            } else { suggest.style.display = 'none'; }
+        };
+        document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
     },
 
-    setupCalculations: function() {
-        document.getElementById('piGridBody').addEventListener('input', (e) => {
-            if (e.target.classList.contains('num')) {
-                this.calculateRow(e.target.closest('tr'));
-            }
-        });
+    selectExpense: function(code, name) {
+        document.getElementById('expense_code').value = code;
+        document.getElementById('expense_name').value = name;
+        document.getElementById('expense_suggest').style.display = 'none';
     },
 
     addEmptyRow: function(data = {}) {
         const tbody = document.getElementById('piGridBody');
+        const rowIndex = tbody.children.length;
         const tr = document.createElement('tr');
+        tr.dataset.index = rowIndex;
         if (data.item_coa_id) tr.dataset.coaId = data.item_coa_id;
         
         tr.innerHTML = `
-            <td style="text-align: center; cursor: pointer; color: red; font-size: 10px;" onclick="window.PIModule.deleteRow(this)">✖</td>
-            <td>
-                <div style="position: relative; width: 100%; height: 100%;">
-                    <input type="text" class="grid-input item-code-search" value="${data.code || ''}">
-                    <div class="po-suggest item-suggest"></div>
-                </div>
+            <td style="text-align: center; border: 1px solid #cbd5e0; font-size: 10px; color: #64748b;">${rowIndex + 1}</td>
+            <td style="border: 1px solid #cbd5e0; position: relative;">
+                <input type="text" class="grid-input item-code-search" value="${data.item_code || data.code || ''}">
+                <div class="po-suggest grid-suggest"></div>
             </td>
-            <td><input type="text" class="grid-input" value="${data.name || ''}" readonly></td>
-            <td><input type="text" class="grid-input num pieces" value="${data.pieces || ''}"></td>
-            <td><input type="text" class="grid-input num qty" value="${data.quantity || ''}"></td>
-            <td><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
-            <td><input type="text" class="grid-input num rate" value="${data.rate || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.description || data.name || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value="${data.pieces || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value="${data.quantity || ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value="${data.rate || ''}"></td>
             
             <!-- Tax Mode -->
-            <td class="pi-tax-col"><input type="text" class="grid-input num val-excl" value="${data.gross_amount || ''}" readonly></td>
-            <td class="pi-tax-col"><input type="text" class="grid-input num stax-rate" value="${data.sales_tax_rate || ''}"></td>
-            <td class="pi-tax-col"><input type="text" class="grid-input num stax-amt" value="${data.sales_tax_amount || ''}" readonly></td>
-            <td class="pi-tax-col"><input type="text" class="grid-input num ftax-rate" value="${data.further_tax_rate || ''}"></td>
-            <td class="pi-tax-col"><input type="text" class="grid-input num ftax-amt" value="${data.further_tax_amount || ''}" readonly></td>
-            <td class="pi-tax-col"><input type="text" class="grid-input num val-incl" value="${data.net_amount || ''}" readonly></td>
+            <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${data.gross_amount || ''}" readonly></td>
+            <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num stax-rate" value="${data.sales_tax_rate || ''}"></td>
+            <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num stax-amt" value="${data.sales_tax_amount || ''}" readonly></td>
+            <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-rate" value="${data.further_tax_rate || ''}"></td>
+            <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-amt" value="${data.further_tax_amount || ''}" readonly></td>
+            <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${data.net_amount || ''}" readonly></td>
             
             <!-- Non-Tax Mode -->
-            <td class="pi-nontax-col"><input type="text" class="grid-input num gross-amt" value="${data.gross_amount || ''}" readonly></td>
-            <td class="pi-nontax-col"><input type="text" class="grid-input num disc-perc" value="${data.discount_percent || ''}"></td>
-            <td class="pi-nontax-col"><input type="text" class="grid-input num disc-amt" value="${data.discount_amount || ''}"></td>
-            <td class="pi-nontax-col"><input type="text" class="grid-input num net-amt" value="${data.net_amount || ''}" readonly></td>
+            <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num gross-amt" value="${data.gross_amount || ''}" readonly></td>
+            <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num disc-perc" value="${data.discount_percent || ''}"></td>
+            <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num disc-amt" value="${data.discount_amount || ''}"></td>
+            <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num net-amt" value="${data.net_amount || ''}" readonly></td>
         `;
         
         tbody.appendChild(tr);
-        this.setupItemSearch(tr);
-        this.toggleTaxMode(); // Apply current visibility
+        this.setupGridEvents(tr);
+        this.toggleTaxMode();
     },
 
-    deleteRow: function(td) {
-        td.closest('tr').remove();
-        this.calculateTotals();
-    },
+    setupGridEvents: function(tr) {
+        const idx = tr.dataset.index;
+        const codeInput = tr.querySelector('.item-code-search');
+        const suggest = tr.querySelector('.grid-suggest');
 
-    setupItemSearch: function(tr) {
-        const input = tr.querySelector('.item-code-search');
-        const suggest = tr.querySelector('.item-suggest');
-        let timeout = null;
-
-        input.addEventListener('input', (e) => {
-            clearTimeout(timeout);
-            const val = e.target.value.trim();
-            if (val.length < 2) {
-                suggest.style.display = 'none';
-                return;
-            }
-
-            timeout = setTimeout(async () => {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const coId = session.company_id || 1;
-                try {
-                    const res = await fetch(`api/inventory.php?action=get_items&company_id=${coId}`);
-                    const items = await res.json();
-                    
-                    const matches = items.filter(i => 
-                        i.item_code.toLowerCase().includes(val.toLowerCase()) || 
-                        i.item_name.toLowerCase().includes(val.toLowerCase())
-                    ).slice(0, 10);
-
-                    if (matches.length > 0) {
-                        suggest.innerHTML = matches.map(i => 
-                            `<div data-id="${i.id}" data-code="${i.item_code}" data-name="${i.item_name}" data-unit="${i.primary_unit || ''}">
-                                <b>${i.item_code}</b> - ${i.item_name}
-                            </div>`
-                        ).join('');
-                        suggest.style.display = 'block';
-                    } else { suggest.style.display = 'none'; }
-                } catch(err) {}
-            }, 300);
-        });
-
-        suggest.addEventListener('click', (e) => {
-            const div = e.target.closest('div');
-            if (!div) return;
+        codeInput.oninput = (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (!val) { suggest.style.display = 'none'; return; }
             
-            tr.dataset.coaId = div.dataset.id;
-            input.value = div.dataset.code;
-            tr.cells[2].querySelector('input').value = div.dataset.name;
-            tr.cells[5].querySelector('input').value = div.dataset.unit;
-            suggest.style.display = 'none';
-            
-            if (tr === document.getElementById('piGridBody').lastElementChild) {
+            const searchWords = val.split(/\s+/);
+            const matches = this.inventory.filter(i => {
+                const searchStr = `${i.item_code} ${i.item_name}`.toLowerCase();
+                return searchWords.every(word => searchStr.includes(word));
+            }).slice(0, 15);
+
+            if (matches.length > 0) {
+                suggest.innerHTML = matches.map(i => 
+                    `<div onclick="window.PIModule.selectGridItem(${idx}, ${i.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                        <b>${i.item_code}</b> - ${i.item_name}
+                    </div>`
+                ).join('');
+                suggest.style.display = 'block';
+                suggest.style.zIndex = '9999';
+            } else { suggest.style.display = 'none'; }
+
+            // Auto-expand row
+            const tbody = document.getElementById('piGridBody');
+            if (tr === tbody.lastElementChild && val !== '') {
                 this.addEmptyRow();
             }
+        };
+
+        tr.querySelectorAll('input.num').forEach(input => {
+            input.oninput = () => this.calculateRow(tr);
         });
 
-        document.addEventListener('click', (e) => {
-            if (e.target !== input && e.target !== suggest) suggest.style.display = 'none';
-        });
+        document.addEventListener('click', (e) => { if (e.target !== codeInput) suggest.style.display = 'none'; });
+    },
+
+    selectGridItem: function(rowIndex, id) {
+        const item = this.inventory.find(x => x.id == id);
+        const tr = document.querySelector(`#piGridBody tr[data-index="${rowIndex}"]`);
+        if (item && tr) {
+            tr.dataset.coaId = item.id;
+            tr.querySelector('.item-code-search').value = item.item_code;
+            tr.cells[2].querySelector('input').value = item.item_name;
+            tr.cells[5].querySelector('input').value = item.primary_unit || 'Pcs';
+            tr.querySelector('.rate').focus();
+            this.calculateRow(tr);
+        }
+        const suggest = tr.querySelector('.grid-suggest');
+        if (suggest) suggest.style.display = 'none';
     },
 
     calculateRow: function(tr) {
@@ -265,93 +266,63 @@ window.PIModule = {
         const isTax = document.getElementById('pi_is_tax').checked;
         
         const gross = qty * rate;
-        let net = gross;
         
-        // Populate Both Views Just In Case Toggle Happens Later
         tr.querySelector('.val-excl').value = gross.toFixed(2);
         tr.querySelector('.gross-amt').value = gross.toFixed(2);
         
         if (isTax) {
             const stRate = parseFloat(tr.querySelector('.stax-rate').value) || 0;
             const ftRate = parseFloat(tr.querySelector('.ftax-rate').value) || 0;
-            
             const stAmt = (gross * stRate) / 100;
             const ftAmt = (gross * ftRate) / 100;
             
             tr.querySelector('.stax-amt').value = stAmt.toFixed(2);
             tr.querySelector('.ftax-amt').value = ftAmt.toFixed(2);
-            
-            net = gross + stAmt + ftAmt;
+            const net = gross + stAmt + ftAmt;
             tr.querySelector('.val-incl').value = net.toFixed(2);
             tr.querySelector('.net-amt').value = net.toFixed(2);
         } else {
             const discPerc = parseFloat(tr.querySelector('.disc-perc').value) || 0;
-            let discAmt = parseFloat(tr.querySelector('.disc-amt').value) || 0;
-            
-            if (e && e.target && e.target.classList.contains('disc-perc')) {
-                discAmt = (gross * discPerc) / 100;
-                tr.querySelector('.disc-amt').value = discAmt.toFixed(2);
-            } else if (e && e.target && e.target.classList.contains('disc-amt')) {
-                // If disc amt typed, ignore perc logic
-            } else {
-                if (discPerc > 0) discAmt = (gross * discPerc) / 100;
-                tr.querySelector('.disc-amt').value = discAmt.toFixed(2);
-            }
-            
-            net = gross - discAmt;
+            const discAmt = (gross * discPerc) / 100;
+            tr.querySelector('.disc-amt').value = discAmt.toFixed(2);
+            const net = gross - discAmt;
             tr.querySelector('.net-amt').value = net.toFixed(2);
             tr.querySelector('.val-incl').value = net.toFixed(2);
         }
-        
         this.calculateTotals();
     },
 
     calculateTotals: function() {
-        let tPcs = 0, tQty = 0, tGross = 0;
-        let tStax = 0, tFtax = 0;
-        let tDisc = 0, tNet = 0;
+        let tPcs = 0, tQty = 0, tGross = 0, tStax = 0, tFtax = 0, tDisc = 0, tNet = 0;
         
         document.querySelectorAll('#piGridBody tr').forEach(tr => {
             tPcs += parseFloat(tr.querySelector('.pieces').value) || 0;
             tQty += parseFloat(tr.querySelector('.qty').value) || 0;
             tGross += parseFloat(tr.querySelector('.val-excl').value) || 0;
-            
             tStax += parseFloat(tr.querySelector('.stax-amt').value) || 0;
             tFtax += parseFloat(tr.querySelector('.ftax-amt').value) || 0;
-            
             tDisc += parseFloat(tr.querySelector('.disc-amt').value) || 0;
             tNet += parseFloat(tr.querySelector('.val-incl').value) || 0;
         });
 
         document.getElementById('tot_pieces').value = tPcs.toFixed(2);
         document.getElementById('tot_qty').value = tQty.toFixed(2);
-        
-        // Tax
         document.getElementById('tot_excl').value = tGross.toFixed(2);
         document.getElementById('tot_stax').value = tStax.toFixed(2);
         document.getElementById('tot_ftax').value = tFtax.toFixed(2);
         document.getElementById('tot_incl').value = tNet.toFixed(2);
-        
-        // Non-Tax
         document.getElementById('tot_gross').value = tGross.toFixed(2);
         document.getElementById('tot_disc').value = tDisc.toFixed(2);
         document.getElementById('tot_net').value = tNet.toFixed(2);
         
         const isTax = document.getElementById('pi_is_tax').checked;
-        
         document.getElementById('pi_gross_tot').value = tGross.toFixed(2);
         
         const addDisc = parseFloat(document.getElementById('pi_add_disc').value) || 0;
         const freight = parseFloat(document.getElementById('pi_freight').value) || 0;
         const paid = parseFloat(document.getElementById('pi_paid').value) || 0;
         
-        let finalNet = 0;
-        if (isTax) {
-            finalNet = tNet + freight;
-        } else {
-            finalNet = tNet - addDisc + freight;
-        }
-        
+        let finalNet = isTax ? (tNet + freight) : (tNet - addDisc + freight);
         document.getElementById('pi_net_tot').value = finalNet.toFixed(2);
         document.getElementById('pi_balance').value = (finalNet - paid).toFixed(2);
         
@@ -360,28 +331,34 @@ window.PIModule = {
         } catch(e){}
     },
 
+    toggleTaxMode: function() {
+        const isTax = document.getElementById('pi_is_tax').checked;
+        const taxCols = document.querySelectorAll('.pi-tax-col, .pi-tax-field');
+        const nonTaxCols = document.querySelectorAll('.pi-nontax-col');
+        taxCols.forEach(el => el.style.display = isTax ? '' : 'none');
+        nonTaxCols.forEach(el => el.style.display = isTax ? 'none' : '');
+        this.calculateTotals();
+    },
+
     resetForm: async function(fetchNext = false) {
         this.currentId = null;
         document.querySelectorAll('#purchaseInvoiceContainer input:not(#expense_code):not(#expense_name), #purchaseInvoiceContainer textarea').forEach(el => {
             if(el.type === 'checkbox') el.checked = false;
             else el.value = '';
         });
-        document.getElementById('vendor_code').dataset.coaId = '';
         document.getElementById('pi_date').valueAsDate = new Date();
         document.getElementById('piGridBody').innerHTML = '';
         
-        document.getElementById('pi_is_tax').checked = false;
-        this.toggleTaxMode();
-        this.addEmptyRow();
-        this.calculateTotals();
-
+        // Add 8 empty rows like Purchase Order
+        for(let i=0; i<8; i++) this.addEmptyRow();
+        
         if (fetchNext) {
             const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const coId = session.company_id || 1;
-            const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${coId}`);
+            const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${session.company_id || 1}`);
             const data = await res.json();
             document.getElementById('pi_sn').value = data.next_sn || 1;
         }
+        this.toggleTaxMode();
     },
 
     saveInvoice: async function() {
@@ -389,8 +366,6 @@ window.PIModule = {
         if (!vendorId) return alert("Please select a valid Vendor!");
 
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-        const companyId = session.company_id || 1;
-
         const payload = {
             id: this.currentId,
             serial_no: document.getElementById('pi_sn').value,
@@ -417,10 +392,9 @@ window.PIModule = {
         };
 
         document.querySelectorAll('#piGridBody tr').forEach(tr => {
-            const coaId = tr.dataset.coaId;
-            if (!coaId) return;
+            if (!tr.dataset.coaId) return;
             payload.items.push({
-                item_coa_id: coaId,
+                item_coa_id: tr.dataset.coaId,
                 description: tr.cells[2].querySelector('input').value,
                 pieces: tr.querySelector('.pieces').value,
                 quantity: tr.querySelector('.qty').value,
@@ -440,7 +414,7 @@ window.PIModule = {
         if (payload.items.length === 0) return alert("Please add at least one item!");
 
         try {
-            const res = await fetch(`api/purchases.php?action=save_invoice&company_id=${companyId}`, {
+            const res = await fetch(`api/purchases.php?action=save_invoice&company_id=${session.company_id || 1}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -465,19 +439,16 @@ window.PIModule = {
             const inv = await res.json();
             if (inv && inv.id) {
                 this.loadInvoiceData(inv);
-            } else {
-                if (dir === 'next') this.resetForm(true);
+            } else if (dir === 'next') {
+                this.resetForm(true);
             }
-        } catch (e) { console.error("Navigation Error:", e); }
+        } catch (e) {}
     },
 
     loadInvoiceData: function(inv) {
         this.currentId = inv.id;
         document.getElementById('pi_sn').value = inv.serial_no;
-        document.getElementById('pi_is_cancelled').checked = inv.is_cancelled == 1;
         document.getElementById('pi_is_tax').checked = inv.is_tax_invoice == 1;
-        this.toggleTaxMode();
-
         document.getElementById('pi_date').value = inv.invoice_date || '';
         document.getElementById('pi_type').value = inv.invoice_type || 'Purchase Invoice';
         document.getElementById('pi_v_invoice_no').value = inv.vendor_invoice_no || '';
@@ -486,7 +457,6 @@ window.PIModule = {
         document.getElementById('pi_po_date').value = inv.purchase_order_date || '';
         document.getElementById('pi_payment_terms').value = inv.payment_terms || '';
         document.getElementById('expense_code').value = inv.expense_account || '';
-        
         document.getElementById('pi_location').value = inv.inventory_location_id || '';
         document.getElementById('pi_job_desc').value = inv.job_no || '';
         document.getElementById('pi_emp_ref').value = inv.employee_ref || '';
@@ -495,49 +465,31 @@ window.PIModule = {
         document.getElementById('pi_add_disc').value = inv.additional_discount || '0.00';
         document.getElementById('pi_paid').value = inv.amount_paid || '0.00';
 
-        if (inv.vendor) {
-            document.getElementById('vendor_code').dataset.coaId = inv.vendor_coa_id;
-            document.getElementById('vendor_code').value = inv.vendor.code || '';
-            document.getElementById('vendor_name').value = inv.vendor.name || '';
-            document.getElementById('vendor_address').value = inv.vendor.address || '';
-            document.getElementById('vendor_tel').value = inv.vendor.telephone || '';
-            document.getElementById('vendor_gst').value = inv.vendor.st_reg_no || '';
-            document.getElementById('vendor_ntn').value = inv.vendor.ntn_cnic || '';
-        }
+        if (inv.vendor_coa_id) this.selectVendor(inv.vendor_coa_id);
 
-        document.getElementById('piGridBody').innerHTML = '';
+        const tbody = document.getElementById('piGridBody');
+        tbody.innerHTML = '';
         if (inv.items && inv.items.length > 0) {
             inv.items.forEach(item => this.addEmptyRow(item));
         }
-        this.addEmptyRow();
+        while(tbody.children.length < 8) this.addEmptyRow();
         this.calculateTotals();
+        this.toggleTaxMode();
     },
 
     deleteInvoice: async function() {
-        if (!this.currentId) return alert("No Purchase Invoice loaded to delete.");
-        if (!confirm("Are you sure you want to delete this Invoice?")) return;
-
+        if (!this.currentId) return alert("No Invoice loaded to delete.");
+        if (!confirm("Are you sure?")) return;
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-        const companyId = session.company_id || 1;
-
         try {
-            const res = await fetch(`api/purchases.php?action=delete_invoice&id=${this.currentId}&company_id=${companyId}`, { method: 'POST' });
+            const res = await fetch(`api/purchases.php?action=delete_invoice&id=${this.currentId}&company_id=${session.company_id || 1}`, { method: 'POST' });
             const result = await res.json();
-            if (result.status === 'success') {
-                alert("Purchase Invoice deleted successfully.");
-                this.resetForm(true);
-            }
-        } catch (e) { alert("Failed to delete Purchase Invoice."); }
+            if (result.status === 'success') { alert("Deleted!"); this.resetForm(true); }
+        } catch (e) { alert("Failed!"); }
     },
 
     printInvoice: function() {
-        if (!this.currentId) return alert("Please save or load an Invoice before printing.");
-        // Basic print logic placeholder matching the existing system pattern
-        const sn = document.getElementById('pi_sn').value;
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
-        printWindow.document.write(`<h2>Purchase Invoice #${sn}</h2><p>Printing functionality is identical to layout.</p><script>window.onload=function(){window.print();window.close();}</script>`);
-        printWindow.document.close();
+        if (!this.currentId) return alert("Save/Load first!");
+        window.open(`api/print_invoice.php?id=${this.currentId}`, '_blank');
     }
 };
-
-setTimeout(() => { if(window.PIModule) window.PIModule.init(); }, 100);
