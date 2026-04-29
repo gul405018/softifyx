@@ -448,25 +448,26 @@ window.PIModule = {
             const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}`);
             const data = await res.json();
             sn = data.next_sn || 1;
-            if (dir === 'prev') sn--; // To get the last saved one
-        } else {
-            if (dir === 'next') sn++;
-            else sn--;
+            // For 'prev' from a new form, we want the max existing serial
+            if (dir === 'prev') {
+                // We'll call navigate with a very high number to get the last one
+                sn = 999999; 
+            }
         }
-        
-        if (sn < 1) return;
 
         try {
-            const res = await fetch(`api/purchases.php?action=get_invoice&serial_no=${sn}&company_id=${companyId}`);
+            const res = await fetch(`api/purchases.php?action=navigate_invoice&serial_no=${sn}&direction=${dir}&company_id=${companyId}`);
             const inv = await res.json();
             if (inv && inv.id) {
                 this.loadInvoiceData(inv);
             } else if (dir === 'next') {
                 this.resetForm(true);
             } else {
-                alert("No record found at Serial No: " + sn);
+                alert("No more records in this direction.");
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("Navigation error:", e);
+        }
     },
 
     loadInvoiceData: function(inv) {

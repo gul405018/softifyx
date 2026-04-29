@@ -144,30 +144,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
     }
     
+    if ($action === 'navigate_invoice') {
+        $current_sn = $_GET['serial_no'] ?? 0;
+        $direction = $_GET['direction'] ?? 'next';
+        if ($direction === 'next') {
+            $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no > ? AND company_id = ? ORDER BY serial_no ASC LIMIT 1");
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no < ? AND company_id = ? ORDER BY serial_no DESC LIMIT 1");
+        }
+        $stmt->execute([$current_sn, $company_id]);
+        $inv = $stmt->fetch();
+        if ($inv) {
+            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name FROM purchase_invoice_items pii JOIN inv_items itm ON pii.item_coa_id = itm.id WHERE pii.invoice_id=?");
+            $stmt->execute([$inv['id']]);
+            $inv['items'] = $stmt->fetchAll();
+            $stmt = $pdo->prepare("SELECT * FROM vendors WHERE coa_list_id=?");
+            $stmt->execute([$inv['vendor_coa_id']]);
+            $inv['vendor'] = $stmt->fetch();
+            if (!$inv['vendor']) {
+                $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE id=?");
+                $stmt->execute([$inv['vendor_coa_id']]);
+                $coa = $stmt->fetch();
+                if ($coa) { $inv['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']]; }
+            }
+        }
+        echo json_encode($inv ?: []);
+    }
+
     if ($action === 'get_invoice') {
         $sn = $_GET['serial_no'] ?? 0;
         $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no=? AND company_id=?");
         $stmt->execute([$sn, $company_id]);
         $inv = $stmt->fetch();
         if ($inv) {
-            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name 
-                                   FROM purchase_invoice_items pii 
-                                   JOIN inv_items itm ON pii.item_coa_id = itm.id 
-                                   WHERE pii.invoice_id=?");
+            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name FROM purchase_invoice_items pii JOIN inv_items itm ON pii.item_coa_id = itm.id WHERE pii.invoice_id=?");
             $stmt->execute([$inv['id']]);
             $inv['items'] = $stmt->fetchAll();
-            
             $stmt = $pdo->prepare("SELECT * FROM vendors WHERE coa_list_id=?");
             $stmt->execute([$inv['vendor_coa_id']]);
             $inv['vendor'] = $stmt->fetch();
-            
             if (!$inv['vendor']) {
                 $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE id=?");
                 $stmt->execute([$inv['vendor_coa_id']]);
                 $coa = $stmt->fetch();
-                if ($coa) {
-                    $inv['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']];
-                }
+                if ($coa) { $inv['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']]; }
             }
         }
         echo json_encode($inv ?: []);
