@@ -443,30 +443,38 @@ window.PIModule = {
         let snVal = document.getElementById('pi_sn').value;
         let sn = parseInt(snVal) || 0;
         
-        // If SN is empty (New mode), first fetch the maximum SN from DB
+        console.log("PI Module: Navigating", dir, "from SN", sn);
+
         if (sn === 0 || isNaN(sn)) {
             const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}`);
             const data = await res.json();
             sn = data.next_sn || 1;
-            if (dir === 'prev') sn--; // To get the last saved one
+            if (dir === 'prev') sn--; 
         } else {
             if (dir === 'next') sn++;
             else sn--;
         }
         
-        if (sn < 1) return;
+        if (sn < 1) return alert("Reached beginning of records.");
 
         try {
             const res = await fetch(`api/purchases.php?action=get_invoice&serial_no=${sn}&company_id=${companyId}`);
             const inv = await res.json();
+            
             if (inv && inv.id) {
                 this.loadInvoiceData(inv);
-            } else if (dir === 'next') {
-                this.resetForm(true);
             } else {
-                alert("No record found at Serial No: " + sn);
+                if (dir === 'next') {
+                    alert("This is a new invoice number.");
+                    this.resetForm(true);
+                } else {
+                    alert("No record found at Serial No: " + sn);
+                }
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("Navigation error:", e);
+            alert("Error loading record. Please check connection.");
+        }
     },
 
     loadInvoiceData: function(inv) {
