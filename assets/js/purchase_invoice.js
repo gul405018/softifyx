@@ -336,6 +336,7 @@ window.PIModule = {
         const isTax = isTaxEl.checked;
         const taxCols = document.querySelectorAll('.pi-tax-col, .pi-tax-field');
         const nonTaxCols = document.querySelectorAll('.pi-nontax-col');
+        
         taxCols.forEach(el => el.style.display = isTax ? '' : 'none');
         nonTaxCols.forEach(el => el.style.display = isTax ? 'none' : '');
         this.calculateTotals();

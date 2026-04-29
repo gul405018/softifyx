@@ -164,13 +164,24 @@
                 <label class="po-label">Amount in Words</label>
                 <span id="pi_amt_words" style="font-size: 10px; font-weight: 700; color: #1e3a8a;">Rupees zero only.</span>
             </div>
-            <div style="width: 250px; background: #e2e8f0; padding: 6px; border-radius: 4px; display: flex; flex-direction: column; gap: 2px;">
-                <div class="pi-nontax-col" style="display: flex; justify-content: space-between;"><label class="po-label">Add. Discount</label><input type="text" id="pi_add_disc" class="po-input num" style="width: 80px;" value="0.00" oninput="window.PIModule.calculateTotals()"></div>
-                <div class="pi-nontax-col" style="display: flex; justify-content: space-between;"><label class="po-label">Gross Total</label><input type="text" id="pi_gross_tot" class="po-input num" style="width: 80px;" value="0.00" readonly></div>
-                <div style="display: flex; justify-content: space-between;"><label class="po-label">Freight</label><input type="text" id="pi_freight" class="po-input num" style="width: 80px;" value="0.00" oninput="window.PIModule.calculateTotals()"></div>
-                <div style="display: flex; justify-content: space-between;"><label class="po-label" style="color: blue;">Net Total</label><input type="text" id="pi_net_tot" class="po-input num" style="width: 80px; font-weight: 700;" value="0.00" readonly></div>
-                <div style="display: flex; justify-content: space-between;"><label class="po-label">Paid</label><input type="text" id="pi_paid" class="po-input num" style="width: 80px;" value="0.00" oninput="window.PIModule.calculateTotals()"></div>
-                <div style="display: flex; justify-content: space-between;"><label class="po-label">Balance</label><input type="text" id="pi_balance" class="po-input num" style="width: 80px;" value="0.00" readonly></div>
+            <div id="piTotalsBox" style="width: 250px; background: #e2e8f0; padding: 6px; border-radius: 4px; display: grid; grid-template-columns: 1fr 80px; gap: 4px; align-content: start;">
+                <label class="po-label pi-nontax-col">Add. Discount</label>
+                <input type="text" id="pi_add_disc" class="po-input num pi-nontax-col" value="0.00" oninput="window.PIModule.calculateTotals()">
+                
+                <label class="po-label pi-nontax-col">Gross Total</label>
+                <input type="text" id="pi_gross_tot" class="po-input num pi-nontax-col" value="0.00" readonly>
+                
+                <label class="po-label">Freight</label>
+                <input type="text" id="pi_freight" class="po-input num" value="0.00" oninput="window.PIModule.calculateTotals()">
+                
+                <label class="po-label" style="color: blue;">Net Total</label>
+                <input type="text" id="pi_net_tot" class="po-input num" style="font-weight: 700;" value="0.00" readonly>
+                
+                <label class="po-label">Paid</label>
+                <input type="text" id="pi_paid" class="po-input num" value="0.00" oninput="window.PIModule.calculateTotals()">
+                
+                <label class="po-label">Balance</label>
+                <input type="text" id="pi_balance" class="po-input num" value="0.00" readonly>
             </div>
         </div>
     </div>
