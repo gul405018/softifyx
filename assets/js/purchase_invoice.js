@@ -11,7 +11,7 @@ window.PIModule = {
         // 1. Reset form immediately to show grid lines
         this.resetForm(true);
         
-        // 2. Load data in background
+        // 2. Load data in background to prevent hanging
         try {
             await Promise.all([
                 this.loadVendors(),
@@ -19,7 +19,10 @@ window.PIModule = {
                 this.loadEmployees(),
                 this.loadJobs()
             ]);
-        } catch (err) {}
+            console.log("PI Module: Data loaded successfully.");
+        } catch (err) {
+            console.error("PI Module: Error loading background data:", err);
+        }
         
         this.setupKeyboardShortcuts();
         this.setupVendorSearch();
@@ -42,7 +45,7 @@ window.PIModule = {
                 const backup = await res.json();
                 if (backup) this.vendors = backup;
             }
-        } catch (e) {}
+        } catch (e) { console.error("PI Module: Load Vendors Error:", e); }
     },
 
     loadInventory: async function() {
@@ -51,7 +54,7 @@ window.PIModule = {
         try {
             const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${companyId}`);
             this.inventory = await res.json();
-        } catch (e) {}
+        } catch (e) { console.error("PI Module: Load Inventory Error:", e); }
     },
 
     loadEmployees: async function() {
@@ -439,18 +442,8 @@ window.PIModule = {
         let snVal = document.getElementById('pi_sn').value;
         let sn = parseInt(snVal) || 0;
         
-        // If retrieving last saved, we need to find the MAX serial number first
-        if (dir === 'last') {
-            try {
-                const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}`);
-                const data = await res.json();
-                sn = (data.next_sn || 1) - 1; // Last saved is next - 1
-                if (sn < 1) return alert("No records found.");
-            } catch(e) { return; }
-        } else {
-            if (dir === 'next') sn++;
-            else sn--;
-        }
+        if (dir === 'next') sn++;
+        else sn--;
         
         if (sn < 1) return;
 
@@ -462,7 +455,7 @@ window.PIModule = {
             } else if (dir === 'next') {
                 this.resetForm(true);
             } else {
-                alert("Record not found.");
+                alert("No earlier invoice found.");
             }
         } catch (e) {}
     },
