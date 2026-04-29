@@ -69,16 +69,16 @@ window.PRModule = {
             <td style="text-align: center; font-size: 9px; background: #f8fafc;">${rowCount + 1}</td>
             <td><input type="text" class="grid-input item-code-search" placeholder="..."></td>
             <td><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
-            <td><input type="number" class="grid-input num pieces" value="0.00"></td>
-            <td><input type="number" class="grid-input num qty" value="0.00"></td>
+            <td><input type="number" class="grid-input num pieces" value=""></td>
+            <td><input type="number" class="grid-input num qty" value=""></td>
             <td><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
-            <td><input type="number" class="grid-input num rate" value="0.00"></td>
-            <td><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value="0.00"></td>
-            <td><input type="number" class="grid-input num tax-rate" value="0.00"></td>
-            <td><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value="0.00"></td>
-            <td><input type="number" class="grid-input num ftax-rate" value="0.00"></td>
-            <td><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value="0.00"></td>
-            <td><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value="0.00"></td>
+            <td><input type="number" class="grid-input num rate" value=""></td>
+            <td><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value=""></td>
+            <td><input type="number" class="grid-input num tax-rate" value=""></td>
+            <td><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value=""></td>
+            <td><input type="number" class="grid-input num ftax-rate" value=""></td>
+            <td><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value=""></td>
+            <td><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value=""></td>
             <input type="hidden" class="item-coa-id">
         `;
 
