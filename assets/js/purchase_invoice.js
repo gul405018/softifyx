@@ -521,7 +521,170 @@ window.PIModule = {
     },
 
     printInvoice: function() {
-        if (!this.currentId) return alert("Save/Load first!");
-        window.open(`api/print_invoice.php?id=${this.currentId}`, '_blank');
+        if (!this.currentId) return alert("Please save or load an invoice first.");
+
+        const sn = document.getElementById('pi_sn').value;
+        const date = document.getElementById('pi_date').value;
+        const vCode = document.getElementById('vendor_code').value;
+        const vName = document.getElementById('vendor_name').value;
+        const vAddress = document.getElementById('vendor_address').value;
+        const vTel = document.getElementById('vendor_tel').value;
+        const isTax = document.getElementById('pi_is_tax').checked;
+        const type = document.getElementById('pi_type').value;
+
+        const totPieces = document.getElementById('tot_pieces').value;
+        const totQty = document.getElementById('tot_qty').value;
+        const totNet = document.getElementById('pi_net_tot').value;
+        const amtWords = document.getElementById('pi_amt_words').innerText;
+        const remarks = document.getElementById('pi_remarks').value;
+
+        // Get company details
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companies = JSON.parse(localStorage.getItem('softifyx_companies') || '[]');
+        const company = companies.find(c => c.id == session.company_id) || {};
+        const coName = company.name || session.company_name || 'SOFTIFYX TECHNOLOGIES';
+        const coAddress = company.address || '';
+        const coPhone = company.phone || '';
+
+        let itemsHtml = '';
+        document.querySelectorAll('#piGridBody tr').forEach((tr, index) => {
+            const code = tr.querySelector('.item-code-search').value;
+            if (!code) return;
+
+            const desc = tr.cells[2].querySelector('input').value;
+            const pieces = tr.querySelector('.pieces').value;
+            const qty = tr.querySelector('.qty').value;
+            const unit = tr.cells[5].querySelector('input').value;
+            const rate = tr.querySelector('.rate').value;
+            
+            let amountHtml = '';
+            if (isTax) {
+                const excl = tr.querySelector('.val-excl').value;
+                const stax = tr.querySelector('.stax-amt').value;
+                const ftax = tr.querySelector('.ftax-amt').value;
+                const incl = tr.querySelector('.val-incl').value;
+                amountHtml = `
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${excl}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${stax}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${ftax}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${incl}</td>
+                `;
+            } else {
+                const gross = tr.querySelector('.gross-amt').value;
+                const disc = tr.querySelector('.disc-amt').value;
+                const net = tr.querySelector('.net-amt').value;
+                amountHtml = `
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${gross}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${disc}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${net}</td>
+                `;
+            }
+
+            itemsHtml += `
+                <tr>
+                    <td style="border:1px solid #000; padding:4px; text-align:center;">${index + 1}</td>
+                    <td style="border:1px solid #000; padding:4px;">${code}</td>
+                    <td style="border:1px solid #000; padding:4px;">${desc}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:center;">${pieces}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:center;">${qty} ${unit}</td>
+                    <td style="border:1px solid #000; padding:4px; text-align:right;">${rate}</td>
+                    ${amountHtml}
+                </tr>
+            `;
+        });
+
+        const printWindow = window.open('', '_blank', 'width=900,height=600');
+        const html = `
+            <html>
+            <head>
+                <title>${type} - ${sn}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; margin: 20px; color: #333; }
+                    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                    .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
+                    .details-table { width: 100%; margin-bottom: 15px; border-collapse: collapse; }
+                    .details-table td { padding: 3px; vertical-align: top; }
+                    .grid-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                    .grid-table th { border: 1px solid #000; padding: 5px; background: #f2f2f2; font-size: 10px; text-transform: uppercase; }
+                    .grid-table td { border: 1px solid #000; padding: 4px; }
+                    .footer-sig { margin-top: 50px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${coName}</h1>
+                    <p style="margin: 3px 0;">${coAddress}</p>
+                    <p style="margin: 0;">Phone: ${coPhone}</p>
+                    <h2 style="margin: 10px 0 0 0; text-decoration: underline;">${type.toUpperCase()}</h2>
+                </div>
+
+                <table class="details-table">
+                    <tr>
+                        <td width="60%">
+                            <b>Vendor:</b><br>
+                            ${vName} (${vCode})<br>
+                            ${vAddress}<br>
+                            Tel: ${vTel}
+                        </td>
+                        <td width="40%" style="text-align: right;">
+                            <b>Serial No:</b> ${sn}<br>
+                            <b>Date:</b> ${date}<br>
+                            <b>Invoice Type:</b> ${isTax ? 'Tax Invoice' : 'Non-Tax Invoice'}
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="grid-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th>Pcs</th>
+                            <th>Qty</th>
+                            <th>Rate</th>
+                            ${isTax ? '<th>Value Excl</th><th>STax Amt</th><th>FTax Amt</th><th>Value Incl</th>' : '<th>Gross</th><th>Disc</th><th>Net</th>'}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: bold; background: #f9f9f9;">
+                            <td colspan="3" style="text-align: right;">TOTALS</td>
+                            <td style="text-align: center;">${totPieces}</td>
+                            <td style="text-align: center;">${totQty}</td>
+                            <td></td>
+                            <td colspan="${isTax ? 4 : 3}" style="text-align: right;">${totNet}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <p><b>Amount in Words:</b> ${amtWords}</p>
+                <p><b>Remarks:</b> ${remarks}</p>
+
+                <div class="footer-sig">
+                    <table width="100%">
+                        <tr>
+                            <td style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 5px;">Prepared By</td>
+                            <td style="width: 5%;"></td>
+                            <td style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 5px;">Checked By</td>
+                            <td style="width: 5%;"></td>
+                            <td style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 5px;">Authorized Signatory</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+        printWindow.document.write(html);
+        printWindow.document.close();
     }
 };
