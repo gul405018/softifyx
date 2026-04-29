@@ -531,7 +531,9 @@ window.POModule = {
         const companyId = session.company_id || 1;
 
         try {
-            const res = await fetch(`api/purchases.php?action=delete_po&id=${this.currentId}&company_id=${companyId}`);
+            const res = await fetch(`api/purchases.php?action=delete_po&id=${this.currentId}&company_id=${companyId}`, {
+                method: 'POST'
+            });
             const result = await res.json();
             
             if (result.status === 'success') {
@@ -570,6 +572,15 @@ window.POModule = {
 
         // Collect items
         let itemsHtml = '';
+        
+        // Get company details
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companies = JSON.parse(localStorage.getItem('softifyx_companies') || '[]');
+        const company = companies.find(c => c.id == session.company_id) || {};
+        const coName = company.name || session.company_name || 'SOFTIFYX TECHNOLOGIES';
+        const coAddress = company.address || '';
+        const coPhone = company.phone || '';
+        
         document.querySelectorAll('#poGridBody tr').forEach((tr, index) => {
             const code = tr.querySelector('.item-code-search').value;
             if (!code) return; // Skip empty rows
@@ -618,8 +629,11 @@ window.POModule = {
             </head>
             <body>
                 <div class="header">
-                    <h2>PURCHASE ORDER</h2>
-                    <p>Serial No: <b>${sn}</b></p>
+                    <h2>${coName}</h2>
+                    <p style="margin: 5px 0;">${coAddress}</p>
+                    <p style="margin: 0 0 15px 0;">Phone: ${coPhone}</p>
+                    <h3 style="margin: 15px 0 5px 0; text-decoration: underline;">PURCHASE ORDER</h3>
+                    <p style="margin: 0;">Serial No: <b>${sn}</b></p>
                 </div>
                 
                 <table class="details-table">
