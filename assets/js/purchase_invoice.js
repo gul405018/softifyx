@@ -7,15 +7,23 @@ window.PIModule = {
 
     init: async function() {
         console.log("PI Module: Initializing...");
-        // Load data upfront like Purchase Order module
-        await Promise.all([
-            this.loadVendors(),
-            this.loadInventory(),
-            this.loadEmployees(),
-            this.loadJobs()
-        ]);
         
+        // 1. Reset form immediately to show grid lines
         this.resetForm(true);
+        
+        // 2. Load data in background to prevent hanging
+        try {
+            await Promise.all([
+                this.loadVendors(),
+                this.loadInventory(),
+                this.loadEmployees(),
+                this.loadJobs()
+            ]);
+            console.log("PI Module: Data loaded successfully.");
+        } catch (err) {
+            console.error("PI Module: Error loading background data:", err);
+        }
+        
         this.setupKeyboardShortcuts();
         this.setupVendorSearch();
         this.setupExpenseSearch();
@@ -26,7 +34,6 @@ window.PIModule = {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
         try {
-            // Match PO logic: Try VND then SUP then generic
             let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
             this.vendors = await res.json();
             if (!this.vendors || this.vendors.length === 0) {
@@ -56,7 +63,6 @@ window.PIModule = {
         try {
             const res = await fetch(`api/maintain.php?action=get_employees&company_id=${companyId}`);
             this.employees = await res.json();
-            const select = document.getElementById('pi_emp_ref'); // In PI it was an input, maybe make it a select later?
         } catch (e) {}
     },
 
@@ -70,7 +76,6 @@ window.PIModule = {
     },
 
     setupKeyboardShortcuts: function() {
-        // Remove existing to avoid duplicates if re-opened
         const handler = (e) => {
             if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
@@ -132,7 +137,6 @@ window.PIModule = {
 
     setupExpenseSearch: function() {
         const input = document.getElementById('expense_name');
-        const codeField = document.getElementById('expense_code');
         const suggest = document.getElementById('expense_suggest');
         if (!input || !suggest) return;
 
@@ -169,6 +173,7 @@ window.PIModule = {
 
     addEmptyRow: function(data = {}) {
         const tbody = document.getElementById('piGridBody');
+        if (!tbody) return;
         const rowIndex = tbody.children.length;
         const tr = document.createElement('tr');
         tr.dataset.index = rowIndex;
@@ -177,16 +182,15 @@ window.PIModule = {
         tr.innerHTML = `
             <td style="text-align: center; border: 1px solid #cbd5e0; font-size: 10px; color: #64748b;">${rowIndex + 1}</td>
             <td style="border: 1px solid #cbd5e0; position: relative;">
-                <input type="text" class="grid-input item-code-search" value="${data.item_code || data.code || ''}">
+                <input type="text" class="grid-input item-code-search" value="${data.code || ''}">
                 <div class="po-suggest grid-suggest"></div>
             </td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.description || data.name || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.name || data.description || ''}" readonly></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value="${data.pieces || ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value="${data.quantity || ''}"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value="${data.rate || ''}"></td>
             
-            <!-- Tax Mode -->
             <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${data.gross_amount || ''}" readonly></td>
             <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num stax-rate" value="${data.sales_tax_rate || ''}"></td>
             <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num stax-amt" value="${data.sales_tax_amount || ''}" readonly></td>
@@ -194,7 +198,6 @@ window.PIModule = {
             <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-amt" value="${data.further_tax_amount || ''}" readonly></td>
             <td class="pi-tax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${data.net_amount || ''}" readonly></td>
             
-            <!-- Non-Tax Mode -->
             <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num gross-amt" value="${data.gross_amount || ''}" readonly></td>
             <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num disc-perc" value="${data.discount_percent || ''}"></td>
             <td class="pi-nontax-col" style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num disc-amt" value="${data.discount_amount || ''}"></td>
@@ -217,21 +220,20 @@ window.PIModule = {
             
             const searchWords = val.split(/\s+/);
             const matches = this.inventory.filter(i => {
-                const searchStr = `${i.item_code} ${i.item_name}`.toLowerCase();
+                const searchStr = `${i.code} ${i.name}`.toLowerCase();
                 return searchWords.every(word => searchStr.includes(word));
             }).slice(0, 15);
 
             if (matches.length > 0) {
                 suggest.innerHTML = matches.map(i => 
                     `<div onclick="window.PIModule.selectGridItem(${idx}, ${i.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
-                        <b>${i.item_code}</b> - ${i.item_name}
+                        <b>${i.code}</b> - ${i.name}
                     </div>`
                 ).join('');
                 suggest.style.display = 'block';
                 suggest.style.zIndex = '9999';
             } else { suggest.style.display = 'none'; }
 
-            // Auto-expand row
             const tbody = document.getElementById('piGridBody');
             if (tr === tbody.lastElementChild && val !== '') {
                 this.addEmptyRow();
@@ -250,9 +252,9 @@ window.PIModule = {
         const tr = document.querySelector(`#piGridBody tr[data-index="${rowIndex}"]`);
         if (item && tr) {
             tr.dataset.coaId = item.id;
-            tr.querySelector('.item-code-search').value = item.item_code;
-            tr.cells[2].querySelector('input').value = item.item_name;
-            tr.cells[5].querySelector('input').value = item.primary_unit || 'Pcs';
+            tr.querySelector('.item-code-search').value = item.code;
+            tr.cells[2].querySelector('input').value = item.name;
+            tr.cells[5].querySelector('input').value = item.unit || 'Pcs';
             tr.querySelector('.rate').focus();
             this.calculateRow(tr);
         }
@@ -264,7 +266,6 @@ window.PIModule = {
         const qty = parseFloat(tr.querySelector('.qty').value) || 0;
         const rate = parseFloat(tr.querySelector('.rate').value) || 0;
         const isTax = document.getElementById('pi_is_tax').checked;
-        
         const gross = qty * rate;
         
         tr.querySelector('.val-excl').value = gross.toFixed(2);
@@ -275,7 +276,6 @@ window.PIModule = {
             const ftRate = parseFloat(tr.querySelector('.ftax-rate').value) || 0;
             const stAmt = (gross * stRate) / 100;
             const ftAmt = (gross * ftRate) / 100;
-            
             tr.querySelector('.stax-amt').value = stAmt.toFixed(2);
             tr.querySelector('.ftax-amt').value = ftAmt.toFixed(2);
             const net = gross + stAmt + ftAmt;
@@ -294,8 +294,8 @@ window.PIModule = {
 
     calculateTotals: function() {
         let tPcs = 0, tQty = 0, tGross = 0, tStax = 0, tFtax = 0, tDisc = 0, tNet = 0;
-        
-        document.querySelectorAll('#piGridBody tr').forEach(tr => {
+        const rows = document.querySelectorAll('#piGridBody tr');
+        rows.forEach(tr => {
             tPcs += parseFloat(tr.querySelector('.pieces').value) || 0;
             tQty += parseFloat(tr.querySelector('.qty').value) || 0;
             tGross += parseFloat(tr.querySelector('.val-excl').value) || 0;
@@ -317,7 +317,6 @@ window.PIModule = {
         
         const isTax = document.getElementById('pi_is_tax').checked;
         document.getElementById('pi_gross_tot').value = tGross.toFixed(2);
-        
         const addDisc = parseFloat(document.getElementById('pi_add_disc').value) || 0;
         const freight = parseFloat(document.getElementById('pi_freight').value) || 0;
         const paid = parseFloat(document.getElementById('pi_paid').value) || 0;
@@ -332,7 +331,9 @@ window.PIModule = {
     },
 
     toggleTaxMode: function() {
-        const isTax = document.getElementById('pi_is_tax').checked;
+        const isTaxEl = document.getElementById('pi_is_tax');
+        if (!isTaxEl) return;
+        const isTax = isTaxEl.checked;
         const taxCols = document.querySelectorAll('.pi-tax-col, .pi-tax-field');
         const nonTaxCols = document.querySelectorAll('.pi-nontax-col');
         taxCols.forEach(el => el.style.display = isTax ? '' : 'none');
@@ -342,21 +343,31 @@ window.PIModule = {
 
     resetForm: async function(fetchNext = false) {
         this.currentId = null;
-        document.querySelectorAll('#purchaseInvoiceContainer input:not(#expense_code):not(#expense_name), #purchaseInvoiceContainer textarea').forEach(el => {
+        const container = document.getElementById('purchaseInvoiceContainer');
+        if (!container) return;
+        
+        container.querySelectorAll('input:not(#expense_code):not(#expense_name), textarea').forEach(el => {
             if(el.type === 'checkbox') el.checked = false;
             else el.value = '';
         });
-        document.getElementById('pi_date').valueAsDate = new Date();
-        document.getElementById('piGridBody').innerHTML = '';
         
-        // Add 8 empty rows like Purchase Order
-        for(let i=0; i<8; i++) this.addEmptyRow();
+        const dateEl = document.getElementById('pi_date');
+        if (dateEl) dateEl.valueAsDate = new Date();
+        
+        const tbody = document.getElementById('piGridBody');
+        if (tbody) {
+            tbody.innerHTML = '';
+            for(let i=0; i<8; i++) this.addEmptyRow();
+        }
         
         if (fetchNext) {
-            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${session.company_id || 1}`);
-            const data = await res.json();
-            document.getElementById('pi_sn').value = data.next_sn || 1;
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${session.company_id || 1}`);
+                const data = await res.json();
+                const snEl = document.getElementById('pi_sn');
+                if (snEl) snEl.value = data.next_sn || 1;
+            } catch(e) {}
         }
         this.toggleTaxMode();
     },
@@ -420,11 +431,9 @@ window.PIModule = {
                 body: JSON.stringify(payload)
             });
             const result = await res.json();
-            if (result.status === 'success') {
-                alert("Purchase Invoice saved successfully!");
-                this.resetForm(true);
-            } else { alert("Save Error: " + result.message); }
-        } catch (e) { console.error("Save Invoice Error:", e); }
+            if (result.status === 'success') { alert("Saved!"); this.resetForm(true); }
+            else { alert("Error: " + result.message); }
+        } catch (e) { alert("Failed to save."); }
     },
 
     navigate: async function(dir) {
@@ -437,11 +446,8 @@ window.PIModule = {
         try {
             const res = await fetch(`api/purchases.php?action=get_invoice&serial_no=${sn}&company_id=${companyId}`);
             const inv = await res.json();
-            if (inv && inv.id) {
-                this.loadInvoiceData(inv);
-            } else if (dir === 'next') {
-                this.resetForm(true);
-            }
+            if (inv && inv.id) this.loadInvoiceData(inv);
+            else if (dir === 'next') this.resetForm(true);
         } catch (e) {}
     },
 
@@ -478,14 +484,14 @@ window.PIModule = {
     },
 
     deleteInvoice: async function() {
-        if (!this.currentId) return alert("No Invoice loaded to delete.");
+        if (!this.currentId) return alert("No Invoice loaded.");
         if (!confirm("Are you sure?")) return;
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         try {
             const res = await fetch(`api/purchases.php?action=delete_invoice&id=${this.currentId}&company_id=${session.company_id || 1}`, { method: 'POST' });
             const result = await res.json();
             if (result.status === 'success') { alert("Deleted!"); this.resetForm(true); }
-        } catch (e) { alert("Failed!"); }
+        } catch (e) { alert("Failed."); }
     },
 
     printInvoice: function() {
