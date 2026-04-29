@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$sn, $company_id]);
         $inv = $stmt->fetch();
         if ($inv) {
-            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name 
+            $stmt = $pdo->prepare("SELECT pii.*, itm.code as code, itm.name as name 
                                    FROM purchase_invoice_items pii 
                                    JOIN inv_items itm ON pii.item_coa_id = itm.id 
                                    WHERE pii.invoice_id=?");
