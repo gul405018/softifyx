@@ -1,3 +1,4 @@
+a
 <?php
 header('Content-Type: application/json');
 require_once 'db_config.php';
@@ -95,7 +96,8 @@ try {
         net_amount DECIMAL(15,2) DEFAULT 0,
         FOREIGN KEY (invoice_id) REFERENCES purchase_invoices(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-} catch (Exception $e) {}
+} catch (Exception $e) {
+}
 
 $action = $_GET['action'] ?? '';
 $company_id = $_GET['company_id'] ?? 1;
@@ -120,11 +122,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                                    WHERE poi.po_id=?");
             $stmt->execute([$po['id']]);
             $po['items'] = $stmt->fetchAll();
-            
+
             $stmt = $pdo->prepare("SELECT * FROM vendors WHERE coa_list_id=?");
             $stmt->execute([$po['vendor_coa_id']]);
             $po['vendor'] = $stmt->fetch();
-            
+
             if (!$po['vendor']) {
                 $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE id=?");
                 $stmt->execute([$po['vendor_coa_id']]);
@@ -136,39 +138,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
         echo json_encode($po);
     }
-    
+
     if ($action === 'get_next_invoice_serial') {
         $stmt = $pdo->prepare("SELECT MAX(serial_no) as max_sn FROM purchase_invoices WHERE company_id = ?");
         $stmt->execute([$company_id]);
         $row = $stmt->fetch();
         echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
-    }
-    
-    if ($action === 'navigate_invoice') {
-        $current_sn = $_GET['serial_no'] ?? 0;
-        $direction = $_GET['direction'] ?? 'next';
-        if ($direction === 'next') {
-            $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no > ? AND company_id = ? ORDER BY serial_no ASC LIMIT 1");
-        } else {
-            $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no < ? AND company_id = ? ORDER BY serial_no DESC LIMIT 1");
-        }
-        $stmt->execute([$current_sn, $company_id]);
-        $inv = $stmt->fetch();
-        if ($inv) {
-            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name FROM purchase_invoice_items pii JOIN inv_items itm ON pii.item_coa_id = itm.id WHERE pii.invoice_id=?");
-            $stmt->execute([$inv['id']]);
-            $inv['items'] = $stmt->fetchAll();
-            $stmt = $pdo->prepare("SELECT * FROM vendors WHERE coa_list_id=?");
-            $stmt->execute([$inv['vendor_coa_id']]);
-            $inv['vendor'] = $stmt->fetch();
-            if (!$inv['vendor']) {
-                $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE id=?");
-                $stmt->execute([$inv['vendor_coa_id']]);
-                $coa = $stmt->fetch();
-                if ($coa) { $inv['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']]; }
-            }
-        }
-        echo json_encode($inv ?: []);
     }
 
     if ($action === 'get_invoice') {
@@ -177,17 +152,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$sn, $company_id]);
         $inv = $stmt->fetch();
         if ($inv) {
-            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name FROM purchase_invoice_items pii JOIN inv_items itm ON pii.item_coa_id = itm.id WHERE pii.invoice_id=?");
+            $stmt = $pdo->prepare("SELECT pii.*, itm.item_code as code, itm.item_name as name 
+                                   FROM purchase_invoice_items pii 
+                                   JOIN inv_items itm ON pii.item_coa_id = itm.id 
+                                   WHERE pii.invoice_id=?");
             $stmt->execute([$inv['id']]);
             $inv['items'] = $stmt->fetchAll();
+
             $stmt = $pdo->prepare("SELECT * FROM vendors WHERE coa_list_id=?");
             $stmt->execute([$inv['vendor_coa_id']]);
             $inv['vendor'] = $stmt->fetch();
+
             if (!$inv['vendor']) {
                 $stmt = $pdo->prepare("SELECT * FROM coa_list WHERE id=?");
                 $stmt->execute([$inv['vendor_coa_id']]);
                 $coa = $stmt->fetch();
-                if ($coa) { $inv['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']]; }
+                if ($coa) {
+                    $inv['vendor'] = ['code' => $coa['account_code'], 'name' => $coa['account_name']];
+                }
             }
         }
         echo json_encode($inv ?: []);
@@ -196,12 +178,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
-    
+
     if ($action === 'save_po') {
         try {
             $pdo->beginTransaction();
             $id = $data['id'] ?? null;
-            
+
             if ($id) {
                 // Update
                 $stmt = $pdo->prepare("UPDATE purchase_orders SET 
@@ -210,12 +192,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     total_further_tax=?, total_incl_tax=?, amount_words=?, terms_conditions=?, remarks=?, is_cancelled=?
                     WHERE id=? AND company_id=?");
                 $stmt->execute([
-                    $data['po_date'], $data['delivery_date'], $data['payment_terms'], $data['job_ref'], $data['employee_ref_id'],
-                    $data['vendor_coa_id'], $data['total_pieces'], $data['total_qty'], $data['total_excl_tax'], $data['total_tax_amount'],
-                    $data['total_further_tax'], $data['total_incl_tax'], $data['amount_words'], $data['terms_conditions'], $data['remarks'], $data['is_cancelled'],
-                    $id, $company_id
+                    $data['po_date'],
+                    $data['delivery_date'],
+                    $data['payment_terms'],
+                    $data['job_ref'],
+                    $data['employee_ref_id'],
+                    $data['vendor_coa_id'],
+                    $data['total_pieces'],
+                    $data['total_qty'],
+                    $data['total_excl_tax'],
+                    $data['total_tax_amount'],
+                    $data['total_further_tax'],
+                    $data['total_incl_tax'],
+                    $data['amount_words'],
+                    $data['terms_conditions'],
+                    $data['remarks'],
+                    $data['is_cancelled'],
+                    $id,
+                    $company_id
                 ]);
-                
+
                 // Clear old items
                 $pdo->prepare("DELETE FROM purchase_order_items WHERE po_id=?")->execute([$id]);
             } else {
@@ -226,27 +222,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     total_further_tax, total_incl_tax, amount_words, terms_conditions, remarks, is_cancelled
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
-                    $company_id, $data['serial_no'], $data['po_date'], $data['delivery_date'], $data['payment_terms'], $data['job_ref'], $data['employee_ref_id'],
-                    $data['vendor_coa_id'], $data['total_pieces'], $data['total_qty'], $data['total_excl_tax'], $data['total_tax_amount'],
-                    $data['total_further_tax'], $data['total_incl_tax'], $data['amount_words'], $data['terms_conditions'], $data['remarks'], $data['is_cancelled']
+                    $company_id,
+                    $data['serial_no'],
+                    $data['po_date'],
+                    $data['delivery_date'],
+                    $data['payment_terms'],
+                    $data['job_ref'],
+                    $data['employee_ref_id'],
+                    $data['vendor_coa_id'],
+                    $data['total_pieces'],
+                    $data['total_qty'],
+                    $data['total_excl_tax'],
+                    $data['total_tax_amount'],
+                    $data['total_further_tax'],
+                    $data['total_incl_tax'],
+                    $data['amount_words'],
+                    $data['terms_conditions'],
+                    $data['remarks'],
+                    $data['is_cancelled']
                 ]);
                 $id = $pdo->lastInsertId();
             }
-            
+
             // Insert Items
             $stmtItem = $pdo->prepare("INSERT INTO purchase_order_items (
                 po_id, item_coa_id, description, pieces, quantity, unit, rate, 
                 value_excl_tax, tax_rate, tax_amount, further_tax_rate, further_tax_amount, value_incl_tax
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            
+
             foreach ($data['items'] as $item) {
-                if (!$item['item_coa_id']) continue;
+                if (!$item['item_coa_id'])
+                    continue;
                 $stmtItem->execute([
-                    $id, $item['item_coa_id'], $item['description'], $item['pieces'], $item['quantity'], $item['unit'], $item['rate'],
-                    $item['value_excl_tax'], $item['tax_rate'], $item['tax_amount'], $item['further_tax_rate'], $item['further_tax_amount'], $item['value_incl_tax']
+                    $id,
+                    $item['item_coa_id'],
+                    $item['description'],
+                    $item['pieces'],
+                    $item['quantity'],
+                    $item['unit'],
+                    $item['rate'],
+                    $item['value_excl_tax'],
+                    $item['tax_rate'],
+                    $item['tax_amount'],
+                    $item['further_tax_rate'],
+                    $item['further_tax_amount'],
+                    $item['value_incl_tax']
                 ]);
             }
-            
+
             $pdo->commit();
             echo json_encode(['status' => 'success', 'id' => $id]);
         } catch (Exception $e) {
@@ -263,7 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['status' => 'success']);
         }
     }
-    
+
     if ($action === 'delete_invoice') {
         $id = $_GET['id'] ?? null;
         if ($id) {
@@ -272,11 +295,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['status' => 'success']);
         }
     }
-    
+
     if ($action === 'save_invoice') {
         $data = json_decode(file_get_contents('php://input'), true);
         $id = $data['id'] ?? null;
-        
+
         $fields = [
             'company_id' => $company_id,
             'serial_no' => $data['serial_no'],
@@ -300,9 +323,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'net_total' => $data['net_total'] ?: 0,
             'amount_paid' => $data['amount_paid'] ?: 0
         ];
-        
+
         if ($id) {
-            $setClause = implode(', ', array_map(function($k) { return "$k = ?"; }, array_keys($fields)));
+            $setClause = implode(', ', array_map(function ($k) {
+                return "$k = ?"; }, array_keys($fields)));
             $stmt = $pdo->prepare("UPDATE purchase_invoices SET $setClause WHERE id=? AND company_id=?");
             $values = array_values($fields);
             $values[] = $id;
@@ -316,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute(array_values($fields));
             $id = $pdo->lastInsertId();
         }
-        
+
         if (!empty($data['items'])) {
             $stmt = $pdo->prepare("INSERT INTO purchase_invoice_items (invoice_id, item_coa_id, description, pieces, quantity, unit, rate, gross_amount, discount_percent, discount_amount, sales_tax_rate, sales_tax_amount, further_tax_rate, further_tax_amount, net_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             foreach ($data['items'] as $item) {
