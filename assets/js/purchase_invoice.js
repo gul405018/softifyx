@@ -439,15 +439,24 @@ window.PIModule = {
     navigate: async function(dir) {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
-        let sn = parseInt(document.getElementById('pi_sn').value);
-        sn = (dir === 'next') ? sn + 1 : sn - 1;
+        let snVal = document.getElementById('pi_sn').value;
+        let sn = parseInt(snVal) || 0;
+        
+        if (dir === 'next') sn++;
+        else sn--;
+        
         if (sn < 1) return;
 
         try {
             const res = await fetch(`api/purchases.php?action=get_invoice&serial_no=${sn}&company_id=${companyId}`);
             const inv = await res.json();
-            if (inv && inv.id) this.loadInvoiceData(inv);
-            else if (dir === 'next') this.resetForm(true);
+            if (inv && inv.id) {
+                this.loadInvoiceData(inv);
+            } else if (dir === 'next') {
+                this.resetForm(true);
+            } else {
+                alert("No earlier invoice found.");
+            }
         } catch (e) {}
     },
 
