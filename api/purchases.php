@@ -24,10 +24,15 @@ try {
         terms_conditions TEXT,
         remarks TEXT,
         is_cancelled TINYINT DEFAULT 0,
+        converted_to VARCHAR(100) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX (company_id),
         INDEX (serial_no)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    try {
+        $pdo->exec("ALTER TABLE purchase_orders ADD COLUMN converted_to VARCHAR(100) DEFAULT NULL AFTER is_cancelled");
+    } catch(Exception $e) {}
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_order_items (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -99,12 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE purchase_orders SET 
                     po_date=?, delivery_date=?, payment_terms=?, job_ref=?, employee_ref_id=?, 
                     vendor_coa_id=?, total_pieces=?, total_qty=?, total_excl_tax=?, total_tax_amount=?, 
-                    total_further_tax=?, total_incl_tax=?, amount_words=?, terms_conditions=?, remarks=?, is_cancelled=?
+                    total_further_tax=?, total_incl_tax=?, amount_words=?, terms_conditions=?, remarks=?, is_cancelled=?, converted_to=?
                     WHERE id=? AND company_id=?");
                 $stmt->execute([
                     $data['po_date'], $data['delivery_date'], $data['payment_terms'], $data['job_ref'], $data['employee_ref_id'],
                     $data['vendor_coa_id'], $data['total_pieces'], $data['total_qty'], $data['total_excl_tax'], $data['total_tax_amount'],
-                    $data['total_further_tax'], $data['total_incl_tax'], $data['amount_words'], $data['terms_conditions'], $data['remarks'], $data['is_cancelled'],
+                    $data['total_further_tax'], $data['total_incl_tax'], $data['amount_words'], $data['terms_conditions'], $data['remarks'], $data['is_cancelled'], $data['converted_to'],
                     $id, $company_id
                 ]);
                 
@@ -115,12 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("INSERT INTO purchase_orders (
                     company_id, serial_no, po_date, delivery_date, payment_terms, job_ref, employee_ref_id,
                     vendor_coa_id, total_pieces, total_qty, total_excl_tax, total_tax_amount,
-                    total_further_tax, total_incl_tax, amount_words, terms_conditions, remarks, is_cancelled
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    total_further_tax, total_incl_tax, amount_words, terms_conditions, remarks, is_cancelled, converted_to
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
                     $company_id, $data['serial_no'], $data['po_date'], $data['delivery_date'], $data['payment_terms'], $data['job_ref'], $data['employee_ref_id'],
                     $data['vendor_coa_id'], $data['total_pieces'], $data['total_qty'], $data['total_excl_tax'], $data['total_tax_amount'],
-                    $data['total_further_tax'], $data['total_incl_tax'], $data['amount_words'], $data['terms_conditions'], $data['remarks'], $data['is_cancelled']
+                    $data['total_further_tax'], $data['total_incl_tax'], $data['amount_words'], $data['terms_conditions'], $data['remarks'], $data['is_cancelled'], $data['converted_to']
                 ]);
                 $id = $pdo->lastInsertId();
             }

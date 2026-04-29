@@ -18,6 +18,17 @@ window.POModule = {
         this.setupVendorSearch();
         this.resetForm(true);
         this.setupKeyboardNav();
+        
+        document.getElementById('po_is_cancelled').addEventListener('change', (e) => {
+            const statusEl = document.getElementById('po_status_text');
+            if (statusEl) {
+                if (e.target.checked && !this.converted_to) {
+                    statusEl.innerHTML = 'Cancelled';
+                } else if (!this.converted_to) {
+                    statusEl.innerHTML = '';
+                }
+            }
+        });
     },
 
     loadVendors: async function() {
@@ -280,6 +291,18 @@ window.POModule = {
         document.getElementById('po_remarks').value = po.remarks || '';
         document.getElementById('po_is_cancelled').checked = parseInt(po.is_cancelled) === 1;
 
+        this.converted_to = po.converted_to || null;
+        const statusEl = document.getElementById('po_status_text');
+        if (statusEl) {
+            if (this.converted_to) {
+                statusEl.innerHTML = `Converted To:<br>${this.converted_to}`;
+            } else if (parseInt(po.is_cancelled) === 1) {
+                statusEl.innerHTML = 'Cancelled';
+            } else {
+                statusEl.innerHTML = '';
+            }
+        }
+
         // Load Vendor Info
         const vendor = this.vendors.find(v => v.id == po.vendor_coa_id || v.coa_list_id == po.vendor_coa_id);
         if (vendor) {
@@ -416,6 +439,10 @@ window.POModule = {
             if (el) el.value = '';
         });
         document.getElementById('po_is_cancelled').checked = false;
+        
+        this.converted_to = null;
+        const statusEl = document.getElementById('po_status_text');
+        if (statusEl) statusEl.innerHTML = '';
 
         // Reset Grid with 8 rows
         document.getElementById('poGridBody').innerHTML = '';
@@ -482,6 +509,7 @@ window.POModule = {
             terms_conditions: document.getElementById('po_terms').value,
             remarks: document.getElementById('po_remarks').value,
             is_cancelled: document.getElementById('po_is_cancelled').checked ? 1 : 0,
+            converted_to: this.converted_to || null,
             items: items
         };
 
@@ -515,6 +543,41 @@ window.POModule = {
                 if (dir === 'next') this.resetForm(true);
             }
         } catch (e) { console.error("Navigation Error:", e); }
+    },
+
+    convertPO: async function(targetModule) {
+        if (!this.currentId) {
+            alert("Please save or load a Purchase Order first.");
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to convert this Purchase Order to ${targetModule}?`)) {
+            return;
+        }
+
+        const sn = document.getElementById('po_sn').value;
+        const convertedText = `Converted To:<br>${targetModule} No. ${sn}`;
+
+        try {
+            // Update UI instantly
+            document.getElementById('po_status_text').innerHTML = convertedText;
+            this.converted_to = `${targetModule} No. ${sn}`;
+            
+            // Save the PO immediately to persist the conversion state
+            await this.savePO();
+            
+            // Open the target module 
+            if (window.openModule) {
+                window.openModule(targetModule);
+            } else if (window.loadModule) {
+                window.loadModule(targetModule);
+            } else {
+                alert(`${targetModule} module will be opened. (Navigation logic pending)`);
+            }
+        } catch (e) {
+            console.error("Conversion Error:", e);
+            alert("Failed to convert Purchase Order.");
+        }
     },
 
     deletePO: async function() {
