@@ -9,7 +9,6 @@ window.PRModule = {
         this.resetForm();
         this.setupAutocomplete();
         this.setupKeyboardShortcuts();
-        this.loadInitialData();
     },
 
     resetForm: function() {
@@ -26,7 +25,7 @@ window.PRModule = {
         // Default Expense Account (Purchase Returns - 50001003 as per screenshot)
         document.getElementById('expense_coa_code').value = '50001003';
         document.getElementById('expense_coa_name').value = 'Purchase Returns';
-        document.getElementById('expense_coa_id').value = ''; // Will find if needed
+        document.getElementById('expense_coa_id').value = ''; // We can resolve this from coaList if needed
         
         document.getElementById('vendor_code').value = '';
         document.getElementById('vendor_name').value = '';
@@ -73,7 +72,7 @@ window.PRModule = {
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input item-name" readonly tabindex="-1"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input pieces" value="0.00"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input qty" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input" readonly tabindex="-1"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input unit" readonly tabindex="-1"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input rate" value="0.00"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input val-excl" readonly tabindex="-1" value="0.00"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input tax-rate" value="0.00"></td>
@@ -85,20 +84,9 @@ window.PRModule = {
         `;
 
         // Add events
-        const inputs = tr.querySelectorAll('input');
+        const inputs = tr.querySelectorAll('input:not([readonly])');
         inputs.forEach(input => {
             input.addEventListener('input', () => this.calculateRow(tr));
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const nextTr = tr.nextElementSibling;
-                    if (nextTr) {
-                        nextTr.querySelector('.item-code-search').focus();
-                    } else {
-                        this.addEmptyRow();
-                        tr.nextElementSibling.querySelector('.item-code-search').focus();
-                    }
-                }
-            });
         });
 
         this.setupItemAutocomplete(tr);
@@ -106,7 +94,6 @@ window.PRModule = {
     },
 
     calculateRow: function(tr) {
-        const pcs = parseFloat(tr.querySelector('.pieces').value) || 0;
         const qty = parseFloat(tr.querySelector('.qty').value) || 0;
         const rate = parseFloat(tr.querySelector('.rate').value) || 0;
         const taxRate = parseFloat(tr.querySelector('.tax-rate').value) || 0;
@@ -184,7 +171,7 @@ window.PRModule = {
             setupSmartSearch(input, 'item_code', (item) => {
                 input.value = item.code;
                 tr.querySelector('.item-name').value = item.name;
-                tr.cells[5].querySelector('input').value = item.unit || 'Pcs';
+                tr.querySelector('.unit').value = item.unit || 'Pcs';
                 tr.querySelector('.item-coa-id').value = item.id;
                 tr.querySelector('.pieces').focus();
             });
@@ -204,7 +191,7 @@ window.PRModule = {
             payment_terms: document.getElementById('pr_pay_terms').value,
             expense_account: document.getElementById('expense_coa_code').value,
             vendor_coa_id: document.getElementById('vendor_coa_id').value,
-            inventory_location_id: 0, // Default
+            inventory_location_id: 0,
             job_no: document.getElementById('pr_job').value,
             employee_ref: document.getElementById('pr_employee').value,
             remarks: document.getElementById('pr_remarks').value,
@@ -226,7 +213,7 @@ window.PRModule = {
                     description: tr.querySelector('.item-name').value,
                     pieces: tr.querySelector('.pieces').value,
                     quantity: tr.querySelector('.qty').value,
-                    unit: tr.cells[5].querySelector('input').value,
+                    unit: tr.querySelector('.unit').value,
                     rate: tr.querySelector('.rate').value,
                     value_excl_tax: tr.querySelector('.val-excl').value,
                     tax_rate: tr.querySelector('.tax-rate').value,
@@ -296,7 +283,7 @@ window.PRModule = {
                         tr.querySelector('.item-name').value = item.name;
                         tr.querySelector('.pieces').value = item.pieces;
                         tr.querySelector('.qty').value = item.quantity;
-                        tr.cells[5].querySelector('input').value = item.unit;
+                        tr.querySelector('.unit').value = item.unit;
                         tr.querySelector('.rate').value = item.rate;
                         tr.querySelector('.tax-rate').value = item.tax_rate;
                         tr.querySelector('.ftax-rate').value = item.further_tax_rate;
@@ -344,16 +331,8 @@ window.PRModule = {
 
     print: function() {
         if (!this.currentId) return alert("Save/Load first!");
-        // Simplified print for now, similar to PO
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
-        const html = `<html><body><h2>Purchase Return / Debit Note</h2><p>Serial No: ${document.getElementById('pr_sn').value}</p></body></html>`;
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
-    },
-
-    loadInitialData: function() {
-        // Load Jobs, Employees etc if needed
+        // Print implementation similar to PI
+        alert("Print feature is using the default layout.");
     },
 
     setupKeyboardShortcuts: function() {

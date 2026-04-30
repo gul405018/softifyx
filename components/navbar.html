@@ -61,7 +61,7 @@
             <div class="dropdown">
                 <div class="dropdown-item" onclick="openModularPopup('Navigation/Purchases/purchase_order.html', 'fa-shopping-cart', 'Purchase Order', () => window.POModule.init(), 'Purchase Order', true)">Purchase Order</div>
                 <div class="dropdown-item" onclick="openModularPopup('Navigation/Purchases/purchase_invoice.html', 'fa-file-invoice-dollar', 'Purchase Invoice', () => window.PIModule.init(), 'Purchase Invoice', true)">Purchase Invoice</div>
-                <div class="dropdown-item" data-target="Navigation/Purchases/purchases_return_debit_notes.html" data-module="Purchases Return/Debit Notes">Purchases Return/Debit Notes</div>
+                <div class="dropdown-item" onclick="openModularPopup('Navigation/Purchases/purchase_returns.html', 'fa-undo', 'Purchases Return/Debit Notes', () => window.PRModule.init(), 'Purchases Return/Debit Notes', true)">Purchases Return/Debit Notes</div>
                 <div class="dropdown-item" data-target="Navigation/Purchases/cash_payments.html" data-module="Cash Payments">Cash Payments</div>
                 <div class="dropdown-item" data-target="Navigation/Purchases/bank_payments.html" data-module="Bank Payments">Bank Payments</div>
             </div>
