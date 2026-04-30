@@ -151,7 +151,7 @@ window.PRModule = {
         tr.querySelector('.val-excl').value = excl > 0 ? excl.toFixed(2) : '';
         tr.querySelector('.tax-amt').value = taxAmt > 0 ? taxAmt.toFixed(2) : '';
         tr.querySelector('.ftax-amt').value = ftaxAmt > 0 ? ftaxAmt.toFixed(2) : '';
-        tr.querySelector('.val-incl').value = incl > 0 ? incl.toFixed(Neto = 2) : '';
+        tr.querySelector('.val-incl').value = incl > 0 ? incl.toFixed(2) : '';
 
         this.calculateTotals();
     },

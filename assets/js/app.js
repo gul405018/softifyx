@@ -6301,5 +6301,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         window.resetLocationForm = resetLocationForm;
 
+        // --- FINAL EXPOSURES FOR MODULES ---
+        if (window.PRModule) {
+            console.log("SoftifyX: PRModule detected and bound to global scope.");
+        }
+
 
 
