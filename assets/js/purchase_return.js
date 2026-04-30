@@ -333,10 +333,15 @@ window.PRModule = {
         const ftaxAmt = (excl * ftaxRate) / 100;
         const incl = excl + taxAmt + ftaxAmt;
 
-        tr.querySelector('.val-excl').value = excl.toFixed(2);
-        tr.querySelector('.tax-amt').value = taxAmt.toFixed(2);
-        tr.querySelector('.ftax-amt').value = ftaxAmt.toFixed(2);
-        tr.querySelector('.val-incl').value = incl.toFixed(2);
+        const setVal = (sel, val) => {
+            const el = tr.querySelector(sel);
+            if(el) el.value = val > 0 ? val.toFixed(2) : '';
+        };
+
+        setVal('.val-excl', excl);
+        setVal('.tax-amt', taxAmt);
+        setVal('.ftax-amt', ftaxAmt);
+        setVal('.val-incl', incl);
 
         this.calculateTotals();
     },
