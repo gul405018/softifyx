@@ -11,7 +11,7 @@ window.PRModule = {
         this.setupKeyboardShortcuts();
     },
 
-    resetForm: function() {
+    resetForm: function(isNew = false) {
         this.currentId = null;
         document.getElementById('pr_sn').value = '';
         document.getElementById('pr_date').value = new Date().toISOString().split('T')[0];
@@ -22,10 +22,9 @@ window.PRModule = {
         document.getElementById('pr_nature').value = 'Purchase Return (Reduces Inventory)';
         document.getElementById('pr_pay_terms').value = '';
         
-        // Default Expense Account (Purchase Returns - 50001003 as per screenshot)
+        // Default Expense Account
         document.getElementById('expense_coa_code').value = '50001003';
         document.getElementById('expense_coa_name').value = 'Purchase Returns';
-        document.getElementById('expense_coa_id').value = ''; // We can resolve this from coaList if needed
         
         document.getElementById('vendor_code').value = '';
         document.getElementById('vendor_name').value = '';
@@ -68,24 +67,31 @@ window.PRModule = {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="border: 1px solid #cbd5e0; text-align: center; font-size: 10px;">${rowCount + 1}</td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input item-code-search"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input item-name" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input pieces" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input qty" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input unit" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input rate" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input val-excl" readonly tabindex="-1" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input tax-rate" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input tax-amt" readonly tabindex="-1" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="number" class="po-grid-input ftax-rate" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input ftax-amt" readonly tabindex="-1" value="0.00"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="po-grid-input val-incl" readonly tabindex="-1" value="0.00"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-code-search"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-rate" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-rate" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value=""></td>
             <input type="hidden" class="item-coa-id">
         `;
 
-        // Add events
-        const inputs = tr.querySelectorAll('input:not([readonly])');
-        inputs.forEach(input => {
+        // Numeric fields logic
+        const numInputs = tr.querySelectorAll('.num:not([readonly])');
+        numInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                if (this.value === '0.00' || this.value === '0') this.value = '';
+            });
+            input.addEventListener('blur', function() {
+                if (this.value === '' || isNaN(parseFloat(this.value))) this.value = '';
+                else this.value = parseFloat(this.value).toFixed(2);
+            });
             input.addEventListener('input', () => this.calculateRow(tr));
         });
 
@@ -104,10 +110,10 @@ window.PRModule = {
         const ftaxAmt = (excl * ftaxRate) / 100;
         const incl = excl + taxAmt + ftaxAmt;
 
-        tr.querySelector('.val-excl').value = excl.toFixed(2);
-        tr.querySelector('.tax-amt').value = taxAmt.toFixed(2);
-        tr.querySelector('.ftax-amt').value = ftaxAmt.toFixed(2);
-        tr.querySelector('.val-incl').value = incl.toFixed(2);
+        tr.querySelector('.val-excl').value = excl > 0 ? excl.toFixed(2) : '';
+        tr.querySelector('.tax-amt').value = taxAmt > 0 ? taxAmt.toFixed(2) : '';
+        tr.querySelector('.ftax-amt').value = ftaxAmt > 0 ? ftaxAmt.toFixed(2) : '';
+        tr.querySelector('.val-incl').value = incl > 0 ? incl.toFixed(2) : '';
 
         this.calculateTotals();
     },
@@ -120,7 +126,7 @@ window.PRModule = {
             totQty += parseFloat(tr.querySelector('.qty').value) || 0;
             totExcl += parseFloat(tr.querySelector('.val-excl').value) || 0;
             totTax += parseFloat(tr.querySelector('.tax-amt').value) || 0;
-            totFTax += parseFloat(tr.querySelector('.ftax-amt').value) || 0;
+            totFTax += parseFloat(tr.querySelector('.ftax-rate').value) || 0;
             totIncl += parseFloat(tr.querySelector('.val-incl').value) || 0;
         });
 
@@ -146,22 +152,19 @@ window.PRModule = {
 
     setupAutocomplete: function() {
         const vCode = document.getElementById('vendor_code');
-        const vName = document.getElementById('vendor_name');
-
-        const handleSelect = (v) => {
-            vCode.value = v.code;
-            vName.value = v.name;
-            document.getElementById('vendor_address').value = v.address || '';
-            document.getElementById('vendor_tel').value = v.phone || '';
-            document.getElementById('vendor_gst').value = v.gst || '';
-            document.getElementById('vendor_ntn').value = v.ntn || '';
-            document.getElementById('vendor_coa_id').value = v.coa_list_id;
-            document.getElementById('vendor_balance').textContent = parseFloat(v.balance || 0).toFixed(2);
-        };
+        const vSuggest = document.getElementById('vendor_suggest');
 
         if (window.setupSmartSearch) {
-            setupSmartSearch(vCode, 'vendor_code', handleSelect);
-            setupSmartSearch(vName, 'vendor_name', handleSelect);
+            setupSmartSearch(vCode, 'vendor_code', (v) => {
+                vCode.value = v.code;
+                document.getElementById('vendor_name').value = v.name;
+                document.getElementById('vendor_address').value = v.address || '';
+                document.getElementById('vendor_tel').value = v.phone || '';
+                document.getElementById('vendor_gst').value = v.gst || '';
+                document.getElementById('vendor_ntn').value = v.ntn || '';
+                document.getElementById('vendor_coa_id').value = v.coa_list_id;
+                document.getElementById('vendor_balance').textContent = parseFloat(v.balance || 0).toFixed(2);
+            }, vSuggest);
         }
     },
 
@@ -191,7 +194,7 @@ window.PRModule = {
             payment_terms: document.getElementById('pr_pay_terms').value,
             expense_account: document.getElementById('expense_coa_code').value,
             vendor_coa_id: document.getElementById('vendor_coa_id').value,
-            inventory_location_id: 0,
+            inventory_location_id: document.getElementById('pr_location').value,
             job_no: document.getElementById('pr_job').value,
             employee_ref: document.getElementById('pr_employee').value,
             remarks: document.getElementById('pr_remarks').value,
@@ -281,12 +284,12 @@ window.PRModule = {
                         const tr = tbody.lastElementChild;
                         tr.querySelector('.item-code-search').value = item.code;
                         tr.querySelector('.item-name').value = item.name;
-                        tr.querySelector('.pieces').value = item.pieces;
-                        tr.querySelector('.qty').value = item.quantity;
+                        tr.querySelector('.pieces').value = parseFloat(item.pieces).toFixed(2);
+                        tr.querySelector('.qty').value = parseFloat(item.quantity).toFixed(2);
                         tr.querySelector('.unit').value = item.unit;
-                        tr.querySelector('.rate').value = item.rate;
-                        tr.querySelector('.tax-rate').value = item.tax_rate;
-                        tr.querySelector('.ftax-rate').value = item.further_tax_rate;
+                        tr.querySelector('.rate').value = parseFloat(item.rate).toFixed(2);
+                        tr.querySelector('.tax-rate').value = parseFloat(item.tax_rate).toFixed(2);
+                        tr.querySelector('.ftax-rate').value = parseFloat(item.further_tax_rate).toFixed(2);
                         tr.querySelector('.item-coa-id').value = item.item_coa_id;
                         this.calculateRow(tr);
                     });
@@ -331,7 +334,6 @@ window.PRModule = {
 
     print: function() {
         if (!this.currentId) return alert("Save/Load first!");
-        // Print implementation similar to PI
         alert("Print feature is using the default layout.");
     },
 
