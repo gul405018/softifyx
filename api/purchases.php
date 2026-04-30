@@ -182,16 +182,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     if ($action === 'get_next_invoice_serial') {
-        $stmt = $pdo->prepare("SELECT MAX(serial_no) as max_sn FROM purchase_invoices WHERE company_id = ?");
-        $stmt->execute([$company_id]);
+        $is_tax = ($_GET['is_tax'] ?? '0') === '1' ? 1 : 0;
+        $stmt = $pdo->prepare("SELECT MAX(serial_no) as max_sn FROM purchase_invoices WHERE company_id = ? AND is_tax_invoice = ?");
+        $stmt->execute([$company_id, $is_tax]);
         $row = $stmt->fetch();
         echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
     }
 
     if ($action === 'get_invoice') {
         $sn = $_GET['serial_no'] ?? 0;
-        $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no=? AND company_id=?");
-        $stmt->execute([$sn, $company_id]);
+        $is_tax = ($_GET['is_tax'] ?? '0') === '1' ? 1 : 0;
+        $stmt = $pdo->prepare("SELECT * FROM purchase_invoices WHERE serial_no=? AND company_id=? AND is_tax_invoice=?");
+        $stmt->execute([$sn, $company_id, $is_tax]);
         $inv = $stmt->fetch();
         if ($inv) {
             $stmt = $pdo->prepare("SELECT pii.*, itm.code as code, itm.name as name 

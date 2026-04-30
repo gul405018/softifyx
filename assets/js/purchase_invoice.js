@@ -330,7 +330,7 @@ window.PIModule = {
         } catch(e){}
     },
 
-    toggleTaxMode: function() {
+    toggleTaxMode: async function() {
         const isTaxEl = document.getElementById('pi_is_tax');
         if (!isTaxEl) return;
         const isTax = isTaxEl.checked;
@@ -339,6 +339,19 @@ window.PIModule = {
         
         taxCols.forEach(el => el.style.display = isTax ? '' : 'none');
         nonTaxCols.forEach(el => el.style.display = isTax ? 'none' : '');
+        
+        // If it's a NEW invoice, fetch the next serial for this mode
+        if (this.currentId === null) {
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const companyId = session.company_id || 1;
+                const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}&is_tax=${isTax ? 1 : 0}`);
+                const data = await res.json();
+                const snEl = document.getElementById('pi_sn');
+                if (snEl) snEl.value = data.next_sn || 1;
+            } catch(e) { console.error("Error fetching next serial on toggle:", e); }
+        }
+
         this.calculateTotals();
     },
 
@@ -364,7 +377,8 @@ window.PIModule = {
         if (fetchNext) {
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${session.company_id || 1}`);
+                const isTax = document.getElementById('pi_is_tax').checked ? 1 : 0;
+                const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${session.company_id || 1}&is_tax=${isTax}`);
                 const data = await res.json();
                 const snEl = document.getElementById('pi_sn');
                 if (snEl) snEl.value = data.next_sn || 1;
@@ -440,13 +454,14 @@ window.PIModule = {
     navigate: async function(dir) {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
+        const isTax = document.getElementById('pi_is_tax').checked ? 1 : 0;
         let snVal = document.getElementById('pi_sn').value;
         let sn = parseInt(snVal) || 0;
         
-        console.log("PI Module: Navigating", dir, "from SN", sn);
+        console.log("PI Module: Navigating", dir, "from SN", sn, "TaxMode:", isTax);
 
         if (sn === 0 || isNaN(sn)) {
-            const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}`);
+            const res = await fetch(`api/purchases.php?action=get_next_invoice_serial&company_id=${companyId}&is_tax=${isTax}`);
             const data = await res.json();
             sn = data.next_sn || 1;
             if (dir === 'prev') sn--; 
@@ -458,17 +473,17 @@ window.PIModule = {
         if (sn < 1) return alert("Reached beginning of records.");
 
         try {
-            const res = await fetch(`api/purchases.php?action=get_invoice&serial_no=${sn}&company_id=${companyId}`);
+            const res = await fetch(`api/purchases.php?action=get_invoice&serial_no=${sn}&company_id=${companyId}&is_tax=${isTax}`);
             const inv = await res.json();
             
             if (inv && inv.id) {
                 this.loadInvoiceData(inv);
             } else {
                 if (dir === 'next') {
-                    alert("This is a new invoice number.");
+                    alert("This is a new invoice number for this sequence.");
                     this.resetForm(true);
                 } else {
-                    alert("No record found at Serial No: " + sn);
+                    alert("No record found in this sequence at Serial No: " + sn);
                 }
             }
         } catch (e) {
