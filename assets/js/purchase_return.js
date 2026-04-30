@@ -4,11 +4,49 @@
 window.PRModule = {
     currentId: null,
     companyId: JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1,
+    employees: [],
+    jobs: [],
 
-    init: function() {
+    init: async function() {
         this.resetForm();
         this.setupAutocomplete();
         this.setupKeyboardShortcuts();
+        
+        // Load data for dropdowns
+        await Promise.all([
+            this.loadEmployees(),
+            this.loadJobs()
+        ]);
+    },
+
+    loadEmployees: async function() {
+        try {
+            const res = await fetch(`api/maintain.php?action=get_employees&company_id=${this.companyId}`);
+            this.employees = await res.json();
+            this.populateSelect('pr_employee', this.employees, 'name');
+        } catch (e) {}
+    },
+
+    loadJobs: async function() {
+        try {
+            const res = await fetch(`api/jobs.php?action=get_jobs&company_id=${this.companyId}`);
+            this.jobs = await res.json();
+            this.populateSelect('pr_job', this.jobs, 'job_no');
+        } catch (e) {}
+    },
+
+    populateSelect: function(id, data, labelKey) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        const val = select.value;
+        select.innerHTML = '<option value="">Select...</option>';
+        data.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id || item[labelKey];
+            opt.textContent = item[labelKey] + (item.description ? ' - ' + item.description : '');
+            select.appendChild(opt);
+        });
+        select.value = val;
     },
 
     resetForm: function(isNew = false) {
@@ -66,7 +104,7 @@ window.PRModule = {
         const rowCount = tbody.rows.length;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="border: 1px solid #cbd5e0; text-align: center; font-size: 10px;">${rowCount + 1}</td>
+            <td style="border: 1px solid #cbd5e0; text-align: center; font-size: 10px; background: #f8fafc;">${rowCount + 1}</td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-code-search"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
             <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value=""></td>
@@ -113,7 +151,7 @@ window.PRModule = {
         tr.querySelector('.val-excl').value = excl > 0 ? excl.toFixed(2) : '';
         tr.querySelector('.tax-amt').value = taxAmt > 0 ? taxAmt.toFixed(2) : '';
         tr.querySelector('.ftax-amt').value = ftaxAmt > 0 ? ftaxAmt.toFixed(2) : '';
-        tr.querySelector('.val-incl').value = incl > 0 ? incl.toFixed(2) : '';
+        tr.querySelector('.val-incl').value = incl > 0 ? incl.toFixed(Neto = 2) : '';
 
         this.calculateTotals();
     },
@@ -262,6 +300,9 @@ window.PRModule = {
                     document.getElementById('pr_pay_terms').value = data.payment_terms;
                     document.getElementById('expense_coa_code').value = data.expense_account;
                     document.getElementById('vendor_coa_id').value = data.vendor_coa_id;
+                    document.getElementById('pr_location').value = data.inventory_location_id;
+                    document.getElementById('pr_job').value = data.job_no;
+                    document.getElementById('pr_employee').value = data.employee_ref;
                     document.getElementById('pr_remarks').value = data.remarks;
                     document.getElementById('pr_freight').value = data.carriage_freight;
                     document.getElementById('pr_received').value = data.amount_received;
@@ -284,12 +325,12 @@ window.PRModule = {
                         const tr = tbody.lastElementChild;
                         tr.querySelector('.item-code-search').value = item.code;
                         tr.querySelector('.item-name').value = item.name;
-                        tr.querySelector('.pieces').value = parseFloat(item.pieces).toFixed(2);
-                        tr.querySelector('.qty').value = parseFloat(item.quantity).toFixed(2);
+                        tr.querySelector('.pieces').value = parseFloat(item.pieces || 0).toFixed(2);
+                        tr.querySelector('.qty').value = parseFloat(item.quantity || 0).toFixed(2);
                         tr.querySelector('.unit').value = item.unit;
-                        tr.querySelector('.rate').value = parseFloat(item.rate).toFixed(2);
-                        tr.querySelector('.tax-rate').value = parseFloat(item.tax_rate).toFixed(2);
-                        tr.querySelector('.ftax-rate').value = parseFloat(item.further_tax_rate).toFixed(2);
+                        tr.querySelector('.rate').value = parseFloat(item.rate || 0).toFixed(2);
+                        tr.querySelector('.tax-rate').value = parseFloat(item.tax_rate || 0).toFixed(2);
+                        tr.querySelector('.ftax-rate').value = parseFloat(item.further_tax_rate || 0).toFixed(2);
                         tr.querySelector('.item-coa-id').value = item.item_coa_id;
                         this.calculateRow(tr);
                     });
