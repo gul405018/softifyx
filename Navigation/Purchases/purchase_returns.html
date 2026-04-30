@@ -94,44 +94,47 @@
         </div>
 
         <!-- Grid Section -->
-        <div style="flex: 1; border: 1px solid #cbd5e0; overflow: hidden; display: flex; flex-direction: column; background: #fff; min-height: 200px;">
-            <div style="flex: 1; overflow-y: auto;">
-                <table id="prGrid" style="width: 100%; border-collapse: collapse; background: white; table-layout: fixed;">
-                    <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
+        <div style="flex: 1; border: 1px solid #cbd5e0; display: flex; flex-direction: column; background: #fff; min-height: 200px;">
+            <div class="grid-scroll-container">
+                <table id="prGrid">
+                    <thead>
                         <tr>
-                            <th style="width: 25px; border: 1px solid #cbd5e0; background: #e2e8f0; font-size: 9px;">#</th>
-                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Item Code</th>
-                            <th style="width: 180px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Description</th>
-                            <th style="width: 50px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Pieces</th>
-                            <th style="width: 60px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Quantity</th>
-                            <th style="width: 45px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Unit</th>
-                            <th style="width: 70px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Rate</th>
-                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Val Excl Tax</th>
-                            <th style="width: 45px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Tax %</th>
-                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Tax Amt</th>
-                            <th style="width: 45px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Frth %</th>
-                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Frth Amt</th>
-                            <th style="width: 85px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Val Incl Tax</th>
+                            <th style="width: 25px;">#</th>
+                            <th style="width: 80px;">Item Code</th>
+                            <th style="width: 180px;">Description</th>
+                            <th style="width: 50px;">Pieces</th>
+                            <th style="width: 60px;">Quantity</th>
+                            <th style="width: 45px;">Unit</th>
+                            <th style="width: 70px;">Rate</th>
+                            <th style="width: 80px;">Val Excl Tax</th>
+                            <th style="width: 45px;">Tax %</th>
+                            <th style="width: 75px;">Tax Amt</th>
+                            <th style="width: 45px;">Frth %</th>
+                            <th style="width: 75px;">Frth Amt</th>
+                            <th style="width: 85px;">Val Incl Tax</th>
                         </tr>
                     </thead>
                     <tbody id="prGridBody"></tbody>
-                    <tfoot style="position: sticky; bottom: 0; background: #e2e8f0; z-index: 10;">
-                        <tr>
-                            <td colspan="3" style="text-align: right; padding-right: 12px; font-weight: 700; font-size: 10px; color: #475569; border: 1px solid #cbd5e0;">Totals</td>
-                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_pieces" class="po-total-input" value="0.00" readonly></td>
-                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_qty" class="po-total-input" value="0.00" readonly></td>
-                            <td style="border: 1px solid #cbd5e0;"></td>
-                            <td style="border: 1px solid #cbd5e0;"></td>
-                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_excl" class="po-total-input" value="0.00" readonly></td>
-                            <td style="border: 1px solid #cbd5e0;"></td>
-                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_stax" class="po-total-input" value="0.00" readonly></td>
-                            <td style="border: 1px solid #cbd5e0;"></td>
-                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_ftax" class="po-total-input" value="0.00" readonly></td>
-                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_incl" class="po-total-input" value="0.00" readonly></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
+            <!-- Totals Footer (Fixed below the scrollable grid) -->
+            <table style="width: 100%; border-collapse: collapse; background: #e2e8f0; table-layout: fixed; border: 1px solid #cbd5e0;">
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="width: 285px; text-align: right; padding-right: 12px; font-weight: 700; font-size: 10px; color: #475569; border: 1px solid #cbd5e0;">Totals</td>
+                        <td style="width: 50px; border: 1px solid #cbd5e0;"><input type="text" id="tot_pieces" class="po-total-input" value="0.00" readonly></td>
+                        <td style="width: 60px; border: 1px solid #cbd5e0;"><input type="text" id="tot_qty" class="po-total-input" value="0.00" readonly></td>
+                        <td style="width: 45px; border: 1px solid #cbd5e0;"></td>
+                        <td style="width: 70px; border: 1px solid #cbd5e0;"></td>
+                        <td style="width: 80px; border: 1px solid #cbd5e0;"><input type="text" id="tot_excl" class="po-total-input" value="0.00" readonly></td>
+                        <td style="width: 45px; border: 1px solid #cbd5e0;"></td>
+                        <td style="width: 75px; border: 1px solid #cbd5e0;"><input type="text" id="tot_stax" class="po-total-input" value="0.00" readonly></td>
+                        <td style="width: 45px; border: 1px solid #cbd5e0;"></td>
+                        <td style="width: 75px; border: 1px solid #cbd5e0;"><input type="text" id="tot_ftax" class="po-total-input" value="0.00" readonly></td>
+                        <td style="width: 85px; border: 1px solid #cbd5e0;"><input type="text" id="tot_incl" class="po-total-input" value="0.00" readonly></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
 
         <!-- Footer Section -->
@@ -182,8 +185,14 @@
         .po-suggest { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e0; max-height: 200px; overflow-y: auto; z-index: 10000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .po-suggest div { padding: 8px; cursor: pointer; font-size: 10px; border-bottom: 1px solid #f1f5f9; }
         .po-suggest div:hover { background: #f1f5f9; }
-        #prGrid { border-collapse: collapse !important; border: 1px solid #cbd5e0; width: 100%; }
-        #prGrid th { border: 1px solid #cbd5e0; background: #f1f5f9; padding: 4px; color: #475569; }
+        
+        /* Fixed Table Style with Grid Lines */
+        #prGrid { width: 100%; border-collapse: collapse; border: 1px solid #cbd5e0; table-layout: fixed; }
+        #prGrid th { border: 1px solid #cbd5e0; background: #f1f5f9; padding: 4px; color: #475569; position: sticky; top: 0; z-index: 20; }
         #prGrid td { border: 1px solid #cbd5e0 !important; padding: 0 !important; position: relative; background: #fff; height: 22px; }
+        #prGridBody tr:hover td { background-color: #f8fafc; }
+        
+        /* Inner Scrollbar Container */
+        .grid-scroll-container { height: 200px; overflow-y: auto; border-bottom: 1px solid #cbd5e0; }
     </style>
 </div>
