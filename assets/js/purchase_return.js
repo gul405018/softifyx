@@ -208,6 +208,14 @@ window.PRModule = {
 
     setupItemAutocomplete: function(tr) {
         const input = tr.querySelector('.item-code-search');
+        
+        input.addEventListener('input', () => {
+            const tbody = document.getElementById('prGridBody');
+            if (tr === tbody.lastElementChild && input.value.trim() !== '') {
+                this.addEmptyRow();
+            }
+        });
+
         if (window.setupSmartSearch) {
             setupSmartSearch(input, 'item_code', (item) => {
                 input.value = item.code;
