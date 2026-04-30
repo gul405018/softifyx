@@ -2,62 +2,13 @@
  * Purchase Return / Debit Notes Module
  */
 window.PRModule = {
-    vendors: [],
-    inventory: [],
-    employees: [],
-    jobs: [],
     currentId: null,
     companyId: JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1,
 
-    init: async function() {
+    init: function() {
         this.resetForm(true);
-        
-        try {
-            await Promise.all([
-                this.loadVendors(),
-                this.loadInventory(),
-                this.loadEmployees(),
-                this.loadJobs()
-            ]);
-        } catch (err) {
-            console.error("PR Module: Error loading background data:", err);
-        }
-
-        this.setupVendorSearch();
-        this.setupExpenseSearch();
+        this.setupAutocomplete();
         this.setupKeyboardShortcuts();
-    },
-
-    loadVendors: async function() {
-        try {
-            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${this.companyId}`);
-            this.vendors = await res.json();
-            if (!this.vendors || this.vendors.length === 0) {
-                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${this.companyId}`);
-                this.vendors = await res.json();
-            }
-        } catch (e) { console.error("PR Module: Load Vendors Error:", e); }
-    },
-
-    loadInventory: async function() {
-        try {
-            const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${this.companyId}`);
-            this.inventory = await res.json();
-        } catch (e) { console.error("PR Module: Load Inventory Error:", e); }
-    },
-
-    loadEmployees: async function() {
-        try {
-            const res = await fetch(`api/maintain.php?action=get_employees&company_id=${this.companyId}`);
-            this.employees = await res.json();
-        } catch (e) {}
-    },
-
-    loadJobs: async function() {
-        try {
-            const res = await fetch(`api/jobs.php?action=get_jobs&company_id=${this.companyId}`);
-            this.jobs = await res.json();
-        } catch (e) {}
     },
 
     resetForm: function(isNew = false) {
@@ -112,129 +63,55 @@ window.PRModule = {
 
     addEmptyRow: function() {
         const tbody = document.getElementById('prGridBody');
-        const rowIndex = tbody.rows.length;
+        const rowCount = tbody.rows.length;
         const tr = document.createElement('tr');
-        tr.dataset.index = rowIndex;
         tr.innerHTML = `
-            <td style="text-align: center; border: 1px solid #cbd5e0; font-size: 10px; color: #64748b; background: #f8fafc;">${rowIndex + 1}</td>
-            <td style="border: 1px solid #cbd5e0; position: relative;">
-                <input type="text" class="grid-input item-code-search" placeholder="">
+            <td style="text-align: center; font-size: 10px; color: #64748b; background: #f8fafc;">${rowCount + 1}</td>
+            <td style="position: relative;">
+                <input type="text" class="grid-input item-code-search" placeholder="...">
                 <div class="po-suggest grid-suggest"></div>
             </td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-rate" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-rate" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value=""></td>
+            <td><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
+            <td><input type="text" class="grid-input num pieces" value=""></td>
+            <td><input type="text" class="grid-input num qty" value=""></td>
+            <td><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
+            <td><input type="text" class="grid-input num rate" value=""></td>
+            <td><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value=""></td>
+            <td><input type="text" class="grid-input num tax-rate" value=""></td>
+            <td><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value=""></td>
+            <td><input type="text" class="grid-input num ftax-rate" value=""></td>
+            <td><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value=""></td>
+            <td><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value=""></td>
             <input type="hidden" class="item-coa-id">
         `;
 
         const inputs = tr.querySelectorAll('input:not([readonly])');
         inputs.forEach(input => {
             input.addEventListener('input', () => this.calculateRow(tr));
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const nextInput = this.getNextInput(input);
+                    if (nextInput) nextInput.focus();
+                    else {
+                        this.addEmptyRow();
+                        this.getNextInput(input).focus();
+                    }
+                }
+            });
         });
 
-        this.setupGridEvents(tr);
+        this.setupItemAutocomplete(tr);
         tbody.appendChild(tr);
     },
 
-    setupGridEvents: function(tr) {
-        const idx = tr.dataset.index;
-        const codeInput = tr.querySelector('.item-code-search');
-        const suggest = tr.querySelector('.grid-suggest');
-
-        codeInput.oninput = (e) => {
-            const val = e.target.value.toLowerCase().trim();
-            if (!val) { suggest.style.display = 'none'; return; }
-            
-            const searchWords = val.split(/\s+/);
-            const matches = this.inventory.filter(i => {
-                const searchStr = `${i.code} ${i.name}`.toLowerCase();
-                return searchWords.every(word => searchStr.includes(word));
-            }).slice(0, 15);
-
-            if (matches.length > 0) {
-                suggest.innerHTML = matches.map(i => 
-                    `<div onclick="window.PRModule.selectGridItem(${idx}, ${i.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
-                        <b>${i.code}</b> - ${i.name}
-                    </div>`
-                ).join('');
-                suggest.style.display = 'block';
-                suggest.style.zIndex = '9999';
-            } else { suggest.style.display = 'none'; }
-        };
-
-        document.addEventListener('click', (e) => { if (e.target !== codeInput) suggest.style.display = 'none'; });
-    },
-
-    selectGridItem: function(rowIndex, id) {
-        const item = this.inventory.find(i => i.id == id);
-        if (!item) return;
-
-        const tr = document.querySelector(`#prGridBody tr[data-index="${rowIndex}"]`);
-        if (!tr) return;
-
-        tr.querySelector('.item-code-search').value = item.code;
-        tr.querySelector('.item-name').value = item.name;
-        tr.querySelector('.unit').value = item.unit || 'Pcs';
-        tr.querySelector('.item-coa-id').value = item.id;
-        tr.querySelector('.grid-suggest').style.display = 'none';
-        tr.querySelector('.pieces').focus();
-    },
-
-    setupVendorSearch: function() {
-        const input = document.getElementById('vendor_code');
-        const suggest = document.getElementById('vendor_suggest');
-        if (!input || !suggest) return;
-
-        input.oninput = (e) => {
-            const val = e.target.value.toLowerCase().trim();
-            if (!val) { suggest.style.display = 'none'; return; }
-            
-            const searchWords = val.split(/\s+/);
-            const matches = this.vendors.filter(v => {
-                const searchStr = `${v.code} ${v.name} ${v.address || ''}`.toLowerCase();
-                return searchWords.every(word => searchStr.includes(word));
-            }).slice(0, 15);
-
-            if (matches.length > 0) {
-                suggest.innerHTML = matches.map(v => 
-                    `<div onclick="window.PRModule.selectVendor(${v.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
-                        <b>${v.code}</b> - ${v.name}
-                    </div>`
-                ).join('');
-                suggest.style.display = 'block';
-            } else { suggest.style.display = 'none'; }
-        };
-        document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
-    },
-
-    selectVendor: function(id) {
-        const v = this.vendors.find(v => v.id == id);
-        if (!v) return;
-
-        document.getElementById('vendor_code').value = v.code;
-        document.getElementById('vendor_name').value = v.name;
-        document.getElementById('vendor_address').value = v.address || '';
-        document.getElementById('vendor_tel').value = v.phone || '';
-        document.getElementById('vendor_gst').value = v.gst || '';
-        document.getElementById('vendor_ntn').value = v.ntn || '';
-        document.getElementById('vendor_coa_id').value = v.coa_list_id;
-        document.getElementById('vendor_balance').value = parseFloat(v.balance || 0).toFixed(2);
-        document.getElementById('vendor_suggest').style.display = 'none';
-    },
-
-    setupExpenseSearch: function() {
-        // Simple implementation if COA is available
+    getNextInput: function(current) {
+        const inputs = Array.from(document.querySelectorAll('#prGridBody input:not([readonly])'));
+        const index = inputs.indexOf(current);
+        return inputs[index + 1];
     },
 
     calculateRow: function(tr) {
+        const pcs = parseFloat(tr.querySelector('.pieces').value) || 0;
         const qty = parseFloat(tr.querySelector('.qty').value) || 0;
         const rate = parseFloat(tr.querySelector('.rate').value) || 0;
         const taxRate = parseFloat(tr.querySelector('.tax-rate').value) || 0;
@@ -245,10 +122,10 @@ window.PRModule = {
         const ftaxAmt = (excl * ftaxRate) / 100;
         const incl = excl + taxAmt + ftaxAmt;
 
-        tr.querySelector('.val-excl').value = excl ? excl.toFixed(2) : "";
-        tr.querySelector('.tax-amt').value = taxAmt ? taxAmt.toFixed(2) : "";
-        tr.querySelector('.ftax-amt').value = ftaxAmt ? ftaxAmt.toFixed(2) : "";
-        tr.querySelector('.val-incl').value = incl ? incl.toFixed(2) : "";
+        tr.querySelector('.val-excl').value = excl.toFixed(2);
+        tr.querySelector('.tax-amt').value = taxAmt.toFixed(2);
+        tr.querySelector('.ftax-amt').value = ftaxAmt.toFixed(2);
+        tr.querySelector('.val-incl').value = incl.toFixed(2);
 
         this.calculateTotals();
     },
@@ -285,6 +162,37 @@ window.PRModule = {
 
         if (window.toWords) {
             document.getElementById('pr_amt_words').textContent = toWords(netTot) + " only.";
+        }
+    },
+
+    setupAutocomplete: function() {
+        const vCode = document.getElementById('vendor_code');
+        const handleSelect = (v) => {
+            vCode.value = v.code;
+            document.getElementById('vendor_name').value = v.name;
+            document.getElementById('vendor_address').value = v.address || '';
+            document.getElementById('vendor_tel').value = v.phone || '';
+            document.getElementById('vendor_gst').value = v.gst || '';
+            document.getElementById('vendor_ntn').value = v.ntn || '';
+            document.getElementById('vendor_coa_id').value = v.coa_list_id;
+            document.getElementById('vendor_balance').value = parseFloat(v.balance || 0).toFixed(2);
+        };
+
+        if (window.setupSmartSearch) {
+            setupSmartSearch(vCode, 'vendor_code', handleSelect, 'vendor_suggest');
+        }
+    },
+
+    setupItemAutocomplete: function(tr) {
+        const input = tr.querySelector('.item-code-search');
+        if (window.setupSmartSearch) {
+            setupSmartSearch(input, 'item_code', (item) => {
+                input.value = item.code;
+                tr.querySelector('.item-name').value = item.name;
+                tr.querySelector('.unit').value = item.unit || 'Pcs';
+                tr.querySelector('.item-coa-id').value = item.id;
+                tr.querySelector('.pieces').focus();
+            });
         }
     },
 
@@ -441,24 +349,20 @@ window.PRModule = {
 
     print: function() {
         if (!this.currentId) return alert("Please save or load a record first.");
-        const coName = JSON.parse(localStorage.getItem('softifyx_session') || '{}').business_name || "BUSINESS NAME";
         const sn = document.getElementById('pr_sn').value;
         const date = document.getElementById('pr_date').value;
         const vName = document.getElementById('vendor_name').value;
-        const vCode = document.getElementById('vendor_code').value;
         const netTot = document.getElementById('pr_net_tot').value;
-        const amtWords = document.getElementById('pr_amt_words').textContent;
 
         const printWindow = window.open('', '_blank', 'width=800,height=600');
         const html = `
             <html>
             <head><title>Purchase Return - ${sn}</title></head>
             <body style="font-family: Arial; padding: 20px;">
-                <h2 style="text-align:center;">${coName}</h2>
-                <h3 style="text-align:center;">PURCHASE RETURN / DEBIT NOTE</h3>
+                <h2 style="text-align:center;">PURCHASE RETURN / DEBIT NOTE</h2>
                 <hr>
                 <p><b>Serial No:</b> ${sn} &nbsp;&nbsp;&nbsp; <b>Date:</b> ${date}</p>
-                <p><b>Vendor:</b> ${vName} (${vCode})</p>
+                <p><b>Vendor:</b> ${vName}</p>
                 <table border="1" width="100%" style="border-collapse: collapse; margin-top: 20px;">
                     <thead>
                         <tr style="background:#f2f2f2;"><th>#</th><th>Code</th><th>Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr>
@@ -479,7 +383,6 @@ window.PRModule = {
                         <tr><th colspan="5" align="right">NET TOTAL:</th><th align="right">${netTot}</th></tr>
                     </tfoot>
                 </table>
-                <p><b>Amount in Words:</b> ${amtWords}</p>
                 <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
             </body>
             </html>
