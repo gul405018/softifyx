@@ -21,6 +21,7 @@ window.PRModule = {
 
         this.setupKeyboardShortcuts();
         this.setupVendorSearch();
+        this.setupExpenseSearch();
     },
 
     loadVendors: async function() {
@@ -274,6 +275,50 @@ window.PRModule = {
         if(bal) bal.value = parseFloat(v.balance || 0).toFixed(2);
         
         const suggest = document.getElementById('vendor_suggest');
+        if(suggest) suggest.style.display = 'none';
+    },
+
+    setupExpenseSearch: function() {
+        const input = document.getElementById('expense_coa_name');
+        const suggest = document.getElementById('expense_suggest');
+        if (!input || !suggest) return;
+
+        input.oninput = async (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (val.length < 2) { suggest.style.display = 'none'; return; }
+
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            try {
+                const res = await fetch(`api/admin.php?action=get_coa_list&company_id=${session.company_id || 1}`);
+                const coa = await res.json();
+                
+                const matches = coa.filter(c => 
+                    (c.account_type === 'Expense' || c.account_type === 'Cost of Sales' || c.account_name.toLowerCase().includes('return')) &&
+                    (c.account_code.includes(val) || c.account_name.toLowerCase().includes(val))
+                ).slice(0, 10);
+
+                if (matches.length > 0) {
+                    suggest.innerHTML = matches.map(c => 
+                        `<div onclick="window.PRModule.selectExpense('${c.account_code}', '${c.account_name}')" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer; font-size:11px;">
+                            <b style="color:#2563eb;">${c.account_code}</b> - ${c.account_name}
+                        </div>`
+                    ).join('');
+                    suggest.style.display = 'block';
+                    suggest.style.zIndex = '1000';
+                } else { suggest.style.display = 'none'; }
+            } catch(e) { console.error("Expense search error:", e); }
+        };
+        document.addEventListener('mousedown', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
+    },
+
+    selectExpense: function(code, name) {
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if(el) el.value = val || '';
+        };
+        setVal('expense_coa_code', code);
+        setVal('expense_coa_name', name);
+        const suggest = document.getElementById('expense_suggest');
         if(suggest) suggest.style.display = 'none';
     },
 
