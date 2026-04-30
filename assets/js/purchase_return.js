@@ -2,13 +2,42 @@
  * Purchase Return / Debit Notes Module
  */
 window.PRModule = {
+    vendors: [],
+    inventory: [],
     currentId: null,
     companyId: JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1,
 
-    init: function() {
+    init: async function() {
         this.resetForm(true);
-        this.setupAutocomplete();
+        
+        // Load data for searches
+        try {
+            await Promise.all([
+                this.loadVendors(),
+                this.loadInventory()
+            ]);
+        } catch (e) { console.error("PR Module: Data load error", e); }
+
         this.setupKeyboardShortcuts();
+        this.setupVendorSearch();
+    },
+
+    loadVendors: async function() {
+        try {
+            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${this.companyId}`);
+            this.vendors = await res.json();
+            if (!this.vendors || this.vendors.length === 0) {
+                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${this.companyId}`);
+                this.vendors = await res.json();
+            }
+        } catch (e) { console.error("PR Module: Load Vendors Error", e); }
+    },
+
+    loadInventory: async function() {
+        try {
+            const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${this.companyId}`);
+            this.inventory = await res.json();
+        } catch (e) { console.error("PR Module: Load Inventory Error", e); }
     },
 
     resetForm: function(isNew = false) {
@@ -65,6 +94,7 @@ window.PRModule = {
         const tbody = document.getElementById('prGridBody');
         const rowCount = tbody.rows.length;
         const tr = document.createElement('tr');
+        tr.dataset.index = rowCount;
         tr.innerHTML = `
             <td style="text-align: center; font-size: 10px; color: #64748b; background: #f8fafc;">${rowCount + 1}</td>
             <td style="position: relative;">
@@ -85,29 +115,108 @@ window.PRModule = {
             <input type="hidden" class="item-coa-id">
         `;
 
-        const inputs = tr.querySelectorAll('input:not([readonly])');
-        inputs.forEach(input => {
-            input.addEventListener('input', () => this.calculateRow(tr));
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const nextInput = this.getNextInput(input);
-                    if (nextInput) nextInput.focus();
-                    else {
-                        this.addEmptyRow();
-                        this.getNextInput(input).focus();
-                    }
-                }
-            });
-        });
-
-        this.setupItemAutocomplete(tr);
+        this.setupGridEvents(tr);
         tbody.appendChild(tr);
     },
 
-    getNextInput: function(current) {
-        const inputs = Array.from(document.querySelectorAll('#prGridBody input:not([readonly])'));
-        const index = inputs.indexOf(current);
-        return inputs[index + 1];
+    setupGridEvents: function(tr) {
+        const idx = tr.dataset.index;
+        const codeInput = tr.querySelector('.item-code-search');
+        const suggest = tr.querySelector('.grid-suggest');
+
+        codeInput.oninput = (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (!val) { suggest.style.display = 'none'; return; }
+            
+            const searchWords = val.split(/\s+/);
+            const matches = this.inventory.filter(i => {
+                const searchStr = `${i.code} ${i.name}`.toLowerCase();
+                return searchWords.every(word => searchStr.includes(word));
+            }).slice(0, 15);
+
+            if (matches.length > 0) {
+                suggest.innerHTML = matches.map(i => 
+                    `<div onclick="window.PRModule.selectGridItem(${idx}, ${i.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                        <b>${i.code}</b> - ${i.name}
+                    </div>`
+                ).join('');
+                suggest.style.display = 'block';
+                suggest.style.zIndex = '9999';
+            } else { suggest.style.display = 'none'; }
+
+            const tbody = document.getElementById('prGridBody');
+            if (tr === tbody.lastElementChild && val !== '') {
+                this.addEmptyRow();
+            }
+        };
+
+        tr.querySelectorAll('input.num').forEach(input => {
+            input.oninput = () => this.calculateRow(tr);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    const inputs = Array.from(document.querySelectorAll('#prGridBody input:not([readonly])'));
+                    const curIdx = inputs.indexOf(input);
+                    if (inputs[curIdx + 1]) inputs[curIdx + 1].focus();
+                }
+            };
+        });
+
+        document.addEventListener('click', (e) => { if (e.target !== codeInput) suggest.style.display = 'none'; });
+    },
+
+    selectGridItem: function(idx, id) {
+        const item = this.inventory.find(i => i.id == id);
+        if (!item) return;
+        const tr = document.querySelector(`#prGridBody tr[data-index="${idx}"]`);
+        if (!tr) return;
+
+        tr.querySelector('.item-code-search').value = item.code;
+        tr.querySelector('.item-name').value = item.name;
+        tr.querySelector('.unit').value = item.unit || 'Pcs';
+        tr.querySelector('.item-coa-id').value = item.id;
+        tr.querySelector('.grid-suggest').style.display = 'none';
+        tr.querySelector('.pieces').focus();
+    },
+
+    setupVendorSearch: function() {
+        const input = document.getElementById('vendor_code');
+        const suggest = document.getElementById('vendor_suggest');
+        if (!input || !suggest) return;
+
+        input.oninput = (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (!val) { suggest.style.display = 'none'; return; }
+            
+            const searchWords = val.split(/\s+/);
+            const matches = this.vendors.filter(v => {
+                const searchStr = `${v.code} ${v.name} ${v.address || ''}`.toLowerCase();
+                return searchWords.every(word => searchStr.includes(word));
+            }).slice(0, 10);
+
+            if (matches.length > 0) {
+                suggest.innerHTML = matches.map(v => 
+                    `<div onclick="window.PRModule.selectVendor(${v.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                        <b>${v.code}</b> - ${v.name}
+                    </div>`
+                ).join('');
+                suggest.style.display = 'block';
+            } else { suggest.style.display = 'none'; }
+        };
+        document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
+    },
+
+    selectVendor: function(id) {
+        const v = this.vendors.find(v => v.id == id);
+        if (!v) return;
+        document.getElementById('vendor_code').value = v.code;
+        document.getElementById('vendor_name').value = v.name;
+        document.getElementById('vendor_address').value = v.address || '';
+        document.getElementById('vendor_tel').value = v.phone || '';
+        document.getElementById('vendor_gst').value = v.gst || '';
+        document.getElementById('vendor_ntn').value = v.ntn || '';
+        document.getElementById('vendor_coa_id').value = v.coa_list_id;
+        document.getElementById('vendor_balance').value = parseFloat(v.balance || 0).toFixed(2);
+        document.getElementById('vendor_suggest').style.display = 'none';
     },
 
     calculateRow: function(tr) {
@@ -162,37 +271,6 @@ window.PRModule = {
 
         if (window.toWords) {
             document.getElementById('pr_amt_words').textContent = toWords(netTot) + " only.";
-        }
-    },
-
-    setupAutocomplete: function() {
-        const vCode = document.getElementById('vendor_code');
-        const handleSelect = (v) => {
-            vCode.value = v.code;
-            document.getElementById('vendor_name').value = v.name;
-            document.getElementById('vendor_address').value = v.address || '';
-            document.getElementById('vendor_tel').value = v.phone || '';
-            document.getElementById('vendor_gst').value = v.gst || '';
-            document.getElementById('vendor_ntn').value = v.ntn || '';
-            document.getElementById('vendor_coa_id').value = v.coa_list_id;
-            document.getElementById('vendor_balance').value = parseFloat(v.balance || 0).toFixed(2);
-        };
-
-        if (window.setupSmartSearch) {
-            setupSmartSearch(vCode, 'vendor_code', handleSelect, 'vendor_suggest');
-        }
-    },
-
-    setupItemAutocomplete: function(tr) {
-        const input = tr.querySelector('.item-code-search');
-        if (window.setupSmartSearch) {
-            setupSmartSearch(input, 'item_code', (item) => {
-                input.value = item.code;
-                tr.querySelector('.item-name').value = item.name;
-                tr.querySelector('.unit').value = item.unit || 'Pcs';
-                tr.querySelector('.item-coa-id').value = item.id;
-                tr.querySelector('.pieces').focus();
-            });
         }
     },
 
