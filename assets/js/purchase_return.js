@@ -8,6 +8,7 @@ window.PRModule = {
     companyId: JSON.parse(localStorage.getItem('softifyx_session') || '{}').company_id || 1,
 
     init: async function() {
+        // Reset form immediately to show grid
         this.resetForm(true);
         
         // Load data for searches
@@ -23,14 +24,22 @@ window.PRModule = {
     },
 
     loadVendors: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
         try {
             // Try VND first
-            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${this.companyId}`);
+            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
             let data = await res.json();
             
             // If empty, try SUP (Suppliers)
             if (!data || data.length === 0) {
-                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${this.companyId}`);
+                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${companyId}`);
+                data = await res.json();
+            }
+            
+            // If still empty, try general
+            if (!data || data.length === 0) {
+                res = await fetch(`api/maintain.php?action=get_vendors&company_id=${companyId}`);
                 data = await res.json();
             }
             
@@ -43,8 +52,10 @@ window.PRModule = {
     },
 
     loadInventory: async function() {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
         try {
-            const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${this.companyId}`);
+            const res = await fetch(`api/inventory.php?action=get_all_items&company_id=${companyId}`);
             const data = await res.json();
             this.inventory = Array.isArray(data) ? data : [];
             console.log("PR Module: Loaded Inventory:", this.inventory.length);
@@ -56,11 +67,13 @@ window.PRModule = {
 
     resetForm: function(isNew = false) {
         this.currentId = null;
-        const snField = document.getElementById('pr_sn');
-        if(snField) snField.value = '';
-        
-        const dateField = document.getElementById('pr_date');
-        if(dateField) dateField.value = new Date().toISOString().split('T')[0];
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if(el) el.value = val || '';
+        };
+
+        setVal('pr_sn', '');
+        setVal('pr_date', new Date().toISOString().split('T')[0]);
         
         const fields = [
             'pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date',
@@ -69,10 +82,7 @@ window.PRModule = {
             'pr_received', 'expense_coa_id', 'pr_location', 'pr_job', 'pr_employee'
         ];
         
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = '';
-        });
+        fields.forEach(id => setVal(id, ''));
         
         const nature = document.getElementById('pr_nature');
         if(nature) nature.value = 'Purchase Return (Reduces Inventory)';
@@ -95,7 +105,9 @@ window.PRModule = {
     },
 
     getNextSerial: function() {
-        fetch(`api/purchases.php?action=get_next_return_serial&company_id=${this.companyId}`)
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`)
             .then(res => res.json())
             .then(data => {
                 if (!this.currentId) {
@@ -385,7 +397,9 @@ window.PRModule = {
 
         if (data.items.length === 0) return alert("Please add at least one item.");
 
-        fetch(`api/purchases.php?action=save_return&company_id=${this.companyId}`, {
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        fetch(`api/purchases.php?action=save_return&company_id=${companyId}`, {
             method: 'POST',
             body: JSON.stringify(data)
         })
@@ -402,7 +416,9 @@ window.PRModule = {
     },
 
     loadRecord: function(sn) {
-        fetch(`api/purchases.php?action=get_return&serial_no=${sn}&company_id=${this.companyId}`)
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        fetch(`api/purchases.php?action=get_return&serial_no=${sn}&company_id=${companyId}`)
             .then(res => res.json())
             .then(data => {
                 if (data && data.id) {
@@ -477,7 +493,9 @@ window.PRModule = {
     deleteRecord: function() {
         if (!this.currentId) return;
         if (confirm("Are you sure you want to delete this record?")) {
-            fetch(`api/purchases.php?action=delete_return&id=${this.currentId}&company_id=${this.companyId}`, { method: 'POST' })
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            const companyId = session.company_id || 1;
+            fetch(`api/purchases.php?action=delete_return&id=${this.currentId}&company_id=${companyId}`, { method: 'POST' })
                 .then(res => res.json())
                 .then(res => {
                     if (res.status === 'success') {
@@ -489,7 +507,9 @@ window.PRModule = {
     },
 
     loadLastSaved: function() {
-        fetch(`api/purchases.php?action=get_next_return_serial&company_id=${this.companyId}`)
+        const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+        const companyId = session.company_id || 1;
+        fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.next_sn > 1) {
