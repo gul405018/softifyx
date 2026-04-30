@@ -104,19 +104,19 @@ window.PRModule = {
         const rowCount = tbody.rows.length;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="border: 1px solid #cbd5e0; text-align: center; font-size: 10px; background: #f8fafc;">${rowCount + 1}</td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-code-search"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-rate" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-rate" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value=""></td>
-            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0; text-align: center; font-size: 10px; background: #f8fafc; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;">${rowCount + 1}</td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input item-code-search"></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input item-name" readonly tabindex="-1"></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input unit" readonly tabindex="-1"></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-rate" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-rate" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num ftax-amt" readonly tabindex="-1" value=""></td>
+            <td style="border: 1px solid #cbd5e0; border-left: 1px solid #cbd5e0; border-right: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" readonly tabindex="-1" value=""></td>
             <input type="hidden" class="item-coa-id">
         `;
 
