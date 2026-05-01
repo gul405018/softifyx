@@ -331,49 +331,41 @@ window.PRModule = {
                 const active = document.activeElement;
                 if (!active) return;
 
-                // If in grid
+                // Handle Grid Inputs
                 if (active.classList.contains('grid-input')) {
                     e.preventDefault();
                     const tr = active.closest('tr');
-                    const td = active.closest('td');
-                    const rowIndex = parseInt(tr.dataset.index);
-                    const cellIndex = td.cellIndex;
+                    const inputs = Array.from(tr.querySelectorAll('input:not([readonly])'));
+                    const currentIdx = inputs.indexOf(active);
 
-                    const nextCell = tr.cells[cellIndex + 1];
-                    if (nextCell) {
-                        const input = nextCell.querySelector('input');
-                        if (input) {
-                            if (input.readOnly) {
-                                // Skip read-only
-                                const nextNextCell = tr.cells[cellIndex + 2];
-                                if (nextNextCell) {
-                                    const nextInput = nextNextCell.querySelector('input');
-                                    if (nextInput) nextInput.focus();
-                                }
-                            } else {
-                                input.focus();
-                            }
-                        }
+                    if (currentIdx < inputs.length - 1) {
+                        // Move to next editable cell in same row
+                        inputs[currentIdx + 1].focus();
                     } else {
                         // Move to next row
                         const nextTr = tr.nextElementSibling;
                         if (nextTr) {
-                            const firstInput = nextTr.querySelector('.item-code-search');
-                            if (firstInput) firstInput.focus();
+                            const firstEditable = nextTr.querySelector('input:not([readonly])');
+                            if (firstEditable) firstEditable.focus();
+                        } else {
+                            // If last row, move to carriage/freight
+                            const carriage = document.getElementById('pr_carriage');
+                            if (carriage) carriage.focus();
                         }
                     }
-                } else if (active.classList.contains('pr-input')) {
-                    // Normal header inputs
+                } 
+                // Handle Header/Footer Inputs
+                else if (active.classList.contains('pr-input') || active.tagName === 'SELECT') {
                     e.preventDefault();
-                    const inputs = Array.from(container.querySelectorAll('.pr-input, .item-code-search')).filter(i => !i.readOnly && i.type !== 'hidden');
-                    const idx = inputs.indexOf(active);
-                    if (idx > -1 && idx < inputs.length - 1) {
-                        inputs[idx + 1].focus();
+                    const allInputs = Array.from(container.querySelectorAll('.pr-input, .item-code-search, select'))
+                                         .filter(i => !i.readOnly && i.offsetParent !== null);
+                    const idx = allInputs.indexOf(active);
+                    if (idx > -1 && idx < allInputs.length - 1) {
+                        allInputs[idx + 1].focus();
                     }
                 }
             }
             
-            // Ctrl+S to save
             if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
                 this.saveReturn();
