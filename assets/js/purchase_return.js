@@ -396,7 +396,7 @@ window.PRModule = {
         this.currentId = null;
         this.selectedVendorCoaId = null;
         
-        const snField = document.getElementById('pr_sn') || document.querySelector('[id="pr_sn"]');
+        const snField = document.getElementById('pr_sn');
         if (snField) snField.value = isNew ? '...' : '';
 
         // Reset all header fields
@@ -422,7 +422,7 @@ window.PRModule = {
 
         if (isNew) {
             const snField = document.getElementById('pr_sn');
-            if (snField) snField.value = '01'; // Default starting point
+            if (snField) snField.value = '1'; // Default starting point
 
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{"company_id":1}');
@@ -432,12 +432,11 @@ window.PRModule = {
                 const data = await res.json();
                 
                 if (snField && data.next_sn) {
-                    // Format as 01, 02 etc if needed, or just the number
-                    snField.value = data.next_sn.toString().padStart(2, '0');
+                    snField.value = data.next_sn; // Use raw number (1, 2, 3...)
                 }
             } catch(e) {
-                console.error("PR Module: Serial fetch error, using default 01", e);
-                if (snField) snField.value = '01';
+                console.error("PR Module: Serial fetch error, using default 1", e);
+                if (snField) snField.value = '1';
             }
         }
         
