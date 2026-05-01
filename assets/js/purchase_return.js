@@ -15,7 +15,8 @@ window.PRModule = {
             this.loadInventory(),
             this.loadEmployees(),
             this.loadJobs(),
-            this.loadExpenseAccounts()
+            this.loadExpenseAccounts(),
+            this.loadLocations()
         ]);
         this.setupVendorSearch();
         this.resetForm(true);
@@ -71,18 +72,24 @@ window.PRModule = {
     },
 
     loadExpenseAccounts: async function() {
+        // Hardcoded as per reference image but keeping logic if needed
+        document.getElementById('expense_code').value = '50001003';
+        document.getElementById('expense_name').value = 'Purchase Returns';
+    },
+
+    loadLocations: async function() {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
         try {
-            // Fetching accounts starting with 5 (Expenses) as a default
-            const res = await fetch(`api/maintain.php?action=get_coa_list&company_id=${companyId}&type=EXPENSE`);
-            this.expenseAccounts = await res.json();
-            const select = document.getElementById('pr_expense_account');
+            const res = await fetch(`api/inventory.php?action=get_locations&company_id=${companyId}`);
+            const locations = await res.json();
+            const select = document.getElementById('pr_location');
             if (select) {
-                select.innerHTML = '<option value="">Select Account</option>';
-                this.expenseAccounts.forEach(a => select.innerHTML += `<option value="${a.id}">${a.account_code} - ${a.account_name}</option>`);
+                select.innerHTML = '';
+                locations.forEach(l => select.innerHTML += `<option value="${l.id}">${l.name}</option>`);
+                if (locations.length === 0) select.innerHTML = '<option value="1">Main Store</option>';
             }
-        } catch (e) { console.error("PR Module: Load Expense Accounts Error:", e); }
+        } catch (e) { console.error("PR Module: Load Locations Error:", e); }
     },
 
     setupVendorSearch: function() {
@@ -278,7 +285,24 @@ window.PRModule = {
         const netEl = document.getElementById('pr_net_total');
         if (netEl) netEl.value = netTotal.toFixed(2);
 
-        document.getElementById('pr_amt_words').innerText = `Rupees ${netTotal.toFixed(2)} only.`;
+        // Balance = Net Total - Amount Received
+        const received = parseFloat(document.getElementById('pr_received').value) || 0;
+        const balance = netTotal - received;
+        const balEl = document.getElementById('pr_balance');
+        if (balEl) balEl.value = balance.toFixed(2);
+
+        document.getElementById('pr_amt_words').innerText = `Rupees ${this.numberToWords(netTotal)} only.`;
+    },
+
+    numberToWords: function(num) {
+        if (num === 0) return "zero and 00/100";
+        const parts = num.toFixed(2).split('.');
+        const whole = parseInt(parts[0]);
+        const decimal = parts[1];
+        
+        // Simple placeholder for conversion or use a utility if available
+        // For now, mirroring the format "Rupees zero and 00/100"
+        return `${whole} and ${decimal}/100`;
     },
 
     setupKeyboardNav: function() {
@@ -341,6 +365,11 @@ window.PRModule = {
         if (carriageInput) {
             carriageInput.oninput = () => this.calculateTotals();
         }
+
+        const receivedInput = document.getElementById('pr_received');
+        if (receivedInput) {
+            receivedInput.oninput = () => this.calculateTotals();
+        }
     },
 
     resetForm: async function(isNew = false) {
@@ -348,12 +377,12 @@ window.PRModule = {
         this.selectedVendorCoaId = null;
         
         const inputs = ['pr_sn', 'pr_date', 'pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
-                       'pr_nature_dn', 'pr_payment_terms', 'pr_expense_account', 'pr_job_no', 'pr_employee_ref', 
-                       'pr_remarks', 'pr_carriage', 'pr_net_total', 'vendor_code', 'vendor_name', 'vendor_address', 
+                       'pr_nature_dn', 'pr_payment_terms', 'pr_job_no', 'pr_employee_ref', 'pr_location',
+                       'pr_remarks', 'pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance', 'vendor_code', 'vendor_name', 'vendor_address', 
                        'vendor_tel', 'vendor_gst', 'vendor_ntn', 'vendor_balance'];
         inputs.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = (id === 'pr_carriage' || id === 'pr_net_total') ? '0.00' : '';
+            if (el) el.value = (id === 'pr_carriage' || id === 'pr_net_total' || id === 'pr_received' || id === 'pr_balance') ? '0.00' : '';
         });
         document.getElementById('pr_is_cancelled').checked = false;
         document.getElementById('prGridBody').innerHTML = '';
@@ -409,13 +438,15 @@ window.PRModule = {
             vendor_invoice_date: document.getElementById('pr_vendor_inv_date').value,
             nature_of_debit_note: document.getElementById('pr_nature_dn').value,
             payment_terms: document.getElementById('pr_payment_terms').value,
-            expense_account: document.getElementById('pr_expense_account').value,
+            expense_account: '50001003',
             vendor_coa_id: this.selectedVendorCoaId,
+            inventory_location_id: document.getElementById('pr_location').value,
             job_no: document.getElementById('pr_job_no').value,
             employee_ref: document.getElementById('pr_employee_ref').value,
             remarks: document.getElementById('pr_remarks').value,
             carriage_freight: document.getElementById('pr_carriage').value,
             net_total: document.getElementById('pr_net_total').value,
+            amount_received: document.getElementById('pr_received').value,
             is_cancelled: document.getElementById('pr_is_cancelled').checked ? 1 : 0,
             amount_in_words: document.getElementById('pr_amt_words').innerText,
             items: items
@@ -443,13 +474,14 @@ window.PRModule = {
         document.getElementById('pr_purchase_date').value = ret.purchase_date || '';
         document.getElementById('pr_vendor_inv_no').value = ret.vendor_invoice_no || '';
         document.getElementById('pr_vendor_inv_date').value = ret.vendor_invoice_date || '';
-        document.getElementById('pr_nature_dn').value = ret.nature_of_debit_note || 'Damaged Goods';
+        document.getElementById('pr_nature_dn').value = ret.nature_of_debit_note || 'Purchase Return (Reduces Inventory)';
         document.getElementById('pr_payment_terms').value = ret.payment_terms || '';
-        document.getElementById('pr_expense_account').value = ret.expense_account || '';
         document.getElementById('pr_job_no').value = ret.job_no || '';
         document.getElementById('pr_employee_ref').value = ret.employee_ref || '';
+        document.getElementById('pr_location').value = ret.inventory_location_id || '1';
         document.getElementById('pr_remarks').value = ret.remarks || '';
         document.getElementById('pr_carriage').value = ret.carriage_freight || '0.00';
+        document.getElementById('pr_received').value = ret.amount_received || '0.00';
         document.getElementById('pr_is_cancelled').checked = parseInt(ret.is_cancelled) === 1;
 
         if (ret.vendor_coa_id) { this.selectVendor(ret.vendor_coa_id); }
