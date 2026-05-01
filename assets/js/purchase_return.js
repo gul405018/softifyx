@@ -101,9 +101,10 @@ window.PRModule = {
             const val = e.target.value.toLowerCase().trim();
             if (!val) { suggest.style.display = 'none'; return; }
             
+            const searchWords = val.split(/\s+/);
             const matches = this.vendors.filter(v => {
                 const searchStr = `${v.code} ${v.name} ${v.address || ''}`.toLowerCase();
-                return searchStr.includes(val);
+                return searchWords.every(word => searchStr.includes(word));
             }).slice(0, 15);
 
             if (matches.length > 0) {
@@ -115,6 +116,7 @@ window.PRModule = {
                     </div>
                 `).join('');
                 suggest.style.display = 'block';
+                suggest.style.zIndex = '9999';
             } else { suggest.style.display = 'none'; }
         };
         
@@ -194,9 +196,10 @@ window.PRModule = {
             const val = e.target.value.toLowerCase().trim();
             if (!val) { suggest.style.display = 'none'; return; }
             
+            const searchWords = val.split(/\s+/);
             const matches = this.inventory.filter(i => {
                 const searchStr = `${i.code} ${i.name} ${i.unit || ''}`.toLowerCase();
-                return searchStr.includes(val);
+                return searchWords.every(word => searchStr.includes(word));
             }).slice(0, 15);
             
             if (matches.length > 0) {
@@ -208,6 +211,7 @@ window.PRModule = {
                     </div>
                 `).join('');
                 suggest.style.display = 'block';
+                suggest.style.zIndex = '9999';
             } else { suggest.style.display = 'none'; }
 
             const tbody = document.getElementById('prGridBody');
