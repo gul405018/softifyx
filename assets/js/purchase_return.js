@@ -101,41 +101,55 @@ window.PRModule = {
             const val = e.target.value.toLowerCase().trim();
             if (!val) { suggest.style.display = 'none'; return; }
             
-            const searchWords = val.split(/\s+/);
             const matches = this.vendors.filter(v => {
                 const searchStr = `${v.code} ${v.name} ${v.address || ''}`.toLowerCase();
-                return searchWords.every(word => searchStr.includes(word));
+                return searchStr.includes(val);
             }).slice(0, 15);
 
             if (matches.length > 0) {
-                suggest.innerHTML = matches.map(v => `<div onclick="window.PRModule.selectVendor(${v.id})" style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;"><b>${v.code}</b> - ${v.name}</div>`).join('');
+                suggest.innerHTML = matches.map(v => `
+                    <div onclick="window.PRModule.selectVendor(${v.id})" 
+                         style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                         <div style="font-weight:700; color:#1e3a8a;">${v.code}</div>
+                         <div style="font-size:9px; color:#475569;">${v.name}</div>
+                    </div>
+                `).join('');
                 suggest.style.display = 'block';
-                suggest.style.zIndex = '9999';
-            } else { 
-                suggest.style.display = 'none'; 
-            }
+            } else { suggest.style.display = 'none'; }
         };
-        document.addEventListener('click', (e) => { if (e.target !== input) suggest.style.display = 'none'; });
+        
+        // Handle focus loss
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !suggest.contains(e.target)) {
+                suggest.style.display = 'none';
+            }
+        });
     },
 
     selectVendor: async function(coaId) {
         const v = this.vendors.find(x => x.id == coaId || x.coa_list_id == coaId);
         if (v) {
-            document.getElementById('vendor_code').value = v.code;
-            document.getElementById('vendor_name').value = v.name;
+            document.getElementById('vendor_code').value = v.code || '';
+            document.getElementById('vendor_name').value = v.name || '';
             document.getElementById('vendor_address').value = v.address || '';
-            document.getElementById('vendor_tel').value = v.telephone || '';
+            document.getElementById('vendor_tel').value = v.telephone || v.mobile || '';
             document.getElementById('vendor_gst').value = v.st_reg_no || '';
             document.getElementById('vendor_ntn').value = v.ntn_cnic || '';
             this.selectedVendorCoaId = v.id;
             
+            // Load Balance
+            const balEl = document.getElementById('vendor_balance');
+            if (balEl) balEl.value = '...';
+            
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const res = await fetch(`api/maintain.php?action=get_coa_balance&coa_id=${coaId}&fy_id=${session.fy_id || 0}`);
+                const res = await fetch(`api/maintain.php?action=get_coa_balance&coa_id=${v.id}&fy_id=${session.fy_id || 0}`);
                 const bal = await res.json();
-                const balEl = document.getElementById('vendor_balance');
                 if (balEl) balEl.value = parseFloat(bal.balance || 0).toFixed(2);
-            } catch(e) { console.error("Balance fetch error:", e); }
+            } catch(e) { 
+                console.error("Balance fetch error:", e); 
+                if (balEl) balEl.value = '0.00';
+            }
         }
         document.getElementById('vendor_suggest').style.display = 'none';
         document.getElementById('pr_date').focus();
@@ -176,36 +190,40 @@ window.PRModule = {
         const codeInput = tr.querySelector('.item-code-search');
         const suggest = tr.querySelector('.grid-suggest');
         
-        codeInput.addEventListener('input', (e) => {
+        codeInput.oninput = (e) => {
             const val = e.target.value.toLowerCase().trim();
-            if (!val) { suggest.style.display = 'none'; } 
-            else {
-                const searchWords = val.split(/\s+/);
-                const matches = this.inventory.filter(i => {
-                    const searchStr = `${i.code} ${i.name} ${i.unit || ''}`.toLowerCase();
-                    return searchWords.every(word => searchStr.includes(word));
-                }).slice(0, 15);
-                
-                if (matches.length > 0) {
-                    suggest.innerHTML = matches.map(i => `
-                        <div onclick="window.PRModule.selectGridItem(${idx}, ${i.coa_list_id})" 
-                             style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
-                             <b>${i.code}</b> - ${i.name} <small style="color:#64748b;">(${i.unit || 'Pcs'})</small>
-                        </div>
-                    `).join('');
-                    suggest.style.display = 'block';
-                    suggest.style.zIndex = '9999';
-                } else { suggest.style.display = 'none'; }
-            }
+            if (!val) { suggest.style.display = 'none'; return; }
+            
+            const matches = this.inventory.filter(i => {
+                const searchStr = `${i.code} ${i.name} ${i.unit || ''}`.toLowerCase();
+                return searchStr.includes(val);
+            }).slice(0, 15);
+            
+            if (matches.length > 0) {
+                suggest.innerHTML = matches.map(i => `
+                    <div onclick="window.PRModule.selectGridItem(${idx}, ${i.coa_list_id})" 
+                         style="padding:6px; border-bottom:1px solid #eee; cursor:pointer;">
+                         <div style="font-weight:700; color:#1e3a8a;">${i.code}</div>
+                         <div style="font-size:9px; color:#475569;">${i.name} <small>(${i.unit || 'Pcs'})</small></div>
+                    </div>
+                `).join('');
+                suggest.style.display = 'block';
+            } else { suggest.style.display = 'none'; }
+
             const tbody = document.getElementById('prGridBody');
             if (tr === tbody.lastElementChild && val !== '') { this.addRow(); }
-        });
+        };
 
         tr.querySelectorAll('input.num').forEach(input => {
             input.oninput = () => this.calculateRow(idx);
         });
 
-        document.addEventListener('click', (e) => { if (e.target !== codeInput) suggest.style.display = 'none'; });
+        // Hide suggest on click outside
+        document.addEventListener('click', (e) => {
+            if (!codeInput.contains(e.target) && !suggest.contains(e.target)) {
+                suggest.style.display = 'none';
+            }
+        });
     },
 
     selectGridItem: function(rowIndex, coaId) {
@@ -376,27 +394,38 @@ window.PRModule = {
         this.currentId = null;
         this.selectedVendorCoaId = null;
         
-        const inputs = ['pr_sn', 'pr_date', 'pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
+        const snField = document.getElementById('pr_sn');
+        if (snField) snField.value = '...';
+
+        const inputs = ['pr_date', 'pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
                        'pr_nature_dn', 'pr_payment_terms', 'pr_job_no', 'pr_employee_ref', 'pr_location',
                        'pr_remarks', 'pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance', 'vendor_code', 'vendor_name', 'vendor_address', 
                        'vendor_tel', 'vendor_gst', 'vendor_ntn', 'vendor_balance'];
+        
         inputs.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = (id === 'pr_carriage' || id === 'pr_net_total' || id === 'pr_received' || id === 'pr_balance') ? '0.00' : '';
+            if (el) el.value = (['pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance'].includes(id)) ? '0.00' : '';
         });
+        
         document.getElementById('pr_is_cancelled').checked = false;
         document.getElementById('prGridBody').innerHTML = '';
         for (let i = 0; i < 8; i++) { this.addRow(); }
 
         if (isNew) {
-            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-            const companyId = session.company_id || 1;
-            const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
-            const data = await res.json();
-            document.getElementById('pr_sn').value = data.next_sn;
-            document.getElementById('pr_date').value = new Date().toISOString().split('T')[0];
+            try {
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+                const companyId = session.company_id || 1;
+                const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
+                const data = await res.json();
+                if (snField) snField.value = data.next_sn || '1';
+                document.getElementById('pr_date').value = new Date().toISOString().split('T')[0];
+            } catch(e) {
+                console.error("Serial fetch error:", e);
+                if (snField) snField.value = '1';
+            }
         }
         this.calculateTotals();
+        document.getElementById('vendor_code').focus();
     },
 
     saveReturn: async function() {
