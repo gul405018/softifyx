@@ -10,21 +10,24 @@ window.PRModule = {
 
     init: async function() {
         console.log("PR Module: Initializing...");
-        // Pre-fill date immediately
+        
+        // Step 1: Immediately show the form with default serial
+        await this.resetForm(true);
+        
+        // Step 2: Set current date
         const dateEl = document.getElementById('pr_date');
         if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
         
-        await Promise.all([
-            this.loadVendors(),
-            this.loadInventory(),
-            this.loadEmployees(),
-            this.loadJobs(),
-            this.loadExpenseAccounts(),
-            this.loadLocations()
-        ]);
+        // Step 3: Load data in background without blocking init
+        this.loadVendors().catch(e => console.error("Load Vendors Error:", e));
+        this.loadInventory().catch(e => console.error("Load Inventory Error:", e));
+        this.loadEmployees().catch(e => console.error("Load Employees Error:", e));
+        this.loadJobs().catch(e => console.error("Load Jobs Error:", e));
+        this.loadExpenseAccounts().catch(e => console.error("Load Accounts Error:", e));
+        this.loadLocations().catch(e => console.error("Load Locations Error:", e));
+
         this.setupVendorSearch();
         this.setupKeyboardNav();
-        await this.resetForm(true);
     },
 
     loadVendors: async function() {
@@ -418,24 +421,23 @@ window.PRModule = {
         for (let i = 0; i < 8; i++) { this.addRow(); }
 
         if (isNew) {
+            const snField = document.getElementById('pr_sn');
+            if (snField) snField.value = '01'; // Default starting point
+
             try {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{"company_id":1}');
-                const companyId = session.company_id;
-                console.log("PR Module: Fetching serial for company:", companyId);
+                const companyId = session.company_id || 1;
                 
                 const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
                 const data = await res.json();
-                console.log("PR Module: Received serial data:", data);
                 
-                if (snField) {
-                    snField.value = data.next_sn || '1';
+                if (snField && data.next_sn) {
+                    // Format as 01, 02 etc if needed, or just the number
+                    snField.value = data.next_sn.toString().padStart(2, '0');
                 }
-                
-                const dateEl = document.getElementById('pr_date');
-                if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
             } catch(e) {
-                console.error("PR Module: Serial fetch error:", e);
-                if (snField) snField.value = '1';
+                console.error("PR Module: Serial fetch error, using default 01", e);
+                if (snField) snField.value = '01';
             }
         }
         
