@@ -222,49 +222,47 @@
         .pr-field-group {
             display: flex;
             align-items: stretch;
-            height: 22px;
-            margin-bottom: 2px;
+            height: 20px;
         }
         .pr-label {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
             color: #334155;
             display: flex;
             align-items: center;
             background: #f1f5f9;
-            padding: 0 6px;
+            padding: 0 4px;
             border: 1px solid #cbd5e0;
             white-space: nowrap;
         }
         .pr-input {
             border: 1px solid #cbd5e0;
             border-left: none;
-            padding: 0 6px;
+            padding: 0 4px;
             font-size: 10px;
             outline: none;
             background: #fff;
             height: 100%;
         }
-        .pr-input:focus { border-color: #3b82f6; z-index: 1; position: relative; background: #f0f9ff; }
+        .pr-input:focus { border-color: #3b82f6; z-index: 1; position: relative; background: #fff; }
         .pr-input[readonly] { background: #f8fafc; color: #475569; }
         .pr-input-inner { height: 100%; outline: none; padding: 0 4px; font-size: 10px; background: transparent; }
 
         .pr-tool-btn {
-            height: 24px;
-            padding: 0 12px;
-            font-size: 10px;
+            height: 22px;
+            padding: 0 8px;
+            font-size: 9px;
             font-weight: 600;
             border: 1px solid #cbd5e0;
-            border-radius: 4px;
+            border-radius: 2px;
             cursor: pointer;
             background: white;
             color: #1e3a8a;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
         }
-        .pr-tool-btn:hover { background: #f1f5f9; border-color: #94a3b8; transform: translateY(-1px); }
+        .pr-tool-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
         .pr-btn-add { color: #15803d; }
         .pr-btn-save { background: #1e3a8a !important; color: white !important; border-color: #1e3a8a !important; }
         .pr-btn-save:hover { background: #1e40af !important; }
@@ -272,37 +270,38 @@
         .pr-btn-delete { color: #991b1b; }
 
         .pr-nav-btn {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px solid #cbd5e0;
             background: white;
-            font-size: 8px;
+            font-size: 7px;
             cursor: pointer;
-            border-radius: 2px;
+            border-radius: 1px;
             color: #475569;
         }
-        .pr-nav-btn:hover { background: #e2e8f0; color: #1e3a8a; }
+        .pr-nav-btn:hover { background: #e2e8f0; }
 
-        #prGrid { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        #prGrid { border-collapse: collapse; }
         #prGrid th {
             background: #e2e8f0;
-            border: 1px solid #475569;
+            border: 1px solid #94a3b8;
             font-size: 9px;
             font-weight: 700;
-            color: #1e293b;
-            padding: 4px 2px;
+            color: #334155;
+            padding: 2px;
             text-transform: uppercase;
             text-align: center;
-            height: 28px;
+            height: 22px;
         }
         #prGrid td {
-            border: 1px solid #94a3b8;
+            border: 1px solid #cbd5e0;
             padding: 0;
-            height: 24px;
+            height: 20px;
             position: relative;
+            overflow: visible;
         }
         .grid-input {
             width: 100%;
@@ -310,9 +309,9 @@
             border: none;
             padding: 0 4px;
             font-size: 10px;
-            background: transparent;
             outline: none;
-            text-align: inherit;
+            background: transparent;
+            display: block;
         }
         .grid-input:focus { background: #f0f9ff; }
         .grid-input.num { text-align: right; }

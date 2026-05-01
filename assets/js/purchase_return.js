@@ -10,26 +10,16 @@ window.PRModule = {
 
     init: async function() {
         console.log("PR Module: Initializing...");
-        
-        // 1. Reset form immediately to show grid lines
-        this.resetForm(true);
-
-        // 2. Load data in background to prevent hanging
-        try {
-            await Promise.all([
-                this.loadVendors(),
-                this.loadInventory(),
-                this.loadEmployees(),
-                this.loadJobs(),
-                this.loadExpenseAccounts(),
-                this.loadLocations()
-            ]);
-            console.log("PR Module: Background data loaded successfully.");
-        } catch (err) {
-            console.error("PR Module: Error loading background data:", err);
-        }
-
+        await Promise.all([
+            this.loadVendors(),
+            this.loadInventory(),
+            this.loadEmployees(),
+            this.loadJobs(),
+            this.loadExpenseAccounts(),
+            this.loadLocations()
+        ]);
         this.setupVendorSearch();
+        this.resetForm(true);
         this.setupKeyboardNav();
     },
 
@@ -37,22 +27,8 @@ window.PRModule = {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
         try {
-            // Stage 1: Try VND
-            let res = await fetch(`api/maintain.php?action=get_vendors&sub_id=VND&company_id=${companyId}`);
+            const res = await fetch(`api/maintain.php?action=get_vendors&company_id=${companyId}`);
             this.vendors = await res.json();
-            
-            // Stage 2: Try SUP if empty
-            if (!this.vendors || this.vendors.length === 0) {
-                res = await fetch(`api/maintain.php?action=get_vendors&sub_id=SUP&company_id=${companyId}`);
-                this.vendors = await res.json();
-            }
-            
-            // Stage 3: Try generic if still empty
-            if (!this.vendors || this.vendors.length === 0) {
-                res = await fetch(`api/maintain.php?action=get_vendors&company_id=${companyId}`);
-                const backup = await res.json();
-                if (backup && backup.length > 0) this.vendors = backup;
-            }
             console.log("PR Module: Vendors loaded:", this.vendors.length);
         } catch (e) { console.error("PR Module: Load Vendors Error:", e); }
     },
@@ -154,7 +130,6 @@ window.PRModule = {
         const v = this.vendors.find(x => x.id == coaId || x.coa_list_id == coaId);
         if (v) {
             document.getElementById('vendor_code').value = v.code || '';
-            document.getElementById('vendor_code').dataset.coaId = v.id;
             document.getElementById('vendor_name').value = v.name || '';
             document.getElementById('vendor_address').value = v.address || '';
             document.getElementById('vendor_tel').value = v.telephone || v.mobile || '';
@@ -176,10 +151,8 @@ window.PRModule = {
                 if (balEl) balEl.value = '0.00';
             }
         }
-        const suggest = document.getElementById('vendor_suggest');
-        if (suggest) suggest.style.display = 'none';
-        const dateInput = document.getElementById('pr_date');
-        if (dateInput) dateInput.focus();
+        document.getElementById('vendor_suggest').style.display = 'none';
+        document.getElementById('pr_date').focus();
     },
 
     // --- GRID LOGIC ---
@@ -228,14 +201,13 @@ window.PRModule = {
             
             if (matches.length > 0) {
                 suggest.innerHTML = matches.map(i => `
-                    <div onclick="window.PRModule.selectGridItem(${idx}, ${i.id || i.coa_list_id})" 
+                    <div onclick="window.PRModule.selectGridItem(${idx}, ${i.coa_list_id})" 
                          style="padding:6px; border-bottom:1px solid #eee; cursor:pointer;">
                          <div style="font-weight:700; color:#1e3a8a;">${i.code}</div>
                          <div style="font-size:9px; color:#475569;">${i.name} <small>(${i.unit || 'Pcs'})</small></div>
                     </div>
                 `).join('');
                 suggest.style.display = 'block';
-                suggest.style.zIndex = '9999';
             } else { suggest.style.display = 'none'; }
 
             const tbody = document.getElementById('prGridBody');
@@ -254,8 +226,8 @@ window.PRModule = {
         });
     },
 
-    selectGridItem: function(rowIndex, itemId) {
-        const item = this.inventory.find(x => x.id == itemId || x.coa_list_id == itemId);
+    selectGridItem: function(rowIndex, coaId) {
+        const item = this.inventory.find(x => x.coa_list_id == coaId);
         const tr = document.querySelector(`#prGridBody tr[data-index="${rowIndex}"]`);
         if (item && tr) {
             tr.dataset.coaId = item.coa_list_id;
@@ -446,8 +418,7 @@ window.PRModule = {
                 const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
                 const data = await res.json();
                 if (snField) snField.value = data.next_sn || '1';
-                const dateEl = document.getElementById('pr_date');
-                if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+                document.getElementById('pr_date').value = new Date().toISOString().split('T')[0];
             } catch(e) {
                 console.error("Serial fetch error:", e);
                 if (snField) snField.value = '1';
