@@ -242,8 +242,9 @@ window.PRModule = {
             tr.querySelector('.tax-rate').value = (item.tax_rate && parseFloat(item.tax_rate) !== 0) ? item.tax_rate : '';
             this.calculateRow(rowIndex);
             
-            const nextInput = tr.querySelector('.pieces');
-            if (nextInput) nextInput.focus();
+            // Move focus to Pieces immediately after selection
+            const piecesInput = tr.querySelector('.pieces');
+            if (piecesInput) setTimeout(() => piecesInput.focus(), 50);
         }
         const suggest = tr.querySelector('.pr-suggest');
         if (suggest) suggest.style.display = 'none';
