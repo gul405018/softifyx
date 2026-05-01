@@ -348,9 +348,13 @@ window.PRModule = {
                             const firstEditable = nextTr.querySelector('input:not([readonly])');
                             if (firstEditable) firstEditable.focus();
                         } else {
-                            // If last row, move to carriage/freight
-                            const carriage = document.getElementById('pr_carriage');
-                            if (carriage) carriage.focus();
+                            // LAST ROW: Add new row dynamically then focus its first input
+                            this.addRow();
+                            setTimeout(() => {
+                                const newTr = document.getElementById('prGridBody').lastElementChild;
+                                const firstInput = newTr.querySelector('.item-code-search');
+                                if (firstInput) firstInput.focus();
+                            }, 10);
                         }
                     }
                 } 
@@ -482,8 +486,10 @@ window.PRModule = {
             });
             const result = await res.json();
             if (result.status === 'success') {
+                this.currentId = result.id; // Immediate Sync of DB ID
                 alert("Purchase Return saved successfully!");
-                this.resetForm(true);
+                // Optionally keep the form loaded instead of resetting
+                // this.resetForm(true); 
             } else { alert("Save Error: " + result.message); }
         } catch (e) { console.error("Save Return Error:", e); }
     },

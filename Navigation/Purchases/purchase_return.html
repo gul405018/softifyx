@@ -1,5 +1,5 @@
 <!-- Purchase Return Module -->
-<div id="purchaseReturnContainer" data-module="Purchase Return" style="width: 950px; height: 520px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+<div id="purchaseReturnContainer" data-module="Purchase Return" style="width: 1000px; height: 550px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
     
     <!-- Top Toolbar -->
     <div style="background: #e2e8f0; padding: 2px; display: flex; gap: 2px; border-bottom: 1px solid #cbd5e0; align-items: center; overflow-x: auto;">
@@ -32,7 +32,7 @@
                 <label class="pr-label">Serial No</label>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <button class="pr-nav-btn" onclick="window.PRModule.navigate('prev')"><<</button>
-                    <input type="text" id="pr_sn" class="pr-input" style="width: 60px; text-align: center; color: blue; font-weight: 700; font-size: 11px;" readonly>
+                    <input type="text" id="pr_sn" class="pr-input" style="width: 70px; text-align: center; color: #1e3a8a; font-weight: 800; font-size: 13px; background: #fffde7; border: 1.5px solid #fbc02d;" readonly>
                     <button class="pr-nav-btn" onclick="window.PRModule.navigate('next')">>></button>
                     <label style="margin-left: 10px; font-size: 9px; display: flex; align-items: center; gap: 3px; color: #475569;">
                         Cancel <input type="checkbox" id="pr_is_cancelled">
@@ -76,7 +76,7 @@
             </div>
 
             <!-- Right Side: Vendor Info -->
-            <div style="width: 360px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px; background: #f8fafc; position: relative;">
+            <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px; background: #f8fafc; position: relative; margin-right: 2px;">
                 <div style="position: absolute; top: -6px; left: 10px; background: #f8fafc; padding: 0 4px; font-size: 8px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">Vendor Info</div>
                 <div style="display: grid; grid-template-columns: 50px 1fr; gap: 2px;">
                     <label class="pr-label">Code</label>
@@ -90,18 +90,15 @@
                     </div>
 
                     <label class="pr-label">Name</label>
-                    <input type="text" id="vendor_name" class="pr-input" readonly>
-
+                    <input type="text" id="vendor_name" class="pr-input" style="width: 100%;" readonly>
                     <label class="pr-label">Address</label>
-                    <textarea id="vendor_address" class="pr-input" style="height: 24px; resize: none;" readonly></textarea>
-
+                    <textarea id="vendor_address" class="pr-input" style="height: 24px; resize: none; width: 100%;" readonly></textarea>
                     <label class="pr-label">Tel</label>
-                    <input type="text" id="vendor_tel" class="pr-input" readonly>
-
+                    <input type="text" id="vendor_tel" class="pr-input" style="width: 100%;" readonly>
                     <label class="pr-label">GST/NTN</label>
-                    <div style="display: flex; gap: 3px;">
-                        <input type="text" id="vendor_gst" class="pr-input" placeholder="GST" readonly>
-                        <input type="text" id="vendor_ntn" class="pr-input" placeholder="NTN" readonly style="width: 75px;">
+                    <div style="display: flex; gap: 3px; width: 100%;">
+                        <input type="text" id="vendor_gst" class="pr-input" placeholder="GST" readonly style="flex: 1;">
+                        <input type="text" id="vendor_ntn" class="pr-input" placeholder="NTN" readonly style="width: 120px;">
                     </div>
                 </div>
             </div>
@@ -114,18 +111,18 @@
                     <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
                         <tr>
                             <th style="width: 25px; border: 1px solid #cbd5e0; background: #e2e8f0;"></th>
-                            <th style="width: 85px; border: 1px solid #cbd5e0;">Item Code</th>
-                            <th style="width: 170px; border: 1px solid #cbd5e0;">Description</th>
-                            <th style="width: 50px; border: 1px solid #cbd5e0;">Pieces</th>
-                            <th style="width: 60px; border: 1px solid #cbd5e0;">Quantity</th>
-                            <th style="width: 45px; border: 1px solid #cbd5e0;">Unit</th>
-                            <th style="width: 70px; border: 1px solid #cbd5e0;">Rate</th>
-                            <th style="width: 80px; border: 1px solid #cbd5e0;">Val Excl</th>
-                            <th style="width: 40px; border: 1px solid #cbd5e0;">Tax%</th>
-                            <th style="width: 75px; border: 1px solid #cbd5e0;">Tax Amt</th>
-                            <th style="width: 40px; border: 1px solid #cbd5e0;">Frth%</th>
-                            <th style="width: 75px; border: 1px solid #cbd5e0;">Frth Amt</th>
-                            <th style="width: 80px; border: 1px solid #cbd5e0;">Val Incl</th>
+                            <th style="width: 100px; border: 1px solid #cbd5e0; text-align: center;">Item Code</th>
+                            <th style="width: 250px; border: 1px solid #cbd5e0; text-align: center;">Description</th>
+                            <th style="width: 60px; border: 1px solid #cbd5e0; text-align: center;">Pieces</th>
+                            <th style="width: 70px; border: 1px solid #cbd5e0; text-align: center;">Quantity</th>
+                            <th style="width: 55px; border: 1px solid #cbd5e0; text-align: center;">Unit</th>
+                            <th style="width: 80px; border: 1px solid #cbd5e0; text-align: center;">Rate</th>
+                            <th style="width: 90px; border: 1px solid #cbd5e0; text-align: center;">Val Excl</th>
+                            <th style="width: 50px; border: 1px solid #cbd5e0; text-align: center;">Tax%</th>
+                            <th style="width: 85px; border: 1px solid #cbd5e0; text-align: center;">Tax Amt</th>
+                            <th style="width: 50px; border: 1px solid #cbd5e0; text-align: center;">Frth%</th>
+                            <th style="width: 85px; border: 1px solid #cbd5e0; text-align: center;">Frth Amt</th>
+                            <th style="width: 90px; border: 1px solid #cbd5e0; text-align: center;">Val Incl</th>
                         </tr>
                     </thead>
                     <tbody id="prGridBody">
