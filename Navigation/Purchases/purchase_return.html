@@ -1,0 +1,227 @@
+<!-- Purchase Return Module -->
+<div id="purchaseReturnContainer" data-module="Purchase Return" style="width: 950px; height: 520px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+    
+    <!-- Top Toolbar -->
+    <div style="background: #e2e8f0; padding: 2px; display: flex; gap: 2px; border-bottom: 1px solid #cbd5e0; align-items: center; overflow-x: auto;">
+        <button class="pr-tool-btn pr-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/vendors.html', 'fa-user-tie', 'Vendors/Suppliers', window.initVendorsView, 'Vendors', true)">New Vendor</button>
+        <button class="pr-tool-btn pr-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-boxes', 'Chart Of Inventory', window.initChartOfInventoryView, 'Chart of Inventory', true)">New Item</button>
+        
+        <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 1px;"></div>
+        
+        <button class="pr-tool-btn pr-btn-add" onclick="window.PRModule.resetForm(true)">Add</button>
+        <button class="pr-tool-btn pr-btn-save" onclick="window.PRModule.saveReturn()">Save (Ctrl+S)</button>
+        <button class="pr-tool-btn pr-btn-cancel" onclick="window.PRModule.resetForm()">Cancel</button>
+        <button class="pr-tool-btn pr-btn-delete" onclick="window.PRModule.deleteReturn()">Delete</button>
+        
+        <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 1px;"></div>
+        
+        <button class="pr-tool-btn" style="background: #f8fafc; color:#1e293b;">Search List</button>
+        <button class="pr-tool-btn" style="background: #f8fafc; color:#1e293b;">History</button>
+        
+        <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 1px;"></div>
+        
+        <button class="pr-tool-btn pr-btn-info" onclick="window.PRModule.navigate('next')">Retrieve Last</button>
+        <button class="pr-tool-btn pr-btn-save" onclick="window.PRModule.printReturn()">Print</button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 6px; background: white; overflow: hidden;">
+        
+        <!-- Header Info Rows -->
+        <div style="display: flex; gap: 10px;">
+            <!-- Left Side: Return Details -->
+            <div style="flex: 1; display: grid; grid-template-columns: 100px 1fr 100px 1fr; gap: 4px; align-content: start;">
+                <label class="pr-label">Serial No</label>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button class="pr-nav-btn" onclick="window.PRModule.navigate('prev')"><<</button>
+                    <input type="text" id="pr_sn" class="pr-input" style="width: 50px; text-align: center; color: blue; font-weight: 700; font-size: 11px;" readonly>
+                    <button class="pr-nav-btn" onclick="window.PRModule.navigate('next')">>></button>
+                </div>
+                <label class="pr-label">Return Date</label>
+                <input type="date" id="pr_date" class="pr-input">
+
+                <label class="pr-label">Purchase No</label>
+                <input type="text" id="pr_purchase_no" class="pr-input">
+                <label class="pr-label">Purch. Date</label>
+                <input type="date" id="pr_purchase_date" class="pr-input">
+
+                <label class="pr-label">Vend. Inv No</label>
+                <input type="text" id="pr_vendor_inv_no" class="pr-input">
+                <label class="pr-label">Inv. Date</label>
+                <input type="date" id="pr_vendor_inv_date" class="pr-input">
+
+                <label class="pr-label">Nature D.N.</label>
+                <select id="pr_nature_dn" class="pr-input">
+                    <option value="Damaged Goods">Damaged Goods</option>
+                    <option value="Shortage">Shortage</option>
+                    <option value="Price Difference">Price Difference</option>
+                    <option value="Wrong Item">Wrong Item</option>
+                    <option value="Other">Other</option>
+                </select>
+                <label class="pr-label">Pay. Terms</label>
+                <input type="text" id="pr_payment_terms" class="pr-input">
+
+                <label class="pr-label">Expense A/C</label>
+                <select id="pr_expense_account" class="pr-input">
+                    <option value="">Select Account</option>
+                </select>
+                <label class="pr-label">Job No</label>
+                <select id="pr_job_no" class="pr-input">
+                    <option value="">Select Job</option>
+                </select>
+
+                <label class="pr-label">Employee</label>
+                <select id="pr_employee_ref" class="pr-input" style="grid-column: span 1;">
+                    <option value="">Select Employee</option>
+                </select>
+                <label style="font-size: 9px; display: flex; align-items: center; gap: 3px; color: #475569;">
+                    Cancel <input type="checkbox" id="pr_is_cancelled">
+                </label>
+            </div>
+
+            <!-- Right Side: Vendor Info -->
+            <div style="width: 340px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px; background: #f8fafc; position: relative;">
+                <div style="position: absolute; top: -6px; left: 10px; background: #f8fafc; padding: 0 4px; font-size: 8px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">Vendor Info</div>
+                <div style="display: grid; grid-template-columns: 50px 1fr; gap: 2px;">
+                    <label class="pr-label">Code</label>
+                    <div style="display: flex; gap: 3px;">
+                        <div style="position: relative; flex: 1;">
+                            <input type="text" id="vendor_code" class="pr-input" placeholder="Search vendor...">
+                            <div id="vendor_suggest" class="pr-suggest"></div>
+                        </div>
+                        <label class="pr-label" style="min-width: 25px; text-align: right;">Bal.</label>
+                        <input type="text" id="vendor_balance" class="pr-input" style="width: 60px; text-align: right;" readonly>
+                    </div>
+
+                    <label class="pr-label">Name</label>
+                    <input type="text" id="vendor_name" class="pr-input" readonly>
+
+                    <label class="pr-label">Address</label>
+                    <textarea id="vendor_address" class="pr-input" style="height: 24px; resize: none;" readonly></textarea>
+
+                    <label class="pr-label">Tel</label>
+                    <input type="text" id="vendor_tel" class="pr-input" readonly>
+
+                    <label class="pr-label">GST/NTN</label>
+                    <div style="display: flex; gap: 3px;">
+                        <input type="text" id="vendor_gst" class="pr-input" placeholder="GST" readonly>
+                        <input type="text" id="vendor_ntn" class="pr-input" placeholder="NTN" readonly style="width: 75px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid Table Section -->
+        <div style="flex: 1; border: 1px solid #cbd5e0; overflow: hidden; display: flex; flex-direction: column; background: #fff; min-height: 180px; margin-top: 2px;">
+            <div style="flex: 1; overflow-y: auto;">
+                <table id="prGrid" style="width: 100%; border-collapse: collapse; background: white; table-layout: fixed;">
+                    <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 10;">
+                        <tr>
+                            <th style="width: 25px; border: 1px solid #cbd5e0; background: #e2e8f0;"></th>
+                            <th style="width: 85px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Item Code</th>
+                            <th style="width: 170px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Description</th>
+                            <th style="width: 50px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Pieces</th>
+                            <th style="width: 60px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Quantity</th>
+                            <th style="width: 45px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Unit</th>
+                            <th style="width: 70px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Rate</th>
+                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Val Excl</th>
+                            <th style="width: 40px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Tax%</th>
+                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Tax Amt</th>
+                            <th style="width: 40px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Frth%</th>
+                            <th style="width: 75px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Frth Amt</th>
+                            <th style="width: 80px; border: 1px solid #cbd5e0; font-size: 9px; padding: 2px; text-transform: uppercase;">Val Incl</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prGridBody">
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                    <tfoot style="position: sticky; bottom: 0; background: #e2e8f0; z-index: 10;">
+                        <tr>
+                            <td colspan="3" style="text-align: right; padding-right: 12px; font-weight: 700; font-size: 9px; color: #475569; border: 1px solid #cbd5e0;">TOTALS</td>
+                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_pieces" class="pr-total-input" value="0.00" readonly></td>
+                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_qty" class="pr-total-input" value="0.00" readonly></td>
+                            <td style="border: 1px solid #cbd5e0;"></td>
+                            <td style="border: 1px solid #cbd5e0;"></td>
+                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_excl" class="pr-total-input" value="0.00" readonly></td>
+                            <td style="border: 1px solid #cbd5e0;"></td>
+                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_tax" class="pr-total-input" value="0.00" readonly></td>
+                            <td style="border: 1px solid #cbd5e0;"></td>
+                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_further" class="pr-total-input" value="0.00" readonly></td>
+                            <td style="border: 1px solid #cbd5e0;"><input type="text" id="tot_incl" class="pr-total-input" value="0.00" readonly></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div style="display: flex; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 2px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <label class="pr-label" style="min-width: 60px;">Amt Words:</label>
+                    <span id="pr_amt_words" style="font-size: 8px; font-weight: 700; color: #1e3a8a;">Rupees zero only.</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 80px 1fr 80px 1fr; gap: 4px;">
+                    <label class="pr-label">Carriage/Frgt</label>
+                    <input type="text" id="pr_carriage" class="pr-input" style="text-align: right;" value="0.00">
+                    <label class="pr-label">Net Total</label>
+                    <input type="text" id="pr_net_total" class="pr-input" style="text-align: right; font-weight: 700; color: #b91c1c;" readonly>
+                </div>
+            </div>
+            <div style="width: 280px; display: flex; flex-direction: column; gap: 2px;">
+                <label class="pr-label">Remarks</label>
+                <textarea id="pr_remarks" class="pr-input" style="height: 35px; resize: none; font-size: 8px;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .pr-tool-btn {
+            background: #ffffff;
+            border: 1px solid #1F4E79;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 55px;
+            border-radius: 4px;
+            color: #1F4E79;
+            transition: all 0.2s;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        .pr-tool-btn:hover { background: #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .pr-btn-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
+        .pr-btn-add:hover { background: #218838 !important; }
+        .pr-btn-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
+        .pr-btn-save:hover { background: #153550 !important; }
+        .pr-btn-cancel { background: #6c757d !important; color: white !important; border-color: #6c757d !important; }
+        .pr-btn-cancel:hover { background: #5a6268 !important; }
+        .pr-btn-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
+        .pr-btn-delete:hover { background: #c82333 !important; }
+        .pr-btn-info { background: #17a2b8 !important; color: white !important; border-color: #17a2b8 !important; }
+        .pr-btn-info:hover { background: #138496 !important; }
+        
+        .pr-label { font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; display: flex; align-items: center; }
+        .pr-input { height: 22px; border: 1px solid #cbd5e0; border-radius: 3px; padding: 0 4px; font-size: 11px; outline: none; width: 100%; }
+        .pr-input:focus { border-color: #1F4E79; background: #fff; }
+        
+        .pr-nav-btn { height: 22px; padding: 0 4px; background: white; border: 1px solid #cbd5e0; cursor: pointer; font-size: 9px; font-weight: 800; border-radius: 2px; }
+        .pr-nav-btn:hover { background: #f1f5f9; }
+        
+        .pr-total-input { width: 100%; height: 20px; background: #fff; border: 1px solid #cbd5e0; text-align: right; font-weight: 700; font-size: 10px; color: #1e3a8a; padding: 0 4px; }
+        
+        .grid-input { border: none; width: 100%; height: 100%; padding: 2px 4px; font-size: 11px; outline: none; background: transparent; }
+        .grid-input:focus { background: #eff6ff; }
+        .grid-input.num { text-align: right; }
+        
+        .pr-suggest { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e0; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .pr-suggest div { padding: 5px 10px; cursor: pointer; font-size: 10px; border-bottom: 1px solid #f1f5f9; }
+        .pr-suggest div:hover { background: #f1f5f9; }
+        
+        #prGrid td { border: 1px solid #cbd5e0; padding: 0; position: relative; overflow: visible; }
+    </style>
+</div>
