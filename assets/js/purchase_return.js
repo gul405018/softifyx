@@ -163,22 +163,22 @@ window.PRModule = {
         tr.dataset.index = rowIndex;
         
         tr.innerHTML = `
-            <td style="text-align:center; font-size:10px; color:#64748b;">${rowIndex + 1}</td>
-            <td>
+            <td style="text-align:center; font-size:10px; color:#64748b; border: 1px solid #cbd5e0;">${rowIndex + 1}</td>
+            <td style="border: 1px solid #cbd5e0;">
                 <input type="text" class="grid-input item-code-search" placeholder="" value="${data.item_code || data.code || ''}">
-                <div class="pr-suggest grid-suggest"></div>
+                <div class="pr-suggest"></div>
             </td>
-            <td><input type="text" class="grid-input" value="${data.description || data.name || ''}" readonly></td>
-            <td><input type="text" class="grid-input num pieces" value="${(data.pieces && parseFloat(data.pieces) !== 0) ? data.pieces : ''}"></td>
-            <td><input type="text" class="grid-input num qty" value="${(data.quantity && parseFloat(data.quantity) !== 0) ? data.quantity : ''}"></td>
-            <td><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
-            <td><input type="text" class="grid-input num rate" value="${(data.rate && parseFloat(data.rate) !== 0) ? data.rate : ''}"></td>
-            <td><input type="text" class="grid-input num val-excl" value="${(data.value_excl_tax && parseFloat(data.value_excl_tax) !== 0) ? data.value_excl_tax : ''}" readonly></td>
-            <td><input type="text" class="grid-input num tax-rate" value="${(data.tax_rate && parseFloat(data.tax_rate) !== 0) ? data.tax_rate : ''}"></td>
-            <td><input type="text" class="grid-input num tax-amt" value="${(data.tax_amount && parseFloat(data.tax_amount) !== 0) ? data.tax_amount : ''}" readonly></td>
-            <td><input type="text" class="grid-input num frth-rate" value="${(data.further_tax_rate && parseFloat(data.further_tax_rate) !== 0) ? data.further_tax_rate : ''}"></td>
-            <td><input type="text" class="grid-input num frth-amt" value="${(data.further_tax_amount && parseFloat(data.further_tax_amount) !== 0) ? data.further_tax_amount : ''}" readonly></td>
-            <td><input type="text" class="grid-input num val-incl" value="${(data.value_incl_tax && parseFloat(data.value_incl_tax) !== 0) ? data.value_incl_tax : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.description || data.name || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num pieces" value="${(data.pieces && parseFloat(data.pieces) !== 0) ? data.pieces : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num qty" value="${(data.quantity && parseFloat(data.quantity) !== 0) ? data.quantity : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input" value="${data.unit || ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num rate" value="${(data.rate && parseFloat(data.rate) !== 0) ? data.rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-excl" value="${(data.value_excl_tax && parseFloat(data.value_excl_tax) !== 0) ? data.value_excl_tax : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-rate" value="${(data.tax_rate && parseFloat(data.tax_rate) !== 0) ? data.tax_rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num tax-amt" value="${(data.tax_amount && parseFloat(data.tax_amount) !== 0) ? data.tax_amount : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-rate" value="${(data.further_tax_rate && parseFloat(data.further_tax_rate) !== 0) ? data.further_tax_rate : ''}"></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num frth-amt" value="${(data.further_tax_amount && parseFloat(data.further_tax_amount) !== 0) ? data.further_tax_amount : ''}" readonly></td>
+            <td style="border: 1px solid #cbd5e0;"><input type="text" class="grid-input num val-incl" value="${(data.value_incl_tax && parseFloat(data.value_incl_tax) !== 0) ? data.value_incl_tax : ''}" readonly></td>
         `;
         tbody.appendChild(tr);
         if (data.item_coa_id) { tr.dataset.coaId = data.item_coa_id; }
@@ -188,7 +188,7 @@ window.PRModule = {
     setupGridEvents: function(tr) {
         const idx = tr.dataset.index;
         const codeInput = tr.querySelector('.item-code-search');
-        const suggest = tr.querySelector('.grid-suggest');
+        const suggest = tr.querySelector('.pr-suggest');
         
         codeInput.oninput = (e) => {
             const val = e.target.value.toLowerCase().trim();
@@ -241,7 +241,7 @@ window.PRModule = {
             const nextInput = tr.querySelector('.pieces');
             if (nextInput) nextInput.focus();
         }
-        const suggest = tr.querySelector('.grid-suggest');
+        const suggest = tr.querySelector('.pr-suggest');
         if (suggest) suggest.style.display = 'none';
     },
 
@@ -317,9 +317,6 @@ window.PRModule = {
         const parts = num.toFixed(2).split('.');
         const whole = parseInt(parts[0]);
         const decimal = parts[1];
-        
-        // Simple placeholder for conversion or use a utility if available
-        // For now, mirroring the format "Rupees zero and 00/100"
         return `${whole} and ${decimal}/100`;
     },
 
