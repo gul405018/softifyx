@@ -389,39 +389,56 @@ window.PRModule = {
     },
 
     resetForm: async function(isNew = false) {
+        console.log("PR Module: Resetting Form, isNew:", isNew);
         this.currentId = null;
         this.selectedVendorCoaId = null;
         
-        const snField = document.getElementById('pr_sn');
-        if (snField) snField.value = '...';
+        const snField = document.getElementById('pr_sn') || document.querySelector('[id="pr_sn"]');
+        if (snField) snField.value = isNew ? '...' : '';
 
+        // Reset all header fields
         const inputs = ['pr_date', 'pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
-                       'pr_nature_dn', 'pr_payment_terms', 'pr_job_no', 'pr_employee_ref', 'pr_location',
+                       'pr_payment_terms', 'pr_job_no', 'pr_employee_ref', 'pr_location',
                        'pr_remarks', 'pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance', 'vendor_code', 'vendor_name', 'vendor_address', 
                        'vendor_tel', 'vendor_gst', 'vendor_ntn', 'vendor_balance'];
         
         inputs.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = (['pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance'].includes(id)) ? '0.00' : '';
+            if (el) {
+                if (['pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance'].includes(id)) el.value = '0.00';
+                else el.value = '';
+            }
         });
         
         document.getElementById('pr_is_cancelled').checked = false;
+        document.getElementById('pr_nature_dn').value = 'Purchase Return (Reduces Inventory)';
+        
+        // Reset Grid
         document.getElementById('prGridBody').innerHTML = '';
         for (let i = 0; i < 8; i++) { this.addRow(); }
 
         if (isNew) {
             try {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
-                const companyId = session.company_id || 1;
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{"company_id":1}');
+                const companyId = session.company_id;
+                console.log("PR Module: Fetching serial for company:", companyId);
+                
                 const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
                 const data = await res.json();
-                if (snField) snField.value = data.next_sn || '1';
-                document.getElementById('pr_date').value = new Date().toISOString().split('T')[0];
+                console.log("PR Module: Received serial data:", data);
+                
+                if (snField) {
+                    snField.value = data.next_sn || '1';
+                }
+                
+                const dateEl = document.getElementById('pr_date');
+                if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
             } catch(e) {
-                console.error("Serial fetch error:", e);
+                console.error("PR Module: Serial fetch error:", e);
                 if (snField) snField.value = '1';
             }
         }
+        
         this.calculateTotals();
         setTimeout(() => {
             const vCode = document.getElementById('vendor_code');
