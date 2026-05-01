@@ -10,6 +10,10 @@ window.PRModule = {
 
     init: async function() {
         console.log("PR Module: Initializing...");
+        // Pre-fill date immediately
+        const dateEl = document.getElementById('pr_date');
+        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+        
         await Promise.all([
             this.loadVendors(),
             this.loadInventory(),
@@ -19,8 +23,8 @@ window.PRModule = {
             this.loadLocations()
         ]);
         this.setupVendorSearch();
-        this.resetForm(true);
         this.setupKeyboardNav();
+        await this.resetForm(true);
     },
 
     loadVendors: async function() {
@@ -419,7 +423,10 @@ window.PRModule = {
             }
         }
         this.calculateTotals();
-        document.getElementById('vendor_code').focus();
+        setTimeout(() => {
+            const vCode = document.getElementById('vendor_code');
+            if (vCode) vCode.focus();
+        }, 150);
     },
 
     saveReturn: async function() {
@@ -549,4 +556,13 @@ window.PRModule = {
         if (!this.currentId) { alert("Please save or load a record first."); return; }
         window.print(); // Simple print for now
     }
+// Global entry point for ERP modular popup system
+window.initPurchaseReturnModule = function() {
+    console.log("PR Module: Global Init called");
+    if (window.PRModule) window.PRModule.init();
 };
+
+// Also try to init immediately if container exists (for direct testing)
+if (document.getElementById('purchaseReturnContainer')) {
+    window.PRModule.init();
+}
