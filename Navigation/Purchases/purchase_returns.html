@@ -1,198 +1,241 @@
 <!-- Purchase Return / Debit Notes Module -->
-<div id="purchaseReturnContainer" data-module="Purchase Return/Debit Notes" style="width: 920px; height: 600px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-y: auto; overflow-x: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+<div id="purchaseReturnContainer" data-module="Purchase Return/Debit Notes" style="width: 950px; height: 600px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-y: auto; overflow-x: hidden; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
     
     <!-- Top Toolbar -->
-    <div style="background: #e2e8f0; padding: 2px; display: flex; gap: 2px; border-bottom: 1px solid #cbd5e0; align-items: center; overflow-x: auto;">
-        <button class="po-tool-btn po-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/vendors.html', 'fa-user-tie', 'Vendors/Suppliers', window.initVendorsView, 'Vendors', true)">New Vendor</button>
-        <button class="po-tool-btn po-btn-info" onclick="openSecondaryModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-boxes', 'Chart Of Inventory', window.initChartOfInventoryView, 'Chart of Inventory', true)">New Item</button>
+    <div style="background: #e2e8f0; padding: 2px; display: flex; gap: 2px; border-bottom: 1px solid #cbd5e0; align-items: center;">
+        <div style="font-weight: bold; font-style: italic; color: #4a5568; margin-right: auto; padding-left: 10px; font-size: 16px; letter-spacing: 1px;">PURCHASE RETURNS / DEBIT NOTES</div>
         
-        <div style="width: 1px; height: 16px; background: #cbd5e0; margin: 0 1px;"></div>
-        
-        <button class="po-tool-btn po-btn-add" onclick="window.PRModule.resetForm(true)">Add</button>
-        <button class="po-tool-btn po-btn-save" onclick="window.PRModule.save()">Save (Ctrl+S)</button>
-        <button class="po-tool-btn po-btn-cancel" onclick="window.PRModule.resetForm()">Cancel</button>
-        <button class="po-tool-btn po-btn-delete" onclick="window.PRModule.deleteRecord()">Delete</button>
-        <button class="po-tool-btn po-btn-info">Post</button>
-        <button class="po-tool-btn po-btn-info">Find</button>
-        <button class="po-tool-btn po-btn-info" onclick="window.PRModule.loadLastSaved()">Retrieve Last Saved</button>
-        <button class="po-tool-btn po-btn-save" onclick="window.PRModule.print()">Print</button>
-        <button class="po-tool-btn po-btn-info">Voucher</button>
+        <button class="po-toolbar-btn" onclick="openModularPopup('Navigation/Maintain/vendors.html', 'fa-user-plus', 'Vendors/Suppliers', null, 'Vendors/Suppliers', true)">
+            <i class="fas fa-user-plus" style="color: #48bb78;"></i><br>New Vendor
+        </button>
+        <button class="po-toolbar-btn" onclick="openModularPopup('Navigation/Maintain/chart_of_inventory.html', 'fa-box-open', 'Chart Of Inventory', null, 'Chart Of Inventory', true)">
+            <i class="fas fa-box-open" style="color: #ecc94b;"></i><br>New Item
+        </button>
+        <div style="width: 1px; background: #cbd5e0; height: 30px; margin: 0 5px;"></div>
+        <button class="po-toolbar-btn" onclick="PRModule.resetForm()">
+            <i class="fas fa-plus" style="color: #4299e1;"></i><br>Add
+        </button>
+        <button class="po-toolbar-btn" onclick="PRModule.save()">
+            <i class="fas fa-check" style="color: #48bb78;"></i><br>Save (Ctrl+S)
+        </button>
+        <button class="po-toolbar-btn" onclick="PRModule.resetForm()">
+            <i class="fas fa-times" style="color: #f56565;"></i><br>Cancel
+        </button>
+        <button class="po-toolbar-btn" onclick="PRModule.deleteRecord()">
+            <i class="fas fa-trash" style="color: #e53e3e;"></i><br>Delete
+        </button>
+        <button class="po-toolbar-btn">
+            <i class="fas fa-upload" style="color: #667eea;"></i><br>Post
+        </button>
+        <button class="po-toolbar-btn">
+            <i class="fas fa-search" style="color: #4a5568;"></i><br>Find
+        </button>
+        <button class="po-toolbar-btn" onclick="PRModule.loadLastSaved()">
+            <i class="fas fa-history" style="color: #a0aec0;"></i><br>Retrieve Last Saved
+        </button>
+        <button class="po-toolbar-btn" onclick="PRModule.print()">
+            <i class="fas fa-print" style="color: #718096;"></i><br>Print
+        </button>
+        <button class="po-toolbar-btn">
+            <i class="fas fa-receipt" style="color: #4a5568;"></i><br>Voucher
+        </button>
     </div>
 
-    <!-- Main Content Area -->
-    <div style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 6px; background: white; overflow: hidden;">
-        
-        <!-- Header Info Rows -->
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1; display: grid; grid-template-columns: 100px 100px 40px 100px; gap: 4px; align-content: start; align-items: center;">
-                <label class="po-label">Serial No</label>
-                <div style="display: flex; align-items: center; gap: 4px; grid-column: 2 / span 2;">
-                    <button class="po-nav-btn" onclick="window.PRModule.navigate(-1)">&lt;&lt;</button>
-                    <input type="text" id="pr_sn" class="po-input" style="width: 60px; text-align: center; color: blue; font-weight: 700; font-size: 11px;" readonly>
-                    <button class="po-nav-btn" onclick="window.PRModule.navigate(1)">&gt;&gt;</button>
+    <!-- Header Info -->
+    <div style="padding: 10px; display: grid; grid-template-columns: 1fr 330px; gap: 15px; background: #f8fafc;">
+        <!-- Left Side: Basic Info -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Serial No</label>
+                <div style="display: flex; align-items: center; background: #edf2f7; border-radius: 4px; padding: 2px;">
+                    <button class="nav-btn" onclick="PRModule.navigate(-1)">&laquo;</button>
+                    <input type="text" id="pr_sn" class="po-input" style="width: 100px; text-align: center; font-weight: bold; color: #2b6cb0;" readonly>
+                    <button class="nav-btn" onclick="PRModule.navigate(1)">&raquo;</button>
                 </div>
-                <label style="font-size: 9px; display: flex; align-items: center; justify-content: flex-end; gap: 3px; color: #475569;">
-                    Cancel <input type="checkbox" id="pr_is_cancelled">
-                </label>
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 5px;">
+                    <label class="po-label">Cancel</label>
+                    <input type="checkbox" id="pr_is_cancelled">
+                </div>
+            </div>
 
-                <label class="po-label">Date</label>
-                <input type="date" id="pr_date" class="po-input" style="grid-column: 2 / span 2;">
-                
-                <label class="po-label">Purchase No.</label>
-                <input type="text" id="pr_purchase_no" class="po-input" style="grid-column: 2;">
-                <label class="po-label" style="text-align: right;">Dated</label>
-                <input type="date" id="pr_purchase_date" class="po-input" style="grid-column: 4;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Date</label>
+                <input type="date" id="pr_date" class="po-input" style="width: 150px;">
+            </div>
 
-                <label class="po-label">Vendor Inv No.</label>
-                <input type="text" id="pr_vendor_inv_no" class="po-input" style="grid-column: 2;">
-                <label class="po-label" style="text-align: right;">Dated</label>
-                <input type="date" id="pr_vendor_inv_date" class="po-input" style="grid-column: 4;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Purchase No.</label>
+                <input type="text" id="pr_purchase_no" class="po-input" style="width: 150px;">
+                <label class="po-label">Dated</label>
+                <input type="date" id="pr_purchase_date" class="po-input" style="width: 150px;">
+            </div>
 
-                <label class="po-label">Nature of DN</label>
-                <select id="pr_nature" class="po-input" style="grid-column: 2 / span 3;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Vendor Inv No.</label>
+                <input type="text" id="pr_vendor_inv_no" class="po-input" style="width: 150px;">
+                <label class="po-label">Dated</label>
+                <input type="date" id="pr_vendor_inv_date" class="po-input" style="width: 150px;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Nature of DN</label>
+                <select id="pr_nature" class="po-input" style="flex: 1;">
                     <option value="Purchase Return (Reduces Inventory)">Purchase Return (Reduces Inventory)</option>
                     <option value="Price Adjustment">Price Adjustment</option>
                 </select>
-
-                <label class="po-label">Terms of Payment</label>
-                <input type="text" id="pr_pay_terms" class="po-input" style="grid-column: 2 / span 3;">
-
-                <label class="po-label">Expense Account</label>
-                <div style="display: flex; gap: 3px; grid-column: 2 / span 3; position: relative;">
-                    <input type="text" id="expense_coa_code" class="po-input" style="width: 80px;" placeholder="Code" value="50001003" readonly>
-                    <input type="text" id="expense_coa_name" class="po-input" style="flex: 1;" placeholder="Search expense..." value="Purchase Returns">
-                </div>
             </div>
 
-            <!-- Right Side: Vendor Info -->
-            <div style="width: 330px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px; background: #f8fafc; position: relative;">
-                <div style="position: absolute; top: -6px; left: 10px; background: #f8fafc; padding: 0 4px; font-size: 8px; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">Vendor Info</div>
-                <div style="display: grid; grid-template-columns: 50px 1fr; gap: 2px;">
-                    <label class="po-label">Code</label>
-                    <div style="display: flex; gap: 3px;">
-                        <div style="position: relative; flex: 1;">
-                            <input type="text" id="vendor_code" class="po-input" placeholder="Search vendor...">
-                            <div id="vendor_suggest" class="po-suggest"></div>
-                        </div>
-                        <label class="po-label" style="min-width: 25px; text-align: right;">Bal.</label>
-                        <span id="vendor_balance" style="color: #e53e3e; font-weight: bold; font-size: 11px; min-width: 60px; text-align: right;">0.00</span>
-                    </div>
-                    <label class="po-label">Name</label>
-                    <input type="text" id="vendor_name" class="po-input" readonly>
-                    <label class="po-label">Address</label>
-                    <textarea id="vendor_address" class="po-input" style="height: 24px; resize: none;" readonly></textarea>
-                    <label class="po-label">Tel</label>
-                    <input type="text" id="vendor_tel" class="po-input" readonly>
-                    <label class="po-label">GST/NTN</label>
-                    <div style="display: flex; gap: 3px;">
-                        <input type="text" id="vendor_gst" class="po-input" placeholder="GST" readonly>
-                        <label class="po-label" style="min-width: 20px; text-align: right;">NTN</label>
-                        <input type="text" id="vendor_ntn" class="po-input" placeholder="NTN" readonly style="width: 75px;">
-                    </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Terms of Payment</label>
+                <input type="text" id="pr_pay_terms" class="po-input" style="flex: 1;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 100px;">Expense Account</label>
+                <div style="display: flex; flex: 1; gap: 2px;">
+                    <input type="text" id="expense_coa_code" class="po-input" style="width: 80px;" readonly>
+                    <input type="text" id="expense_coa_name" class="po-input" style="flex: 1;" readonly>
                 </div>
             </div>
         </div>
 
-        <!-- Grid Section -->
-        <div style="flex: 1; border: 1px solid #cbd5e0; display: flex; flex-direction: column; background: #fff; min-height: 250px;">
-            <div class="grid-scroll-area">
-                <table id="prGrid">
-                    <thead>
-                        <tr>
-                            <th style="width: 25px;">#</th>
-                            <th style="width: 80px;">Item Code</th>
-                            <th style="width: 180px;">Description</th>
-                            <th style="width: 50px;">Pieces</th>
-                            <th style="width: 60px;">Quantity</th>
-                            <th style="width: 45px;">Unit</th>
-                            <th style="width: 70px;">Rate</th>
-                            <th style="width: 80px;">Val Excl Tax</th>
-                            <th style="width: 45px;">Tax %</th>
-                            <th style="width: 75px;">Tax Amt</th>
-                            <th style="width: 45px;">Frth %</th>
-                            <th style="width: 75px;">Frth Amt</th>
-                            <th style="width: 85px;">Val Incl Tax</th>
-                        </tr>
-                    </thead>
-                    <tbody id="prGridBody"></tbody>
-                </table>
+        <!-- Right Side: Vendor Info -->
+        <fieldset style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 8px;">
+            <legend style="font-size: 11px; font-weight: bold; color: #4a5568; padding: 0 5px;">Vendor</legend>
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 5px; align-items: center;">
+                <label class="po-label">Code</label>
+                <div style="display: flex; gap: 2px;">
+                    <input type="text" id="vendor_code" class="po-input" style="width: 80px;" placeholder="Search...">
+                    <div style="display: flex; align-items: center; gap: 5px; margin-left: auto;">
+                        <label class="po-label">Balance</label>
+                        <span id="vendor_balance" style="color: #e53e3e; font-weight: bold;">0.00</span>
+                    </div>
+                </div>
+                
+                <label class="po-label">Name</label>
+                <input type="text" id="vendor_name" class="po-input" placeholder="Search vendor by name...">
+                
+                <label class="po-label">Address</label>
+                <textarea id="vendor_address" class="po-input" style="height: 40px; resize: none;" readonly></textarea>
+                
+                <label class="po-label">Telephone</label>
+                <input type="text" id="vendor_tel" class="po-input" readonly>
+                
+                <label class="po-label">GST Reg No.</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="vendor_gst" class="po-input" style="flex: 1;" readonly>
+                    <label class="po-label">NTN</label>
+                    <input type="text" id="vendor_ntn" class="po-input" style="width: 80px;" readonly>
+                </div>
             </div>
+        </fieldset>
+    </div>
 
-            <!-- Totals Footer (Fixed at the bottom of the grid area) -->
-            <table style="width: 100%; border-collapse: collapse; background: #e2e8f0; table-layout: fixed; border: 1px solid #cbd5e0; border-top: none;">
-                <tfoot>
-                    <tr>
-                        <td colspan="3" style="width: 285px; text-align: right; padding-right: 12px; font-weight: 700; font-size: 10px; color: #475569; border: 1px solid #cbd5e0;">Totals</td>
-                        <td style="width: 50px; border: 1px solid #cbd5e0;"><input type="text" id="tot_pieces" class="po-total-input" value="0.00" readonly></td>
-                        <td style="width: 60px; border: 1px solid #cbd5e0;"><input type="text" id="tot_qty" class="po-total-input" value="0.00" readonly></td>
-                        <td style="width: 45px; border: 1px solid #cbd5e0;"></td>
-                        <td style="width: 70px; border: 1px solid #cbd5e0;"></td>
-                        <td style="width: 80px; border: 1px solid #cbd5e0;"><input type="text" id="tot_excl" class="po-total-input" value="0.00" readonly></td>
-                        <td style="width: 45px; border: 1px solid #cbd5e0;"></td>
-                        <td style="width: 75px; border: 1px solid #cbd5e0;"><input type="text" id="tot_stax" class="po-total-input" value="0.00" readonly></td>
-                        <td style="width: 45px; border: 1px solid #cbd5e0;"></td>
-                        <td style="width: 75px; border: 1px solid #cbd5e0;"><input type="text" id="tot_ftax" class="po-total-input" value="0.00" readonly></td>
-                        <td style="width: 85px; border: 1px solid #cbd5e0;"><input type="text" id="tot_incl" class="po-total-input" value="0.00" readonly></td>
-                    </tr>
-                </tfoot>
-            </table>
+    <!-- Grid Section -->
+    <div style="flex: 1; overflow-y: auto; border-top: 1px solid #cbd5e0; border-bottom: 1px solid #cbd5e0; background: #edf2f7;">
+        <table id="prGrid" style="width: 100%; border-collapse: collapse; background: white; table-layout: fixed;">
+            <thead>
+                <tr style="background: #e2e8f0; position: sticky; top: 0; z-index: 10;">
+                    <th style="width: 25px; border: 1px solid #a0aec0;">#</th>
+                    <th style="width: 80px; border: 1px solid #a0aec0;">Item Code</th>
+                    <th style="width: 180px; border: 1px solid #a0aec0;">Description</th>
+                    <th style="width: 50px; border: 1px solid #a0aec0;">Pieces</th>
+                    <th style="width: 60px; border: 1px solid #a0aec0;">Quantity</th>
+                    <th style="width: 45px; border: 1px solid #a0aec0;">Unit</th>
+                    <th style="width: 70px; border: 1px solid #a0aec0;">Rate</th>
+                    <th style="width: 80px; border: 1px solid #a0aec0;">Value Excl.</th>
+                    <th style="width: 45px; border: 1px solid #a0aec0;">STax%</th>
+                    <th style="width: 75px; border: 1px solid #a0aec0;">STax Amt</th>
+                    <th style="width: 45px; border: 1px solid #a0aec0;">Frth%</th>
+                    <th style="width: 75px; border: 1px solid #a0aec0;">Frth Amt</th>
+                    <th style="width: 85px; border: 1px solid #a0aec0;">Value Incl.</th>
+                </tr>
+            </thead>
+            <tbody id="prGridBody">
+                <!-- Rows added by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer Summary Row -->
+    <div style="background: #cbd5e0; padding: 2px 10px; display: grid; grid-template-columns: 285px 50px 60px 70px 80px 45px 75px 45px 75px 85px; gap: 0; align-items: center; text-align: center; font-weight: bold; font-size: 11px;">
+        <div style="text-align: right; padding-right: 10px; font-style: italic;">Totals</div>
+        <input type="text" id="tot_pieces" class="po-footer-input" readonly value="0.00">
+        <input type="text" id="tot_qty" class="po-footer-input" readonly value="0.00">
+        <div></div> <!-- rate gap -->
+        <input type="text" id="tot_excl" class="po-footer-input" readonly value="0.00">
+        <div></div> <!-- stax % gap -->
+        <input type="text" id="tot_stax" class="po-footer-input" readonly value="0.00">
+        <div></div> <!-- frth % gap -->
+        <input type="text" id="tot_ftax" class="po-footer-input" readonly value="0.00">
+        <input type="text" id="tot_incl" class="po-footer-input" readonly value="0.00">
+    </div>
+
+    <!-- Bottom Footer -->
+    <div style="padding: 10px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; background: #f8fafc;">
+        <!-- Left Side: Additional Fields -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 120px;">Inventory Location</label>
+                <select id="pr_location" class="po-input" style="flex: 1;">
+                    <option value="">Main Store</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 120px;">Job No & Description</label>
+                <select id="pr_job" class="po-input" style="flex: 1;">
+                    <option value="">Select Job...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="po-label" style="width: 120px;">Employee Reference</label>
+                <select id="pr_employee" class="po-input" style="flex: 1;">
+                    <option value="">Select Employee...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <label class="po-label" style="width: 120px; margin-top: 5px;">Remarks</label>
+                <textarea id="pr_remarks" class="po-input" style="flex: 1; height: 50px; resize: none;"></textarea>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <label class="po-label" style="width: 120px; font-style: italic;">Amount in Words:</label>
+                <div id="pr_amt_words" style="flex: 1; font-size: 11px; font-weight: bold; color: #4a5568;">Rupees zero and 00/100 only.</div>
+            </div>
         </div>
 
-        <!-- Footer Section -->
-        <div style="display: flex; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 4px;">
-            <div style="flex: 1; display: grid; grid-template-columns: 100px 1fr; gap: 4px;">
-                <label class="po-label">Inv. Location</label>
-                <select id="pr_location" class="po-input"><option value="1">Main Store</option></select>
-                <label class="po-label">Job No & Desc</label>
-                <select id="pr_job" class="po-input"><option value="">Select Job...</option></select>
-                <label class="po-label">Employee Ref</label>
-                <select id="pr_employee" class="po-input"><option value="">Select Employee...</option></select>
-                <label class="po-label">Remarks</label>
-                <textarea id="pr_remarks" class="po-input" style="height: 36px; resize: none;"></textarea>
-                <label class="po-label">Amount in Words</label>
-                <span id="pr_amt_words" style="font-size: 10px; font-weight: 700; color: #1e3a8a;">Rupees zero only.</span>
-            </div>
-            <div id="prTotalsBox" style="width: 250px; background: #e2e8f0; padding: 6px; border-radius: 4px; display: grid; grid-template-columns: 1fr 80px; gap: 4px; align-content: start;">
-                <label class="po-label">Freight</label>
-                <input type="text" id="pr_freight" class="po-input num" value="0.00" oninput="window.PRModule.calculateTotals()">
-                
-                <label class="po-label" style="color: blue;">Net Total</label>
-                <input type="text" id="pr_net_tot" class="po-input num" style="font-weight: 700;" value="0.00" readonly>
-                
-                <label class="po-label">Received</label>
-                <input type="text" id="pr_received" class="po-input num" value="0.00" oninput="window.PRModule.calculateTotals()">
-                
-                <label class="po-label">Balance</label>
-                <input type="text" id="pr_balance" class="po-input num" value="0.00" readonly>
-            </div>
+        <!-- Right Side: Totals -->
+        <div style="display: grid; grid-template-columns: 1fr 100px; gap: 5px; align-items: center;">
+            <label class="po-label" style="text-align: right; padding-right: 10px;">Carriage and Freight</label>
+            <input type="number" id="pr_freight" class="po-input" style="text-align: right;" value="0.00" oninput="PRModule.calculateTotals()">
+            
+            <label class="po-label" style="text-align: right; padding-right: 10px; font-weight: bold; color: #2b6cb0;">Net Total</label>
+            <input type="text" id="pr_net_tot" class="po-input" style="text-align: right; font-weight: bold; background: #ebf8ff; color: #2c5282;" readonly value="0.00">
+            
+            <label class="po-label" style="text-align: right; padding-right: 10px;">Amount Received</label>
+            <input type="number" id="pr_received" class="po-input" style="text-align: right;" value="0.00" oninput="PRModule.calculateTotals()">
+            
+            <label class="po-label" style="text-align: right; padding-right: 10px;">Balance</label>
+            <input type="text" id="pr_balance" class="po-input" style="text-align: right;" readonly value="0.00">
         </div>
     </div>
 
-    <style>
-        .po-tool-btn { background: #ffffff; border: 1px solid #1F4E79; padding: 2px 6px; font-size: 10px; font-weight: 600; cursor: pointer; min-width: 55px; border-radius: 4px; color: #1F4E79; transition: all 0.2s; height: 24px; display: inline-flex; align-items: center; justify-content: center; }
-        .po-btn-add { background: #28a745 !important; color: white !important; border-color: #28a745 !important; }
-        .po-btn-save { background: #1F4E79 !important; color: white !important; border-color: #1F4E79 !important; }
-        .po-btn-cancel { background: #6c757d !important; color: white !important; border-color: #6c757d !important; }
-        .po-btn-delete { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
-        .po-btn-info { background: #17a2b8 !important; color: white !important; border-color: #17a2b8 !important; }
-        .po-label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; white-space: nowrap; }
-        .po-input { height: 22px; border: 1px solid #cbd5e0; border-radius: 3px; padding: 0 6px; font-size: 11px; outline: none; width: 100%; }
-        .po-input:focus { border-color: #1F4E79; background: #fff; }
-        .po-nav-btn { height: 22px; padding: 0 6px; background: white; border: 1px solid #cbd5e0; cursor: pointer; font-size: 9px; font-weight: 800; border-radius: 2px; }
-        .po-total-input { width: 100%; height: 20px; background: #fff; border: 1px solid #cbd5e0; text-align: right; font-weight: 700; font-size: 10px; color: #1e3a8a; padding: 0 4px; }
-        .grid-input { border: none !important; width: 100%; height: 22px; padding: 2px 5px; font-size: 11px; outline: none; background: #fff !important; display: block; }
-        .grid-input:focus { background: #eff6ff !important; }
-        .grid-input.num { text-align: right; }
-        .po-suggest { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #cbd5e0; max-height: 200px; overflow-y: auto; z-index: 10000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .po-suggest div { padding: 8px; cursor: pointer; font-size: 10px; border-bottom: 1px solid #f1f5f9; }
-        .po-suggest div:hover { background: #f1f5f9; }
-        
-        #prGrid { width: 100%; border-collapse: collapse !important; border: 1px solid #cbd5e0 !important; table-layout: fixed; background: #fff; margin-bottom: 0; }
-        #prGrid th { border: 1px solid #cbd5e0 !important; background: #f1f5f9; padding: 4px; color: #475569; font-size: 9px; height: 28px; text-transform: uppercase; text-align: center; }
-        #prGrid td { border: 1px solid #cbd5e0 !important; padding: 0 !important; position: relative; background: #fff; height: 24px; }
-        #prGridBody tr { height: 24px !important; }
-        #prGridBody tr td { border: 1px solid #cbd5e0 !important; }
-        
-        .grid-scroll-area { height: 250px; overflow-y: scroll; border-bottom: 1px solid #cbd5e0; background: #fff; }
-    </style>
+    <!-- Hidden Inputs for logic -->
+    <input type="hidden" id="vendor_coa_id">
+    <input type="hidden" id="expense_coa_id">
 </div>
+
+<style>
+    .po-toolbar-btn {
+        background: #f7fafc; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 10px; min-width: 65px; line-height: 1.2; text-align: center;
+    }
+    .po-toolbar-btn:hover { background: #edf2f7; }
+    .po-toolbar-btn i { font-size: 16px; margin-bottom: 2px; }
+    .po-label { font-size: 11px; color: #4a5568; }
+    .po-input { border: 1px solid #cbd5e0; border-radius: 3px; padding: 3px 6px; font-size: 11px; }
+    .nav-btn { background: #fff; border: 1px solid #cbd5e0; border-radius: 3px; padding: 0 8px; cursor: pointer; color: #4a5568; font-weight: bold; height: 22px; }
+    .nav-btn:hover { background: #f7fafc; }
+    #prGrid th { padding: 4px; font-size: 10px; color: #2d3748; }
+    .po-grid-input { width: 100%; border: none; padding: 4px; font-size: 11px; outline: none; background: transparent; }
+    .po-grid-input:focus { background: #ebf8ff; }
+    .po-footer-input { border: none; background: transparent; font-size: 11px; font-weight: bold; text-align: center; width: 100%; outline: none; }
+</style>
