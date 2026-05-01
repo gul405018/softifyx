@@ -6304,6 +6304,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // --- FINAL EXPOSURES FOR MODULES ---
         if (window.PRModule) {
             console.log("SoftifyX: PRModule detected and bound to global scope.");
+            // Ensure PRModule.init is called when the module is opened via navigation
+            const originalInit = window.PRModule.init;
+            window.PRModule.init = async function() {
+                await originalInit.apply(window.PRModule);
+                console.log("PRModule initialized from global scope.");
+            };
         }
 
 
