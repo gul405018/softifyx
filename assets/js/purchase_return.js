@@ -11,14 +11,10 @@ window.PRModule = {
     init: async function() {
         console.log("PR Module: Initializing...");
         
-        // Step 1: Immediately show the form with default serial
-        await this.resetForm(true);
+        // Step 1: Immediately show the form and initialize data
+        this.resetForm(true);
         
-        // Step 2: Set current date
-        const dateEl = document.getElementById('pr_date');
-        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
-        
-        // Step 3: Load data in background without blocking init
+        // Step 2: Load data in background without blocking init
         this.loadVendors().catch(e => console.error("Load Vendors Error:", e));
         this.loadInventory().catch(e => console.error("Load Inventory Error:", e));
         this.loadEmployees().catch(e => console.error("Load Employees Error:", e));
@@ -400,7 +396,7 @@ window.PRModule = {
         if (snField) snField.value = isNew ? '...' : '';
 
         // Reset all header fields
-        const inputs = ['pr_date', 'pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
+        const inputs = ['pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
                        'pr_payment_terms', 'pr_job_no', 'pr_employee_ref', 'pr_location',
                        'pr_remarks', 'pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance', 'vendor_code', 'vendor_name', 'vendor_address', 
                        'vendor_tel', 'vendor_gst', 'vendor_ntn', 'vendor_balance'];
@@ -413,26 +409,32 @@ window.PRModule = {
             }
         });
         
-        document.getElementById('pr_is_cancelled').checked = false;
-        document.getElementById('pr_nature_dn').value = 'Purchase Return (Reduces Inventory)';
+        const dateEl = document.getElementById('pr_date');
+        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+        
+        const cancelCheck = document.getElementById('pr_is_cancelled');
+        if (cancelCheck) cancelCheck.checked = false;
+
+        const natureSelect = document.getElementById('pr_nature_dn');
+        if (natureSelect) natureSelect.value = 'Purchase Return (Reduces Inventory)';
         
         // Reset Grid
-        document.getElementById('prGridBody').innerHTML = '';
-        for (let i = 0; i < 8; i++) { this.addRow(); }
+        const gridBody = document.getElementById('prGridBody');
+        if (gridBody) {
+            gridBody.innerHTML = '';
+            for (let i = 0; i < 8; i++) { this.addRow(); }
+        }
 
         if (isNew) {
-            const snField = document.getElementById('pr_sn');
-            if (snField) snField.value = '1'; // Default starting point
-
             try {
-                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{"company_id":1}');
+                const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = session.company_id || 1;
                 
                 const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
                 const data = await res.json();
                 
-                if (snField && data.next_sn) {
-                    snField.value = data.next_sn; // Use raw number (1, 2, 3...)
+                if (snField) {
+                    snField.value = data.next_sn || 1;
                 }
             } catch(e) {
                 console.error("PR Module: Serial fetch error, using default 1", e);
@@ -579,8 +581,3 @@ window.initPurchaseReturnModule = function() {
     console.log("PR Module: Global Init called");
     if (window.PRModule) window.PRModule.init();
 };
-
-// Also try to init immediately if container exists (for direct testing)
-if (document.getElementById('purchaseReturnContainer')) {
-    window.PRModule.init();
-}
