@@ -396,12 +396,13 @@ window.PRModule = {
         this.currentId = null;
         this.selectedVendorCoaId = null;
         
+        // 1. SET SERIAL AND DATE IMMEDIATELY
         const snField = document.getElementById('pr_sn');
-        if (snField) {
-            snField.value = isNew ? '1' : ''; // Immediate default to 1 for new records
-        }
+        const dateEl = document.getElementById('pr_date');
+        if (snField) snField.value = isNew ? '1' : '';
+        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
 
-        // Reset all header fields
+        // 2. Reset all header fields
         const inputs = ['pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
                        'pr_payment_terms', 'pr_job_no', 'pr_employee_ref', 'pr_location',
                        'pr_remarks', 'pr_carriage', 'pr_net_total', 'pr_received', 'pr_balance', 'vendor_code', 'vendor_name', 'vendor_address', 
@@ -414,9 +415,6 @@ window.PRModule = {
                 else el.value = '';
             }
         });
-        
-        const dateEl = document.getElementById('pr_date');
-        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
         
         const cancelCheck = document.getElementById('pr_is_cancelled');
         if (cancelCheck) cancelCheck.checked = false;
