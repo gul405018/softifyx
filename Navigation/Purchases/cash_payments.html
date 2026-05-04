@@ -80,14 +80,13 @@
 
         <!-- Grid Section -->
         <div style="flex: 1; border: 1px solid #cbd5e0; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: #fff;">
-            <div id="grid_header_text" style="background: #1e3a8a; color: white; padding: 3px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+            <div style="background: #1e3a8a; color: white; padding: 3px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase;">
                 Detail of Purchase Invoices Against Which Amount has been Paid
             </div>
             <div style="flex: 1; overflow: hidden;">
                 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                     <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
-                        <!-- Vendor Mode Header -->
-                        <tr class="cp-grid-header" id="header_vendor">
+                        <tr class="cp-grid-header">
                             <th style="width: 20px;">#</th>
                             <th style="width: 70px;">Inv No.</th>
                             <th style="width: 80px;">Date</th>
@@ -99,14 +98,6 @@
                             <th style="width: 80px;">Adv Adj</th>
                             <th style="width: 80px;">Disc</th>
                             <th style="width: 90px;">Total</th>
-                        </tr>
-                        <!-- Petty Mode Header -->
-                        <tr class="cp-grid-header" id="header_petty" style="display: none;">
-                            <th style="width: 30px;">#</th>
-                            <th style="width: 100px;">Acc Code</th>
-                            <th style="width: 200px;">Account Name</th>
-                            <th style="width: 1fr;">Description</th>
-                            <th style="width: 120px;">Amount</th>
                         </tr>
                     </thead>
                     <tbody id="cpGridBody"></tbody>
