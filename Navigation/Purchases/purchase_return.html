@@ -454,4 +454,41 @@
         .pr-suggest div { padding: 5px 10px; cursor: pointer; font-size: 10px; border-bottom: 1px solid #f1f5f9; }
         .pr-suggest div:hover { background: #f1f5f9; }
     </style>
+    <script>
+        // Directly handle the PRModule logic as a fail-safe
+        (function() {
+            console.log("PR Module: Fail-safe script initialized");
+            
+            const originalResetForm = window.PRModule ? window.PRModule.resetForm : null;
+            
+            window.PRModule = window.PRModule || {};
+            window.PRModule.resetForm = function(isAdd) {
+                console.log("PR Module: resetForm called, isAdd:", isAdd);
+                
+                // Call original if it exists to maintain other functionality (grid, etc)
+                if (typeof originalResetForm === 'function') {
+                    originalResetForm.call(window.PRModule, isAdd);
+                }
+
+                if (isAdd) {
+                    const snInput = document.getElementById("pr_sn");
+                    if (snInput) snInput.value = "...";
+
+                    // Fetch next serial using the exact path requested
+                    fetch('api/purchase-return/next-serial/')
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("API Response Success:", data);
+                        if (snInput) {
+                            snInput.value = data.nextSerial || 1;
+                        }
+                    })
+                    .catch(err => {
+                        console.error("API Error:", err);
+                        if (snInput) snInput.value = "1";
+                    });
+                }
+            };
+        })();
+    </script>
 </div>
