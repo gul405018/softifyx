@@ -1,5 +1,5 @@
 <!-- Cash Payments Module -->
-<div id="cashPaymentContainer" data-module="Cash Payments" style="width: 950px; height: 600px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden !important; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
+<div id="cashPaymentContainer" data-module="Cash Payments" style="width: 930px; height: 600px; display: flex; flex-direction: column; background: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden !important; border: 1px solid #cbd5e0; border-radius: 4px; position: relative;">
     
     <!-- Top Toolbar -->
     <div style="background: #e2e8f0; padding: 2px; display: flex; gap: 2px; border-bottom: 1px solid #cbd5e0; align-items: center; overflow-x: auto; white-space: nowrap;">
@@ -43,7 +43,7 @@
                 <select id="cp_employee_id" class="cp-input"></select>
             </div>
 
-            <div style="width: 200px; display: flex; flex-direction: column; gap: 6px; justify-content: center; padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+            <div style="width: 190px; display: flex; flex-direction: column; gap: 6px; justify-content: center; padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
                 <label style="display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; cursor: pointer; color: #1e3a8a;">
                     <input type="radio" name="cp_type" value="Vendor" checked onclick="window.CPModule.updatePaidToLabel('Vendor')"> Payment To Vendor
                 </label>
@@ -87,17 +87,17 @@
                 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                     <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
                         <tr class="cp-grid-header">
-                            <th style="width: 25px;">#</th>
-                            <th style="width: 75px;">Inv No.</th>
-                            <th style="width: 85px;">Date</th>
+                            <th style="width: 20px;">#</th>
+                            <th style="width: 70px;">Inv No.</th>
+                            <th style="width: 80px;">Date</th>
                             <th style="width: 90px;">Paid</th>
-                            <th style="width: 45px;">WHT%</th>
-                            <th style="width: 85px;">WHT Amt</th>
-                            <th style="width: 45px;">GST%</th>
-                            <th style="width: 85px;">GST Amt</th>
-                            <th style="width: 85px;">Adv Adj</th>
-                            <th style="width: 85px;">Disc</th>
-                            <th style="width: 100px;">Total</th>
+                            <th style="width: 40px;">WHT%</th>
+                            <th style="width: 80px;">WHT Amt</th>
+                            <th style="width: 40px;">GST%</th>
+                            <th style="width: 80px;">GST Amt</th>
+                            <th style="width: 80px;">Adv Adj</th>
+                            <th style="width: 80px;">Disc</th>
+                            <th style="width: 90px;">Total</th>
                         </tr>
                     </thead>
                     <tbody id="cpGridBody"></tbody>
@@ -106,17 +106,17 @@
             
             <!-- Totals Footer -->
             <div style="background: #e2e8f0; border-top: 1px solid #cbd5e0; padding: 4px;">
-                <div style="display: grid; grid-template-columns: 185px 90px 130px 130px 85px 85px 100px; gap: 2px;">
+                <div style="display: grid; grid-template-columns: 170px 90px 120px 120px 80px 80px 90px; gap: 2px;">
                     <div style="text-align: right; font-weight: 700; font-size: 10px; color: #1e3a8a; padding-right: 10px;">Prepayment / Advance</div>
                     <input type="text" id="cp_prepayment" class="cp-grid-total" value="0.00" style="height: 22px; font-size: 10px;">
                     <div colspan="4"></div>
                     <input type="text" id="cp_total_advance" class="cp-grid-total" value="0.00" readonly style="background: #f8fafc; height: 22px; font-size: 10px;">
                 </div>
-                <div style="display: grid; grid-template-columns: 185px 90px 130px 130px 85px 85px 100px; gap: 2px; margin-top: 2px;">
+                <div style="display: grid; grid-template-columns: 170px 90px 120px 120px 80px 80px 90px; gap: 2px; margin-top: 2px;">
                     <div style="text-align: right; font-weight: 700; font-size: 10px; color: #1e3a8a; padding-right: 10px;">Totals</div>
                     <input type="text" id="cp_total_paid" class="cp-grid-total" value="0.00" readonly style="height: 22px; font-size: 10px;">
-                    <input type="text" id="cp_total_wht" class="cp-grid-total" value="0.00" readonly style="width: 85px; margin-left: auto; height: 22px; font-size: 10px;">
-                    <input type="text" id="cp_total_gst" class="cp-grid-total" value="0.00" readonly style="width: 85px; margin-left: auto; height: 22px; font-size: 10px;">
+                    <input type="text" id="cp_total_wht" class="cp-grid-total" value="0.00" readonly style="width: 80px; margin-left: auto; height: 22px; font-size: 10px;">
+                    <input type="text" id="cp_total_gst" class="cp-grid-total" value="0.00" readonly style="width: 80px; margin-left: auto; height: 22px; font-size: 10px;">
                     <input type="text" id="cp_total_adj" class="cp-grid-total" value="0.00" readonly style="height: 22px; font-size: 10px;">
                     <input type="text" id="cp_total_disc" class="cp-grid-total" value="0.00" readonly style="height: 22px; font-size: 10px;">
                     <input type="text" id="cp_grand_total" class="cp-grid-total" value="0.00" readonly style="background: #1e3a8a; color: white; height: 22px; font-size: 10px;">
