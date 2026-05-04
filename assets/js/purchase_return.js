@@ -587,8 +587,10 @@ window.PRModule = {
 
     printReturn: function() {
         if (!this.currentId) { alert("Please save or load a record first."); return; }
-        window.print(); // Simple print for now
+        window.print();
     }
+};
+
 // Global entry point for ERP modular popup system
 window.initPurchaseReturnModule = function() {
     console.log("PR Module: Global Init called");
