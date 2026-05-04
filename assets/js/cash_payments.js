@@ -105,10 +105,25 @@ window.CPModule = {
     },
 
     updatePaidToLabel: function(type) {
+        const isVendor = type === 'Vendor';
         const lbl = document.getElementById('lbl_paid_to');
-        if (lbl) lbl.innerText = type === 'Vendor' ? 'Paid To Vendor' : 'Paid To (Petty)';
+        if (lbl) lbl.innerText = isVendor ? 'Paid To Vendor' : 'Paid To (Petty)';
+        
         const nameInput = document.getElementById('cp_paid_to_name');
-        if (nameInput) nameInput.placeholder = type === 'Vendor' ? 'Search Vendor...' : 'Search Petty Account...';
+        if (nameInput) nameInput.placeholder = isVendor ? 'Search Vendor...' : 'Search Petty Account...';
+
+        // Toggle Grid Headers
+        document.getElementById('header_vendor').style.display = isVendor ? 'table-row' : 'none';
+        document.getElementById('header_petty').style.display = isVendor ? 'none' : 'table-row';
+        document.getElementById('grid_header_text').innerText = isVendor 
+            ? 'Detail of Purchase Invoices Against Which Amount has been Paid'
+            : 'Detail of Petty Cash Expenses / Payments';
+
+        // Reset Grid
+        const gridBody = document.getElementById('cpGridBody');
+        gridBody.innerHTML = '';
+        for (let i = 0; i < 8; i++) { this.addRow(); }
+        this.calculateTotals();
     },
 
     resetForm: async function(isNew = false) {
@@ -124,12 +139,9 @@ window.CPModule = {
         });
 
         document.getElementById('cp_is_cancelled').checked = false;
-        document.querySelector('input[name="cp_type"][value="Vendor"]').checked = true;
+        const vendorRadio = document.querySelector('input[name="cp_type"][value="Vendor"]');
+        if (vendorRadio) vendorRadio.checked = true;
         this.updatePaidToLabel('Vendor');
-
-        const gridBody = document.getElementById('cpGridBody');
-        gridBody.innerHTML = '';
-        for (let i = 0; i < 8; i++) { this.addRow(); }
 
         if (isNew) {
             document.getElementById('cp_date').value = new Date().toISOString().split('T')[0];
@@ -147,62 +159,145 @@ window.CPModule = {
         const tbody = document.getElementById('cpGridBody');
         const idx = tbody.children.length;
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td style="text-align:center; font-size:10px; color:#64748b; border: 1px solid #cbd5e0;">${idx + 1}</td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input inv-no" value="${data.invoice_no || ''}"></td>
-            <td class="cp-grid-cell"><input type="date" class="cp-grid-input inv-date" value="${data.invoice_date || ''}"></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num paid-amt" value="${data.paid_amount || ''}"></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num wht-rate" value="${data.wht_rate || ''}"></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num wht-amt" value="${data.wht_amount || ''}" readonly></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num gst-rate" value="${data.gst_rate || ''}"></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num gst-amt" value="${data.gst_amount || ''}" readonly></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num adv-adj" value="${data.advance_adjusted || ''}"></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num disc-rcvd" value="${data.discount_received || ''}"></td>
-            <td class="cp-grid-cell"><input type="text" class="cp-grid-input num tot-debited" value="${data.total_debited || ''}" readonly></td>
-        `;
+        const isVendor = document.querySelector('input[name="cp_type"]:checked').value === 'Vendor';
+
+        if (isVendor) {
+            tr.innerHTML = `
+                <td style="text-align:center; font-size:10px; color:#64748b; border: 1px solid #cbd5e0;">${idx + 1}</td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input inv-no" value="${data.invoice_no || ''}"></td>
+                <td class="cp-grid-cell"><input type="date" class="cp-grid-input inv-date" value="${data.invoice_date || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num paid-amt" value="${data.paid_amount || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num wht-rate" value="${data.wht_rate || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num wht-amt" value="${data.wht_amount || ''}" readonly></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num gst-rate" value="${data.gst_rate || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num gst-amt" value="${data.gst_amount || ''}" readonly></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num adv-adj" value="${data.advance_adjusted || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num disc-rcvd" value="${data.discount_received || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num tot-debited" value="${data.total_debited || ''}" readonly></td>
+            `;
+        } else {
+            tr.innerHTML = `
+                <td style="text-align:center; font-size:10px; color:#64748b; border: 1px solid #cbd5e0;">${idx + 1}</td>
+                <td class="cp-grid-cell" style="position:relative;">
+                    <input type="text" class="cp-grid-input acc-code" value="${data.account_code || ''}">
+                    <div class="cp-suggest grid-suggest" style="width: 300px; display:none;"></div>
+                </td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input acc-name" value="${data.account_name || ''}" readonly></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input petty-desc" value="${data.description || ''}"></td>
+                <td class="cp-grid-cell"><input type="text" class="cp-grid-input num petty-amt" value="${data.amount || ''}"></td>
+                <input type="hidden" class="acc-id" value="${data.account_coa_id || ''}">
+            `;
+            this.setupGridSmartSearch(tr);
+        }
+
         tbody.appendChild(tr);
         tr.querySelectorAll('input.num').forEach(input => {
             input.oninput = () => this.calculateRow(tr);
         });
     },
 
+    setupGridSmartSearch: function(tr) {
+        const codeInput = tr.querySelector('.acc-code');
+        const suggest = tr.querySelector('.grid-suggest');
+        if (!codeInput || !suggest) return;
+
+        codeInput.oninput = async (e) => {
+            const val = e.target.value;
+            if (!val || val.length < 1) { suggest.style.display = 'none'; return; }
+            const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
+            try {
+                const res = await fetch(`api/cash_payments.php?action=search_parties&q=${val}&company_id=${session.company_id || 1}`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    suggest.innerHTML = data.map(item => `
+                        <div onclick="window.CPModule.selectGridAccount(this, ${item.id}, '${item.code}', '${item.name}')" 
+                             style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;">
+                             <div style="font-weight:700; color:#1e3a8a; font-size:11px;">${item.code}</div>
+                             <div style="font-size:10px; color:#475569;">${item.name}</div>
+                        </div>
+                    `).join('');
+                    suggest.style.display = 'block';
+                } else { suggest.style.display = 'none'; }
+            } catch (e) { console.error("Grid Search Error:", e); }
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!codeInput.contains(e.target) && !suggest.contains(e.target)) {
+                suggest.style.display = 'none';
+            }
+        });
+    },
+
+    selectGridAccount: function(el, id, code, name) {
+        const tr = el.closest('tr');
+        tr.querySelector('.acc-id').value = id;
+        tr.querySelector('.acc-code').value = code;
+        tr.querySelector('.acc-name').value = name;
+        tr.querySelector('.grid-suggest').style.display = 'none';
+    },
+
     calculateRow: function(tr) {
-        const paid = parseFloat(tr.querySelector('.paid-amt').value) || 0;
-        const whtR = parseFloat(tr.querySelector('.wht-rate').value) || 0;
-        const gstR = parseFloat(tr.querySelector('.gst-rate').value) || 0;
-        const adj = parseFloat(tr.querySelector('.adv-adj').value) || 0;
-        const disc = parseFloat(tr.querySelector('.disc-rcvd').value) || 0;
+        const isVendor = document.querySelector('input[name="cp_type"]:checked').value === 'Vendor';
+        if (isVendor) {
+            const paid = parseFloat(tr.querySelector('.paid-amt').value) || 0;
+            const whtR = parseFloat(tr.querySelector('.wht-rate').value) || 0;
+            const gstR = parseFloat(tr.querySelector('.gst-rate').value) || 0;
+            const adj = parseFloat(tr.querySelector('.adv-adj').value) || 0;
+            const disc = parseFloat(tr.querySelector('.disc-rcvd').value) || 0;
 
-        const whtA = (paid * whtR) / 100;
-        const gstA = (paid * gstR) / 100;
-        const total = paid + whtA + gstA + adj - disc;
+            const whtA = (paid * whtR) / 100;
+            const gstA = (paid * gstR) / 100;
+            const total = paid + whtA + gstA + adj - disc;
 
-        tr.querySelector('.wht-amt').value = whtA > 0 ? whtA.toFixed(2) : '';
-        tr.querySelector('.gst-amt').value = gstA > 0 ? gstA.toFixed(2) : '';
-        tr.querySelector('.tot-debited').value = total > 0 ? total.toFixed(2) : '';
+            tr.querySelector('.wht-amt').value = whtA > 0 ? whtA.toFixed(2) : '';
+            tr.querySelector('.gst-amt').value = gstA > 0 ? gstA.toFixed(2) : '';
+            tr.querySelector('.tot-debited').value = total > 0 ? total.toFixed(2) : '';
+        }
         
         this.calculateTotals();
     },
 
     calculateTotals: function() {
+        const isVendor = document.querySelector('input[name="cp_type"]:checked').value === 'Vendor';
         let tPaid = 0, tWht = 0, tGst = 0, tAdj = 0, tDisc = 0, tTotal = 0;
+        
         document.querySelectorAll('#cpGridBody tr').forEach(tr => {
-            tPaid += parseFloat(tr.querySelector('.paid-amt').value) || 0;
-            tWht += parseFloat(tr.querySelector('.wht-amt').value) || 0;
-            tGst += parseFloat(tr.querySelector('.gst-amt').value) || 0;
-            tAdj += parseFloat(tr.querySelector('.adv-adj').value) || 0;
-            tDisc += parseFloat(tr.querySelector('.disc-rcvd').value) || 0;
-            tTotal += parseFloat(tr.querySelector('.tot-debited').value) || 0;
+            if (isVendor) {
+                tPaid += parseFloat(tr.querySelector('.paid-amt').value) || 0;
+                tWht += parseFloat(tr.querySelector('.wht-amt').value) || 0;
+                tGst += parseFloat(tr.querySelector('.gst-amt').value) || 0;
+                tAdj += parseFloat(tr.querySelector('.adv-adj').value) || 0;
+                tDisc += parseFloat(tr.querySelector('.disc-rcvd').value) || 0;
+                tTotal += parseFloat(tr.querySelector('.tot-debited').value) || 0;
+            } else {
+                const amt = parseFloat(tr.querySelector('.petty-amt').value) || 0;
+                tTotal += amt;
+            }
         });
 
         const prepayment = parseFloat(document.getElementById('cp_prepayment').value) || 0;
         
-        document.getElementById('cp_total_advance').value = prepayment.toFixed(2);
-        document.getElementById('cp_total_paid').value = tPaid.toFixed(2);
-        document.getElementById('cp_total_wht').value = tWht.toFixed(2);
-        document.getElementById('cp_total_gst').value = tGst.toFixed(2);
-        document.getElementById('cp_total_adj').value = tAdj.toFixed(2);
-        document.getElementById('cp_total_disc').value = tDisc.toFixed(2);
+        if (isVendor) {
+            document.getElementById('cp_total_advance').value = prepayment.toFixed(2);
+            document.getElementById('cp_total_paid').value = tPaid.toFixed(2);
+            document.getElementById('cp_total_wht').value = tWht.toFixed(2);
+            document.getElementById('cp_total_gst').value = tGst.toFixed(2);
+            document.getElementById('cp_total_adj').value = tAdj.toFixed(2);
+            document.getElementById('cp_total_disc').value = tDisc.toFixed(2);
+        } else {
+            // In Petty mode, some Vendor fields might be hidden or irrelevant, but we keep logic simple
+            document.getElementById('cp_total_advance').value = '0.00';
+            document.getElementById('cp_total_paid').value = '0.00';
+            document.getElementById('cp_total_wht').value = '0.00';
+            document.getElementById('cp_total_gst').value = '0.00';
+            document.getElementById('cp_total_adj').value = '0.00';
+            document.getElementById('cp_total_disc').value = '0.00';
+        }
+        
+        const grandTotal = tTotal + (isVendor ? prepayment : 0);
+        document.getElementById('cp_grand_total').value = grandTotal.toFixed(2);
+        document.getElementById('cp_amt_words').innerText = `Rupees ${this.numberToWords(grandTotal)} only.`;
+    },
         
         const grandTotal = tTotal + prepayment;
         document.getElementById('cp_grand_total').value = grandTotal.toFixed(2);
@@ -222,22 +317,35 @@ window.CPModule = {
             return;
         }
 
+        const isVendor = document.querySelector('input[name="cp_type"]:checked').value === 'Vendor';
         const items = [];
         document.querySelectorAll('#cpGridBody tr').forEach(tr => {
-            const paid = parseFloat(tr.querySelector('.paid-amt').value) || 0;
-            if (paid > 0) {
-                items.push({
-                    invoice_no: tr.querySelector('.inv-no').value,
-                    invoice_date: tr.querySelector('.inv-date').value,
-                    paid_amount: paid,
-                    wht_rate: tr.querySelector('.wht-rate').value,
-                    wht_amount: tr.querySelector('.wht-amt').value,
-                    gst_rate: tr.querySelector('.gst-rate').value,
-                    gst_amount: tr.querySelector('.gst-amt').value,
-                    advance_adjusted: tr.querySelector('.adv-adj').value,
-                    discount_received: tr.querySelector('.disc-rcvd').value,
-                    total_debited: tr.querySelector('.tot-debited').value
-                });
+            if (isVendor) {
+                const paid = parseFloat(tr.querySelector('.paid-amt').value) || 0;
+                if (paid > 0) {
+                    items.push({
+                        invoice_no: tr.querySelector('.inv-no').value,
+                        invoice_date: tr.querySelector('.inv-date').value,
+                        paid_amount: paid,
+                        wht_rate: tr.querySelector('.wht-rate').value,
+                        wht_amount: tr.querySelector('.wht-amt').value,
+                        gst_rate: tr.querySelector('.gst-rate').value,
+                        gst_amount: tr.querySelector('.gst-amt').value,
+                        advance_adjusted: tr.querySelector('.adv-adj').value,
+                        discount_received: tr.querySelector('.disc-rcvd').value,
+                        total_debited: tr.querySelector('.tot-debited').value
+                    });
+                }
+            } else {
+                const amt = parseFloat(tr.querySelector('.petty-amt').value) || 0;
+                if (amt > 0) {
+                    items.push({
+                        account_coa_id: tr.querySelector('.acc-id').value,
+                        description: tr.querySelector('.petty-desc').value,
+                        paid_amount: amt,
+                        total_debited: amt
+                    });
+                }
             }
         });
 
@@ -297,7 +405,9 @@ window.CPModule = {
         document.getElementById('cp_job_id').value = data.job_id;
         document.getElementById('cp_employee_id').value = data.employee_id;
         document.getElementById('cp_is_cancelled').checked = parseInt(data.is_cancelled) === 1;
-        document.querySelector(`input[name="cp_type"][value="${data.payment_type}"]`).checked = true;
+        
+        const typeRadio = document.querySelector(`input[name="cp_type"][value="${data.payment_type}"]`);
+        if (typeRadio) typeRadio.checked = true;
         this.updatePaidToLabel(data.payment_type);
 
         this.selectedCashCoaId = data.cash_account_coa_id;
@@ -315,7 +425,13 @@ window.CPModule = {
 
         const tbody = document.getElementById('cpGridBody');
         tbody.innerHTML = '';
-        data.items.forEach(item => this.addRow(item));
+        data.items.forEach(item => {
+            // Transform backend item to addRow format
+            this.addRow({
+                ...item,
+                amount: item.paid_amount // Petty mode uses 'amount' property
+            });
+        });
         while (tbody.children.length < 8) { this.addRow(); }
         this.calculateTotals();
     },
