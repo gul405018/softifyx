@@ -434,19 +434,18 @@ window.PRModule = {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = session.company_id || 1;
                 
-                console.log("PR Module: Fetching next SN for company:", companyId);
-                const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`, {
+                console.log("PR Module: Fetching next serial from dedicated API...");
+                const res = await fetch(`api/purchase_return.php?action=next-serial&company_id=${companyId}`, {
                     cache: 'no-store'
                 });
                 
-                const text = await res.text();
-                console.log("PR Module: Raw SN Response:", text);
+                const data = await res.json();
+                console.log("PR Module: Next Serial Data:", data);
                 
-                const data = JSON.parse(text);
                 const snEl = document.getElementById('pr_sn');
-                if (snEl && data.next_sn) {
-                    snEl.value = data.next_sn;
-                    console.log("PR Module: Set SN to:", data.next_sn);
+                if (snEl && data.nextSerial) {
+                    snEl.value = data.nextSerial;
+                    console.log("PR Module: Set SN to:", data.nextSerial);
                 }
             } catch(e) {
                 console.error("PR Module: Serial fetch error:", e);
@@ -561,15 +560,16 @@ window.PRModule = {
     navigate: async function(dir) {
         const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
         const companyId = session.company_id || 1;
-        let sn = parseInt(document.getElementById('pr_sn').value);
-        sn = (dir === 'next') ? sn + 1 : sn - 1;
-        if (sn < 1) return;
-
+        let sn = parseInt(document.getElementById('pr_sn').value) || 0;
+        
         try {
-            const res = await fetch(`api/purchases.php?action=get_return&serial_no=${sn}&company_id=${companyId}`);
+            const res = await fetch(`api/purchase_return.php?action=get_navigation&current_sn=${sn}&direction=${dir}&company_id=${companyId}`);
             const ret = await res.json();
-            if (ret && ret.id) { this.loadReturnData(ret); } 
-            else if (dir === 'next') { this.resetForm(true); }
+            if (ret && ret.id) { 
+                this.loadReturnData(ret); 
+            } else if (dir === 'next') { 
+                this.resetForm(true); 
+            }
         } catch (e) { console.error("Navigation Error:", e); }
     },
 
