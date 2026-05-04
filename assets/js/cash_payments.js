@@ -112,12 +112,12 @@ window.CPModule = {
 
         if (type === 'Petty') {
             if (vendorRow) vendorRow.style.display = 'none';
-            if (gridTitle) gridTitle.innerText = "Detail of Petty Cash Payments / Expenses";
+            if (gridTitle) gridTitle.style.display = 'none'; // Hide blue title bar
             if (vendorFooter) vendorFooter.style.display = 'none';
             if (pettyFooter) pettyFooter.style.display = 'block';
         } else {
             if (vendorRow) vendorRow.style.display = 'flex';
-            if (gridTitle) gridTitle.innerText = "Detail of Purchase Invoices Against Which Amount has been Paid";
+            if (gridTitle) gridTitle.style.display = 'block'; // Show blue title bar
             if (vendorFooter) vendorFooter.style.display = 'block';
             if (pettyFooter) pettyFooter.style.display = 'none';
         }
