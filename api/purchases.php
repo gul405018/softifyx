@@ -139,7 +139,11 @@ try {
         value_incl_tax DECIMAL(15,2) DEFAULT 0,
         FOREIGN KEY (return_id) REFERENCES purchase_returns(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-} catch (Exception $e) { }
+    // ... other migrations ...
+} catch (Exception $e) {
+    // Silently log or handle migration errors if needed, but don't break the whole API
+    // error_log("Migration Error: " . $e->getMessage());
+}
 
 $action = $_GET['action'] ?? '';
 $company_id = $_GET['company_id'] ?? 1;
@@ -150,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         $row = $stmt->fetch();
         echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
+        exit;
     }
 
     if ($action === 'get_po') {
@@ -178,7 +183,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 }
             }
         }
-        echo json_encode($po);
+        echo json_encode($po ?: []);
+        exit;
     }
 
     if ($action === 'get_next_invoice_serial') {
@@ -186,6 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         $row = $stmt->fetch();
         echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
+        exit;
     }
 
     if ($action === 'get_invoice') {
@@ -215,6 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
         }
         echo json_encode($inv ?: []);
+        exit;
     }
 
     if ($action === 'get_next_return_serial') {
@@ -222,6 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute([$company_id]);
         $row = $stmt->fetch();
         echo json_encode(['next_sn' => ($row['max_sn'] ?? 0) + 1]);
+        exit;
     }
 
     if ($action === 'get_return') {
@@ -251,6 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
         }
         echo json_encode($ret ?: []);
+        exit;
     }
 }
 

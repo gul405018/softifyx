@@ -436,15 +436,22 @@ window.PRModule = {
                 const session = JSON.parse(localStorage.getItem('softifyx_session') || '{}');
                 const companyId = session.company_id || 1;
                 
-                const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
-                const data = await res.json();
+                console.log("PR Module: Fetching next SN for company:", companyId);
+                const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`, {
+                    cache: 'no-store'
+                });
                 
+                const text = await res.text();
+                console.log("PR Module: Raw SN Response:", text);
+                
+                const data = JSON.parse(text);
                 const snEl = document.getElementById('pr_sn');
                 if (snEl && data.next_sn) {
                     snEl.value = data.next_sn;
+                    console.log("PR Module: Set SN to:", data.next_sn);
                 }
             } catch(e) {
-                console.error("PR Module: Serial fetch error, using default 1", e);
+                console.error("PR Module: Serial fetch error:", e);
                 const snEl = document.getElementById('pr_sn');
                 if (snEl) snEl.value = '1';
             }
