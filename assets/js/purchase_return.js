@@ -11,8 +11,12 @@ window.PRModule = {
     init: async function() {
         console.log("PR Module: Initializing...");
         
-        // Step 1: Immediately show the form and initialize data
-        this.resetForm(true);
+        try {
+            // Step 1: Immediately show the form and initialize data
+            this.resetForm(true);
+        } catch (e) {
+            console.error("PR Module: Init Reset Error:", e);
+        }
         
         // Step 2: Load data in background without blocking init
         this.loadVendors().catch(e => console.error("Load Vendors Error:", e));
@@ -393,7 +397,9 @@ window.PRModule = {
         this.selectedVendorCoaId = null;
         
         const snField = document.getElementById('pr_sn');
-        if (snField) snField.value = isNew ? '...' : '';
+        if (snField) {
+            snField.value = isNew ? '1' : ''; // Immediate default to 1 for new records
+        }
 
         // Reset all header fields
         const inputs = ['pr_purchase_no', 'pr_purchase_date', 'pr_vendor_inv_no', 'pr_vendor_inv_date', 
@@ -433,12 +439,14 @@ window.PRModule = {
                 const res = await fetch(`api/purchases.php?action=get_next_return_serial&company_id=${companyId}`);
                 const data = await res.json();
                 
-                if (snField) {
-                    snField.value = data.next_sn || 1;
+                const snEl = document.getElementById('pr_sn');
+                if (snEl && data.next_sn) {
+                    snEl.value = data.next_sn;
                 }
             } catch(e) {
                 console.error("PR Module: Serial fetch error, using default 1", e);
-                if (snField) snField.value = '1';
+                const snEl = document.getElementById('pr_sn');
+                if (snEl) snEl.value = '1';
             }
         }
         
