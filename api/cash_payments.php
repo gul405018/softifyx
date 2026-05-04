@@ -27,8 +27,10 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS cash_payment_items (
         id INT AUTO_INCREMENT PRIMARY KEY,
         payment_id INT NOT NULL,
-        invoice_no VARCHAR(100),
-        invoice_date DATE,
+        coa_id INT, -- For Petty Payments
+        description TEXT, -- For Petty Payments
+        invoice_no VARCHAR(100), -- For Vendor Payments
+        invoice_date DATE, -- For Vendor Payments
         paid_amount DECIMAL(15,2) DEFAULT 0,
         wht_rate DECIMAL(15,2) DEFAULT 0,
         wht_amount DECIMAL(15,2) DEFAULT 0,
@@ -125,12 +127,13 @@ if ($action === 'save') {
         }
 
         if (!empty($data['items'])) {
-            $stmt = $pdo->prepare("INSERT INTO cash_payment_items (payment_id, invoice_no, invoice_date, paid_amount, wht_rate, wht_amount, gst_rate, gst_amount, advance_adjusted, discount_received, total_debited) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO cash_payment_items (payment_id, coa_id, description, invoice_no, invoice_date, paid_amount, wht_rate, wht_amount, gst_rate, gst_amount, advance_adjusted, discount_received, total_debited) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             foreach ($data['items'] as $item) {
                 $stmt->execute([
-                    $id, $item['invoice_no'], $item['invoice_date'], $item['paid_amount'],
-                    $item['wht_rate'], $item['wht_amount'], $item['gst_rate'], $item['gst_amount'],
-                    $item['advance_adjusted'], $item['discount_received'], $item['total_debited']
+                    $id, $item['coa_id'] ?? null, $item['description'] ?? null,
+                    $item['invoice_no'] ?? null, $item['invoice_date'] ?? null, $item['paid_amount'],
+                    $item['wht_rate'] ?? 0, $item['wht_amount'] ?? 0, $item['gst_rate'] ?? 0, $item['gst_amount'] ?? 0,
+                    $item['advance_adjusted'] ?? 0, $item['discount_received'] ?? 0, $item['total_debited']
                 ]);
             }
         }
@@ -158,7 +161,12 @@ if ($action === 'get') {
     
     $payment = $stmt->fetch();
     if ($payment) {
-        $stmt = $pdo->prepare("SELECT * FROM cash_payment_items WHERE payment_id = ?");
+        $stmt = $pdo->prepare("
+            SELECT i.*, cl.code as coa_code, cl.name as coa_name 
+            FROM cash_payment_items i 
+            LEFT JOIN coa_list cl ON i.coa_id = cl.id
+            WHERE i.payment_id = ?
+        ");
         $stmt->execute([$payment['id']]);
         $payment['items'] = $stmt->fetchAll();
         
